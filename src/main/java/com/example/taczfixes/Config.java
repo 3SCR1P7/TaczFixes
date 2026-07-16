@@ -23,6 +23,8 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_RPG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
+    public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
+    public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
 
     static {
         BUILDER.push("limb_damage");
@@ -38,32 +40,32 @@ public class Config {
 
         BUILDER.push("gun_types");
         LIMB_FACTOR_DEFAULT = BUILDER
-                .comment("Default limb damage multiplier for unknown gun types (fallback). Default: 0.65")
-                .defineInRange("default", 0.65, 0.0, 2.0);
+                .comment("Default limb damage multiplier for unknown gun types (fallback). Default: 0.6")
+                .defineInRange("default", 0.6, 0.0, 2.0);
         GUN_TYPE_PISTOL = BUILDER
-                .comment("Limb damage multiplier for pistols. Default: 0.65")
-                .defineInRange("pistol", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for pistols. Default: 0.6")
+                .defineInRange("pistol", 0.6, 0.0, 2.0);
         GUN_TYPE_RIFLE = BUILDER
-                .comment("Limb damage multiplier for rifles. Default: 0.65")
-                .defineInRange("rifle", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for rifles. Default: 0.6")
+                .defineInRange("rifle", 0.6, 0.0, 2.0);
         GUN_TYPE_SNIPER = BUILDER
-                .comment("Limb damage multiplier for snipers. Default: 0.65")
-                .defineInRange("sniper", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for snipers. Default: 0.6")
+                .defineInRange("sniper", 0.6, 0.0, 2.0);
         GUN_TYPE_SHOTGUN = BUILDER
-                .comment("Limb damage multiplier for shotguns. Default: 0.65")
-                .defineInRange("shotgun", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for shotguns. Default: 0.6")
+                .defineInRange("shotgun", 0.6, 0.0, 2.0);
         GUN_TYPE_SMG = BUILDER
-                .comment("Limb damage multiplier for SMGs. Default: 0.65")
-                .defineInRange("smg", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for SMGs. Default: 0.6")
+                .defineInRange("smg", 0.6, 0.0, 2.0);
         GUN_TYPE_RPG = BUILDER
-                .comment("Limb damage multiplier for RPGs. Default: 0.65")
-                .defineInRange("rpg", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for RPGs. Default: 0.6")
+                .defineInRange("rpg", 0.6, 0.0, 2.0);
         GUN_TYPE_MG = BUILDER
-                .comment("Limb damage multiplier for machine guns. Default: 0.65")
-                .defineInRange("mg", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for machine guns. Default: 0.6")
+                .defineInRange("mg", 0.6, 0.0, 2.0);
         GUN_TYPE_OTHER = BUILDER
-                .comment("Limb damage multiplier for other/custom gun types. Default: 0.65")
-                .defineInRange("other", 0.65, 0.0, 2.0);
+                .comment("Limb damage multiplier for other/custom gun types. Default: 0.6")
+                .defineInRange("other", 0.6, 0.0, 2.0);
         BUILDER.pop();
 
         BUILDER.push("mobs");
@@ -81,11 +83,23 @@ public class Config {
 
         BUILDER.pop();
 
-        BUILDER.push("burst_fire");
+BUILDER.push("burst_fire");
         BURST_BLOCK_ATTACHMENTS = BUILDER
                 .comment("List of attachment IDs that prevent burst fire. When a gun has any of these attachments equipped, burst mode will be disabled and only a dry fire sound will play.",
                         "Example: [\"ccrp:ammo_mod_hap\"]")
                 .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
+        BUILDER.pop();
+
+        BUILDER.push("peek_aim");
+        AUTO_AIM_WHEN_PEEKING = BUILDER
+                .comment("Automatically aim down sights when using gd656peek's left/right peek while holding a TACZ gun.")
+                .define("auto_aim_when_peeking", true);
+        BUILDER.pop();
+
+        BUILDER.push("compat");
+        ADS_INTERRUPT_SPRINT = BUILDER
+                .comment("Stop sprinting when aiming down sights. Fixes animation conflicts with mods like Parcool that add first-person sprint animations.")
+                .define("ads_interrupt_sprint", true);
         BUILDER.pop();
     }
 

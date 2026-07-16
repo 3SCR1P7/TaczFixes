@@ -13,7 +13,11 @@
     "LocalPlayerShootPreCheckMixin",
     "LocalPlayerCrawlMixin",
     "InnerThirdPersonManagerMixin",
-    "MixinArcanaScopeGate"
+    "MixinArcanaScopeGate",
+    "MixinPeekHandler",
+    "MixinLocalPlayerAim",
+    "MixinLocalPlayerSprint",
+    "MixinEntitySprint"
   ],
   "injectors": {
     "defaultRequire": 1
