@@ -25,6 +25,12 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
+    public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
+    public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
+    public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
+    public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH;
+    public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW;
+    public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_MIN_RPM;
 
     static {
         BUILDER.push("limb_damage");
@@ -90,6 +96,27 @@ BUILDER.push("burst_fire");
                 .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
         BUILDER.pop();
 
+        BUILDER.push("recoil_fire_rate");
+        RECOIL_FIRE_RATE_REDUCTION_ENABLED = BUILDER
+                .comment("Enable recoil reduction when firing within a short time window (rapid fire). Compatible with high fire rate guns.")
+                .define("enabled", true);
+        RECOIL_FIRE_RATE_WINDOW = BUILDER
+                .comment("Time window in milliseconds. If the next shot is fired within this window, recoil reduction is applied. Default: 200")
+                .defineInRange("window_ms", 200, 0, 5000);
+        RECOIL_FIRE_RATE_FACTOR = BUILDER
+                .comment("Recoil multiplier when firing within the window (rapid fire). 0.5 = 50% recoil, 0.3 = 30% recoil, 1.0 = no reduction. Default: 0.5")
+                .defineInRange("factor", 0.6, 0.0, 1.0);
+        RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH = BUILDER
+                .comment("Vertical (pitch) recoil multiplier when NOT firing within the window (paused/between bursts). 2.5 = 250% recoil. Default: 2.4")
+                .defineInRange("pause_factor_pitch", 2.4, 1.0, 10.0);
+        RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW = BUILDER
+                .comment("Horizontal (yaw) recoil multiplier when NOT firing within the window (paused/between bursts). 2.5 = 250% recoil. Default: 2.4")
+                .defineInRange("pause_factor_yaw", 1.2, 1.0, 10.0);
+        RECOIL_FIRE_RATE_MIN_RPM = BUILDER
+                .comment("Minimum RPM (rounds per minute) required for this feature to activate. Guns with RPM below this threshold are unaffected. Default: 300")
+                .defineInRange("min_rpm", 300, 0, 2400);
+        BUILDER.pop();
+
         BUILDER.push("peek_aim");
         AUTO_AIM_WHEN_PEEKING = BUILDER
                 .comment("Automatically aim down sights when using gd656peek's left/right peek while holding a TACZ gun.")
@@ -101,6 +128,7 @@ BUILDER.push("burst_fire");
                 .comment("Stop sprinting when aiming down sights. Fixes animation conflicts with mods like Parcool that add first-person sprint animations.")
                 .define("ads_interrupt_sprint", true);
         BUILDER.pop();
+
     }
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();

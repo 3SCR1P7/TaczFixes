@@ -17,7 +17,8 @@
     "MixinPeekHandler",
     "MixinLocalPlayerAim",
     "MixinLocalPlayerSprint",
-    "MixinEntitySprint"
+    "MixinEntitySprint",
+    "MixinCameraSetupEvent",
   ],
   "injectors": {
     "defaultRequire": 1
