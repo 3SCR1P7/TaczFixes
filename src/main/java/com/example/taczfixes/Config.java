@@ -25,6 +25,11 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
+    public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
+    public static final ForgeConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
+    public static final ForgeConfigSpec.IntValue SPREAD_RAMP_DECAY_DELAY_MS;
+    public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_DECAY;
+
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
@@ -127,6 +132,21 @@ BUILDER.push("burst_fire");
         ADS_INTERRUPT_SPRINT = BUILDER
                 .comment("Stop sprinting when aiming down sights. Fixes animation conflicts with mods like Parcool that add first-person sprint animations.")
                 .define("ads_interrupt_sprint", true);
+        BUILDER.pop();
+
+        BUILDER.push("spread_ramp");
+        SPREAD_RAMP_INCREMENT = BUILDER
+                .comment("Each shot adds this fraction of the gun's base spread (e.g. 0.05 = +5% per shot). Default: 0.03")
+                .defineInRange("increment", 0.03, 0.0, 1.0);
+        SPREAD_RAMP_MAX_STACKS = BUILDER
+                .comment("Maximum number of consecutive shots before spread stops increasing. Default: 25")
+                .defineInRange("max_stacks", 25, 0, 100);
+        SPREAD_RAMP_DECAY_DELAY_MS = BUILDER
+                .comment("Time in ms since the last shot before spread starts decreasing. Default: 200")
+                .defineInRange("decay_delay_ms", 200, 0, 10000);
+        SPREAD_RAMP_DECAY = BUILDER
+                .comment("Amount of spread recovered per tick when no shot is fired (fraction of base spread, e.g. 0.10 = -10% per tick). Default: 0.10")
+                .defineInRange("decay", 0.10, 0.0, 1.0);
         BUILDER.pop();
 
     }
