@@ -23,12 +23,14 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_RPG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
+    public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_DECAY_DELAY_MS;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_DECAY;
+    public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
 
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
@@ -94,20 +96,13 @@ public class Config {
 
         BUILDER.pop();
 
-BUILDER.push("burst_fire");
-        BURST_BLOCK_ATTACHMENTS = BUILDER
-                .comment("List of attachment IDs that prevent burst fire. When a gun has any of these attachments equipped, burst mode will be disabled and only a dry fire sound will play.",
-                        "Example: [\"ccrp:ammo_mod_hap\"]")
-                .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
-        BUILDER.pop();
-
         BUILDER.push("recoil_fire_rate");
         RECOIL_FIRE_RATE_REDUCTION_ENABLED = BUILDER
                 .comment("Enable recoil reduction when firing within a short time window (rapid fire). Compatible with high fire rate guns.")
                 .define("enabled", true);
         RECOIL_FIRE_RATE_WINDOW = BUILDER
                 .comment("Time window in milliseconds. If the next shot is fired within this window, recoil reduction is applied. Default: 200")
-                .defineInRange("window_ms", 200, 0, 5000);
+                .defineInRange("window_ms", 200, 0, 10000);
         RECOIL_FIRE_RATE_FACTOR = BUILDER
                 .comment("Recoil multiplier when firing within the window (rapid fire). 0.5 = 50% recoil, 0.3 = 30% recoil, 1.0 = no reduction. Default: 0.5")
                 .defineInRange("factor", 0.6, 0.0, 1.0);
@@ -119,19 +114,7 @@ BUILDER.push("burst_fire");
                 .defineInRange("pause_factor_yaw", 1.2, 1.0, 10.0);
         RECOIL_FIRE_RATE_MIN_RPM = BUILDER
                 .comment("Minimum RPM (rounds per minute) required for this feature to activate. Guns with RPM below this threshold are unaffected. Default: 300")
-                .defineInRange("min_rpm", 300, 0, 2400);
-        BUILDER.pop();
-
-        BUILDER.push("peek_aim");
-        AUTO_AIM_WHEN_PEEKING = BUILDER
-                .comment("Automatically aim down sights when using gd656peek's left/right peek while holding a TACZ gun.")
-                .define("auto_aim_when_peeking", true);
-        BUILDER.pop();
-
-        BUILDER.push("compat");
-        ADS_INTERRUPT_SPRINT = BUILDER
-                .comment("Stop sprinting when aiming down sights. Fixes animation conflicts with mods like Parcool that add first-person sprint animations.")
-                .define("ads_interrupt_sprint", true);
+                .defineInRange("min_rpm", 300, 0, 1200);
         BUILDER.pop();
 
         BUILDER.push("spread_ramp");
@@ -140,7 +123,7 @@ BUILDER.push("burst_fire");
                 .defineInRange("increment", 0.03, 0.0, 1.0);
         SPREAD_RAMP_MAX_STACKS = BUILDER
                 .comment("Maximum number of consecutive shots before spread stops increasing. Default: 25")
-                .defineInRange("max_stacks", 25, 0, 100);
+                .defineInRange("max_stacks", 50, 0, 1000);
         SPREAD_RAMP_DECAY_DELAY_MS = BUILDER
                 .comment("Time in ms since the last shot before spread starts decreasing. Default: 200")
                 .defineInRange("decay_delay_ms", 200, 0, 10000);
@@ -149,6 +132,38 @@ BUILDER.push("burst_fire");
                 .defineInRange("decay", 0.10, 0.0, 1.0);
         BUILDER.pop();
 
+        BUILDER.push("misc");
+
+        BUILDER.push("burst_fire");
+        BURST_BLOCK_ATTACHMENTS = BUILDER
+                .comment("List of attachment IDs that prevent burst fire. When a gun has any of these attachments equipped, burst mode will be disabled and only a dry fire sound will play.",
+                        "Example: [\"ccrp:ammo_mod_hap\"]")
+                .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
+        BUILDER.pop();
+
+        BUILDER.push("compat");
+        DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
+                .comment("When using a sight-type scope attachment (red dot, holo, etc.), disable TACZ Arcana's scope-in magnification so it behaves like a non-magnifying sight.",
+                        "Only applies if TACZ Arcana is installed.")
+                .define("disable_arcana_magnification_for_sight", true);
+        ADS_INTERRUPT_SPRINT = BUILDER
+                .comment("Stop sprinting when aiming down sights. Fixes animation conflicts with mods like Parcool that add first-person sprint animations.")
+                .define("ads_interrupt_sprint", true);
+        BUILDER.pop();
+
+        BUILDER.push("explosion");
+        EXPLOSION_BULLET_ONLY = BUILDER
+                .comment("When enabled, bullet explosions only affect tacz:bullet entities (EntityKineticBullet), ignoring all other entities (players, mobs, etc.).")
+                .define("bullet_only", false);
+        BUILDER.pop();
+
+        BUILDER.push("peek_aim");
+        AUTO_AIM_WHEN_PEEKING = BUILDER
+                .comment("Automatically aim down sights when using gd656peek's left/right peek while holding a TACZ gun.")
+                .define("auto_aim_when_peeking", true);
+        BUILDER.pop();
+
+        BUILDER.pop();
     }
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();

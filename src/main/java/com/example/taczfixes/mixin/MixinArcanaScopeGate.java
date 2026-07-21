@@ -1,5 +1,6 @@
 package com.example.taczfixes.mixin;
 
+import com.example.taczfixes.Config;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -21,6 +22,8 @@ public class MixinArcanaScopeGate {
 
     @Inject(method = "Iwtki3eC", at = @At("HEAD"), cancellable = true)
     private void taczfixes$onIwtki3eC(CallbackInfoReturnable<Boolean> cir) {
+        if (!Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT.get()) return;
+
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
         if (player == null) return;

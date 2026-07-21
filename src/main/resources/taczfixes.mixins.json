@@ -9,7 +9,8 @@
     "LivingEntityShootMixin",
     "LivingEntityCrawlMixin",
     "MixinShootOnceIncrement",
-    "MixinModernKineticGunBulletSpread"
+    "MixinModernKineticGunBulletSpread",
+    "MixinTaczProjectileExplosion"
   ],
   "client": [
     "LocalPlayerShootPreCheckMixin",
@@ -20,7 +21,7 @@
     "MixinLocalPlayerAim",
     "MixinLocalPlayerSprint",
     "MixinEntitySprint",
-    "MixinCameraSetupEvent",
+    "MixinCameraSetupEvent"
   ],
   "injectors": {
     "defaultRequire": 1
