@@ -9,9 +9,11 @@ public class SpreadState {
         lastShotTime = System.currentTimeMillis();
     }
 
-    public static float getMultiplier() {
+    public static float modifyInaccuracy(float baseInaccuracy) {
         int currentStacks = Math.max(0, stacks - 1);
-        return 1.0f + currentStacks * Config.SPREAD_RAMP_INCREMENT.get().floatValue();
+        float percMultiplier = 1.0f + currentStacks * Config.SPREAD_RAMP_INCREMENT.get().floatValue();
+        float flatAdd = currentStacks * Config.SPREAD_RAMP_FLAT_INCREMENT.get().floatValue();
+        return baseInaccuracy * percMultiplier + flatAdd;
     }
 
     public static void tick() {

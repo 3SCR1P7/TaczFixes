@@ -12,6 +12,6 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 public class MixinModernKineticGunBulletSpread {
     @ModifyVariable(method = "doBulletSpread", at = @At("HEAD"), argsOnly = true, index = 7)
     private float taczfixes$modifyInaccuracy(float inaccuracy) {
-        return inaccuracy * SpreadState.getMultiplier();
+        return SpreadState.modifyInaccuracy(inaccuracy);
     }
 }

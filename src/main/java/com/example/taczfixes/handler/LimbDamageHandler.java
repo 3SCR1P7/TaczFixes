@@ -3,6 +3,7 @@ package com.example.taczfixes.handler;
 import com.example.taczfixes.Config;
 import com.example.taczfixes.util.LimbDamageHelper;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.resources.ResourceLocation;

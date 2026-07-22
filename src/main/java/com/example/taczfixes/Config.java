@@ -26,20 +26,37 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
+    public static final ForgeConfigSpec.BooleanValue FIRE_INTERRUPT_SPRINT;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
+    public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_FLAT_INCREMENT;
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_DECAY_DELAY_MS;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_DECAY;
     public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
-
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_MIN_RPM;
+    public static final ForgeConfigSpec.IntValue GUN_LEVEL_MAX_LEVEL;
+    public static final ForgeConfigSpec.IntValue GUN_LEVEL_BASE_KILLS;
+    public static final ForgeConfigSpec.IntValue GUN_LEVEL_INCREMENT;
+
 
     static {
+        BUILDER.push("gun_level");
+        GUN_LEVEL_MAX_LEVEL = BUILDER
+                .comment("Maximum gun level. Default: 500")
+                .defineInRange("max_level", 500, 1, 10000);
+        GUN_LEVEL_BASE_KILLS = BUILDER
+                .comment("Kills needed for level 1. Default: 1")
+                .defineInRange("base_kills", 1, 1, 100000);
+        GUN_LEVEL_INCREMENT = BUILDER
+                .comment("Additional kills required per level. exp(L) = base + inc * L * (L-1) / 2. When inc=0, linear: exp(L) = base * L. Default: 5")
+                .defineInRange("level_increment", 5, 0, 100000);
+        BUILDER.pop();
+
         BUILDER.push("limb_damage");
 
         BUILDER.push("player");
@@ -110,7 +127,7 @@ public class Config {
                 .comment("Vertical (pitch) recoil multiplier when NOT firing within the window (paused/between bursts). 2.5 = 250% recoil. Default: 2.4")
                 .defineInRange("pause_factor_pitch", 2.4, 1.0, 10.0);
         RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW = BUILDER
-                .comment("Horizontal (yaw) recoil multiplier when NOT firing within the window (paused/between bursts). 2.5 = 250% recoil. Default: 2.4")
+                .comment("Horizontal (yaw) recoil multiplier when NOT firing within the window (paused/between bursts). 2.5 = 250% recoil. Default: 1.2")
                 .defineInRange("pause_factor_yaw", 1.2, 1.0, 10.0);
         RECOIL_FIRE_RATE_MIN_RPM = BUILDER
                 .comment("Minimum RPM (rounds per minute) required for this feature to activate. Guns with RPM below this threshold are unaffected. Default: 300")
@@ -119,11 +136,14 @@ public class Config {
 
         BUILDER.push("spread_ramp");
         SPREAD_RAMP_INCREMENT = BUILDER
-                .comment("Each shot adds this fraction of the gun's base spread (e.g. 0.05 = +5% per shot). Default: 0.03")
+                .comment("Each shot adds this fraction of the gun's base spread (e.g. 0.03 = +3% per shot). Default: 0.03")
                 .defineInRange("increment", 0.03, 0.0, 1.0);
+        SPREAD_RAMP_FLAT_INCREMENT = BUILDER
+                .comment("Each shot adds this fixed amount to spread (e.g. 0.01 adds 0.01 degrees of spread per stack). Default: 0.02")
+                .defineInRange("flat_increment", 0.02, 0.0, 10.0);
         SPREAD_RAMP_MAX_STACKS = BUILDER
-                .comment("Maximum number of consecutive shots before spread stops increasing. Default: 25")
-                .defineInRange("max_stacks", 50, 0, 1000);
+                .comment("Maximum number of consecutive shots before spread stops increasing. Default: 30")
+                .defineInRange("max_stacks", 30, 0, 1000);
         SPREAD_RAMP_DECAY_DELAY_MS = BUILDER
                 .comment("Time in ms since the last shot before spread starts decreasing. Default: 200")
                 .defineInRange("decay_delay_ms", 200, 0, 10000);
@@ -149,8 +169,10 @@ public class Config {
         ADS_INTERRUPT_SPRINT = BUILDER
                 .comment("Stop sprinting when aiming down sights. Fixes animation conflicts with mods like Parcool that add first-person sprint animations.")
                 .define("ads_interrupt_sprint", true);
+        FIRE_INTERRUPT_SPRINT = BUILDER
+                .comment("Stop sprinting when firing a gun. Prevents shooting while sprinting.")
+                .define("fire_interrupt_sprint", true);
         BUILDER.pop();
-
         BUILDER.push("explosion");
         EXPLOSION_BULLET_ONLY = BUILDER
                 .comment("When enabled, bullet explosions only affect tacz:bullet entities (EntityKineticBullet), ignoring all other entities (players, mobs, etc.).")
@@ -160,7 +182,7 @@ public class Config {
         BUILDER.push("peek_aim");
         AUTO_AIM_WHEN_PEEKING = BUILDER
                 .comment("Automatically aim down sights when using gd656peek's left/right peek while holding a TACZ gun.")
-                .define("auto_aim_when_peeking", true);
+                .define("auto_aim_when_peeking", false);
         BUILDER.pop();
 
         BUILDER.pop();
