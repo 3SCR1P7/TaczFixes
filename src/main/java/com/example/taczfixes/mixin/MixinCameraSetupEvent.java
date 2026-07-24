@@ -6,7 +6,9 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -36,7 +38,13 @@ public class MixinCameraSetupEvent {
         if (mode != FireMode.AUTO && mode != FireMode.BURST) return;
 
         IGun gun = IGun.getIGunOrNull(player.getMainHandItem());
-        if (gun == null || gun.getRPM(player.getMainHandItem()) < Config.RECOIL_FIRE_RATE_MIN_RPM.get()) return;
+        if (gun == null) return;
+
+        ItemStack gunItem = player.getMainHandItem();
+        if (gun.getRPM(gunItem) < Config.RECOIL_FIRE_RATE_MIN_RPM.get()) return;
+
+        ResourceLocation gunId = gun.getGunId(gunItem);
+        if (gunId != null && Config.RECOIL_FIRE_RATE_DISABLED_GUNS.get().contains(gunId.toString())) return;
 
         long elapsed = System.currentTimeMillis() - shootTimeStamp;
         if (elapsed >= 0 && elapsed < Config.RECOIL_FIRE_RATE_WINDOW.get()) {

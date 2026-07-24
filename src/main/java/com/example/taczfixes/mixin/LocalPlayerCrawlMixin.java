@@ -22,14 +22,14 @@ public class LocalPlayerCrawlMixin {
 
     @Inject(method = "tickCrawl", at = @At("HEAD"), cancellable = true, remap = false)
     private void onTickCrawl(CallbackInfo ci) {
-        boolean nowParCoolCrawling = ParCoolHelper.isCrawling(player);
-        if (nowParCoolCrawling) {
+        if (ParCoolHelper.isCrawling(player)) {
             isCrawling = true;
             taczfixes$wasParCoolCrawling = true;
             ci.cancel();
         } else if (taczfixes$wasParCoolCrawling) {
             isCrawling = false;
             taczfixes$wasParCoolCrawling = false;
+            ci.cancel();
         }
     }
 

@@ -26,14 +26,14 @@ public class LivingEntityCrawlMixin {
 
     @Inject(method = "tickCrawling", at = @At("HEAD"), cancellable = true, remap = false)
     private void onTickCrawling(CallbackInfo ci) {
-        boolean nowParCoolCrawling = ParCoolHelper.isCrawling(shooter);
-        if (nowParCoolCrawling) {
+        if (ParCoolHelper.isCrawling(shooter)) {
             data.isCrawling = true;
             taczfixes$wasParCoolCrawling = true;
             ci.cancel();
         } else if (taczfixes$wasParCoolCrawling) {
             data.isCrawling = false;
             taczfixes$wasParCoolCrawling = false;
+            ci.cancel();
         }
     }
 

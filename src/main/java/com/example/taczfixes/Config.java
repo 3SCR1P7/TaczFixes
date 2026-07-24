@@ -42,6 +42,19 @@ public class Config {
     public static final ForgeConfigSpec.IntValue GUN_LEVEL_MAX_LEVEL;
     public static final ForgeConfigSpec.IntValue GUN_LEVEL_BASE_KILLS;
     public static final ForgeConfigSpec.IntValue GUN_LEVEL_INCREMENT;
+    public static final ForgeConfigSpec.BooleanValue BULLET_RICOCHET_ENABLE;
+    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_MIN_ANGLE;
+    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_MAX_ANGLE;
+    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_CHANCE_MIN;
+    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_CHANCE_MAX;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BULLET_RICOCHET_BLOCK_TAGS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BULLET_RICOCHET_DISABLED_GUNS;
+    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_DAMAGE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_REFLECT_ANGLE_RATIO;
+    public static final ForgeConfigSpec.BooleanValue RECOIL_KNOCKBACK_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SNEAK_MULTIPLIER;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> RECOIL_FIRE_RATE_DISABLED_GUNS;
 
 
     static {
@@ -132,6 +145,10 @@ public class Config {
         RECOIL_FIRE_RATE_MIN_RPM = BUILDER
                 .comment("Minimum RPM (rounds per minute) required for this feature to activate. Guns with RPM below this threshold are unaffected. Default: 300")
                 .defineInRange("min_rpm", 300, 0, 1200);
+        RECOIL_FIRE_RATE_DISABLED_GUNS = BUILDER
+                .comment("List of gun IDs that are exempt from Recoil Fire Rate reduction. Format: \"namespace:path\"",
+                        "Example: [\"rfp:m2hb\", \"rfp:dshkm\"]")
+                .defineList("disabled_guns", List.of("rfp:m2hb", "rfp:dshkm"), it -> it instanceof String);
         BUILDER.pop();
 
         BUILDER.push("spread_ramp");
@@ -152,9 +169,52 @@ public class Config {
                 .defineInRange("decay", 0.10, 0.0, 1.0);
         BUILDER.pop();
 
-        BUILDER.push("misc");
+        BUILDER.push("bullet_ricochet");
+        BULLET_RICOCHET_ENABLE = BUILDER
+                .comment("Enable bullet ricochet off blocks with configured tags.")
+                .define("enable", true);
+        BULLET_RICOCHET_MIN_ANGLE = BUILDER
+                .comment("Minimum incidence angle (in degrees) from the surface normal for ricochet to be possible. Below this angle, the bullet will not ricochet. Default: 60")
+                .defineInRange("min_angle", 60.0, 0.0, 90.0);
+        BULLET_RICOCHET_MAX_ANGLE = BUILDER
+                .comment("Incidence angle at which ricochet chance reaches chance_max. Default: 85")
+                .defineInRange("max_angle", 90.0, 0.0, 90.0);
+        BULLET_RICOCHET_CHANCE_MIN = BUILDER
+                .comment("Ricochet probability when incidence angle equals min_angle. Default: 0.0")
+                .defineInRange("chance_min", 0.0, 0.0, 1.0);
+        BULLET_RICOCHET_CHANCE_MAX = BUILDER
+                .comment("Ricochet probability when incidence angle equals or exceeds max_angle. Default: 1.0")
+                .defineInRange("chance_max", 1.0, 0.0, 1.0);
 
-        BUILDER.push("burst_fire");
+        BULLET_RICOCHET_BLOCK_TAGS = BUILDER
+                .comment("List of block tags that bullets can ricochet off. Format: \"namespace:path\"",
+                        "Example: [\"minecraft:mineable/pickaxe\"]")
+                .defineList("block_tags", List.of("minecraft:mineable/pickaxe"), it -> it instanceof String);
+        BULLET_RICOCHET_DISABLED_GUNS = BUILDER
+                .comment("List of gun IDs that cannot ricochet. Format: \"namespace:path\"",
+                        "Example: [\"ts:c4\"]")
+                .defineList("disabled_guns", List.of("ts:c4"), it -> it instanceof String);
+        BULLET_RICOCHET_DAMAGE_MULTIPLIER = BUILDER
+                .comment("Damage multiplier for ricocheted bullets. 0.2 = 20% damage. Default: 0.2")
+                .defineInRange("damage_multiplier", 0.2, 0.0, 1.0);
+        BULLET_RICOCHET_REFLECT_ANGLE_RATIO = BUILDER
+                .comment("Ratio of reflection angle to incidence angle. 0.5 means the bullet reflects at half the incidence angle. Default: 0.5")
+                .defineInRange("reflect_angle_ratio", 0.5, 0.0, 1.0);
+        BUILDER.pop();
+
+        BUILDER.push("recoil_knockback");
+        RECOIL_KNOCKBACK_ENABLED = BUILDER
+                .comment("Apply a knockback force to the player opposite to their aim direction when firing.")
+                .define("enable", true);
+        RECOIL_KNOCKBACK_MULTIPLIER = BUILDER
+                .comment("Multiplier for recoil knockback force. Higher values push the player back more. Default: 0.015")
+                .defineInRange("multiplier", 0.015, 0.0, 1.0);
+        RECOIL_KNOCKBACK_SNEAK_MULTIPLIER = BUILDER
+                .comment("Multiplier applied to recoil knockback force when sneaking. Default: 0.5")
+                .defineInRange("sneak_multiplier", 0.5, 0.0, 1.0);
+        BUILDER.pop();
+
+        BUILDER.push("misc");
         BURST_BLOCK_ATTACHMENTS = BUILDER
                 .comment("List of attachment IDs that prevent burst fire. When a gun has any of these attachments equipped, burst mode will be disabled and only a dry fire sound will play.",
                         "Example: [\"ccrp:ammo_mod_hap\"]")
@@ -173,6 +233,7 @@ public class Config {
                 .comment("Stop sprinting when firing a gun. Prevents shooting while sprinting.")
                 .define("fire_interrupt_sprint", true);
         BUILDER.pop();
+
         BUILDER.push("explosion");
         EXPLOSION_BULLET_ONLY = BUILDER
                 .comment("When enabled, bullet explosions only affect tacz:bullet entities (EntityKineticBullet), ignoring all other entities (players, mobs, etc.).")

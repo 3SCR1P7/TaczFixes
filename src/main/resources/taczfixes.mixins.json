@@ -6,6 +6,7 @@
   "refmap": "taczfixes.refmap.json",
   "mixins": [
     "EntityKineticBulletMixin",
+    "MixinEntityKineticBulletRicochet",
     "LivingEntityShootMixin",
     "LivingEntityCrawlMixin",
     "MixinShootOnceIncrement",
@@ -25,7 +26,8 @@
     "MixinCameraSetupEvent",
     "MixinGunLevelUpToast",
     "MixinGunTooltipLevel",
-    "MixinLocalPlayerShoot"
+    "MixinLocalPlayerShoot",
+    "MixinLocalPlayerShootRecoilKnockback"
   ],
   "injectors": {
     "defaultRequire": 1
