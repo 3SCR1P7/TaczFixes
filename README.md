@@ -24,13 +24,13 @@
 
 为TaCZ及其附属修复了以下bug：
 
---修复使用跑酷模组的爬行时，tacz的两脚架不会放下的bug
+--使用跑酷模组的爬行时，tacz的两脚架不会放下
 
---修复tacz addon的解放配件对arcana的“模块与皮肤”无效的bug
+--tacz addon的解放配件对arcana的“模块与皮肤”无效
 
---修复tacz arcana的镜内放大功能导致机瞄和红点瞄具无效的bug
+--tacz arcana的镜内放大功能导致机瞄和红点瞄具无效
 
---修复同时安装parcool和tacz模组后，在疾跑时开镜导致抽搐的bug
+--同时安装parcool和tacz模组后，在疾跑时开镜导致抽搐
 
 一切功能均可配置。
 
