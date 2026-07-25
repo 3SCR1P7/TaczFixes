@@ -215,6 +215,8 @@ public class Config {
         BUILDER.pop();
 
         BUILDER.push("misc");
+
+        BUILDER.push("burst_fire");
         BURST_BLOCK_ATTACHMENTS = BUILDER
                 .comment("List of attachment IDs that prevent burst fire. When a gun has any of these attachments equipped, burst mode will be disabled and only a dry fire sound will play.",
                         "Example: [\"ccrp:ammo_mod_hap\"]")
