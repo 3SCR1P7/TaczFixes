@@ -2,6 +2,7 @@ package com.example.taczfixes.mixin;
 
 import com.example.taczfixes.Config;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.gameplay.LocalPlayerShoot;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -43,9 +44,11 @@ public class MixinLocalPlayerShootRecoilKnockback {
         float totalRecoil = maxPitch + maxYaw;
         if (totalRecoil < 0.01f) return;
 
-        float force = totalRecoil * Config.RECOIL_KNOCKBACK_MULTIPLIER.get().floatValue();
-        if (player.isCrouching()) {
-            force *= Config.RECOIL_KNOCKBACK_SNEAK_MULTIPLIER.get().floatValue();
+        float force = totalRecoil * (player.isCrouching()
+                ? Config.RECOIL_KNOCKBACK_SNEAK_MULTIPLIER.get().floatValue()
+                : Config.RECOIL_KNOCKBACK_MULTIPLIER.get().floatValue());
+        if (gun.getFireMode(gunItem) == FireMode.SEMI) {
+            force *= Config.RECOIL_KNOCKBACK_SEMI_FACTOR.get().floatValue();
         }
         Vec3 lookAngle = player.getLookAngle();
         player.push(-lookAngle.x * force, -lookAngle.y * force, -lookAngle.z * force);

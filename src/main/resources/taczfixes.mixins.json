@@ -12,7 +12,10 @@
     "MixinShootOnceIncrement",
     "MixinModernKineticGunBulletSpread",
     "MixinTaczProjectileExplosion",
-    "MixinGunLevelMethods"
+    "MixinGunLevelMethods",
+    "MixinBulletPenetrationBlocker",
+    "MixinEntityDamageReducer",
+    "MixinInaccuracyType"
   ],
   "client": [
     "LocalPlayerShootPreCheckMixin",
@@ -27,7 +30,9 @@
     "MixinGunLevelUpToast",
     "MixinGunTooltipLevel",
     "MixinLocalPlayerShoot",
-    "MixinLocalPlayerShootRecoilKnockback"
+    "MixinLocalPlayerShootRecoilKnockback",
+    "MixinHitboxDisabler",
+    "MixinThirdPersonDisabler"
   ],
   "injectors": {
     "defaultRequire": 1
