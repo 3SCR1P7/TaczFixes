@@ -16,16 +16,15 @@ public class MixinEntitySprint {
     @Inject(method = "setSprinting", at = @At("HEAD"), cancellable = true)
     private void taczfixes$onSetSprinting(boolean sprinting, CallbackInfo ci) {
         if (!sprinting) return;
-        if (!Config.ADS_INTERRUPT_SPRINT.get()) return;
 
         Entity self = (Entity) (Object) this;
-        if (self.level().isClientSide() && self instanceof LocalPlayer player) {
-            Minecraft mc = Minecraft.getInstance();
-            if (mc.player == player && IGun.mainHandHoldGun(player)) {
-                if (IClientPlayerGunOperator.fromLocalPlayer(player).isAim()) {
-                    ci.cancel();
-                }
-            }
+        if (!(self instanceof LocalPlayer player)) return;
+        Minecraft mc = Minecraft.getInstance();
+        if (mc.player != player) return;
+
+        if (Config.ADS_INTERRUPT_SPRINT.get() && IGun.mainHandHoldGun(player)
+                && IClientPlayerGunOperator.fromLocalPlayer(player).isAim()) {
+            ci.cancel();
         }
     }
 }

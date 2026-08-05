@@ -1,21 +1,40 @@
 {
   "required": true,
   "minVersion": "0.8",
+  "plugin": "com.example.taczfixes.mixin.TaczFixesMixinPlugin",
   "package": "com.example.taczfixes.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "taczfixes.refmap.json",
   "mixins": [
     "EntityKineticBulletMixin",
+    "EntityKineticBulletAccessor",
     "MixinEntityKineticBulletRicochet",
+    "MixinEntityKineticBulletLevelDamage",
     "LivingEntityShootMixin",
     "LivingEntityCrawlMixin",
     "MixinShootOnceIncrement",
     "MixinModernKineticGunBulletSpread",
+    "MixinModernKineticGunDoBulletSpread",
+    "MixinAbstractGunDoBulletSpread",
+    "MixinGunScriptAPIGetReloadTime",
     "MixinTaczProjectileExplosion",
     "MixinGunLevelMethods",
     "MixinBulletPenetrationBlocker",
     "MixinEntityDamageReducer",
-    "MixinInaccuracyType"
+    "MixinBulletIgnoreDamagedEntity",
+    "MixinInaccuracyType",
+    "MixinTrackingDisableOnPenetration",
+    "MixinBulletTrackingFlag",
+    "MixinTaczPeekHeadshotLimit",
+    "MixinGunItemEnchantable",
+    "MixinEnchantmentGunWhitelist",
+    "MixinGunItemInfinity",
+    "MixinEntityKineticBulletEnchant",
+    "MixinModernKineticGunMeleeEnchant",
+    "MixinGunScriptAPIReduceAmmoUnbreaking",
+    "MixinEnchantmentGunCompatible",
+    "MixinEnchantmentHelperGunSelect",
+    "MixinAnvilMenuGunConflict"
   ],
   "client": [
     "LocalPlayerShootPreCheckMixin",
@@ -29,10 +48,11 @@
     "MixinCameraSetupEvent",
     "MixinGunLevelUpToast",
     "MixinGunTooltipLevel",
-    "MixinLocalPlayerShoot",
     "MixinLocalPlayerShootRecoilKnockback",
+    "MixinObjectAnimationRunner",
     "MixinHitboxDisabler",
-    "MixinThirdPersonDisabler"
+    "MixinThirdPersonDisabler",
+    "MixinClientTrackingSync"
   ],
   "injectors": {
     "defaultRequire": 1

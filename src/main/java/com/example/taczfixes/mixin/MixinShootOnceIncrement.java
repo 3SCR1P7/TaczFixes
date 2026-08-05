@@ -1,6 +1,7 @@
 package com.example.taczfixes.mixin;
 
 import com.example.taczfixes.SpreadState;
+import com.example.taczfixes.util.MultishotHelper;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -11,5 +12,6 @@ public class MixinShootOnceIncrement {
     @Inject(method = "shootOnce", at = @At("HEAD"), remap = false)
     private void taczfixes$onShootOnce(boolean needConsumeAmmo, CallbackInfo ci) {
         SpreadState.onShot();
+        MultishotHelper.onShotStart();
     }
 }

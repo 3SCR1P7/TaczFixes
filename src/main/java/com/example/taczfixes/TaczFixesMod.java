@@ -1,5 +1,6 @@
 package com.example.taczfixes;
 
+import com.example.taczfixes.handler.GunEnchantmentHandler;
 import com.example.taczfixes.handler.GunLevelHandler;
 import com.example.taczfixes.handler.LimbDamageHandler;
 import com.example.taczfixes.handler.SpreadRampHandler;
@@ -17,5 +18,6 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new LimbDamageHandler());
         MinecraftForge.EVENT_BUS.register(new SpreadRampHandler());
         MinecraftForge.EVENT_BUS.register(new GunLevelHandler());
+        MinecraftForge.EVENT_BUS.register(new GunEnchantmentHandler());
     }
 }
