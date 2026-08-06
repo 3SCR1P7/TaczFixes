@@ -99,6 +99,14 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue ENCH_RIPTIDE_DAMAGE_MULT;
     public static final ForgeConfigSpec.DoubleValue ENCH_QUICK_CHARGE_TIME_REDUCTION;
 
+    public static final ForgeConfigSpec.BooleanValue GUN_BOTTLE_ENABLED;
+    public static final ForgeConfigSpec.IntValue GUN_BOTTLE_EXP_PER_BOTTLE;
+    public static final ForgeConfigSpec.IntValue GUN_BOTTLE_COST;
+
+    public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_CTRL_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_ALT_MULTIPLIER;
+
     static {
         BUILDER.push("gun_level");
         GUN_LEVEL_MAX_LEVEL = BUILDER
@@ -111,8 +119,29 @@ public class Config {
                 .comment("每升1级，升级额外所需的击杀数。默认值：5")
                 .defineInRange("level_increment", 5, 0, 100000);
         GUN_LEVEL_DAMAGE_PER_LEVEL = BUILDER
-                .comment("每级提升的子弹伤害倍率。默认值：0.01（即 +1%/级，不封顶）")
+                .comment("每级提升的子弹伤害倍率。默认值：0.01")
                 .defineInRange("damage_per_level", 0.01, 0.0, 1.0);
+        GUN_BOTTLE_ENABLED = BUILDER
+                .comment("是否启用铁砧使用附魔之瓶为枪械增加经验。默认值：true")
+                .define("bottle_enabled", true);
+        GUN_BOTTLE_EXP_PER_BOTTLE = BUILDER
+                .comment("每瓶附魔之瓶增加的枪械经验值。默认值：5")
+                .defineInRange("bottle_exp_per_bottle", 5, 1, 10000);
+        GUN_BOTTLE_COST = BUILDER
+                .comment("铁砧使用附魔之瓶消耗的玩家经验等级。默认值：1")
+                .defineInRange("bottle_cost", 1, 0, 100);
+        BUILDER.pop();
+
+        BUILDER.push("stepless_zoom");
+        STEPLESS_ZOOM_ENABLED = BUILDER
+                .comment("是否启用瞄具的无极变倍功能（在瞄具 display 文件中配置 stepless 字段）。默认值：true")
+                .define("enabled", true);
+        STEPLESS_ZOOM_CTRL_MULTIPLIER = BUILDER
+                .comment("按住 Ctrl 滚动滚轮时，倍率调整速度的倍率。默认值：4")
+                .defineInRange("zoom_ctrl_multiplier", 4.0, 1.0, 10.0);
+        STEPLESS_ZOOM_ALT_MULTIPLIER = BUILDER
+                .comment("按住 Alt 滚动滚轮时，倍率调整速度的倍率。默认值：0.25")
+                .defineInRange("zoom_alt_multiplier", 0.25, 0.1, 1.0);
         BUILDER.pop();
 
         BUILDER.push("limb_damage_multiplier");
@@ -271,28 +300,6 @@ public class Config {
                 .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
         BUILDER.pop();
 
-        BUILDER.push("compat");
-        DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
-                .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
-                        "需要TaCZ: Arcana模组。")
-                .define("disable_arcana_magnification_for_sight", true);
-        PARCOOL_SLIDE_AS_MOVE_INACCURACY = BUILDER
-                .comment("滑铲时，应用移动时而非爬行时的腰射散布。默认值：true",
-                        "需要ParCool模组。")
-                .define("parcool_slide_as_move_inaccuracy", true);
-        DISABLE_TRACKING_AFTER_PENETRATION = BUILDER
-                .comment("子弹穿透实体后是否失去追踪。默认值：true",
-                        "需要GunsmithLib模组的追踪功能。")
-                .define("disable_tracking_after_penetration", true);
-        PEEK_HEADSHOT_HEIGHT = BUILDER
-                .comment("玩家探头时，从碰撞箱顶部起视为头部的格数。默认值：0.6",
-                        "需要GD656Peek模组。")
-                .defineInRange("peek_headshot_height", 0.6, 0.0, 1.0);
-        ADS_INTERRUPT_SPRINT = BUILDER
-                .comment("开镜是否强制打断疾跑。默认值：true")
-                .define("ads_interrupt_sprint", true);
-        BUILDER.pop();
-
         BUILDER.push("explosion");
         EXPLOSION_BULLET_ONLY = BUILDER
                 .comment("爆炸击退是否仅对子弹生效。默认值：true")
@@ -319,10 +326,10 @@ public class Config {
                         "\"entity_id\"为其命名空间id，\"reduction\"为其降低伤害的比例。")
                 .defineList("entities", List.of("irons_spellbooks:shield,0.95"), it -> it instanceof String);
         BULLET_IGNORE_ENTITY_ENABLE = BUILDER
-                .comment("子弹命中实体后，在冷却时间内忽略该实体，重复命中不再造成伤害。默认值：true")
+                .comment("子弹命中实体后，此子弹是否在一定时间内忽略此实体。默认值：true")
                 .define("ignore_damaged_entity_enable", true);
         BULLET_IGNORE_ENTITY_COOLDOWN_MS = BUILDER
-                .comment("子弹命中实体后，多少毫秒内忽略该实体的重复命中。默认值：5000")
+                .comment("子弹命中实体后，此子弹忽略此实体的时间。默认值：5000")
                 .defineInRange("ignore_damaged_entity_cooldown_ms", 5000, 0, 600000);
         BUILDER.pop();
 
@@ -335,6 +342,28 @@ public class Config {
                 .define("disable_third_person", false);
         BUILDER.pop();
 
+        BUILDER.pop();
+
+        BUILDER.push("compat");
+        DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
+                .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
+                        "需要TaCZ: Arcana模组。")
+                .define("disable_arcana_magnification_for_sight", true);
+        PARCOOL_SLIDE_AS_MOVE_INACCURACY = BUILDER
+                .comment("滑铲时，应用移动时而非爬行时的腰射散布。默认值：true",
+                        "需要ParCool模组。")
+                .define("parcool_slide_as_move_inaccuracy", true);
+        DISABLE_TRACKING_AFTER_PENETRATION = BUILDER
+                .comment("子弹穿透实体后是否失去追踪。默认值：true",
+                        "需要GunsmithLib模组的追踪功能。")
+                .define("disable_tracking_after_penetration", true);
+        PEEK_HEADSHOT_HEIGHT = BUILDER
+                .comment("玩家探头时，从碰撞箱顶部起视为头部的格数。默认值：0.6",
+                        "需要GD656Peek模组。")
+                .defineInRange("peek_headshot_height", 0.6, 0.0, 1.0);
+        ADS_INTERRUPT_SPRINT = BUILDER
+                .comment("开镜是否强制打断疾跑。默认值：true")
+                .define("ads_interrupt_sprint", true);
         BUILDER.pop();
 
         BUILDER.push("gun_enchantment");
@@ -425,57 +454,45 @@ public class Config {
                 .defineInRange("fire_aspect_melee_ticks_per_level", 80, 0, 1200);
         BUILDER.pop();
 
-        BUILDER.push("channeling");
+        BUILDER.push("special");
         ENCH_STEAL_LIGHTNING_COOLDOWN_MS = BUILDER
                 .comment("引雷：冷却时间。默认值：5000")
-                .defineInRange("cooldown_ms", 5000, 0, 600000);
+                .defineInRange("channeling_cooldown_ms", 5000, 0, 600000);
         ENCH_CHANNELING_TRIGGER_CHANCE = BUILDER
-                .comment("引雷：触发概率。默认值：0.2")
-                .defineInRange("trigger_chance", 0.2, 0.0, 1.0);
+                .comment("引雷：触发概率。默认值：0.3")
+                .defineInRange("channeling_trigger_chance", 0.3, 0.0, 1.0);
         ENCH_CHANNELING_ONLY_THUNDER = BUILDER
                 .comment("引雷：是否仅在雷暴天气触发。默认值：false")
-                .define("only_in_thunder", false);
-        BUILDER.pop();
-
-        BUILDER.push("loyalty");
+                .define("channeling_only_in_thunder", false);
         ENCH_LOYALTY_RANGE_PER_LEVEL = BUILDER
                 .comment("忠诚：每级增加的自动锁定距离，需要GunsmithLib。默认值：80")
-                .defineInRange("aim_lock_range_per_level", 80, 0, 10000);
+                .defineInRange("loyalty_aim_lock_range_per_level", 80, 0, 10000);
         ENCH_LOYALTY_ANGLE_PER_LEVEL = BUILDER
                 .comment("忠诚：每级增加的自动锁定角度，需要GunsmithLib。默认值：5")
-                .defineInRange("aim_lock_angle_per_level", 5, 0, 1000);
-        BUILDER.pop();
-
-        BUILDER.push("multishot");
+                .defineInRange("loyalty_aim_lock_angle_per_level", 5, 0, 1000);
         ENCH_MULTISHOT_EXTRA_COUNT = BUILDER
                 .comment("多重射击：每次触发额外发射的弹丸数量。默认值：2")
-                .defineInRange("extra_projectiles", 2, 1, 10);
+                .defineInRange("multishot_extra_projectiles", 2, 1, 10);
         ENCH_MULTISHOT_TRIGGER_CHANCE = BUILDER
-                .comment("多重射击：每级触发概率。默认值：0.2")
-                .defineInRange("trigger_chance_per_level", 0.2, 0.0, 1.0);
+                .comment("多重射击：每级触发概率。默认值：0.3")
+                .defineInRange("multishot_trigger_chance_per_level", 0.3, 0.0, 1.0);
         ENCH_MULTISHOT_SPREAD_ANGLE = BUILDER
                 .comment("多重射击：额外弹丸的偏转角度。默认值：10")
-                .defineInRange("spread_angle", 10.0, 0.0, 45.0);
+                .defineInRange("multishot_spread_angle", 10.0, 0.0, 45.0);
         ENCH_MULTISHOT_COOLDOWN_MS = BUILDER
-                .comment("多重射击：冷却时间。默认值：1000")
-                .defineInRange("cooldown_ms", 200, 0, 600000);
-        BUILDER.pop();
-
-        BUILDER.push("riptide");
+                .comment("多重射击：冷却时间。默认值：200")
+                .defineInRange("multishot_cooldown_ms", 200, 0, 600000);
         ENCH_RIPTIDE_SPEED_MULT = BUILDER
                 .comment("激流：每级提升的子弹飞行速度倍率。默认值：0.5",
                         "射手处于水中/雨中/气泡中时生效。")
-                .defineInRange("speed_multiplier_per_level", 0.5, 0.0, 10.0);
+                .defineInRange("riptide_speed_multiplier_per_level", 0.5, 0.0, 10.0);
         ENCH_RIPTIDE_DAMAGE_MULT = BUILDER
                 .comment("激流：每级提升的子弹伤害倍率。默认值：0.25")
-                .defineInRange("damage_multiplier_per_level", 0.25, 0.0, 10.0);
-        BUILDER.pop();
-
-        BUILDER.push("quick_charge");
+                .defineInRange("riptide_damage_multiplier_per_level", 0.25, 0.0, 10.0);
         ENCH_QUICK_CHARGE_TIME_REDUCTION = BUILDER
                 .comment("快速装填：每级缩减的换弹时间比例。默认值：0.1",
                         "换弹动画会同步加速播放。")
-                .defineInRange("reload_time_reduction_per_level", 0.1, 0.0, 0.9);
+                .defineInRange("quick_charge_reload_time_reduction_per_level", 0.1, 0.0, 0.9);
         BUILDER.pop();
 
         BUILDER.pop();

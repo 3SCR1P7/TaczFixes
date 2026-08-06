@@ -34,7 +34,7 @@
     "MixinGunScriptAPIReduceAmmoUnbreaking",
     "MixinEnchantmentGunCompatible",
     "MixinEnchantmentHelperGunSelect",
-    "MixinAnvilMenuGunConflict"
+    "MixinAnvilMenuGunConflict",
   ],
   "client": [
     "LocalPlayerShootPreCheckMixin",
@@ -52,7 +52,9 @@
     "MixinObjectAnimationRunner",
     "MixinHitboxDisabler",
     "MixinThirdPersonDisabler",
-    "MixinClientTrackingSync"
+    "MixinClientTrackingSync",
+    "MixinAttachmentDisplayStepless",
+    "MixinCameraSetupEventZoom"
   ],
   "injectors": {
     "defaultRequire": 1
