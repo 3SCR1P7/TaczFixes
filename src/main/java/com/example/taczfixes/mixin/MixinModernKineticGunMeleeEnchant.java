@@ -8,9 +8,8 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArgs;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import org.spongepowered.asm.mixin.injection.invoke.arg.Args;
 
 import java.util.List;
 
@@ -28,36 +27,64 @@ import java.util.List;
  */
 @Mixin(targets = "com.tacz.guns.item.ModernKineticGunItem", remap = false)
 public class MixinModernKineticGunMeleeEnchant {
-    @ModifyArgs(method = "lambda$melee$16", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"))
-    private void taczfixes$applyMeleeEnchants(Args args) {
-        LivingEntity user = args.get(0);
+    // 注意：不要使用 @ModifyArgs（Args 合成类在 lambda 中会触发
+    // NoClassDefFoundError: org/spongepowered/asm/synthetic/args/Args$1），
+    // 改为每个参数一个 @ModifyArg。@ModifyArg 多参形式要求回调参数
+    // 与 doMelee 的完整参数列表一致（Arrays.equals 严格校验）。
+    @ModifyArg(method = "lambda$melee$16", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 1)
+    private float taczfixes$applyMeleeEnchantsGunDistance(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
         ItemStack gun = GunEnchantmentHelper.getGunStack(user);
         if (gun.isEmpty()) {
-            return;
+            return gunDistance;
         }
-        // 锋利
-        int sharp = GunEnchantmentHelper.getLevel(gun, Enchantments.SHARPNESS);
-        if (sharp > 0) {
-            float damage = args.get(5);
-            args.set(5, damage + (float) (sharp * Config.ENCH_SHARPNESS_MELEE_DAMAGE.get()));
-        }
-        // 击退
-        int lvl = GunEnchantmentHelper.getLevel(gun, Enchantments.KNOCKBACK);
-        if (lvl > 0) {
-            float knockback = args.get(4);
-            double mult = Config.ENCH_KNOCKBACK_MELEE_MULT.get() * lvl;
-            double flat = Config.ENCH_KNOCKBACK_MELEE_FLAT.get() * lvl;
-            args.set(4, (float) (knockback * (1.0 + mult) + flat));
-        }
-        // 横扫之刃：放大枪械距离与近战距离
         int sweep = GunEnchantmentHelper.getLevel(gun, Enchantments.SWEEPING_EDGE);
         if (sweep > 0) {
             double mult = Config.ENCH_SWEEPING_DISTANCE_MULT.get() * sweep;
-            float gunDistance = args.get(1);
-            float meleeDistance = args.get(2);
-            args.set(1, (float) (gunDistance + gunDistance * mult));
-            args.set(2, (float) (meleeDistance + meleeDistance * mult));
+            return (float) (gunDistance + gunDistance * mult);
         }
+        return gunDistance;
+    }
+
+    @ModifyArg(method = "lambda$melee$16", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 2)
+    private float taczfixes$applyMeleeEnchantsMeleeDistance(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
+        ItemStack gun = GunEnchantmentHelper.getGunStack(user);
+        if (gun.isEmpty()) {
+            return meleeDistance;
+        }
+        int sweep = GunEnchantmentHelper.getLevel(gun, Enchantments.SWEEPING_EDGE);
+        if (sweep > 0) {
+            double mult = Config.ENCH_SWEEPING_DISTANCE_MULT.get() * sweep;
+            return (float) (meleeDistance + meleeDistance * mult);
+        }
+        return meleeDistance;
+    }
+
+    @ModifyArg(method = "lambda$melee$16", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 4)
+    private float taczfixes$applyMeleeEnchantsKnockback(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
+        ItemStack gun = GunEnchantmentHelper.getGunStack(user);
+        if (gun.isEmpty()) {
+            return knockback;
+        }
+        int lvl = GunEnchantmentHelper.getLevel(gun, Enchantments.KNOCKBACK);
+        if (lvl > 0) {
+            double mult = Config.ENCH_KNOCKBACK_MELEE_MULT.get() * lvl;
+            double flat = Config.ENCH_KNOCKBACK_MELEE_FLAT.get() * lvl;
+            return (float) (knockback * (1.0 + mult) + flat);
+        }
+        return knockback;
+    }
+
+    @ModifyArg(method = "lambda$melee$16", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 5)
+    private float taczfixes$applyMeleeEnchantsDamage(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
+        ItemStack gun = GunEnchantmentHelper.getGunStack(user);
+        if (gun.isEmpty()) {
+            return damage;
+        }
+        int sharp = GunEnchantmentHelper.getLevel(gun, Enchantments.SHARPNESS);
+        if (sharp > 0) {
+            return damage + (float) (sharp * Config.ENCH_SHARPNESS_MELEE_DAMAGE.get());
+        }
+        return damage;
     }
 
     /**
