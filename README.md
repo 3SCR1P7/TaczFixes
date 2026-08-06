@@ -38,4 +38,4 @@
 
 一切功能均可配置。
 
-必要的前置：Timeless and Classics Zero 1.1.6或更高版本。
+必要的前置：Timeless and Classics Zero 1.1.8或更高版本。
