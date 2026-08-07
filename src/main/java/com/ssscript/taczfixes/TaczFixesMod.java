@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes;
 
+import com.ssscript.taczfixes.compat.ParCoolSprintInterruptHandler;
 import com.ssscript.taczfixes.data.TaczFixesDataHandler;
 import com.ssscript.taczfixes.handler.GunAnvilHandler;
 import com.ssscript.taczfixes.handler.GunEnchantmentHandler;
@@ -27,6 +28,9 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new GunEnchantmentHandler());
         MinecraftForge.EVENT_BUS.register(new GunAnvilHandler());
         DistExecutor.safeRunWhenOn(Dist.CLIENT,
-                () -> () -> MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler()));
+                () -> () -> {
+                    MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
+                    MinecraftForge.EVENT_BUS.register(new ParCoolSprintInterruptHandler());
+                });
     }
 }

@@ -10,7 +10,9 @@ public class ParCoolHelper {
     private static Boolean parcoolLoaded = null;
     private static Method parkourabilityGet = null;
     private static Method getAction = null;
+    private static Method setDoing = null;
     private static Class<?> crawlClass = null;
+    private static Class<?> fastRunClass = null;
 
     public static boolean isCrawling(LivingEntity entity) {
         if (!isParCoolLoaded()) return false;
@@ -18,7 +20,13 @@ public class ParCoolHelper {
         return checkCrawl(player);
     }
 
-    private static boolean isParCoolLoaded() {
+    public static void interruptSprint(LivingEntity entity) {
+        if (!isParCoolLoaded()) return;
+        if (!(entity instanceof Player player)) return;
+        stopFastRun(player);
+    }
+
+    public static boolean isParCoolLoaded() {
         if (parcoolLoaded == null) {
             parcoolLoaded = ModList.get().isLoaded("parcool");
         }
@@ -27,20 +35,46 @@ public class ParCoolHelper {
 
     private static boolean checkCrawl(Player player) {
         try {
-            if (parkourabilityGet == null) {
-                Class<?> parkourabilityClass = Class.forName("com.alrex.parcool.common.capability.Parkourability");
-                parkourabilityGet = parkourabilityClass.getMethod("get", Player.class);
-                getAction = parkourabilityClass.getMethod("get", Class.class);
+            Object parkourability = getParkourability(player);
+            if (parkourability == null) return false;
+            if (crawlClass == null) {
                 crawlClass = Class.forName("com.alrex.parcool.common.action.impl.Crawl");
             }
-            Object parkourability = parkourabilityGet.invoke(null, player);
-            if (parkourability == null) return false;
             Object crawl = getAction.invoke(parkourability, crawlClass);
             if (crawl == null) return false;
             Method isDoing = crawl.getClass().getMethod("isDoing");
             return (boolean) isDoing.invoke(crawl);
         } catch (Exception e) {
             return false;
+        }
+    }
+
+    private static void stopFastRun(Player player) {
+        try {
+            Object parkourability = getParkourability(player);
+            if (parkourability == null) return;
+            if (fastRunClass == null) {
+                fastRunClass = Class.forName("com.alrex.parcool.common.action.impl.FastRun");
+                setDoing = fastRunClass.getMethod("setDoing", boolean.class);
+            }
+            Object fastRun = getAction.invoke(parkourability, fastRunClass);
+            if (fastRun == null) return;
+            setDoing.invoke(fastRun, false);
+        } catch (Exception e) {
+            // ignore
+        }
+    }
+
+    private static Object getParkourability(Player player) {
+        try {
+            if (parkourabilityGet == null || getAction == null) {
+                Class<?> parkourabilityClass = Class.forName("com.alrex.parcool.common.capability.Parkourability");
+                parkourabilityGet = parkourabilityClass.getMethod("get", Player.class);
+                getAction = parkourabilityClass.getMethod("get", Class.class);
+            }
+            return parkourabilityGet.invoke(null, player);
+        } catch (Exception e) {
+            return null;
         }
     }
 }

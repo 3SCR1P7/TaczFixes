@@ -24,7 +24,10 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
+    public static final ForgeConfigSpec.BooleanValue HIDE_SMOKE_IN_ARCANA_THERMAL;
     public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
+    public static final ForgeConfigSpec.BooleanValue PARCOOL_INTERRUPT_SPRINT_ON_FIRE;
+    public static final ForgeConfigSpec.IntValue PARCOOL_INTERRUPT_SPRINT_WINDOW_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_TRACKING_AFTER_PENETRATION;
     public static final ForgeConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
@@ -356,10 +359,22 @@ public class Config {
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
                         "需要TaCZ: Arcana模组。")
                 .define("disable_arcana_magnification_for_sight", true);
+        HIDE_SMOKE_IN_ARCANA_THERMAL = BUILDER
+                .comment("是否在Arcana热成像瞄具视野内隐藏LrTactical烟雾弹的烟雾。默认值：true",
+                        "需要TaCZ: Arcana与LrTactical模组。")
+                .define("hide_smoke_in_arcana_thermal", true);
         PARCOOL_SLIDE_AS_MOVE_INACCURACY = BUILDER
                 .comment("滑铲时，应用移动时而非爬行时的腰射散布。默认值：true",
                         "需要ParCool模组。")
                 .define("parcool_slide_as_move_inaccuracy", true);
+        PARCOOL_INTERRUPT_SPRINT_ON_FIRE = BUILDER
+                .comment("开火时是否打断ParCool的冲刺动作。默认值：true",
+                        "需要ParCool模组。")
+                .define("parcool_interrupt_sprint_on_fire", true);
+        PARCOOL_INTERRUPT_SPRINT_WINDOW_MS = BUILDER
+                .comment("开火后禁止ParCool冲刺动作的时长（毫秒）。默认值：500",
+                        "需要ParCool模组。")
+                .defineInRange("parcool_interrupt_sprint_window_ms", 500, 0, 10000);
         DISABLE_TRACKING_AFTER_PENETRATION = BUILDER
                 .comment("子弹穿透实体后是否失去追踪。默认值：true",
                         "需要GunsmithLib模组的追踪功能。")

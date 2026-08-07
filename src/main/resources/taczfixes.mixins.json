@@ -41,6 +41,8 @@
     "LocalPlayerCrawlMixin",
     "InnerThirdPersonManagerMixin",
     "MixinArcanaScopeGate",
+    "MixinArcanaScopeState",
+    "MixinLrtSmokeParticleHide",
     "MixinPeekHandler",
     "MixinLocalPlayerAim",
     "MixinLocalPlayerSprint",
