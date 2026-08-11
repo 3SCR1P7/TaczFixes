@@ -13,24 +13,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-/**
- * 近战附魔：
- * - 锋利：每级增加近战伤害
- * - 击退：按倍率 + 固定值增加近战击退
- * - 横扫之刃：按倍率增加近战距离
- * - 火焰附加：TACZ 的 doPerLivingHurt 直接调用 target.hurt()，绕过原版
- *   ServerPlayerGameMode.attack 的点燃逻辑，故在此按等级点燃目标。
- *
- * doMelee 签名：(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List)
- * 生产 jar 中 doMelee 的调用点在 lambda$melee$16(ItemStack gunItem, LivingEntity user, CommonGunIndex) 内。
- * doPerLivingHurt 签名：(LivingEntity user, LivingEntity target, float knockback, float damage, List)
- */
 @Mixin(targets = "com.tacz.guns.item.ModernKineticGunItem", remap = false)
 public class MixinModernKineticGunMeleeEnchant {
-    // 注意：不要使用 @ModifyArgs（Args 合成类在 lambda 中会触发
-    // NoClassDefFoundError: org/spongepowered/asm/synthetic/args/Args$1），
-    // 改为每个参数一个 @ModifyArg。@ModifyArg 多参形式要求回调参数
-    // 与 doMelee 的完整参数列表一致（Arrays.equals 严格校验）。
     @ModifyArg(method = "lambda$melee$16", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 1)
     private float taczfixes$applyMeleeEnchantsGunDistance(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
         ItemStack gun = GunEnchantmentHelper.getGunStack(user);
@@ -87,10 +71,6 @@ public class MixinModernKineticGunMeleeEnchant {
         return damage;
     }
 
-    /**
-     * doPerLivingHurt 在每次近战命中后调用；原版火焰附加的点燃依赖
-     * ServerPlayerGameMode.attack，TACZ 直接 hurt() 不走该流程，故在此补上。
-     */
     @Inject(method = "doPerLivingHurt", at = @At("RETURN"), remap = false)
     private static void taczfixes$applyFireAspect(LivingEntity user, LivingEntity target,
                                                   float knockback, float damage, List<?> effects, CallbackInfo ci) {

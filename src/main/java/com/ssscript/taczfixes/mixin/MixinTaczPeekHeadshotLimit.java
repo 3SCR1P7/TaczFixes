@@ -11,12 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * GD656Peek 的 TaczPeekHitboxHelper.getHitResult 负责探头玩家的命中判定：
- * 命中下半身碰撞箱为非爆头，命中上半身碰撞箱即爆头。
- * 本 mixin 在其正常返回后复查命中点，若命中点不在上半身顶部
- * （顶部向下可配置高度，默认 0.4 格）之内，则把爆头降级为普通身体伤害。
- */
 @Mixin(TaczPeekHitboxHelper.class)
 public class MixinTaczPeekHeadshotLimit {
     @Inject(method = "getHitResult", at = @At("RETURN"), cancellable = true, remap = false)

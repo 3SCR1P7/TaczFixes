@@ -7,14 +7,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-/**
- * 无极变倍：重定向 CameraSetupEvent 中对 IGun#getAimingZoom 的调用。
- * 当当前瞄具启用了无极变倍时返回 SteplessZoomHandler 维护的当前倍率，
- * 否则调用原方法回落到原版逻辑。
- * 覆盖两个调用点：
- *  - applyScopeMagnification：开镜世界 FOV（真正的倍率）
- *  - initialCameraRecoil：开镜时基于倍率的后坐力镜头缩放
- */
 @Mixin(targets = "com.tacz.guns.client.event.CameraSetupEvent", remap = false)
 public class MixinCameraSetupEventZoom {
     @Redirect(method = {

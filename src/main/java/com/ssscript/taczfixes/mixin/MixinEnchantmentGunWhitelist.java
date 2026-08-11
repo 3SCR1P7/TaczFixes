@@ -9,10 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * 附魔白名单：附魔台与铁砧都会经过 Enchantment.canApplyAtEnchantingTable(ItemStack)，
- * 对枪械返回白名单判断结果，其余物品保持原版逻辑。
- */
 @Mixin(Enchantment.class)
 public class MixinEnchantmentGunWhitelist {
     @Inject(method = "canApplyAtEnchantingTable", at = @At("HEAD"), cancellable = true, remap = false)

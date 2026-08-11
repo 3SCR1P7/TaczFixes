@@ -85,8 +85,8 @@ public class MixinEntityKineticBulletRicochet {
             if (tLen < 1e-10) {
                 reflected = normal.scale(speed);
             } else {
-                double theta = Math.atan2(tLen, absDot); // angle from normal
-                double thetaR = Math.PI / 2 - (Math.PI / 2 - theta) * ratio; // scale angle from surface instead
+                double theta = Math.atan2(tLen, absDot);
+                double thetaR = Math.PI / 2 - (Math.PI / 2 - theta) * ratio;
                 Vec3 tangentDir = tangent.scale(1.0 / tLen);
                 reflected = normal.scale(speed * Math.cos(thetaR))
                         .add(tangentDir.scale(speed * Math.sin(thetaR)));

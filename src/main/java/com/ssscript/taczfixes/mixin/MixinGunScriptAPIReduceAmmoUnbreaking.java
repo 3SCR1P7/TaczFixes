@@ -12,9 +12,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * 耐久附魔：开火消耗弹药（reduceAmmoOnce）前按概率跳过，使本次开火不消耗子弹。
- */
 @Mixin(ModernKineticGunScriptAPI.class)
 public class MixinGunScriptAPIReduceAmmoUnbreaking {
     @Shadow(remap = false)

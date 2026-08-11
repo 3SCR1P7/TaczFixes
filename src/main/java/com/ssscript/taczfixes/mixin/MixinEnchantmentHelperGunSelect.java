@@ -13,11 +13,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.List;
 
-/**
- * 附魔台选择附魔时，若目标物品为枪械则标记“枪械附魔”上下文，
- * 使本次选择过程中 Enchantment.isCompatibleWith 忽略冲突（允许同一把枪上出现互相冲突的附魔）。
- * 附魔台与命令附魔最终都会经过 EnchantmentHelper.selectEnchantment。
- */
 @Mixin(EnchantmentHelper.class)
 public class MixinEnchantmentHelperGunSelect {
     @Inject(method = "selectEnchantment", at = @At("HEAD"))

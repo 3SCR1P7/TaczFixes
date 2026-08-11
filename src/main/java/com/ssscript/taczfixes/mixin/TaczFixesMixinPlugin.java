@@ -7,18 +7,11 @@ import org.spongepowered.asm.mixin.extensibility.IMixinInfo;
 import java.util.List;
 import java.util.Set;
 
-/**
- * 按运行环境决定是否应用部分 mixin：
- * MixinTaczPeekHeadshotLimit 需要 GD656Peek 模组，缺失时跳过，避免崩溃。
- * MixinLrtSmokeParticleHide 需要 LrTactical 模组，缺失时跳过，避免崩溃。
- */
 public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean GD656PEEK_PRESENT;
-    private static final boolean LRTACTICAL_PRESENT;
 
     static {
         GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
-        LRTACTICAL_PRESENT = hasResource("me/xjqsh/lrtactical/client/particle/SmokeCloudParticle.class");
     }
 
     private static boolean hasResource(String path) {
@@ -33,9 +26,6 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if ("com.ssscript.taczfixes.mixin.MixinTaczPeekHeadshotLimit".equals(mixinClassName)) {
             return GD656PEEK_PRESENT;
-        }
-        if ("com.ssscript.taczfixes.mixin.MixinLrtSmokeParticleHide".equals(mixinClassName)) {
-            return LRTACTICAL_PRESENT;
         }
         return true;
     }

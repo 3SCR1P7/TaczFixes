@@ -10,12 +10,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * 子弹最终伤害加成：
- * - 枪械等级：每级 +GUN_LEVEL_DAMAGE_PER_LEVEL（不封顶）
- * - 激流：射手处于水中/雨中/气泡中时，每级提升子弹伤害
- * 作用于所有弹丸（含多重射击补发的弹丸）。
- */
 @Mixin(EntityKineticBullet.class)
 public class MixinEntityKineticBulletLevelDamage {
     @Inject(method = "getDamage", at = @At("RETURN"), cancellable = true, remap = false)
@@ -24,9 +18,10 @@ public class MixinEntityKineticBulletLevelDamage {
         if (!(owner instanceof LivingEntity shooter)) {
             return;
         }
-        float factor = GunEnchantmentHelper.getGunLevelDamageFactor(shooter);
+        float factor = 1.0f;
         if (GunEnchantmentHelper.isEnabled()) {
             factor *= GunEnchantmentHelper.getRiptideDamageFactor(shooter);
+            factor *= com.ssscript.taczfixes.util.OverloadDamage.getFactor(shooter);
         }
         if (factor != 1.0f) {
             cir.setReturnValue(cir.getReturnValue() * factor);

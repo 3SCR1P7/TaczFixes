@@ -1,8 +1,10 @@
 package com.ssscript.taczfixes.mixin;
 
 import com.ssscript.taczfixes.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.data.GunTaczFixesData;
 import com.ssscript.taczfixes.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.util.GunEnchantmentHelper;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -34,6 +36,13 @@ public class MixinCameraSetupEvent {
         taczfixes$recoilMultiplierYaw = 1.0f;
         LivingEntity shooter = event.getShooter();
         if (!(shooter instanceof LocalPlayer player)) return;
+        
+        int stability = GunEnchantmentHelper.getLevel(player.getMainHandItem(), TaczFixesMod.STABILITY_ENCHANTMENT.get());
+        float stabilityFactor = 1.0f;
+        if (stability > 0) {
+            stabilityFactor = Math.max(1.0f - (float) (Config.ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL.get() / 100.0 * stability), 0.0f);
+        }
+
         IGun gun = IGun.getIGunOrNull(player.getMainHandItem());
         if (gun == null) return;
         ItemStack gunItem = player.getMainHandItem();
@@ -55,22 +64,26 @@ public class MixinCameraSetupEvent {
                 taczfixes$recoilMultiplierPitch = perGun.pitch_multiplier != null ? perGun.pitch_multiplier.floatValue() : 1.0f;
                 taczfixes$recoilMultiplierYaw = perGun.yaw_multiplier != null ? perGun.yaw_multiplier.floatValue() : 1.0f;
             }
+            taczfixes$recoilMultiplierPitch *= stabilityFactor;
+            taczfixes$recoilMultiplierYaw *= stabilityFactor;
             return;
         }
 
-        if (!Config.RECOIL_FIRE_RATE_REDUCTION_ENABLED.get()) return;
-        if (mode != FireMode.AUTO && mode != FireMode.BURST) return;
-        if (gun.getRPM(gunItem) < Config.RECOIL_FIRE_RATE_MIN_RPM.get()) return;
-        if (Config.RECOIL_FIRE_RATE_DISABLED_GUNS.get().contains(gunId.toString())) return;
-
-        long elapsed = System.currentTimeMillis() - shootTimeStamp;
-        if (elapsed >= 0 && elapsed < Config.RECOIL_FIRE_RATE_WINDOW.get()) {
-            taczfixes$recoilMultiplierPitch = Config.RECOIL_FIRE_RATE_FACTOR.get().floatValue();
-            taczfixes$recoilMultiplierYaw = Config.RECOIL_FIRE_RATE_FACTOR.get().floatValue();
-        } else {
-            taczfixes$recoilMultiplierPitch = Config.RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH.get().floatValue();
-            taczfixes$recoilMultiplierYaw = Config.RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW.get().floatValue();
+        if (Config.RECOIL_FIRE_RATE_REDUCTION_ENABLED.get()
+                && (mode == FireMode.AUTO || mode == FireMode.BURST)
+                && gun.getRPM(gunItem) >= Config.RECOIL_FIRE_RATE_MIN_RPM.get()
+                && !Config.RECOIL_FIRE_RATE_DISABLED_GUNS.get().contains(gunId.toString())) {
+            long elapsed = System.currentTimeMillis() - shootTimeStamp;
+            if (elapsed >= 0 && elapsed < Config.RECOIL_FIRE_RATE_WINDOW.get()) {
+                taczfixes$recoilMultiplierPitch = Config.RECOIL_FIRE_RATE_FACTOR.get().floatValue();
+                taczfixes$recoilMultiplierYaw = Config.RECOIL_FIRE_RATE_FACTOR.get().floatValue();
+            } else {
+                taczfixes$recoilMultiplierPitch = Config.RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH.get().floatValue();
+                taczfixes$recoilMultiplierYaw = Config.RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW.get().floatValue();
+            }
         }
+        taczfixes$recoilMultiplierPitch *= stabilityFactor;
+        taczfixes$recoilMultiplierYaw *= stabilityFactor;
     }
 
     @ModifyArg(method = "initialCameraRecoil", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genPitchSplineFunction(F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"), index = 0, remap = false)

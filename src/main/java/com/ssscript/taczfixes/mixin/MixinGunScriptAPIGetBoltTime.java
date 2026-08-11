@@ -10,20 +10,17 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(ModernKineticGunScriptAPI.class)
-public class MixinGunScriptAPIGetReloadTime {
+public class MixinGunScriptAPIGetBoltTime {
     @Shadow(remap = false)
     private LivingEntity shooter;
 
-    @Inject(method = "getReloadTime", at = @At("RETURN"), cancellable = true, remap = false)
-    private void taczfixes$scaleReloadTime(CallbackInfoReturnable<Long> cir) {
+    @Inject(method = "getBoltTime", at = @At("RETURN"), cancellable = true, remap = false)
+    private void taczfixes$shortenBoltTime(CallbackInfoReturnable<Long> cir) {
         long elapsed = cir.getReturnValue();
-        if (elapsed <= 0) {
+        if (elapsed <= 0 || !GunEnchantmentHelper.isEnabled()) {
             return;
         }
-        if (!GunEnchantmentHelper.isEnabled()) {
-            return;
-        }
-        float factor = GunEnchantmentHelper.getQuickChargeTimeFactor(shooter);
+        float factor = GunEnchantmentHelper.getEfficiencyBoltTimeFactor(GunEnchantmentHelper.getGunStack(shooter));
         if (factor < 1.0f) {
             cir.setReturnValue((long) (elapsed / factor));
         }

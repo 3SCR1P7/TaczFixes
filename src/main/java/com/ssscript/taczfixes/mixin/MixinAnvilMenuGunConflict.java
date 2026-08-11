@@ -3,27 +3,69 @@ package com.ssscript.taczfixes.mixin;
 import com.ssscript.taczfixes.util.GunEnchantmentHelper;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * 铁砧合成时，若左侧待合成的物品为枪械，则标记“枪械附魔”上下文，
- * 使本次合成过程中 Enchantment.isCompatibleWith 忽略冲突，
- * 从而允许把与枪上已有附魔冲突的附魔书（如亡灵杀手）直接合成到枪上。
- */
+import java.util.Map;
+
 @Mixin(AnvilMenu.class)
 public class MixinAnvilMenuGunConflict {
+    @Shadow
+    private DataSlot cost;
+
     @Inject(method = "createResult", at = @At("HEAD"))
     private void taczfixes$markGunAnvil(CallbackInfo ci) {
         ItemStack target = ((AnvilMenu) (Object) this).getSlot(0).getItem();
         GunEnchantmentHelper.setGunEnchanting(!target.isEmpty() && target.getItem() instanceof IGun);
     }
 
+    @Redirect(method = "createResult",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/world/item/enchantment/Enchantment;getRarity()Lnet/minecraft/world/item/enchantment/Enchantment$Rarity;"))
+    private Enchantment.Rarity taczfixes$gunEnchantmentRarityForAnvilCost(Enchantment enchantment) {
+        if (GunEnchantmentHelper.isGunEnchanting() && GunEnchantmentHelper.isConfiguredAnvilEnchantment(enchantment)) {
+            return Enchantment.Rarity.COMMON;
+        }
+        return enchantment.getRarity();
+    }
+
     @Inject(method = "createResult", at = @At("TAIL"))
-    private void taczfixes$clearGunAnvil(CallbackInfo ci) {
+    private void taczfixes$applyGunAnvilCostMultiplier(CallbackInfo ci) {
+        AnvilMenu menu = (AnvilMenu) (Object) this;
+        ItemStack target = menu.getSlot(0).getItem();
+        ItemStack sacrifice = menu.getSlot(1).getItem();
+        ItemStack result = menu.getSlot(2).getItem();
+        if (result.isEmpty() || sacrifice.isEmpty() || !(target.getItem() instanceof IGun)) {
+            GunEnchantmentHelper.setGunEnchanting(false);
+            return;
+        }
+        Map<Enchantment, Integer> sacrificeEnchants = EnchantmentHelper.getEnchantments(sacrifice);
+        Map<Enchantment, Integer> targetEnchants = EnchantmentHelper.getEnchantments(target);
+        Map<Enchantment, Integer> resultEnchants = EnchantmentHelper.getEnchantments(result);
+        int bonus = 0;
+        for (Map.Entry<Enchantment, Integer> entry : sacrificeEnchants.entrySet()) {
+            Enchantment enchantment = entry.getKey();
+            int multiplier = GunEnchantmentHelper.getAnvilCostMultiplier(enchantment);
+            if (multiplier <= 1 || !resultEnchants.containsKey(enchantment)) {
+                continue;
+            }
+            int sacrificeLevel = entry.getValue();
+            int targetLevel = targetEnchants.getOrDefault(enchantment, 0);
+            int mergedLevel = sacrificeLevel == targetLevel ? sacrificeLevel + 1 : Math.max(sacrificeLevel, targetLevel);
+            mergedLevel = Math.min(mergedLevel, enchantment.getMaxLevel());
+            bonus += (multiplier - 1) * mergedLevel;
+        }
+        if (bonus > 0) {
+            this.cost.set(this.cost.get() + bonus);
+        }
         GunEnchantmentHelper.setGunEnchanting(false);
     }
 }

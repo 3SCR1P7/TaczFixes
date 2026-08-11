@@ -12,11 +12,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * 对使用现代散射逻辑（ModernKineticGunItem.doBulletSpread，带 calcSpread 脚本）的枪械：
- * - 多重射击：补发额外弹丸（不消耗弹药）
- * - 激流：射手处于水中/雨中/气泡中时，提升子弹飞行速度
- */
 @Mixin(targets = "com.tacz.guns.item.ModernKineticGunItem", remap = false)
 public class MixinModernKineticGunDoBulletSpread {
     @Inject(method = "doBulletSpread", at = @At("HEAD"), remap = false)
@@ -37,6 +32,7 @@ public class MixinModernKineticGunDoBulletSpread {
             return;
         }
         float factor = GunEnchantmentHelper.getRiptideSpeedFactor(shooter);
+        factor *= GunEnchantmentHelper.getCoilSpeedFactor(gunItem);
         if (factor != 1.0f) {
             Vec3 motion = projectile.getDeltaMovement();
             projectile.setDeltaMovement(motion.scale(factor));

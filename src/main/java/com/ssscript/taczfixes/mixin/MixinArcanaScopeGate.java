@@ -41,7 +41,8 @@ public class MixinArcanaScopeGate {
             return;
         }
 
-        TimelessAPI.getClientAttachmentIndex(id).ifPresent(index -> {
+        ResourceLocation finalId = id;
+        TimelessAPI.getClientAttachmentIndex(finalId).ifPresent(index -> {
             if (!index.isScope()) {
                 cir.setReturnValue(false);
             }

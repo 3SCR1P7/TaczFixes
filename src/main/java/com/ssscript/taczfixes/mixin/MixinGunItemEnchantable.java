@@ -11,11 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * 让枪械可以附魔（附魔台/铁砧机制与 MC 原版工具一致）。
- * isEnchantable / getEnchantmentValue 定义在 Item 上，AbstractGunItem 未覆写，
- * 因此在 Item 层面以 IGun 类型判断进行注入。
- */
 @Mixin(Item.class)
 public class MixinGunItemEnchantable {
     @Inject(method = "isEnchantable", at = @At("HEAD"), cancellable = true)

@@ -11,9 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/**
- * 无限附魔：换弹/射击时免耗背包弹药；背包直读枪完全不耗弹。
- */
 @Mixin(AbstractGunItem.class)
 public class MixinGunItemInfinity {
     @Inject(method = "hasInventoryAmmo", at = @At("HEAD"), cancellable = true, remap = false)
@@ -30,7 +27,6 @@ public class MixinGunItemInfinity {
         if (!GunEnchantmentHelper.hasEnchant(gunItem, Enchantments.INFINITY_ARROWS)) {
             return;
         }
-        // 无限：只要背包里有对应弹药（不消耗），视为全部找到
         for (int i = 0; i < itemHandler.getSlots(); i++) {
             ItemStack check = itemHandler.getStackInSlot(i);
             if (check.isEmpty()) {

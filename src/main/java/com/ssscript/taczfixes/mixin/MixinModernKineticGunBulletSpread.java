@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.mixin;
 import com.ssscript.taczfixes.SpreadState;
 import com.ssscript.taczfixes.data.InaccuracyParams;
 import com.ssscript.taczfixes.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.util.GunEnchantmentHelper;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
@@ -19,7 +20,8 @@ public class MixinModernKineticGunBulletSpread {
     @ModifyVariable(method = "doBulletSpread", at = @At("HEAD"), argsOnly = true, index = 7)
     private float taczfixes$modifyInaccuracy(float inaccuracy, ShooterDataHolder dataHolder, ItemStack gunItem,
                                              LivingEntity shooter, Projectile projectile, int bulletCnt,
-                                             float processedSpeed, float pitch, float yaw) {
+                                             float processedSpeed, float originalInaccuracy, float pitch,
+                                             float yaw) {
         if (shooter == null || gunItem == null) return inaccuracy;
         IGun gun = IGun.getIGunOrNull(gunItem);
         if (gun == null) return inaccuracy;
@@ -28,6 +30,8 @@ public class MixinModernKineticGunBulletSpread {
         ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
         InaccuracyType state = InaccuracyType.getInaccuracyType(shooter);
         InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state);
-        return SpreadState.modifyInaccuracy(dataId, params, inaccuracy);
+        float factor = SpreadState.modifyInaccuracy(dataId, params, inaccuracy);
+        float coilFactor = GunEnchantmentHelper.getCoilInaccuracyFactor(gunItem);
+        return coilFactor != 1.0f ? factor * coilFactor : factor;
     }
 }
