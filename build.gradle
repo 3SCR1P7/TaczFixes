@@ -100,8 +100,6 @@ dependencies {
 
     compileOnly files('libs/taczarcana-dist-stubs.jar')
 
-    compileOnly files('libs/lrtactical-dist-stubs.jar')
-
     compileOnly fg.deobf("gd656peek:gd656peek:0.1.1-1.20.1-forge")
 
 
