@@ -41,7 +41,6 @@
     "MixinGunDataShootInterval",
     "MixinExplodeUtil",
     "MixinEntityKineticBulletDecapitation",
-    "MixinEntityUtilWallHugHit",
   ],
   "client": [
     "LocalPlayerShootPreCheckMixin",
