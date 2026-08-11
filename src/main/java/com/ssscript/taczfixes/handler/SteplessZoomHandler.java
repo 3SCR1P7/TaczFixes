@@ -21,11 +21,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 import java.util.Optional;
 
-/**
- * 无极变倍：仅客户端。
- * 持枪开镜时滚轮上滑放大、下滑缩小，每格调整 speed 倍；
- * 启用无极变倍后忽略瞄具的 zoom 属性，默认/未调整时为 zoom_default 倍。
- */
 public class SteplessZoomHandler {
     private static ResourceLocation activeScopeId = null;
     private static float currentZoom = 1.0f;
@@ -60,10 +55,6 @@ public class SteplessZoomHandler {
         event.setCanceled(true);
     }
 
-    /**
-     * 供 getAimingZoom 混入调用。若当前枪械的瞄具启用了无极变倍则返回当前倍率，
-     * 否则返回 -1 表示回落到原版逻辑。
-     */
     public static float getSteplessZoom(ItemStack stack) {
         SteplessConfig cfg = getConfigFor(stack);
         if (cfg == null) return -1.0f;
