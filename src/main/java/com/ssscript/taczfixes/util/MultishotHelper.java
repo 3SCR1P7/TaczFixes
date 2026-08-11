@@ -15,10 +15,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 多重射击：在射击（doBulletSpread）时按概率补发额外弹丸，不额外消耗弹药。
- * 每次射击仅判定一次（通过 ThreadLocal 标志，在 shootOnce 开头重置）。
- */
 public class MultishotHelper {
     private static final ThreadLocal<Boolean> FIRED_THIS_SHOT = ThreadLocal.withInitial(() -> Boolean.FALSE);
     private static final Map<UUID, Long> LAST_TRIGGER = new ConcurrentHashMap<>();
@@ -26,15 +22,10 @@ public class MultishotHelper {
     private MultishotHelper() {
     }
 
-    /** 在每次射击（shootOnce）开始时调用，重置本次射击的触发标志。 */
     public static void onShotStart() {
         FIRED_THIS_SHOT.set(Boolean.FALSE);
     }
 
-    /**
-     * 在 doBulletSpread 中被调用，为本次射击补发额外弹丸。
-     * 仅在第一个弹丸（bulletCnt == 0）且本次射击尚未触发时判定一次。
-     */
     public static void spawnExtraBullets(LivingEntity shooter, ItemStack gunItem, Projectile projectile,
                                          int bulletCnt, float processedSpeed, float inaccuracy,
                                          float pitch, float yaw) {

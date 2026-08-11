@@ -36,9 +36,7 @@ public class GunsmithLibHelper {
 
     public static void disableTracking(Entity bullet) {
         if (!isLoaded()) return;
-        // 制导模式：直接关闭 NBT 开关，GunsmithLib 每 tick 都会读取该键
         bullet.getPersistentData().putBoolean(TRACKING_ENABLED_KEY, false);
-        // 瞬瞄模式：移除服务器端用于重瞄准的 AIM_RESULTS 表项
         removeAimResult(bullet);
     }
 

@@ -10,20 +10,12 @@ public class ParCoolHelper {
     private static Boolean parcoolLoaded = null;
     private static Method parkourabilityGet = null;
     private static Method getAction = null;
-    private static Method setDoing = null;
     private static Class<?> crawlClass = null;
-    private static Class<?> fastRunClass = null;
 
     public static boolean isCrawling(LivingEntity entity) {
         if (!isParCoolLoaded()) return false;
         if (!(entity instanceof Player player)) return false;
         return checkCrawl(player);
-    }
-
-    public static void interruptSprint(LivingEntity entity) {
-        if (!isParCoolLoaded()) return;
-        if (!(entity instanceof Player player)) return;
-        stopFastRun(player);
     }
 
     public static boolean isParCoolLoaded() {
@@ -46,22 +38,6 @@ public class ParCoolHelper {
             return (boolean) isDoing.invoke(crawl);
         } catch (Exception e) {
             return false;
-        }
-    }
-
-    private static void stopFastRun(Player player) {
-        try {
-            Object parkourability = getParkourability(player);
-            if (parkourability == null) return;
-            if (fastRunClass == null) {
-                fastRunClass = Class.forName("com.alrex.parcool.common.action.impl.FastRun");
-                setDoing = fastRunClass.getMethod("setDoing", boolean.class);
-            }
-            Object fastRun = getAction.invoke(parkourability, fastRunClass);
-            if (fastRun == null) return;
-            setDoing.invoke(fastRun, false);
-        } catch (Exception e) {
-            // ignore
         }
     }
 
