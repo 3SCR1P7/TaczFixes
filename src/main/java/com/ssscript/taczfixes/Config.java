@@ -68,7 +68,6 @@ public class Config {
     public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
     public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
-    public static final ForgeConfigSpec.BooleanValue WALL_HUG_ENTITY_HIT_ENABLE;
 
     public static final ForgeConfigSpec.BooleanValue GUN_ENCHANTMENT_ENABLED;
     public static final ForgeConfigSpec.IntValue GUN_ENCHANTMENT_VALUE;
@@ -414,9 +413,6 @@ public class Config {
         DISABLE_THIRD_PERSON = BUILDER
                 .comment("禁用切换第三人称视角。默认值：false")
                 .define("disable_third_person", false);
-        WALL_HUG_ENTITY_HIT_ENABLE = BUILDER
-                .comment("是否修复子弹无法命中紧贴方块的薄实体（画/物品展示框等）。默认值：true")
-                .define("wall_hug_entity_hit_enable", true);
         BUILDER.pop();
 
         BUILDER.pop();
