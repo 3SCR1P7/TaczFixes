@@ -10,15 +10,22 @@ import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * 对使用默认散射逻辑（AbstractGunItem.doBulletSpread）的枪械：
- * - 多重射击：补发额外弹丸（不消耗弹药）
- * - 激流：射手处于水中/雨中/气泡中时，提升子弹飞行速度
- */
 @Mixin(targets = "com.tacz.guns.api.item.gun.AbstractGunItem", remap = false)
 public class MixinAbstractGunDoBulletSpread {
+    @ModifyVariable(method = "doBulletSpread", at = @At("HEAD"), argsOnly = true, index = 7)
+    private float taczfixes$coilInaccuracy(float inaccuracy, ShooterDataHolder dataHolder, ItemStack gunItem,
+                                           LivingEntity shooter, Projectile projectile, int bulletCnt,
+                                           float processedSpeed, float originalInaccuracy, float pitch, float yaw) {
+        if (gunItem == null) {
+            return inaccuracy;
+        }
+        float coilFactor = GunEnchantmentHelper.getCoilInaccuracyFactor(gunItem);
+        return coilFactor != 1.0f ? inaccuracy * coilFactor : inaccuracy;
+    }
+
     @Inject(method = "doBulletSpread", at = @At("HEAD"), remap = false)
     private void taczfixes$multishotAndRiptide(ShooterDataHolder dataHolder, ItemStack gunItem, LivingEntity shooter,
                                                Projectile projectile, int bulletCnt, float processedSpeed,
@@ -37,6 +44,7 @@ public class MixinAbstractGunDoBulletSpread {
             return;
         }
         float factor = GunEnchantmentHelper.getRiptideSpeedFactor(shooter);
+        factor *= GunEnchantmentHelper.getCoilSpeedFactor(gunItem);
         if (factor != 1.0f) {
             Vec3 motion = projectile.getDeltaMovement();
             projectile.setDeltaMovement(motion.scale(factor));

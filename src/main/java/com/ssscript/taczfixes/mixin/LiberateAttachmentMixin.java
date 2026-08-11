@@ -21,8 +21,6 @@ public class LiberateAttachmentMixin {
             ArrayList<ItemStack> items = cir.getReturnValue();
             items.addAll(moduleItems);
             cir.setReturnValue(items);
-        } catch (IllegalArgumentException e) {
-            // MODULE type doesn't exist (Arcana not loaded)
-        }
+        } catch (IllegalArgumentException e) {}
     }
 }
