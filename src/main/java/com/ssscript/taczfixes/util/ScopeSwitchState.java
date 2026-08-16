@@ -27,8 +27,6 @@ import java.util.Optional;
 public final class ScopeSwitchState {
     private static final Map<ResourceLocation, String> ACTIVE = new HashMap<>();
 
-    public static boolean suppressScopeStencil = false;
-
     public static float aimingProgressValue = 0f;
 
     private ScopeSwitchState() {

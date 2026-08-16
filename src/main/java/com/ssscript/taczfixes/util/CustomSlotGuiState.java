@@ -46,4 +46,9 @@ public final class CustomSlotGuiState {
     public static AttachmentType getViewFromType() {
         return viewFromType;
     }
+
+    public static void clearViewTransition() {
+        viewFromSlot = null;
+        viewFromType = null;
+    }
 }
