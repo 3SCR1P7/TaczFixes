@@ -21,7 +21,7 @@
       }
     },
     //首发后坐力倍率
-    "recoil_multiplier": {
+        "recoil_multiplier": {
       // 相应开火模式下的后坐力倍率。不填则使用配置文件中的默认值。
       // 可选auto，semi，burst
       "auto": {
@@ -38,11 +38,28 @@
           // 宽容时间，单位毫秒。
         },
         "modifier_2": {
-          "count": 2,
+          // 可以是区间
+          "count": [2,3],
+          "pitch_multiplier": 1.5,
+          "yaw_multiplier": 1.5
+        },
+        "modifier_3": {
+          // 如果区间只有一项n，那么视为[n,+∞)
+          "count": [4],
           "pitch_multiplier": 0.5,
           "yaw_multiplier": 0.5
         }
       }
+    },
+    "fire_knockback": {
+      // 开火击退力度。
+      "power": 0.015,
+      // 潜行时开火击退力度。
+      "power_sneak": 0.005,
+      // 半自动时的力度倍率。
+      "multiplier_semi": 4.0,
+      // 连发时的力度倍率。
+      "multiplier_burst": 2.0
     },
     // 自定义配件槽位
     "attachment_slots": {
