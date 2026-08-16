@@ -81,6 +81,8 @@
     "MixinRefitTransformResetState",
     "MixinSimpleChannelRefitRedirect",
     "MixinGunAttachmentSlotSelection",
+    "MixinGunRefitScreenPresetButtons",
+    "MixinGunRefitScreenSlotPressFix",
     "MixinZoomKey"
   ],
   "injectors": {
