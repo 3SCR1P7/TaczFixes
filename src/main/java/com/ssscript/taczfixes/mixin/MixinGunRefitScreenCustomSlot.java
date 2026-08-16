@@ -179,7 +179,6 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
             return null;
         }
         CustomSlotButton button = new CustomSlotButton(x, y, def, slotId, gunStack, btn -> {
-            CustomSlotGuiState.beginRefitViewTransition();
             RefitTransform.changeRefitScreenView(view);
             CustomSlotGuiState.set(slotId);
             this.init();
@@ -190,6 +189,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
     @Inject(method = "onClose", at = @At("TAIL"))
     private void taczfixes$onClose(CallbackInfo ci) {
         CustomSlotGuiState.reset();
+        CustomSlotGuiState.clearViewTransition();
     }
 
     private final java.util.Set<RefitUnloadButton> ownUnloadButtons = new java.util.HashSet<>();

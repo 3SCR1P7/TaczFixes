@@ -13,6 +13,7 @@ public class MixinRefitTransformResetState {
 
     @Inject(method = "changeRefitScreenView", at = @At("HEAD"), remap = false)
     private static void taczfixes$resetCustomSlotState(AttachmentType type, CallbackInfoReturnable<Boolean> cir) {
+        CustomSlotGuiState.beginRefitViewTransition();
         CustomSlotGuiState.reset();
     }
 }

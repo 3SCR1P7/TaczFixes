@@ -71,7 +71,6 @@ public abstract class MixinBedrockGunModelCustomSlot {
 
     @Inject(method = "render", at = @At("RETURN"), remap = false)
     private void taczfixes$renderEnd(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, RenderType renderType, int light, int overlay, CallbackInfo ci) {
-        ScopeSwitchState.suppressScopeStencil = false;
         taczfixes$popScopeShift(poseStack);
     }
 
@@ -320,18 +319,6 @@ public abstract class MixinBedrockGunModelCustomSlot {
                     LensDepthWriter.writeLensDepth(actItem, gun, poseStack, displayContext, light, overlay);
                     poseStack.popPose();
                 }
-                ScopeSwitchState.suppressScopeStencil = true;
-            } else {
-                if (isScopeAttachment(actItem)) {
-                    ScopeSwitchState.suppressScopeStencil = true;
-                }
-            }
-        } else {
-            ItemStack standardScope = this.currentAttachmentItem != null
-                    ? this.currentAttachmentItem.get(AttachmentType.SCOPE)
-                    : ItemStack.EMPTY;
-            if (isScopeAttachment(standardScope)) {
-                ScopeSwitchState.suppressScopeStencil = true;
             }
         }
 

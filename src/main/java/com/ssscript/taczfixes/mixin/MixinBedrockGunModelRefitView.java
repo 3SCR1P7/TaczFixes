@@ -5,6 +5,7 @@ import com.ssscript.taczfixes.data.CustomSlotManager;
 import com.ssscript.taczfixes.util.CustomSlotGuiState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
@@ -30,23 +31,35 @@ public abstract class MixinBedrockGunModelRefitView {
     private void taczfixes$customSlotRefitView(AttachmentType type,
                                                CallbackInfoReturnable<List<BedrockPart>> cir) {
         String slotId = CustomSlotGuiState.get();
-        if (slotId == null) return;
+        if (slotId == null && CustomSlotGuiState.getViewFromSlot() == null) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) return;
         ItemStack gunStack = mc.player.getMainHandItem();
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
         ResourceLocation gunId = igun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, slotId);
-        if (def == null) return;
+        CustomSlotDefinition def = slotId == null ? null : CustomSlotManager.getSlot(gunId, slotId);
+        if (slotId != null && def == null) return;
+        if (slotId == null && RefitTransform.getTransformProgress() >= 1f) {
+            CustomSlotGuiState.clearViewTransition();
+            return;
+        }
 
         boolean oldCall = ((++taczfixes$viewCallCount) & 1L) != 0L;
         List<BedrockPart> path = oldCall
                 ? resolveViewFrom((BedrockModel) (Object) this, gunId)
-                : resolveRefitPath((BedrockModel) (Object) this, slotId, def);
+                : resolveToPath((BedrockModel) (Object) this, slotId, def, type);
         if (path != null) {
             cir.setReturnValue(path);
         }
+    }
+
+    private static List<BedrockPart> resolveToPath(BedrockModel self, String slotId,
+                                                   CustomSlotDefinition def, AttachmentType type) {
+        if (slotId != null) return resolveRefitPath(self, slotId, def);
+        if (type == null || type == AttachmentType.NONE) return pathOf(self, "refit_view");
+        List<BedrockPart> path = pathOf(self, "refit_" + type.name().toLowerCase(Locale.US) + "_view");
+        return path != null ? path : pathOf(self, "refit_view");
     }
 
     private static List<BedrockPart> resolveViewFrom(BedrockModel self, ResourceLocation gunId) {
