@@ -1,0 +1,48 @@
+package com.ssscript.taczfixes.util;
+
+import com.tacz.guns.client.model.bedrock.BedrockPart;
+import com.tacz.guns.client.model.functional.AttachmentRender;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import com.mojang.blaze3d.vertex.PoseStack;
+
+import java.util.Collections;
+import java.util.List;
+
+public final class StandbySlotBuffer {
+    private static List<Object[]> pending = Collections.emptyList();
+
+    private StandbySlotBuffer() {
+    }
+
+    public static void setPending(List<Object[]> standby) {
+        pending = standby;
+    }
+
+    public static List<Object[]> takePending() {
+        List<Object[]> list = pending;
+        pending = Collections.emptyList();
+        return list;
+    }
+
+    public static void renderSlotAttachment(ItemStack item, ItemStack gun, BedrockPart node,
+                                            PoseStack poseStack, ItemDisplayContext displayContext,
+                                            int light, int overlay) {
+        poseStack.pushPose();
+        applyNodePathTransform(node, poseStack);
+        AttachmentRender.renderAttachment(item, gun, poseStack, displayContext, light, overlay);
+        poseStack.popPose();
+    }
+
+    public static void applyNodePathTransform(BedrockPart node, PoseStack pose) {
+        java.util.List<BedrockPart> path = new java.util.ArrayList<>();
+        BedrockPart cur = node;
+        while (cur != null) {
+            path.add(cur);
+            cur = cur.getParent();
+        }
+        for (int i = path.size() - 1; i >= 0; i--) {
+            path.get(i).translateAndRotateAndScale(pose);
+        }
+    }
+}
