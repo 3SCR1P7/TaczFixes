@@ -68,7 +68,20 @@ public class SteplessZoomHandler {
         IGun gun = IGun.getIGunOrNull(stack);
         if (gun == null) return null;
 
-        ResourceLocation slotId = gun.getAttachmentId(stack, AttachmentType.SCOPE);
+        ResourceLocation slotId = null;
+        String active = com.ssscript.taczfixes.util.ScopeSwitchState.getActiveSlot(stack);
+        if (active != null) {
+            ItemStack scope = com.ssscript.taczfixes.util.CustomSlotStorage.get(stack, active);
+            if (!scope.isEmpty()) {
+                com.tacz.guns.api.item.IAttachment attachment = com.tacz.guns.api.item.IAttachment.getIAttachmentOrNull(scope);
+                if (attachment != null) {
+                    slotId = attachment.getAttachmentId(scope);
+                }
+            }
+        }
+        if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) {
+            slotId = gun.getAttachmentId(stack, AttachmentType.SCOPE);
+        }
         if (slotId == null || slotId.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
             slotId = gun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
         }
