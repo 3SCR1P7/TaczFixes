@@ -38,7 +38,6 @@ public class AttachmentLimbFactorManager {
             return baseLimbFactor;
         }
         double result = AttachmentPropertyManager.eval(modifiers, baseLimbFactor);
-        LOGGER.debug("taczfixes: applying {} limb_factor attachment modifier(s) to base {} -> {}", modifiers.size(), baseLimbFactor, result);
         return result;
     }
 

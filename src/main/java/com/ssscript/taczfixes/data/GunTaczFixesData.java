@@ -6,6 +6,7 @@ public class GunTaczFixesData {
     public Double limb_factor;
     public Map<String, InaccuracyConfig> inaccuracy_multiplier;
     public Map<String, RecoilConfig> recoil_multiplier;
+    public Map<String, CustomSlotDefinition> attachment_slots;
 
     public static class InaccuracyConfig {
         public Integer cooldown_delay;

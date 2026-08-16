@@ -48,7 +48,6 @@ public class AttachmentLimbFactorReloadListener implements PreparableReloadListe
                 LOGGER.error("taczfixes: failed to parse limb_factor of attachment data {}", entry.getKey(), ex);
             }
         }
-        LOGGER.debug("taczfixes: loaded {} attachment limb_factor modifier(s) from {} attachment data file(s)", result.size(), all.size());
         return result;
     }
 }
