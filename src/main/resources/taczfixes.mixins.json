@@ -41,6 +41,11 @@
     "MixinGunDataShootInterval",
     "MixinExplodeUtil",
     "MixinEntityKineticBulletDecapitation",
+    "MixinClientMessageRefitGunAccessor",
+    "MixinAttachmentDataUtils",
+    "MixinAttachmentCachePropertyCustomSlot",
+    "MixinAttachmentPropertyManager",
+    "MixinAdsModifierCustomSlot"
   ],
   "client": [
     "LocalPlayerShootPreCheckMixin",
@@ -48,6 +53,7 @@
     "InnerThirdPersonManagerMixin",
     "MixinArcanaScopeGate",
     "MixinArcanaScopeState",
+    "MixinArcanaAttachmentData",
     "MixinParticleRenderHide",
     "MixinPeekHandler",
     "MixinLocalPlayerAim",
@@ -62,7 +68,20 @@
     "MixinThirdPersonDisabler",
     "MixinClientTrackingSync",
     "MixinAttachmentDisplayStepless",
-    "MixinCameraSetupEventZoom"
+    "MixinCameraSetupEventZoom",
+    "MixinFirstPersonRenderGunEvent",
+    "MixinBedrockGunModelCustomSlot",
+    "MixinBedrockGunModelScopeHideOthers",
+    "MixinBedrockAttachmentModelScopeSuppress",
+    "MixinBedrockAttachmentModelSightStencil",
+    "MixinMouseHandlerZoomSensitivity",
+    "MixinGunRefitScreenCustomSlot",
+    "MixinBedrockGunModelRefitView",
+    "MixinGunRefitScreenAttachmentList",
+    "MixinRefitTransformResetState",
+    "MixinSimpleChannelRefitRedirect",
+    "MixinGunAttachmentSlotSelection",
+    "MixinZoomKey"
   ],
   "injectors": {
     "defaultRequire": 1

@@ -18,5 +18,8 @@
   "enchantment.taczfixes.equalizer": "Equalizer",
   "enchantment.taczfixes.random": "Random",
   "enchantment.taczfixes.decapitation": "Decapitation",
-  "enchantment.taczfixes.charge": "Charge"
+  "enchantment.taczfixes.charge": "Charge",
+  "gui.taczfixes.unload": "Unload",
+  "key.categories.taczfixes": "TaczFixes",
+  "key.taczfixes.switch_scope": "Switch Scope"
 }

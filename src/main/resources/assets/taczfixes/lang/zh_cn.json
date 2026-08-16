@@ -18,5 +18,8 @@
   "enchantment.taczfixes.equalizer": "众生平等",
   "enchantment.taczfixes.random": "随机",
   "enchantment.taczfixes.decapitation": "枭首",
-  "enchantment.taczfixes.charge": "冲锋"
+  "enchantment.taczfixes.charge": "冲锋",
+  "gui.taczfixes.unload": "卸载",
+  "key.categories.taczfixes": "TaczFixes",
+  "key.taczfixes.switch_scope": "切换瞄具"
 }
