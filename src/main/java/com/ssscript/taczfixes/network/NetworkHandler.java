@@ -33,5 +33,10 @@ public class NetworkHandler {
                 ClientMessageCustomSlotZoom::decode,
                 ClientMessageCustomSlotZoom::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(3, ClientMessageLoadRefitPreset.class,
+                ClientMessageLoadRefitPreset::encode,
+                ClientMessageLoadRefitPreset::decode,
+                ClientMessageLoadRefitPreset::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }
