@@ -20,5 +20,12 @@ public class GunTaczFixesData {
         public Double pitch_multiplier;
         public Double yaw_multiplier;
         public Integer window;
+        public Map<String, RecoilModifierConfig> modifiers;
+    }
+
+    public static class RecoilModifierConfig {
+        public Integer count;
+        public Double pitch_multiplier;
+        public Double yaw_multiplier;
     }
 }

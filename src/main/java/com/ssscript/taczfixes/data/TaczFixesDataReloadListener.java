@@ -47,6 +47,13 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
             try {
                 GunTaczFixesData data = GSON.fromJson(root.get("taczfixes"), GunTaczFixesData.class);
                 if (data != null) {
+                    JsonElement tfElement = root.get("taczfixes");
+                    if (tfElement.isJsonObject()) {
+                        JsonElement rmElement = tfElement.getAsJsonObject().get("recoil_multiplier");
+                        if (rmElement != null && rmElement.isJsonObject()) {
+                            collectRecoilModifiers(data, rmElement.getAsJsonObject());
+                        }
+                    }
                     result.gunData.put(entry.getKey(), data);
                 }
             } catch (Exception ex) {
@@ -70,6 +77,33 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
             result.allowTags.put(entry.getKey(), ids);
         }
         return result;
+    }
+
+    private static void collectRecoilModifiers(GunTaczFixesData data, JsonObject recoilRoot) {
+        if (data.recoil_multiplier == null) return;
+        for (Map.Entry<String, JsonElement> modeEntry : recoilRoot.entrySet()) {
+            GunTaczFixesData.RecoilConfig config = data.recoil_multiplier.get(modeEntry.getKey());
+            if (config == null || !modeEntry.getValue().isJsonObject()) continue;
+            JsonObject modeObj = modeEntry.getValue().getAsJsonObject();
+            Map<String, GunTaczFixesData.RecoilModifierConfig> mods = new HashMap<>();
+            for (Map.Entry<String, JsonElement> modEntry : modeObj.entrySet()) {
+                String key = modEntry.getKey();
+                if ("window".equals(key) || "pitch_multiplier".equals(key)
+                        || "yaw_multiplier".equals(key) || "modifiers".equals(key)) continue;
+                if (!modEntry.getValue().isJsonObject()) continue;
+                GunTaczFixesData.RecoilModifierConfig mod =
+                        GSON.fromJson(modEntry.getValue(), GunTaczFixesData.RecoilModifierConfig.class);
+                if (mod != null) {
+                    mods.put(key, mod);
+                }
+            }
+            if (mods.isEmpty()) continue;
+            if (config.modifiers == null) {
+                config.modifiers = mods;
+            } else {
+                config.modifiers.putAll(mods);
+            }
+        }
     }
 
     private static class ScanResult {
