@@ -100,10 +100,14 @@ dependencies {
 
     compileOnly files('libs/taczarcana-dist-stubs.jar')
 
+    compileOnly files('libs/mixinextras-0.3.6.jar')
+
     compileOnly fg.deobf("gd656peek:gd656peek:0.1.1-1.20.1-forge")
 
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+
+    annotationProcessor files('libs/mixinextras-0.3.6.jar')
 }
 
 tasks.named('processResources', ProcessResources).configure {
