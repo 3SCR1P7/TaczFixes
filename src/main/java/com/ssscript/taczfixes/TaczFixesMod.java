@@ -27,6 +27,7 @@ import com.ssscript.taczfixes.handler.GunLevelHandler;
 import com.ssscript.taczfixes.handler.LimbDamageHandler;
 import com.ssscript.taczfixes.handler.SpreadRampHandler;
 import com.ssscript.taczfixes.handler.SteplessZoomHandler;
+import com.ssscript.taczfixes.network.NetworkHandler;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
@@ -97,14 +98,21 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new GunLevelHandler());
         MinecraftForge.EVENT_BUS.register(new GunEnchantmentHandler());
         MinecraftForge.EVENT_BUS.register(new GunAnvilHandler());
+        NetworkHandler.init();
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ENCHANTMENTS.register(modBus);
         modBus.addListener(this::onClientSetup);
+        modBus.addListener(this::onRegisterKeyMappings);
+    }
+
+    private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {
+        event.register(com.ssscript.taczfixes.handler.ScopeSwitchHandler.SWITCH_SCOPE_KEY);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.handler.ScopeSwitchHandler());
         });
     }
 }
