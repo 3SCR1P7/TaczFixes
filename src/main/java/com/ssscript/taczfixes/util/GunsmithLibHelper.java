@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.util;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.fml.ModList;
 
@@ -30,7 +31,7 @@ public class GunsmithLibHelper {
 
     public static boolean isTracking(Entity bullet) {
         if (!isLoaded()) return false;
-        var data = bullet.getPersistentData();
+        CompoundTag data = bullet.getPersistentData();
         return data.contains(TRACKING_ENABLED_KEY) || data.contains(KEY_TARGET) || data.contains(KEY_STOP_ON_PENETRATION);
     }
 

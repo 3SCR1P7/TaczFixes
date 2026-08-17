@@ -8,7 +8,9 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
+import com.tacz.guns.api.modifier.JsonProperty;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.resource.CommonAssetsManager;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.modifier.custom.AdsModifier;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
@@ -107,14 +109,14 @@ public final class ScopeSwitchState {
                 .orElse(1.0f);
         double result = base;
         ResourceLocation attachmentId = attachment.getAttachmentId(scope);
-        AttachmentData data = com.tacz.guns.resource.CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
+        AttachmentData data = CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
         if (data == null) {
             data = TimelessAPI.getCommonAttachmentIndex(attachmentId)
                     .map(CommonAttachmentIndex::getData)
                     .orElse(null);
         }
         if (data != null && data.getModifier() != null) {
-            com.tacz.guns.api.modifier.JsonProperty<?> property = data.getModifier().get(AdsModifier.ID);
+            JsonProperty<?> property = data.getModifier().get(AdsModifier.ID);
             if (property != null && property.getValue() instanceof Modifier modifier) {
                 result = AttachmentPropertyManager.eval(modifier, result);
             }

@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.util;
 
 import com.ssscript.taczfixes.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.data.CustomSlotManager;
+import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import net.minecraft.nbt.CompoundTag;
@@ -27,9 +28,8 @@ public class CustomSlotStorage {
     public static ResourceLocation getAttachmentId(ItemStack gun, String slotId) {
         ItemStack item = get(gun, slotId);
         if (item.isEmpty()) return null;
-        return com.tacz.guns.api.item.IAttachment.getIAttachmentOrNull(item) == null
-                ? null
-                : com.tacz.guns.api.item.IAttachment.getIAttachmentOrNull(item).getAttachmentId(item);
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        return attachment == null ? null : attachment.getAttachmentId(item);
     }
 
     public static void install(ItemStack gun, String slotId, ItemStack item) {
@@ -81,10 +81,10 @@ public class CustomSlotStorage {
         if (hasStandardLaser(gun)) return false;
         ItemStack custom = getLaserLike(gun);
         if (custom.isEmpty()) return false;
-        ResourceLocation a = laserItem.getItem() instanceof com.tacz.guns.api.item.IAttachment
-                ? ((com.tacz.guns.api.item.IAttachment) laserItem.getItem()).getAttachmentId(laserItem) : null;
-        ResourceLocation b = custom.getItem() instanceof com.tacz.guns.api.item.IAttachment
-                ? ((com.tacz.guns.api.item.IAttachment) custom.getItem()).getAttachmentId(custom) : null;
+        ResourceLocation a = laserItem.getItem() instanceof IAttachment
+                ? ((IAttachment) laserItem.getItem()).getAttachmentId(laserItem) : null;
+        ResourceLocation b = custom.getItem() instanceof IAttachment
+                ? ((IAttachment) custom.getItem()).getAttachmentId(custom) : null;
         return a != null && a.equals(b);
     }
 }

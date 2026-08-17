@@ -13,9 +13,7 @@ import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import javax.annotation.Nullable;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 public class GunEnchantmentHelper {
     private GunEnchantmentHelper() {
@@ -61,8 +59,6 @@ public class GunEnchantmentHelper {
         }
         return shooter.getMainHandItem();
     }
-
-    private static final Set<Enchantment> CACHED_WHITELIST = new HashSet<>();
 
     public static boolean isWhitelistKey(String key) {
         List<? extends String> whitelist = Config.GUN_ENCHANT_WHITELIST.get();
