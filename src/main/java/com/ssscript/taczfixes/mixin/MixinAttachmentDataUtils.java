@@ -3,8 +3,11 @@ package com.ssscript.taczfixes.mixin;
 import com.ssscript.taczfixes.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.data.CustomSlotManager;
 import com.ssscript.taczfixes.util.CustomSlotStorage;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.resource.CommonAssetsManager;
+import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.util.AttachmentDataUtils;
@@ -37,11 +40,11 @@ public abstract class MixinAttachmentDataUtils {
             ResourceLocation attachmentId = attachment.getAttachmentId(item);
             AttachmentData data = gunData.getExclusiveAttachments().get(attachmentId);
             if (data == null) {
-                data = com.tacz.guns.resource.CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
+                data = CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
             }
             if (data == null) {
-                data = com.tacz.guns.api.TimelessAPI.getCommonAttachmentIndex(attachmentId)
-                        .map(com.tacz.guns.resource.index.CommonAttachmentIndex::getData)
+                data = TimelessAPI.getCommonAttachmentIndex(attachmentId)
+                        .map(CommonAttachmentIndex::getData)
                         .orElse(null);
             }
             if (data != null) {
