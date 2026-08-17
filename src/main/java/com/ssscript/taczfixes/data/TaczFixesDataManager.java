@@ -51,6 +51,11 @@ public class TaczFixesDataManager {
         return key == null ? null : data.recoil_multiplier.get(key);
     }
 
+    public static GunTaczFixesData.FireKnockbackConfig resolveFireKnockback(ResourceLocation dataId) {
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.fire_knockback;
+    }
+
     public static InaccuracyParams resolveInaccuracyParams(ResourceLocation dataId, InaccuracyType state) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         if (data == null || data.inaccuracy_multiplier == null || data.inaccuracy_multiplier.isEmpty()) {

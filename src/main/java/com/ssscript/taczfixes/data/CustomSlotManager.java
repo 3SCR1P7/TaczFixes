@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.data;
 import com.ssscript.taczfixes.util.CustomSlotStorage;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.resource.CommonAssetsManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
@@ -74,7 +75,7 @@ public class CustomSlotManager {
 
     private static Set<ResourceLocation> taczAllowTagContents(ResourceLocation tagId) {
         try {
-            java.util.Set<String> ids = com.tacz.guns.resource.CommonAssetsManager.getInstance()
+            java.util.Set<String> ids = CommonAssetsManager.getInstance()
                     .getAttachmentTags(tagId);
             if (ids == null || ids.isEmpty()) return null;
             Set<ResourceLocation> result = new HashSet<>();
