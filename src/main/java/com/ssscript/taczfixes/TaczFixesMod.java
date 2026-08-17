@@ -107,12 +107,14 @@ public class TaczFixesMod {
 
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {
         event.register(com.ssscript.taczfixes.handler.ScopeSwitchHandler.SWITCH_SCOPE_KEY);
+        event.register(com.ssscript.taczfixes.handler.ConfigKeyHandler.OPEN_CONFIG_KEY);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.handler.ScopeSwitchHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.handler.ConfigKeyHandler());
         });
     }
 }

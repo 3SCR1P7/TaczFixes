@@ -30,6 +30,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
+    public static final ForgeConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_FLAT_INCREMENT;
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
@@ -61,6 +62,10 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SNEAK_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SEMI_FACTOR;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> RECOIL_FIRE_RATE_DISABLED_GUNS;
+    public static final ForgeConfigSpec.IntValue REFIT_TOAST_DURATION_MS;
+    public static final ForgeConfigSpec.IntValue REFIT_TOAST_FADE_MS;
+    public static final ForgeConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MIN;
+    public static final ForgeConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MAX;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PENETRATION_BLOCKED_ENTITIES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DAMAGE_REDUCTION_ENTITIES;
@@ -285,7 +290,7 @@ public class Config {
                 .comment("首次开火的水平后坐力倍率。默认值：1.5")
                 .defineInRange("pause_factor_yaw", 1.5, 1.0, 10.0);
         RECOIL_FIRE_RATE_MIN_RPM = BUILDER
-                .comment("触发首发后坐力倍率所需的最小射速。默认值：200")
+                .comment("触发首发后坐力倍率所需的最小射速。默认值：300")
                 .defineInRange("min_rpm", 300, 0, 1200);
         RECOIL_FIRE_RATE_DISABLED_GUNS = BUILDER
                 .comment("禁用首发后坐力倍率的枪械列表。",
@@ -366,6 +371,24 @@ public class Config {
 
         BUILDER.push("misc");
 
+        BUILDER.push("refit_toast");
+        REFIT_TOAST_DURATION_MS = BUILDER
+                .comment("改装界面提示文字的显示时长（毫秒）。默认值：1000")
+                .defineInRange("duration_ms", 1000, 100, 10000);
+        REFIT_TOAST_FADE_MS = BUILDER
+                .comment("改装界面提示文字开始淡出的时长（毫秒）。默认值：500")
+                .defineInRange("fade_ms", 500, 0, 5000);
+        BUILDER.pop();
+
+        BUILDER.push("refit_view_zoom");
+        REFIT_VIEW_ZOOM_MIN = BUILDER
+                .comment("改装视角模式下，滚轮缩放的最小倍率。默认值：0.5")
+                .defineInRange("min_zoom", 0.5, 0.05, 1.0);
+        REFIT_VIEW_ZOOM_MAX = BUILDER
+                .comment("改装视角模式下，滚轮缩放的最大倍率。默认值：4")
+                .defineInRange("max_zoom", 4.0, 1.0, 100.0);
+        BUILDER.pop();
+
         BUILDER.push("burst_fire");
         BURST_BLOCK_ATTACHMENTS = BUILDER
                 .comment("禁用连发模式的配件列表。",
@@ -422,11 +445,11 @@ public class Config {
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
                         "需要TaCZ: Arcana模组。")
                 .define("disable_arcana_magnification_for_sight", true);
-HIDE_PARTICLES_IN_ARCANA_THERMAL = BUILDER
-                .comment("在热成像瞄具视野内隐藏的粒子列表。",
+        HIDE_PARTICLES_IN_ARCANA_THERMAL = BUILDER
+                .comment("在热成像瞄具视野内隐藏的粒子列表，使用粒子ID，如lrtactical:smoke_cloud。",
                         "需要TaCZ: Arcana模组。")
                 .defineList("hide_particles_in_arcana_thermal",
-                        List.of("me.xjqsh.lrtactical.client.particle.SmokeCloudParticle"),
+                        List.of("lrtactical:smoke_cloud"),
                         it -> it instanceof String);
         PARCOOL_SLIDE_AS_MOVE_INACCURACY = BUILDER
                 .comment("滑铲时，应用移动时而非爬行时的腰射散布。默认值：true",
@@ -443,6 +466,10 @@ HIDE_PARTICLES_IN_ARCANA_THERMAL = BUILDER
         ADS_INTERRUPT_SPRINT = BUILDER
                 .comment("开镜是否强制打断疾跑。默认值：true")
                 .define("ads_interrupt_sprint", true);
+        PREVENT_SPRINT_REENGAGE_WHEN_TILT = BUILDER
+                .comment("据枪时是否阻止疾跑恢复，防止疾跑反复打断导致画面抽搐。默认值：true",
+                        "需要TaCZ Tweaks模组。")
+                .define("prevent_sprint_reengage_when_tilt", true);
         BUILDER.pop();
 
         BUILDER.push("gun_enchantment");
@@ -719,7 +746,7 @@ HIDE_PARTICLES_IN_ARCANA_THERMAL = BUILDER
         ENCH_CHAIN_EXPLOSION_CHANCE_PERCENT_PER_LEVEL = BUILDER
                 .comment("连锁爆破：每级增加的触发概率。默认值：4%")
                 .defineInRange("chain_explosion_chance_percent_per_level", 4.0, 0.0, 100.0);
-ENCH_CHAIN_EXPLOSION_RADIUS_MIN = BUILDER
+        ENCH_CHAIN_EXPLOSION_RADIUS_MIN = BUILDER
                 .comment("连锁爆破：爆炸范围的最小值。默认值：0.5")
                 .defineInRange("chain_explosion_radius_min", 0.5, 0.0, 100.0);
         ENCH_CHAIN_EXPLOSION_RADIUS_SCALE_PER_LEVEL = BUILDER
@@ -794,7 +821,7 @@ ENCH_CHAIN_EXPLOSION_RADIUS_MIN = BUILDER
         BUILDER.pop();
 
         BUILDER.push("pandora_paradox");
-ENCH_PANDORA_PARADOX_MAX_LEVEL = BUILDER
+        ENCH_PANDORA_PARADOX_MAX_LEVEL = BUILDER
                 .comment("潘多拉悖论：附魔的最大等级。默认值：1")
                 .defineInRange("pandora_paradox_max_level", 1, 1, 10);
         ENCH_PANDORA_PARADOX_ANVIL_MULT = BUILDER
