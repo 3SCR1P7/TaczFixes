@@ -1,11 +1,14 @@
 package com.ssscript.taczfixes.handler;
 
 import com.ssscript.taczfixes.Config;
+import com.ssscript.taczfixes.util.CustomSlotStorage;
+import com.ssscript.taczfixes.util.ScopeSwitchState;
 import com.ssscript.taczfixes.util.SteplessConfig;
 import com.ssscript.taczfixes.util.SteplessDisplayAccessor;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.ClientAssetsManager;
@@ -69,11 +72,11 @@ public class SteplessZoomHandler {
         if (gun == null) return null;
 
         ResourceLocation slotId = null;
-        String active = com.ssscript.taczfixes.util.ScopeSwitchState.getActiveSlot(stack);
+        String active = ScopeSwitchState.getActiveSlot(stack);
         if (active != null) {
-            ItemStack scope = com.ssscript.taczfixes.util.CustomSlotStorage.get(stack, active);
+            ItemStack scope = CustomSlotStorage.get(stack, active);
             if (!scope.isEmpty()) {
-                com.tacz.guns.api.item.IAttachment attachment = com.tacz.guns.api.item.IAttachment.getIAttachmentOrNull(scope);
+                IAttachment attachment = IAttachment.getIAttachmentOrNull(scope);
                 if (attachment != null) {
                     slotId = attachment.getAttachmentId(scope);
                 }

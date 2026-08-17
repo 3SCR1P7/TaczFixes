@@ -6,6 +6,7 @@ import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageLevelUp;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -16,7 +17,7 @@ public class GunLevelHandler {
     @SubscribeEvent
     public void onLivingDeath(LivingDeathEvent event) {
         if (event.getEntity().level().isClientSide) return;
-        var source = event.getSource();
+        DamageSource source = event.getSource();
         if (source == null) return;
         if (!(source.getDirectEntity() instanceof EntityKineticBullet bullet)) return;
         Entity owner = bullet.getOwner();

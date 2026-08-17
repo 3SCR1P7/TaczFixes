@@ -7,6 +7,7 @@ import com.ssscript.taczfixes.util.LimbDamageHelper;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.resource.index.CommonGunIndex;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -16,6 +17,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
+import java.util.Optional;
 
 public class LimbDamageHandler {
 
@@ -70,7 +72,7 @@ public class LimbDamageHandler {
         if (limbFactor != null) {
             base = limbFactor;
         } else {
-            var gunIndex = TimelessAPI.getCommonGunIndex(gunId);
+            Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
             if (gunIndex.isEmpty()) {
                 return clampLimbFactor(Config.LIMB_FACTOR_DEFAULT.get().doubleValue());
             }
