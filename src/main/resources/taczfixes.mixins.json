@@ -83,7 +83,11 @@
     "MixinGunAttachmentSlotSelection",
     "MixinGunRefitScreenPresetButtons",
     "MixinGunRefitScreenSlotPressFix",
-    "MixinZoomKey"
+    "MixinGunRefitScreenViewMode",
+    "MixinMouseHandlerRefitViewInput",
+    "MixinBedrockGunModelViewRotate",
+    "MixinZoomKey",
+    "MixinAnvilScreenGunCost"
   ],
   "injectors": {
     "defaultRequire": 1
