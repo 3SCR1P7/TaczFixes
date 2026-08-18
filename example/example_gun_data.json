@@ -69,14 +69,20 @@
         // 槽位类型，可选laser，grip，muzzle，stock，scope，custom。
         // 如果不为custom，那么使用相应类型的槽位名称和贴图，可以安装相应类型的配件。
         "type": "laser",
-        // 需要这些槽位有配件才启用此槽位。
-        "dependence": [
-          "laser"
-        ],
-        // 如果这些槽位有配件，禁用此槽位。
-        "conflict": [
-          "handguard"
-        ]
+        // 需要这些槽位有指定配件才启用此槽位。
+        // 若是true，那么只要这个槽位上有配件就启用此槽位。
+        "dependence": {
+          "laser": true,
+          "scope": [
+            "#tacz:scope"
+          ]
+        },
+        // 如果这些槽位有这些配件，禁用此槽位。
+        "conflict": {
+          "handguard": [
+            "#tacz:handguard"
+          ]
+        }
       },
       "handguard": {
         "type": "custom",
