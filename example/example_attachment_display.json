@@ -1,4 +1,8 @@
 {
+  "group_offset": {
+    // 使laser_pos位置偏移x2 y3 z4。
+    "laser": [2,3,4]
+  }
   "stepless": {
     // 是否启用无极变倍。会替代tacz原版的变倍。
     "enable": true,
