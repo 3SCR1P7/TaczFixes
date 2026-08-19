@@ -48,6 +48,12 @@
           "count": [4],
           "pitch_multiplier": 0.5,
           "yaw_multiplier": 0.5
+        },
+        "modifier_4": {
+          // 第三项为步长
+          "count": [5,"infinite",5],
+          "pitch_multiplier": 3,
+          "yaw_multiplier": 0.2
         }
       }
     },
