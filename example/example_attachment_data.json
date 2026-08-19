@@ -1,0 +1,56 @@
+{
+  "weight": 0.6,
+  "taczfixes": {
+    "limb_factor": {
+      "multiplier": 0.8
+    },
+    "recoil_multiplier": {
+      // 后坐力倍率
+      // 和枪械data中的或配置文件中的一同生效
+      "auto": {
+        "window": 200,
+        "modifier_1": {
+          "count": 1,
+          "pitch_multiplier": 3.0,
+          "yaw_multiplier": 2.0
+        },
+        "modifier_2": {
+          "count": [2,3],
+          "pitch_multiplier": 1.5,
+          "yaw_multiplier": 1.5
+        },
+        "modifier_3": {
+          "count": [4],
+          "pitch_multiplier": 0.5,
+          "yaw_multiplier": 0.5
+        }
+      }
+    },
+    "fire_knockback_power": {
+      // 对于开火击退力度的调整
+      "addend": 0.05,
+      "percent": 0.1,
+      "multiplier": 2.0
+    },
+    "inaccuracy_multiplier": {
+      // 对连射惩罚数值的调整
+      "max_stack": {
+        // 对连射惩罚最大堆叠次数的调整
+        "addned": -1
+      },
+      "per_shot": {
+        // 对每次开火叠加的连射惩罚的调整
+        // 对于flat和percent都生效
+        "multiplier": 0.5
+      },
+      "cooldown_speed": {
+        // 对于回正速度的调整
+        "addned": 0.1
+      },
+      "cooldown_delay": {
+        // 对于回正延迟的调整
+        "addned": -20
+      }
+    }
+  }
+}
