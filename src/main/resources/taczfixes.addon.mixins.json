@@ -1,0 +1,14 @@
+{
+  "required": false,
+  "minVersion": "0.8",
+  "package": "com.ssscript.taczfixes.common.mixin",
+  "compatibilityLevel": "JAVA_17",
+  "refmap": "taczfixes.refmap.json",
+  "mixins": [
+    "LiberateAttachmentMixin"
+  ],
+  "client": [],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
