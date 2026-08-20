@@ -1,7 +1,9 @@
 {
-  "weight": 0.6,
   "taczfixes": {
+    // 安装消耗的改装点数
+    "refit_point_consume": 10,
     "limb_factor": {
+      // 四肢伤害修改
       "multiplier": 0.8
     },
     "recoil_multiplier": {
