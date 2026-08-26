@@ -24,8 +24,24 @@
 
 一切功能均可配置。
 
-前置
+前置模组：
 
---Timeless and Classics Zero 1.1.8(v1)/1.1.9(v2)
+--Timeless and Classics Zero 1.1.8 (v1) / 1.1.9 (v2)
 
---Cloth Config API 11.1.136
+--Cloth Config API 11.1.136 (可选)
+
+联动模组：
+
+--LesRaisins Tactical Equipements
+
+--Gunsmith Lib
+
+--TaCZ: Arcana
+
+--TaCZ Addon
+
+--GD656Peek
+
+--Parcool
+
+
