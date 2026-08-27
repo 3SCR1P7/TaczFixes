@@ -1,8 +1,14 @@
 package com.ssscript.taczfixes.client.util;
 
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
+import com.tacz.guns.api.item.IAttachment;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.client.model.BedrockAttachmentModel;
+import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -33,6 +39,29 @@ public final class StandbySlotBuffer {
         applyNodePathTransform(node, poseStack);
         applyPosAlter(node, gun, poseStack);
         AttachmentRender.renderAttachment(item, gun, poseStack, displayContext, light, overlay);
+        poseStack.popPose();
+    }
+
+    public static void renderRawMesh(ItemStack item, ItemStack gun, BedrockPart node,
+                                     PoseStack poseStack, ItemDisplayContext displayContext,
+                                     int light, int overlay) {
+        poseStack.pushPose();
+        applyNodePathTransform(node, poseStack);
+        applyPosAlter(node, gun, poseStack);
+        poseStack.translate(0.0F, -1.5F, 0.0F);
+        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
+        if (ia != null) {
+            ResourceLocation id = ia.getAttachmentId(item);
+            TimelessAPI.getClientAttachmentIndex(id).ifPresent(index -> {
+                BedrockAttachmentModel model = index.getAttachmentModel();
+                ResourceLocation texture = index.getModelTexture();
+                if (model != null && texture != null) {
+                    // 直接渲染原始网格, 不触发 renderScope/renderBoth 的模板清除与镜片绘制逻辑
+                    ((BedrockModel) model).render(poseStack, displayContext,
+                            RenderType.entityCutout(texture), light, overlay);
+                }
+            });
+        }
         poseStack.popPose();
     }
 

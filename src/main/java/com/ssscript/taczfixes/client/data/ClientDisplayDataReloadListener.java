@@ -7,6 +7,8 @@ import com.google.gson.JsonObject;
 import com.ssscript.taczfixes.client.util.SwitchedDisplayManager;
 import com.ssscript.taczfixes.common.data.AttachmentGroupOffsetManager;
 import com.ssscript.taczfixes.common.data.GunPosAlterManager;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.data.TaczFixesDataReloadListener;
 import com.tacz.guns.util.ResourceScanner;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
@@ -34,6 +36,7 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                 .thenAcceptAsync(result -> {
                     AttachmentGroupOffsetManager.putAll(result.getKey());
                     GunPosAlterManager.putAll(result.getValue());
+                    TaczFixesDataManager.putAll(TaczFixesDataReloadListener.scanFileSystemGunData());
                     SwitchedDisplayManager.refresh();
                 }, gameExecutor);
     }

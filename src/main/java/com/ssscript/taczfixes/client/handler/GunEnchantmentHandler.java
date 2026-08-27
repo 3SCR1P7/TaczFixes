@@ -599,7 +599,7 @@ public class GunEnchantmentHandler {
             MobEffects.MOVEMENT_SLOWDOWN, MobEffects.DIG_SLOWDOWN, MobEffects.HARM, MobEffects.CONFUSION,
             MobEffects.BLINDNESS, MobEffects.HUNGER, MobEffects.WEAKNESS, MobEffects.POISON,
             MobEffects.WITHER, MobEffects.UNLUCK, MobEffects.BAD_OMEN, MobEffects.DARKNESS,
-            MobEffects.LEVITATION, MobEffects.GLOWING, MobEffects.INVISIBILITY);
+            MobEffects.LEVITATION, MobEffects.GLOWING);
 
     @SubscribeEvent
     public void onGunHurtCharge(EntityHurtByGunEvent.Pre event) {
@@ -893,5 +893,87 @@ public class GunEnchantmentHandler {
         if (amount > 0) {
             instance.addTransientModifier(new AttributeModifier(uuid, "taczfixes:loyalty", amount, AttributeModifier.Operation.ADDITION));
         }
+    }
+
+    @SubscribeEvent
+    public void onGunHurtAbyssGazer(EntityHurtByGunEvent.Post event) {
+        if (event.getLogicalSide().isClient()) {
+            return;
+        }
+        if (!GunEnchantmentHelper.isEnabled()) {
+            return;
+        }
+        LivingEntity shooter = event.getAttacker();
+        if (shooter == null) {
+            return;
+        }
+        if (!(event.getHurtEntity() instanceof LivingEntity target) || !target.isAlive()) {
+            return;
+        }
+        int level = GunEnchantmentHelper.getLevelFromShooter(shooter,
+                TaczFixesMod.ABYSS_GAZER_ENCHANTMENT.get());
+        if (level <= 0) {
+            return;
+        }
+        float maxHealth = target.getMaxHealth();
+        float currentHealth = target.getHealth();
+        if (maxHealth <= 0.0F) {
+            return;
+        }
+        double chance = (maxHealth - currentHealth) / maxHealth;
+        if (chance < 1.0 && shooter.getRandom().nextDouble() >= chance) {
+            return;
+        }
+        Entity bullet = event.getBullet();
+        Holder<DamageType> voidType = (bullet == null ? target.level() : bullet.level())
+                .registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ModDamageTypes.BULLET_VOID);
+        DamageSource source = new DamageSource(voidType, shooter, shooter);
+        target.setHealth(0.0F);
+        target.die(source);
+    }
+
+    private static final Map<UUID, Integer> BULLET_PENETRATION = new ConcurrentHashMap<>();
+
+    @SubscribeEvent
+    public void onGunHurtFocusedAmmo(EntityHurtByGunEvent.Pre event) {
+        if (event.getLogicalSide().isClient()) {
+            return;
+        }
+        LivingEntity shooter = event.getAttacker();
+        if (shooter == null) {
+            return;
+        }
+        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.FOCUSED_AMMO_ENCHANTMENT.get());
+        if (level <= 0) {
+            return;
+        }
+        Entity bullet = event.getBullet();
+        if (bullet == null) {
+            return;
+        }
+        int count = BULLET_PENETRATION.getOrDefault(bullet.getUUID(), 0);
+        if (count > 0) {
+            double mult = Math.pow(1.0 + Config.ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL.get() * level, count);
+            event.setBaseAmount(event.getBaseAmount() * (float) mult);
+        }
+        BULLET_PENETRATION.put(bullet.getUUID(), count + 1);
+    }
+
+    @SubscribeEvent
+    public void onGunHurtPatience(EntityHurtByGunEvent.Pre event) {
+        if (event.getLogicalSide().isClient()) {
+            return;
+        }
+        event.setBaseAmount(com.ssscript.taczfixes.common.util.PatienceHelper.applyToBullet(
+                event.getBullet(), event.getBaseAmount()));
+    }
+
+    @SubscribeEvent
+    public void onPlayerTickPatience(TickEvent.PlayerTickEvent event) {
+        if (event.phase != TickEvent.Phase.END) {
+            return;
+        }
+        com.ssscript.taczfixes.common.util.PatienceHelper.onPlayerTick(event.player);
     }
 }

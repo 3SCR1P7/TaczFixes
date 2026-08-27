@@ -133,6 +133,14 @@ public class ConfigScreen {
         dbl_(viewZoom, entry, "misc.refit_view_zoom_max", Config.REFIT_VIEW_ZOOM_MAX);
         cat.addEntry(entry.startSubCategory(cat("refit_view_zoom"), viewZoom).build());
 
+        List<AbstractConfigListEntry> refitButton = new ArrayList<>();
+        dbl_(refitButton, entry, "misc.refit_button_opacity", Config.REFIT_BUTTON_OPACITY);
+        cat.addEntry(entry.startSubCategory(cat("refit_button"), refitButton).build());
+
+        List<AbstractConfigListEntry> refitPoint = new ArrayList<>();
+        int_(refitPoint, entry, "misc.refit_point_default_consume", Config.REFIT_POINT_DEFAULT_CONSUME);
+        cat.addEntry(entry.startSubCategory(cat("refit_point"), refitPoint).build());
+
         List<AbstractConfigListEntry> burst = new ArrayList<>();
         lst_(burst, entry, "misc.burst_block_attachments", Config.BURST_BLOCK_ATTACHMENTS);
         cat.addEntry(entry.startSubCategory(cat("burst"), burst).build());
@@ -328,6 +336,30 @@ public class ConfigScreen {
             int_(e, entry, "enchantment.max_level", Config.ENCH_CHARGE_MAX_LEVEL);
             dbl_(e, entry, "enchantment.charge_damage_percent_per_speed_per_level", Config.ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL);
             int_(e, entry, "enchantment.anvil_mult", Config.ENCH_CHARGE_ANVIL_MULT);
+        });
+        sub(cat, entry, "abyssgazer", e -> {
+            int_(e, entry, "enchantment.max_level", Config.ENCH_ABYSSGAZER_MAX_LEVEL);
+            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_ABYSSGAZER_ANVIL_MULT);
+        });
+        sub(cat, entry, "double_shot", e -> {
+            int_(e, entry, "enchantment.max_level", Config.ENCH_DOUBLE_SHOT_MAX_LEVEL);
+            dbl_(e, entry, "enchantment.double_shot_chance_per_level", Config.ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL);
+            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_DOUBLE_SHOT_ANVIL_MULT);
+        });
+        sub(cat, entry, "focused_ammo", e -> {
+            int_(e, entry, "enchantment.max_level", Config.ENCH_FOCUSED_AMMO_MAX_LEVEL);
+            dbl_(e, entry, "enchantment.focused_ammo_damage_mult_per_level", Config.ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL);
+            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_FOCUSED_AMMO_ANVIL_MULT);
+        });
+        sub(cat, entry, "arcana_eden", e -> {
+            int_(e, entry, "enchantment.max_level", Config.ENCH_ARCANA_EDEN_MAX_LEVEL);
+            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_ARCANA_EDEN_ANVIL_MULT);
+        });
+        sub(cat, entry, "patience", e -> {
+            int_(e, entry, "enchantment.max_level", Config.ENCH_PATIENCE_MAX_LEVEL);
+            int_(e, entry, "enchantment.patience_delay_ms", Config.ENCH_PATIENCE_DELAY_MS);
+            dbl_(e, entry, "enchantment.patience_damage_percent_per_tick_per_level", Config.ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL);
+            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_PATIENCE_ANVIL_MULT);
         });
     }
 
