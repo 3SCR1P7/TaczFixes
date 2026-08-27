@@ -33,6 +33,7 @@ println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty '
 mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
+    config "${mod_id}.client.mixins.json"
     config "${mod_id}.addon.mixins.json"
 }
 
@@ -100,6 +101,10 @@ dependencies {
 
     compileOnly files('libs/taczarcana-dist-stubs.jar')
 
+    compileOnly files('libs/gunsmithlib-forge-1.20.1-tacz1.1.8-6.4.2.jar')
+
+    compileOnly files('libs/kuroutils2-2001.2.5.0.jar')
+
     compileOnly files('libs/mixinextras-0.3.6.jar')
 
     compileOnly fg.deobf("gd656peek:gd656peek:0.1.1-1.20.1-forge")
@@ -138,7 +143,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Version'  : project.jar.archiveVersion,
                 'Implementation-Vendor'   : mod_authors,
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                'MixinConfigs'            : "${mod_id}.mixins.json,${mod_id}.addon.mixins.json"
+                'MixinConfigs'            : "${mod_id}.mixins.json,${mod_id}.client.mixins.json,${mod_id}.addon.mixins.json"
         ])
     }
 
