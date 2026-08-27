@@ -16,5 +16,6 @@ public abstract class MixinAttachmentPropertyManager {
     private static void taczfixes$cascadeDependents(LivingEntity shooter, ItemStack gunItem, CallbackInfo ci) {
         if (!(shooter instanceof net.minecraft.server.level.ServerPlayer player)) return;
         CustomSlotManager.cascadeUnloadDependents(player, gunItem);
+        CustomSlotManager.cascadeUnloadConflicts(player, gunItem);
     }
 }

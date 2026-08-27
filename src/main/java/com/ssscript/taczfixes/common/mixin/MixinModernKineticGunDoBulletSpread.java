@@ -22,6 +22,16 @@ public class MixinModernKineticGunDoBulletSpread {
             return;
         }
         MultishotHelper.spawnExtraBullets(shooter, gunItem, projectile, bulletCnt, processedSpeed, inaccuracy, pitch, yaw);
+        com.ssscript.taczfixes.common.util.DoubleShotHelper.spawnExtraBullet(shooter, gunItem, projectile,
+                processedSpeed, inaccuracy, pitch, yaw);
+        com.ssscript.taczfixes.common.util.PatienceHelper.onShot(shooter, gunItem, projectile);
+        if (projectile instanceof com.tacz.guns.entity.EntityKineticBullet kineticBullet && gunItem != null) {
+            net.minecraft.resources.ResourceLocation replaced = com.ssscript.taczfixes.common.util.AmmoReplaceHelper
+                    .resolveAmmoId(gunItem, kineticBullet.getAmmoId());
+            if (replaced != null) {
+                ((EntityKineticBulletAccessor) kineticBullet).taczfixes$setAmmoId(replaced);
+            }
+        }
     }
 
     @Inject(method = "doBulletSpread", at = @At("TAIL"), remap = false)

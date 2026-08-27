@@ -32,5 +32,6 @@ public class MixinShootOnceIncrement {
         InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state, gunItem);
         SpreadState.onShot(dataId, params);
         MultishotHelper.onShotStart();
+        com.ssscript.taczfixes.common.util.DoubleShotHelper.onShotStart();
     }
 }
