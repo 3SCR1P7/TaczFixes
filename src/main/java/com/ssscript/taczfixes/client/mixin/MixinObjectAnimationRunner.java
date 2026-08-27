@@ -1,10 +1,12 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.tacz.guns.api.client.animation.ObjectAnimation;
 import com.tacz.guns.api.client.animation.ObjectAnimationRunner;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -26,20 +28,40 @@ public class MixinObjectAnimationRunner {
         if (player == null) {
             return;
         }
-        float speed = 1.0f;
+        ItemStack gun = player.getMainHandItem();
+        // 动画速度 = 1 / 总时间倍率(配件 data 倍率 × 附魔倍率), 与动作时长同步
+        // 枪械 data 的 allow_animation_zoom 为 false 时不加速动画
+        boolean zoomAllowed = com.ssscript.taczfixes.common.data.TaczFixesDataManager.isAnimationZoomAllowed(gun);
+        double divisor = 1.0d;
         if (animation.name.contains("reload")) {
-            speed = GunEnchantmentHelper.getQuickChargeAnimationSpeed(player);
+            divisor = AttachmentTaczFixesManager.getReloadTimeFactor(gun);
+            if (divisor > 0.0d && GunEnchantmentHelper.isEnabled()) {
+                divisor *= GunEnchantmentHelper.getQuickChargeTimeFactor(player);
+            }
         } else if (animation.name.contains("bolt")) {
-            speed = GunEnchantmentHelper.getEfficiencyBoltAnimationSpeed(player);
+            divisor = AttachmentTaczFixesManager.getManualActionTimeFactor(gun);
+            if (divisor > 0.0d && GunEnchantmentHelper.isEnabled()) {
+                divisor *= GunEnchantmentHelper.getEfficiencyBoltTimeFactor(gun);
+            }
         }
-        if (speed > 1.0f) {
+        // 时长被减为 0 或以下: 动画一帧内播完, 视觉上不播放(不受 allow_animation_zoom 影响)
+        // allow_animation_zoom=false 时仅禁用部分加速的同步播放
+        float speed;
+        if (divisor <= 0.0d) {
+            speed = 65536.0f;
+        } else if (!zoomAllowed) {
+            return;
+        } else {
+            speed = (float) (1.0d / divisor);
+        }
+        if (Math.abs(speed - 1.0f) > 1.0e-4f) {
             this.taczfixes_speedFactor = speed;
         }
     }
 
     @ModifyVariable(method = "updateProgress", at = @At("HEAD"), argsOnly = true, index = 1, remap = false)
     private long taczfixes$applyAnimSpeed(long alphaProgress) {
-        if (taczfixes_speedFactor > 1.0f) {
+        if (taczfixes_speedFactor != 1.0f) {
             return (long) (alphaProgress * taczfixes_speedFactor);
         }
         return alphaProgress;

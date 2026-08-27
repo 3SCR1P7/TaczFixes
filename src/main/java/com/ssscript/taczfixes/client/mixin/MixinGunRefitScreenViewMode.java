@@ -1,9 +1,12 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.client.util.RefitViewMode;
+import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.gui.GunRefitScreen;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
@@ -13,6 +16,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -55,8 +59,8 @@ public abstract class MixinGunRefitScreenViewMode extends Screen {
                 ? "gui.taczfixes.refit_view.exit" : "gui.taczfixes.refit_view.enter");
         int width = this.font.width(label) + 10;
         int x = leftmost - width - 4;
-        Button button = Button.builder(label, b -> taczfixes$toggleViewMode())
-                .bounds(x, 10, width, 18).build();
+        Button button = new com.ssscript.taczfixes.client.util.TransparentButton(label,
+                b -> taczfixes$toggleViewMode()).bounds(x, 10, width, 18);
         this.addRenderableWidget(button);
         taczfixes$viewModeButton = button;
         RefitViewMode.setButtonBounds(x, 10, width, 18);
@@ -97,7 +101,10 @@ public abstract class MixinGunRefitScreenViewMode extends Screen {
         }
         boolean active = RefitViewMode.isActive();
         taczfixes$syncCharmButtons(active);
-        if (!active) return;
+        if (!active) {
+            taczfixes$renderRefitPoint(graphics);
+            return;
+        }
         if (taczfixes$viewModeButton != null) {
             taczfixes$viewModeButton.render(graphics, mouseX, mouseY, partialTick);
         }
@@ -106,6 +113,22 @@ public abstract class MixinGunRefitScreenViewMode extends Screen {
         int hintX = (this.width - this.font.width(hint)) / 2;
         graphics.drawString(this.font, hint, hintX, this.height - 26, 0xFFFFFFFF, true);
         ci.cancel();
+    }
+
+    @Unique
+    private void taczfixes$renderRefitPoint(GuiGraphics graphics) {
+        if (taczfixes$viewModeButton == null) return;
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null) return;
+        ItemStack gunStack = player.getMainHandItem();
+        Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
+        if (total == null) return;
+        int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
+        Component text = Component.literal(used + "/" + total);
+        int x = taczfixes$viewModeButton.getX() - this.font.width(text) - 6;
+        int y = taczfixes$viewModeButton.getY() + (taczfixes$viewModeButton.getHeight() - this.font.lineHeight) / 2;
+        graphics.drawString(this.font, text, x, y, 0xFFFFFFFF, true);
     }
 
     @Unique

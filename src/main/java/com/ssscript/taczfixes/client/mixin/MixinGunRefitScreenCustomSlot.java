@@ -229,7 +229,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
             this.slotId = slotId;
             this.gunStack = gunStack;
             com.ssscript.taczfixes.client.util.GunPackIconLoader.LoadedIcon icon = null;
-            if (definition.isCustom() && definition.slot != null) {
+            if (definition.slot != null) {
                 ResourceLocation tex = ResourceLocation.tryParse(definition.slot);
                 if (tex != null) {
                     icon = com.ssscript.taczfixes.client.util.GunPackIconLoader.load(tex);
@@ -280,16 +280,24 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
                             this.iconTexture.width(), this.iconTexture.height());
                 }
             } else {
-                try {
-                    int offset = GunRefitScreen.getSlotTextureXOffset(gunStack,
-                            AttachmentType.valueOf(definition.type.toUpperCase()));
-                    if (item.isEmpty() && offset >= 0 && offset != 192) {
-                        graphics.blit(GunRefitScreen.ICONS_TEXTURE, x + 2, y + 2,
-                                this.width - 4, this.height - 4,
-                                (float) offset, 0f, 32, 32,
-                                GunRefitScreen.getSlotsTextureWidth(), 32);
+                if (item.isEmpty() && this.iconTexture != null) {
+                    graphics.blit(this.iconTexture.texture(),
+                            x + 2, y + 2, 14, 14,
+                            0f, 0f,
+                            this.iconTexture.width(), this.iconTexture.height(),
+                            this.iconTexture.width(), this.iconTexture.height());
+                } else if (item.isEmpty()) {
+                    try {
+                        int offset = GunRefitScreen.getSlotTextureXOffset(gunStack,
+                                AttachmentType.valueOf(definition.type.toUpperCase()));
+                        if (offset >= 0 && offset != 192) {
+                            graphics.blit(GunRefitScreen.ICONS_TEXTURE, x + 2, y + 2,
+                                    this.width - 4, this.height - 4,
+                                    (float) offset, 0f, 32, 32,
+                                    GunRefitScreen.getSlotsTextureWidth(), 32);
+                        }
+                    } catch (IllegalArgumentException ignored) {
                     }
-                } catch (IllegalArgumentException ignored) {
                 }
             }
             if (!item.isEmpty()) {

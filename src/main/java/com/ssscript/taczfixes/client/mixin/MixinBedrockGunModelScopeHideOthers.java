@@ -64,40 +64,48 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         ItemStack gun = this.currentGunItem;
         if (gun == null || gun.isEmpty()) return;
         List<Object[]> standby = com.ssscript.taczfixes.client.util.StandbySlotBuffer.takePending();
+        boolean aiming = taczfixes$isAimingScopeView(gun) && taczfixes$hasScopeViewAttachment(gun);
         if (accelerated) {
+            // 加速路径: 渲染提交到 -940 层, 该层 before 函数与枪体共用镜头剔除模板测试
             for (Object[] slot : standby) {
-                com.ssscript.taczfixes.client.util.StandbySlotBuffer.renderSlotAttachment(
-                        (ItemStack) slot[0], gun,
+                renderStandbySlot((ItemStack) slot[0], gun,
                         (BedrockPart) slot[1],
                         pose, displayContext, light, overlay);
             }
             return;
         }
         renderActiveSlotLast(pose, displayContext, light, overlay);
-        boolean aiming = taczfixes$isAimingScopeView(gun) && taczfixes$hasScopeViewAttachment(gun);
-        if (!aiming) {
-            for (Object[] slot : standby) {
-                com.ssscript.taczfixes.client.util.StandbySlotBuffer.renderSlotAttachment(
-                        (ItemStack) slot[0], gun,
-                        (BedrockPart) slot[1],
-                        pose, displayContext, light, overlay);
-            }
-            return;
-        }
-        RenderHelper.disableItemEntityStencilTest();
-        RenderSystem.stencilFunc(519, 0, 255);
-        RenderSystem.stencilOp(7680, 7680, 7680);
+        // 与枪体保持一致: 应用 TACZ 原版镜头剔除模板函数(renderActiveSlotLast 渲染瞄具后已禁用模板测试)
+        taczfixes$applyActiveScopeStencil(gun);
         for (Object[] slot : standby) {
-            com.ssscript.taczfixes.client.util.StandbySlotBuffer.renderSlotAttachment(
-                    (ItemStack) slot[0], gun,
+            renderStandbySlot((ItemStack) slot[0], gun,
                     (BedrockPart) slot[1],
                     pose, displayContext, light, overlay);
         }
+        if (!aiming) {
+            return;
+        }
+        // 瞄准时: 配件仅在镜头内不可见, 镜头外正常渲染
         renderActiveSlotLast(pose, displayContext, light, overlay);
         if (com.ssscript.taczfixes.client.util.ScopeSwitchState.getActiveSlot(gun) == null) {
             taczfixes$rerenderStandardScope(pose, displayContext, light, overlay);
         }
         taczfixes$applyActiveScopeStencil(gun);
+    }
+
+    @Unique
+    private void renderStandbySlot(ItemStack item, ItemStack gun, BedrockPart node,
+                                   PoseStack pose, ItemDisplayContext displayContext,
+                                   int light, int overlay) {
+        if (isScopeAttachment(item)) {
+            // scope 类型配件: 原始网格渲染, 不触发 renderScope/renderBoth 的模板清除与镜片绘制
+            // (其自绘镜片会毁掉活动瞄具的镜头剔除模板, 导致镜内可见)
+            com.ssscript.taczfixes.client.util.StandbySlotBuffer.renderRawMesh(
+                    item, gun, node, pose, displayContext, light, overlay);
+        } else {
+            com.ssscript.taczfixes.client.util.StandbySlotBuffer.renderSlotAttachment(
+                    item, gun, node, pose, displayContext, light, overlay);
+        }
     }
 
     @Unique
@@ -189,8 +197,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         String active = ScopeSwitchState.getActiveSlot(gun);
         if (active != null) {
             ItemStack actItem = CustomSlotStorage.get(gun, active);
-            if (actItem != null && !actItem.isEmpty()) {
-                if (!isScopeAttachment(actItem)) return;
+            if (actItem != null && !actItem.isEmpty() && isScopeAttachment(actItem)) {
                 taczfixes$applyScopeStencilFunc(actItem);
                 return;
             }

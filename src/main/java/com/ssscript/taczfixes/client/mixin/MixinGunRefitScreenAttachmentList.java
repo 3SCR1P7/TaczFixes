@@ -2,9 +2,13 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.network.ClientMessageInstallCustomSlot;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
+import com.ssscript.taczfixes.client.util.TaczFixesClientState;
+import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
@@ -72,6 +76,19 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
             final ItemStack stack = inventory.getItem(index);
             InventoryAttachmentSlot slot = new InventoryAttachmentSlot(x, y0 + shown * 18, index, inventory,
                     btn -> {
+                        ItemStack installed = CustomSlotStorage.get(gunStack, selected);
+                        int oldConsume = installed.isEmpty() ? 0 : AttachmentTaczFixesManager.getRefitPointConsume(installed);
+                        Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
+                        if (total != null) {
+                            int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
+                            int add = AttachmentTaczFixesManager.getRefitPointConsume(stack);
+                            if (used + add > total + oldConsume) {
+                                btn.setFocused(false);
+                                TaczFixesClientState.markRejectFocusClear();
+                                SoundPlayManager.playerRefitSound(stack, player, SoundManager.INSTALL_SOUND);
+                                return;
+                            }
+                        }
                         SoundPlayManager.playerRefitSound(stack, player, SoundManager.INSTALL_SOUND);
                         NetworkHandler.CHANNEL.sendToServer(new ClientMessageInstallCustomSlot(index, selected));
                     });
