@@ -52,7 +52,9 @@
     "MixinAttachmentRenderDisplaySwitch",
     "MixinBedrockGunModelDisplaySwitch",
     "MixinCameraSetupEventDisplaySwitch",
-    "MixinZoomKey"
+    "MixinZoomKey",
+    "MixinScreenRefitReject",
+    "MixinGsHelper"
   ],
   "client": [],
   "injectors": {

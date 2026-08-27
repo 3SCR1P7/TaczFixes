@@ -18,6 +18,10 @@
     "MixinAbstractGunDoBulletSpread",
     "MixinGunScriptAPIGetReloadTime",
     "MixinGunScriptAPIGetBoltTime",
+    "MixinLivingEntityShootBoltCooldown",
+    "MixinLivingEntityReloadExtraAmmo",
+    "MixinAttachmentDataUtilsAmmoAmount",
+    "MixinModernKineticGunItemFireSelect",
     "MixinTaczProjectileExplosion",
     "MixinGunLevelMethods",
     "MixinBulletPenetrationBlocker",
@@ -45,9 +49,18 @@
     "MixinAttachmentDataUtils",
     "MixinAttachmentCachePropertyCustomSlot",
     "MixinAttachmentPropertyManager",
-    "MixinAdsModifierCustomSlot"
+    "MixinAdsModifierCustomSlot",
+    "MixinEntityKineticBulletBulletProperty",
+    "MixinClientMessageRefitGunRefitPoint",
+    "MixinModernKineticGunScriptAPI",
+    "MixinAbstractGunAmmoCheck"
   ],
-  "client": [],
+  "client": [
+    "MixinClientGunTooltip",
+    "MixinGunHudOverlay",
+    "MixinLocalPlayerShootBoltCooldown",
+    "MixinLocalPlayerDataHolderStateLock"
+  ],
   "injectors": {
     "defaultRequire": 1
   }
