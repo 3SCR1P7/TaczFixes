@@ -2,11 +2,14 @@ package com.ssscript.taczfixes.common.data;
 
 import com.ssscript.taczfixes.common.Config;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import javax.annotation.Nullable;
+import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -38,6 +41,15 @@ public class TaczFixesDataManager {
         return data == null ? null : data.limb_factor;
     }
 
+    public static Integer getGunRefitPoint(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.refit_point;
+    }
+
     public static GunTaczFixesData.RecoilConfig resolveRecoil(ResourceLocation dataId, FireMode mode) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         if (data == null || data.recoil_multiplier == null || data.recoil_multiplier.isEmpty()) {
@@ -50,6 +62,35 @@ public class TaczFixesDataManager {
             case UNKNOWN -> null;
         };
         return key == null ? null : data.recoil_multiplier.get(key);
+    }
+
+    public static Map<String, String> resolveAmmoReplace(ResourceLocation gunId) {
+        ResourceLocation dataId = resolveDataId(gunId);
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null || data.ammo_replace == null ? Collections.emptyMap() : data.ammo_replace;
+    }
+
+    /**
+     * 枪械是否允许加速拉栓/加速换弹时同步加速动画播放。
+     * 未配置或无数据时默认允许(保持既有行为)。
+     */
+    public static boolean isAnimationZoomAllowed(@Nullable ItemStack gunStack) {
+        if (gunStack == null) return true;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return true;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null || data.allow_animation_zoom == null || data.allow_animation_zoom;
+    }
+
+    /** 枪械 data 字段 bullet_in_barrel: 换弹时额外装填 min(x, n) 发。未配置返回 null。 */
+    @Nullable
+    public static Integer getBulletInBarrel(ItemStack gunStack) {
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.bullet_in_barrel;
     }
 
     public static GunTaczFixesData.FireKnockbackConfig resolveFireKnockback(ResourceLocation dataId) {

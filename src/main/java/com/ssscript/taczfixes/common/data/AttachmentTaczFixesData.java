@@ -2,12 +2,22 @@ package com.ssscript.taczfixes.common.data;
 
 import com.tacz.guns.resource.pojo.data.attachment.Modifier;
 
+import java.util.List;
 import java.util.Map;
 
 public class AttachmentTaczFixesData {
+    public Integer refit_point_consume;
     public Modifier limb_factor;
     public Map<String, GunTaczFixesData.RecoilConfig> recoil_multiplier;
     public Modifier fire_knockback_power;
+    public Modifier friction;
+    public Modifier gravity;
+    public Modifier bullet_life;
+    public Modifier manual_action_time;
+    public Modifier reload_time;
+    public Modifier ammo_amount;
+    public List<String> fire_mode_enable;
+    public List<String> fire_mode_disable;
     public InaccuracyAdjust inaccuracy_multiplier;
 
     public static class InaccuracyAdjust {

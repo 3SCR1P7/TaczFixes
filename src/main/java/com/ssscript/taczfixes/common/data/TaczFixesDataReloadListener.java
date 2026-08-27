@@ -4,14 +4,22 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
 import com.tacz.guns.util.ResourceScanner;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.PreparableReloadListener;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.util.profiling.ProfilerFiller;
+import net.minecraftforge.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
+import java.io.IOException;
+import java.io.Reader;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -20,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
+import java.util.stream.Stream;
 
 public class TaczFixesDataReloadListener implements PreparableReloadListener {
     private static final Logger LOGGER = LogManager.getLogger("taczfixes");
@@ -63,6 +72,7 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
                 LOGGER.error("taczfixes: failed to parse taczfixes of gun data {}", entry.getKey(), ex);
             }
         }
+        scanFileSystem(result);
         Map<ResourceLocation, JsonElement> tags =
                 ResourceScanner.scanDirectory(resourceManager, "tacz_tags/attachments/allow_attachments", GSON);
         for (Map.Entry<ResourceLocation, JsonElement> entry : tags.entrySet()) {
@@ -81,6 +91,67 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
         }
         result.switchedDisplays.putAll(scanSwitchedDisplays(resourceManager));
         return result;
+    }
+
+    public static Map<ResourceLocation, GunTaczFixesData> scanFileSystemGunData() {
+        ScanResult result = new ScanResult();
+        scanFileSystem(result);
+        return result.gunData;
+    }
+
+    private static void scanFileSystem(ScanResult result) {
+        try {
+            Path taczDir = FMLPaths.GAMEDIR.get().resolve("tacz");
+            if (!Files.isDirectory(taczDir)) return;
+            try (Stream<Path> packStream = Files.list(taczDir)) {
+                packStream.filter(Files::isDirectory).forEach(packDir -> {
+                    Path dataDir = packDir.resolve("data");
+                    if (!Files.isDirectory(dataDir)) return;
+                    try (Stream<Path> nsStream = Files.list(dataDir)) {
+                        nsStream.filter(Files::isDirectory).forEach(nsDir -> {
+                            Path gunsDir = nsDir.resolve("data").resolve("guns");
+                            if (!Files.isDirectory(gunsDir)) return;
+                            try (Stream<Path> gunStream = Files.list(gunsDir)) {
+                                gunStream.filter(p -> p.getFileName().toString().endsWith(".json")).forEach(file -> {
+                                    String fileName = file.getFileName().toString();
+                                    String id = nsDir.getFileName().toString() + ":" + fileName.substring(0, fileName.length() - 5);
+                                    try {
+                                        JsonObject root = parseLenientJson(file);
+                                        if (root == null || !root.has("taczfixes")) return;
+                                        JsonElement tfElement = root.get("taczfixes");
+                                        if (!tfElement.isJsonObject()) return;
+                                        GunTaczFixesData data = GSON.fromJson(tfElement, GunTaczFixesData.class);
+                                        if (data != null) {
+                                            JsonElement rmElement = tfElement.getAsJsonObject().get("recoil_multiplier");
+                                            if (rmElement != null && rmElement.isJsonObject()) {
+                                                RecoilConfigJsonParser.collectRecoilModifiers(data.recoil_multiplier, rmElement.getAsJsonObject());
+                                            }
+                                            result.gunData.put(ResourceLocation.tryParse(id), data);
+                                        }
+                                    } catch (Exception ex) {
+                                        LOGGER.error("taczfixes: failed to parse gun data file {}", file, ex);
+                                    }
+                                });
+                            } catch (IOException e) {
+                                LOGGER.warn("taczfixes: failed to list gun dir {}", gunsDir, e);
+                            }
+                        });
+                    } catch (IOException e) {
+                        LOGGER.warn("taczfixes: failed to list data dir {}", dataDir, e);
+                    }
+                });
+            }
+        } catch (Exception ex) {
+            LOGGER.error("taczfixes: failed to scan tacz dir", ex);
+        }
+    }
+
+    private static JsonObject parseLenientJson(Path file) throws IOException {
+        try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
+            JsonReader jr = new JsonReader(reader);
+            jr.setLenient(true);
+            return JsonParser.parseReader(jr).getAsJsonObject();
+        }
     }
 
     private static Map<ResourceLocation, List<ResourceLocation>> scanSwitchedDisplays(ResourceManager resourceManager) {

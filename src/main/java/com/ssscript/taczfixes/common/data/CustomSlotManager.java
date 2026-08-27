@@ -182,4 +182,32 @@ public class CustomSlotManager {
             }
         }
     }
+
+    public static void cascadeUnloadConflicts(net.minecraft.server.level.ServerPlayer player, ItemStack gunStack) {
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return;
+        ResourceLocation gunId = gun.getGunId(gunStack);
+        Map<String, CustomSlotDefinition> slots = getSlots(gunId);
+        if (slots.isEmpty()) return;
+        java.util.Map<String, ItemStack> unloaded = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, CustomSlotDefinition> entry : slots.entrySet()) {
+            if (unloaded.containsKey(entry.getKey())) continue;
+            ItemStack stored = CustomSlotStorage.get(gunStack, entry.getKey());
+            if (stored.isEmpty()) continue;
+            boolean conflict = isConflictOccupied(gunId, gunStack, entry.getValue());
+            if (conflict) {
+                ItemStack removed = CustomSlotStorage.unload(gunStack, entry.getKey());
+                if (!removed.isEmpty()) {
+                    unloaded.put(entry.getKey(), removed);
+                }
+            }
+        }
+        boolean liberated = com.ssscript.taczfixes.common.util.LiberateCompat.isLiberated(player);
+        for (Map.Entry<String, ItemStack> e : unloaded.entrySet()) {
+            if (liberated) continue;
+            if (!player.getInventory().add(e.getValue())) {
+                player.drop(e.getValue(), false);
+            }
+        }
+    }
 }

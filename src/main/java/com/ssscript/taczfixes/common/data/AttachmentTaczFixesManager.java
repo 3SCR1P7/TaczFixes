@@ -2,18 +2,26 @@ package com.ssscript.taczfixes.common.data;
 
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.pojo.data.attachment.Modifier;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
+import com.ssscript.taczfixes.common.Config;
 import com.ssscript.taczfixes.common.util.RecoilMultiplierResolver;
+import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.EnumSet;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -65,6 +73,144 @@ public class AttachmentTaczFixesManager {
             return force;
         }
         return (float) AttachmentPropertyManager.eval(modifiers, force);
+    }
+
+    public static float applyFriction(ItemStack gunItem, float base) {
+        return applyModifier(gunItem, base, data -> data.friction);
+    }
+
+    public static int getRefitPointConsume(ItemStack attachmentStack) {
+        if (attachmentStack == null || attachmentStack.isEmpty()) return 0;
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(attachmentStack);
+        if (attachment == null) return 0;
+        ResourceLocation id = attachment.getAttachmentId(attachmentStack);
+        AttachmentTaczFixesData data = resolveData(id);
+        return data == null || data.refit_point_consume == null
+                ? Config.REFIT_POINT_DEFAULT_CONSUME.get()
+                : data.refit_point_consume;
+    }
+
+    public static int getRefitPointUsed(ItemStack gunItem) {
+        int used = 0;
+        IGun gun = IGun.getIGunOrNull(gunItem);
+        if (gun == null) return 0;
+        for (AttachmentType type : AttachmentType.values()) {
+            if (type == AttachmentType.NONE) continue;
+            ItemStack stack = gun.getAttachment(gunItem, type);
+            if (stack.isEmpty()) continue;
+            used += getRefitPointConsume(stack);
+        }
+        ResourceLocation gunId = gun.getGunId(gunItem);
+        for (String slotId : CustomSlotManager.getSlots(gunId).keySet()) {
+            used += getRefitPointConsume(CustomSlotStorage.get(gunItem, slotId));
+        }
+        return used;
+    }
+
+    public static float applyGravity(ItemStack gunItem, float base) {
+        return applyModifier(gunItem, base, data -> data.gravity);
+    }
+
+    public static float applyBulletLife(ItemStack gunItem, float base) {
+        return applyModifier(gunItem, base, data -> data.bullet_life);
+    }
+
+    /** 拉栓时间总倍率(所有已安装配件的 manual_action_time 修饰符对基准值 1 求值)。≤0 表示时长被减为 0 或以下(直接完成)。 */
+    public static double getManualActionTimeFactor(ItemStack gunItem) {
+        return getTimeFactor(gunItem, data -> data.manual_action_time);
+    }
+
+    /** 换弹时间总倍率(所有已安装配件的 reload_time 修饰符对基准值 1 求值)。≤0 表示时长被减为 0 或以下(直接完成)。 */
+    public static double getReloadTimeFactor(ItemStack gunItem) {
+        return getTimeFactor(gunItem, data -> data.reload_time);
+    }
+
+    /**
+     * 弹匣容量修饰符: 在扩容弹匣(extended mag)计算结果之后生效。
+     * y = (x + Σaddend) × (1 + Σpercent) × Πmultiplier, 结果至少为 1。
+     */
+    public static double applyAmmoAmount(ItemStack gunItem, int base) {
+        List<Modifier> modifiers = collectValues(gunItem, data -> data.ammo_amount);
+        if (modifiers.isEmpty()) {
+            return base;
+        }
+        double value = AttachmentPropertyManager.eval(modifiers, base);
+        return Math.max(1.0d, value);
+    }
+
+    /**
+     * 开火模式解锁/禁用: fire_mode_enable 解锁(原生集合没有的模式追加到末尾),
+     * fire_mode_disable 禁用(从集合中移除); 同时出现在两者中时以禁用优先。
+     * 无任何调整时返回原集合引用(null 语义由调用方以 == 判断)。
+     */
+    @Nullable
+    public static List<FireMode> adjustFireModeSet(ItemStack gunItem, List<FireMode> original) {
+        Set<FireMode> enabled = collectFireModes(gunItem, data -> data.fire_mode_enable);
+        Set<FireMode> disabled = collectFireModes(gunItem, data -> data.fire_mode_disable);
+        if (enabled.isEmpty() && disabled.isEmpty()) {
+            return null;
+        }
+        LinkedHashSet<FireMode> result = new LinkedHashSet<>();
+        for (FireMode mode : original) {
+            if (mode != null && mode != FireMode.UNKNOWN && !disabled.contains(mode)) {
+                result.add(mode);
+            }
+        }
+        for (FireMode mode : enabled) {
+            if (!disabled.contains(mode)) {
+                result.add(mode);
+            }
+        }
+        if (result.isEmpty()) {
+            return null;
+        }
+        return new ArrayList<>(result);
+    }
+
+    private static Set<FireMode> collectFireModes(ItemStack gunItem,
+                                                  Function<AttachmentTaczFixesData, List<String>> getter) {
+        Set<FireMode> modes = EnumSet.noneOf(FireMode.class);
+        for (List<String> names : collectValues(gunItem, getter)) {
+            if (names == null) continue;
+            for (String name : names) {
+                FireMode mode = parseFireMode(name);
+                if (mode != null) {
+                    modes.add(mode);
+                }
+            }
+        }
+        return modes;
+    }
+
+    @Nullable
+    private static FireMode parseFireMode(@Nullable String name) {
+        if (name == null || name.isBlank()) {
+            return null;
+        }
+        try {
+            FireMode mode = FireMode.valueOf(name.trim().toUpperCase(Locale.ROOT));
+            return mode == FireMode.UNKNOWN ? null : mode;
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
+    }
+
+    private static double getTimeFactor(ItemStack gunItem,
+                                        Function<AttachmentTaczFixesData, Modifier> getter) {
+        List<Modifier> modifiers = collectValues(gunItem, getter);
+        if (modifiers.isEmpty()) {
+            return 1.0;
+        }
+        return AttachmentPropertyManager.eval(modifiers, 1.0);
+    }
+
+    private static float applyModifier(ItemStack gunItem, float base,
+                                       Function<AttachmentTaczFixesData, Modifier> getter) {
+        List<Modifier> modifiers = collectValues(gunItem, getter);
+        if (modifiers.isEmpty()) {
+            return base;
+        }
+        return (float) AttachmentPropertyManager.eval(modifiers, base);
     }
 
     public static InaccuracyParams adjustInaccuracy(ItemStack gunItem, InaccuracyParams base) {
