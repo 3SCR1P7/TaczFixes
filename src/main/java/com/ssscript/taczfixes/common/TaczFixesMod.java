@@ -2,19 +2,24 @@ package com.ssscript.taczfixes.common;
 
 import com.ssscript.taczfixes.common.data.TaczFixesDataHandler;
 import com.ssscript.taczfixes.common.enchantment.AnnihilationEnchantment;
+import com.ssscript.taczfixes.common.enchantment.AbyssGazerEnchantment;
 import com.ssscript.taczfixes.common.enchantment.AntiGravityEnchantment;
+import com.ssscript.taczfixes.common.enchantment.ArcanaEdenEnchantment;
 import com.ssscript.taczfixes.common.enchantment.ChainExplosionEnchantment;
 import com.ssscript.taczfixes.common.enchantment.ChargeEnchantment;
 import com.ssscript.taczfixes.common.enchantment.CollectorEnchantment;
 import com.ssscript.taczfixes.common.enchantment.DecapitationEnchantment;
 import com.ssscript.taczfixes.common.enchantment.DeepLearningEnchantment;
+import com.ssscript.taczfixes.common.enchantment.DoubleShotEnchantment;
 import com.ssscript.taczfixes.common.enchantment.ElectromagneticCoilEnchantment;
 import com.ssscript.taczfixes.common.enchantment.EqualizerEnchantment;
 import com.ssscript.taczfixes.common.enchantment.ExplosionExpertEnchantment;
+import com.ssscript.taczfixes.common.enchantment.FocusedAmmoEnchantment;
 import com.ssscript.taczfixes.common.enchantment.LifeLeechEnchantment;
 import com.ssscript.taczfixes.common.enchantment.NeurotoxinEnchantment;
 import com.ssscript.taczfixes.common.enchantment.OverloadEnchantment;
 import com.ssscript.taczfixes.common.enchantment.PandoraParadoxEnchantment;
+import com.ssscript.taczfixes.common.enchantment.PatienceEnchantment;
 import com.ssscript.taczfixes.common.enchantment.PreemptiveStrikeEnchantment;
 import com.ssscript.taczfixes.common.enchantment.RandomEnchantment;
 import com.ssscript.taczfixes.common.enchantment.SmartScopeEnchantment;
@@ -89,6 +94,16 @@ public class TaczFixesMod {
             ENCHANTMENTS.register("decapitation", DecapitationEnchantment::new);
     public static final RegistryObject<Enchantment> CHARGE_ENCHANTMENT =
             ENCHANTMENTS.register("charge", ChargeEnchantment::new);
+    public static final RegistryObject<Enchantment> ABYSS_GAZER_ENCHANTMENT =
+            ENCHANTMENTS.register("abyssgazer", AbyssGazerEnchantment::new);
+    public static final RegistryObject<Enchantment> DOUBLE_SHOT_ENCHANTMENT =
+            ENCHANTMENTS.register("double_shot", DoubleShotEnchantment::new);
+    public static final RegistryObject<Enchantment> FOCUSED_AMMO_ENCHANTMENT =
+            ENCHANTMENTS.register("focused_ammo", FocusedAmmoEnchantment::new);
+    public static final RegistryObject<Enchantment> ARCANA_EDEN_ENCHANTMENT =
+            ENCHANTMENTS.register("arcana_eden", ArcanaEdenEnchantment::new);
+    public static final RegistryObject<Enchantment> PATIENCE_ENCHANTMENT =
+            ENCHANTMENTS.register("patience", PatienceEnchantment::new);
 
     public TaczFixesMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);

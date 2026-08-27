@@ -65,8 +65,10 @@ public class Config {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> RECOIL_FIRE_RATE_DISABLED_GUNS;
     public static final ForgeConfigSpec.IntValue REFIT_TOAST_DURATION_MS;
     public static final ForgeConfigSpec.IntValue REFIT_TOAST_FADE_MS;
+    public static final ForgeConfigSpec.DoubleValue REFIT_BUTTON_OPACITY;
     public static final ForgeConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MIN;
     public static final ForgeConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MAX;
+    public static final ForgeConfigSpec.IntValue REFIT_POINT_DEFAULT_CONSUME;
 
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PENETRATION_BLOCKED_ENTITIES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DAMAGE_REDUCTION_ENTITIES;
@@ -175,6 +177,20 @@ public class Config {
     public static final ForgeConfigSpec.IntValue ENCH_CHARGE_MAX_LEVEL;
     public static final ForgeConfigSpec.DoubleValue ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL;
     public static final ForgeConfigSpec.IntValue ENCH_CHARGE_ANVIL_MULT;
+    public static final ForgeConfigSpec.IntValue ENCH_ABYSSGAZER_MAX_LEVEL;
+    public static final ForgeConfigSpec.IntValue ENCH_ABYSSGAZER_ANVIL_MULT;
+    public static final ForgeConfigSpec.IntValue ENCH_DOUBLE_SHOT_MAX_LEVEL;
+    public static final ForgeConfigSpec.DoubleValue ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL;
+    public static final ForgeConfigSpec.IntValue ENCH_DOUBLE_SHOT_ANVIL_MULT;
+    public static final ForgeConfigSpec.IntValue ENCH_FOCUSED_AMMO_MAX_LEVEL;
+    public static final ForgeConfigSpec.DoubleValue ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL;
+    public static final ForgeConfigSpec.IntValue ENCH_FOCUSED_AMMO_ANVIL_MULT;
+    public static final ForgeConfigSpec.IntValue ENCH_ARCANA_EDEN_MAX_LEVEL;
+    public static final ForgeConfigSpec.IntValue ENCH_ARCANA_EDEN_ANVIL_MULT;
+    public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_MAX_LEVEL;
+    public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_DELAY_MS;
+    public static final ForgeConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
+    public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_ANVIL_MULT;
 
     public static final ForgeConfigSpec.BooleanValue GUN_BOTTLE_ENABLED;
     public static final ForgeConfigSpec.IntValue GUN_BOTTLE_EXP_PER_BOTTLE;
@@ -391,6 +407,18 @@ public class Config {
         REFIT_VIEW_ZOOM_MAX = BUILDER
                 .comment("改装视角模式下，滚轮缩放的最大倍率。默认值：4")
                 .defineInRange("max_zoom", 4.0, 1.0, 100.0);
+        BUILDER.pop();
+
+        BUILDER.push("refit_button");
+        REFIT_BUTTON_OPACITY = BUILDER
+                .comment("改装界面按钮（查看当前改装/保存当前方案/加载改装方案）背景的不透明度。0=全透明，1=不透明。默认值：0.45")
+                .defineInRange("opacity", 0.45, 0.0, 1.0);
+        BUILDER.pop();
+
+        BUILDER.push("refit_point");
+        REFIT_POINT_DEFAULT_CONSUME = BUILDER
+                .comment("配件改装点数的全局默认消耗。data中未填写refit_point_consume字段的配件使用此值。默认值：0")
+                .defineInRange("default_consume", 0, 0, 100);
         BUILDER.pop();
 
         BUILDER.push("burst_fire");
@@ -906,6 +934,63 @@ public class Config {
         ENCH_CHARGE_ANVIL_MULT = BUILDER
                 .comment("冲锋：经验等级乘数。默认值：1")
                 .defineInRange("charge_cost_multiplier", 1, 1, 100);
+        BUILDER.pop();
+
+        BUILDER.push("abyss_gazer");
+        ENCH_ABYSSGAZER_MAX_LEVEL = BUILDER
+                .comment("凝渊者：附魔的最大等级。默认值：1")
+                .defineInRange("abyss_gazer_max_level", 1, 1, 10);
+        ENCH_ABYSSGAZER_ANVIL_MULT = BUILDER
+                .comment("凝渊者：经验等级乘数。默认值：8")
+                .defineInRange("abyss_gazer_cost_multiplier", 8, 1, 100);
+        BUILDER.pop();
+
+        BUILDER.push("double_shot");
+        ENCH_DOUBLE_SHOT_MAX_LEVEL = BUILDER
+                .comment("双发弹药：附魔的最大等级。默认值：5")
+                .defineInRange("double_shot_max_level", 5, 1, 10);
+        ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL = BUILDER
+                .comment("双发弹药：每级触发额外子弹的概率。默认值：0.2")
+                .defineInRange("double_shot_chance_per_level", 0.2, 0.0, 1.0);
+        ENCH_DOUBLE_SHOT_ANVIL_MULT = BUILDER
+                .comment("双发弹药：经验等级乘数。默认值：2")
+                .defineInRange("double_shot_cost_multiplier", 2, 1, 100);
+        BUILDER.pop();
+
+        BUILDER.push("focused_ammo");
+        ENCH_FOCUSED_AMMO_MAX_LEVEL = BUILDER
+                .comment("聚能弹药：附魔的最大等级。默认值：4")
+                .defineInRange("focused_ammo_max_level", 4, 1, 10);
+        ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL = BUILDER
+                .comment("聚能弹药：每级每次穿透的伤害倍率增量。默认值：0.25")
+                .defineInRange("focused_ammo_damage_mult_per_level", 0.25, 0.0, 10.0);
+        ENCH_FOCUSED_AMMO_ANVIL_MULT = BUILDER
+                .comment("聚能弹药：经验等级乘数。默认值：2")
+                .defineInRange("focused_ammo_cost_multiplier", 2, 1, 100);
+        BUILDER.pop();
+
+        BUILDER.push("arcana_eden");
+        ENCH_ARCANA_EDEN_MAX_LEVEL = BUILDER
+                .comment("阿卡纳伊甸：附魔的最大等级。默认值：2")
+                .defineInRange("arcana_eden_max_level", 2, 1, 10);
+        ENCH_ARCANA_EDEN_ANVIL_MULT = BUILDER
+                .comment("阿卡纳伊甸：经验等级乘数。默认值：4")
+                .defineInRange("arcana_eden_cost_multiplier", 4, 1, 100);
+        BUILDER.pop();
+
+        BUILDER.push("patience");
+        ENCH_PATIENCE_MAX_LEVEL = BUILDER
+                .comment("耐心：附魔的最大等级。默认值：3")
+                .defineInRange("patience_max_level", 3, 1, 10);
+        ENCH_PATIENCE_DELAY_MS = BUILDER
+                .comment("耐心：未开火多少毫秒后开始累积伤害加成。默认值：500")
+                .defineInRange("patience_delay_ms", 500, 0, 100000);
+        ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL = BUILDER
+                .comment("耐心：每级每 tick 增加的子弹伤害百分比。默认值：0.5%")
+                .defineInRange("patience_damage_percent_per_tick_per_level", 0.5, 0.0, 100.0);
+        ENCH_PATIENCE_ANVIL_MULT = BUILDER
+                .comment("耐心：经验等级乘数。默认值：2")
+                .defineInRange("patience_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
 
         BUILDER.pop();

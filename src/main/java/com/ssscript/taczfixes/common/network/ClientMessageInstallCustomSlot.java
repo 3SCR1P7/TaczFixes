@@ -2,11 +2,14 @@ package com.ssscript.taczfixes.common.network;
 
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
+import com.google.gson.JsonElement;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -70,11 +73,30 @@ public class ClientMessageInstallCustomSlot {
         }
 
         java.util.Map<String, CustomSlotDefinition> allSlots = CustomSlotManager.getSlots(gunId);
-        java.util.Set<String> toUnload = new java.util.LinkedHashSet<>(def.getConflict().keySet());
+        java.util.Set<String> toUnload = new java.util.LinkedHashSet<>();
+        for (java.util.Map.Entry<String, JsonElement> conflictEntry : def.getConflict().entrySet()) {
+            if (CustomSlotManager.satisfies(gunId, gunStack, conflictEntry.getKey(), conflictEntry.getValue())) {
+                toUnload.add(conflictEntry.getKey());
+            }
+        }
         for (java.util.Map.Entry<String, CustomSlotDefinition> entry : allSlots.entrySet()) {
             if (entry.getKey().equals(message.slotId)) continue;
-            if (entry.getValue().getConflict().containsKey(message.slotId)) {
+            JsonElement cond = entry.getValue().getConflict().get(message.slotId);
+            if (cond != null && CustomSlotManager.satisfies(gunId, gunStack, entry.getKey(), cond)) {
                 toUnload.add(entry.getKey());
+            }
+        }
+        Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
+        if (total != null) {
+            int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
+            int delta = -AttachmentTaczFixesManager.getRefitPointConsume(
+                    CustomSlotStorage.get(gunStack, message.slotId));
+            for (String conflictId : toUnload) {
+                delta -= refitPointInSlot(gunStack, gun, conflictId);
+            }
+            delta += AttachmentTaczFixesManager.getRefitPointConsume(item);
+            if (used + delta > total) {
+                return;
             }
         }
         for (String conflictId : toUnload) {
@@ -100,9 +122,24 @@ public class ClientMessageInstallCustomSlot {
             player.getInventory().setItem(message.slotIndex, ItemStack.EMPTY);
         }
         CustomSlotManager.cascadeUnloadDependents(player, gunStack);
+        CustomSlotManager.cascadeUnloadConflicts(player, gunStack);
         AttachmentPropertyManager.postChangeEvent(player, gunStack);
         player.inventoryMenu.broadcastChanges();
         com.tacz.guns.network.NetworkHandler.sendToClientPlayer(new com.tacz.guns.network.message.ServerMessageRefreshRefitScreen(), player);
+    }
+
+    private static int refitPointInSlot(ItemStack gunStack, IGun gun, String refId) {
+        ItemStack stack = CustomSlotStorage.get(gunStack, refId);
+        if (stack.isEmpty()) {
+            try {
+                com.tacz.guns.api.item.attachment.AttachmentType type =
+                        com.tacz.guns.api.item.attachment.AttachmentType.valueOf(refId.toUpperCase());
+                stack = gun.getAttachment(gunStack, type);
+            } catch (IllegalArgumentException ex) {
+                return 0;
+            }
+        }
+        return AttachmentTaczFixesManager.getRefitPointConsume(stack);
     }
 
     private static ItemStack unloadStandard(ItemStack gunStack, IGun gun, String refId) {

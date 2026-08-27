@@ -39,7 +39,18 @@ public class GunEnchantmentHelper {
         if (stack.isEmpty() || enchantment == null) {
             return 0;
         }
-        return EnchantmentHelper.getTagEnchantmentLevel(enchantment, stack);
+        int base = EnchantmentHelper.getTagEnchantmentLevel(enchantment, stack);
+        if (base <= 0) {
+            return 0;
+        }
+        Enchantment eden = com.ssscript.taczfixes.common.TaczFixesMod.ARCANA_EDEN_ENCHANTMENT.get();
+        if (eden != null && enchantment != eden && enchantment.getMaxLevel() > 1) {
+            int edenLevel = EnchantmentHelper.getTagEnchantmentLevel(eden, stack);
+            if (edenLevel > 0) {
+                base += edenLevel;
+            }
+        }
+        return base;
     }
 
     public static boolean hasEnchant(ItemStack stack, Enchantment enchantment) {
@@ -104,6 +115,11 @@ public class GunEnchantmentHelper {
             case "random" -> Config.ENCH_RANDOM_ANVIL_MULT.get();
             case "decapitation" -> Config.ENCH_DECAPITATION_ANVIL_MULT.get();
             case "charge" -> Config.ENCH_CHARGE_ANVIL_MULT.get();
+            case "abyssgazer" -> Config.ENCH_ABYSSGAZER_ANVIL_MULT.get();
+            case "double_shot" -> Config.ENCH_DOUBLE_SHOT_ANVIL_MULT.get();
+            case "focused_ammo" -> Config.ENCH_FOCUSED_AMMO_ANVIL_MULT.get();
+            case "arcana_eden" -> Config.ENCH_ARCANA_EDEN_ANVIL_MULT.get();
+            case "patience" -> Config.ENCH_PATIENCE_ANVIL_MULT.get();
             default -> -1;
         };
     }
