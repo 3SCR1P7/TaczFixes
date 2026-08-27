@@ -45,14 +45,43 @@
         // 对于flat和percent都生效
         "multiplier": 0.5
       },
-      "cooldown_speed": {
-        // 对于回正速度的调整
-        "addned": 0.1
-      },
-      "cooldown_delay": {
-        // 对于回正延迟的调整
-        "addned": -20
-      }
+    "cooldown_speed": {
+      // 对于回正速度的调整
+      "addned": 0.1
+    },
+    "cooldown_delay": {
+      // 对于回正延迟的调整
+      "addned": -20
+    },
+    "friction": {
+      "addend": 0.01
+    },
+    "gravity": {
+      "addend": 0.01
+    },
+    "bullet_life": {
+      "addend": 0.01
+    },
+    "manual_action_time": {
+      "addend": 0.01
+    },
+    "reload_time": {
+      "addend": 0.01
+    },
+    "sprint_time": {
+      "addend": 0.01
+    },
+    "ammo_amount": {
+      "addend": 1
+    },
+    // 安装此配件后解锁此开火模式
+    "fire_mode_enable": [
+      "auto"
+    ],
+    // 安装此配件后禁用此开火模式
+    "fire_mode_disable": [
+      "auto"
+      ],
     }
   }
 }
