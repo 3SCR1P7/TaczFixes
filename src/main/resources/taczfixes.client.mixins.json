@@ -4,10 +4,11 @@
   "package": "com.ssscript.taczfixes.client.mixin",
   "compatibilityLevel": "JAVA_17",
   "refmap": "taczfixes.refmap.json",
-  "mixins": [
-    "LocalPlayerShootPreCheckMixin",
-    "LocalPlayerCrawlMixin",
-    "InnerThirdPersonManagerMixin",
+  "mixins": [],
+  "client": [
+    "MixinLocalPlayerShootPreCheck",
+    "MixinLocalPlayerCrawl",
+    "MixinInnerThirdPersonManager",
     "MixinArcanaScopeGate",
     "MixinArcanaScopeState",
     "MixinArcanaAttachmentData",
@@ -23,7 +24,6 @@
     "MixinObjectAnimationRunner",
     "MixinHitboxDisabler",
     "MixinThirdPersonDisabler",
-    "MixinClientTrackingSync",
     "MixinAttachmentDisplayStepless",
     "MixinCameraSetupEventZoom",
     "MixinFirstPersonRenderGunEvent",
@@ -33,6 +33,7 @@
     "MixinBedrockAttachmentModelSightStencil",
     "MixinMouseHandlerZoomSensitivity",
     "MixinGunRefitScreenCustomSlot",
+    "MixinGunRefitScreenSlotAdapter",
     "MixinBedrockGunModelRefitView",
     "MixinGunRefitScreenAttachmentList",
     "MixinRefitTransformResetState",
@@ -52,11 +53,15 @@
     "MixinAttachmentRenderDisplaySwitch",
     "MixinBedrockGunModelDisplaySwitch",
     "MixinCameraSetupEventDisplaySwitch",
+    "MixinRangefinderLock",
+    "MixinRangefinderProjection",
+    "MixinGunPropertyDiagrams",
     "MixinZoomKey",
     "MixinScreenRefitReject",
-    "MixinGsHelper"
+    "MixinGsHelper",
+    "MixinClientTrackingSync",
+    "MixinClientAttachmentItemTooltip"
   ],
-  "client": [],
   "injectors": {
     "defaultRequire": 1
   }

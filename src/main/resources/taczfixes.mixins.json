@@ -6,18 +6,18 @@
   "compatibilityLevel": "JAVA_17",
   "refmap": "taczfixes.refmap.json",
   "mixins": [
-    "EntityKineticBulletMixin",
-    "EntityKineticBulletAccessor",
+    "MixinEntityKineticBullet",
     "MixinEntityKineticBulletRicochet",
     "MixinEntityKineticBulletLevelDamage",
-    "LivingEntityShootMixin",
-    "LivingEntityCrawlMixin",
+    "MixinLivingEntityShoot",
+    "MixinLivingEntityCrawl",
     "MixinShootOnceIncrement",
     "MixinModernKineticGunBulletSpread",
     "MixinModernKineticGunDoBulletSpread",
     "MixinAbstractGunDoBulletSpread",
     "MixinGunScriptAPIGetReloadTime",
     "MixinGunScriptAPIGetBoltTime",
+    "MixinLivingEntityAimSprintTime",
     "MixinLivingEntityShootBoltCooldown",
     "MixinLivingEntityReloadExtraAmmo",
     "MixinAttachmentDataUtilsAmmoAmount",
@@ -49,7 +49,6 @@
     "MixinAttachmentDataUtils",
     "MixinAttachmentCachePropertyCustomSlot",
     "MixinAttachmentPropertyManager",
-    "MixinAdsModifierCustomSlot",
     "MixinEntityKineticBulletBulletProperty",
     "MixinClientMessageRefitGunRefitPoint",
     "MixinModernKineticGunScriptAPI",
@@ -60,8 +59,5 @@
     "MixinGunHudOverlay",
     "MixinLocalPlayerShootBoltCooldown",
     "MixinLocalPlayerDataHolderStateLock"
-  ],
-  "injectors": {
-    "defaultRequire": 1
-  }
+  ]
 }
