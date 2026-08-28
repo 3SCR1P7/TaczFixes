@@ -2,8 +2,12 @@
   "taczfixes": {
     // 可供使用的改装点数，不填则为无限
     "refit_point": 100,
-    // 滞空散布倍率
-    "jump_inaccuracy_multiplier": 1.5,
+    "jump_inaccuracy": {
+      // 滞空散布倍率
+      "multiplier": 2.0,
+      // 滞空散布倍率的涨落速度，percent/tick
+      "speed": 0.5
+    }
     // 是否允许加速拉栓/加速换弹时同步加速动画播放
     "allow_animation_zoom": true,
     "bullet_in_barrel": 1,
