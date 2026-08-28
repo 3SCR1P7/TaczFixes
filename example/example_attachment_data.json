@@ -81,7 +81,16 @@
     // 安装此配件后禁用此开火模式
     "fire_mode_disable": [
       "auto"
-      ],
+    ],
+    "jump_inaccuracy": {
+      "multiplier": {
+        // 修改滞空散布倍率
+        "addend": 0.01
+      },
+      "speed": {
+        // 修改滞空散布倍率的涨落速度
+        "addend": 0.01
+      }
     }
   }
 }
