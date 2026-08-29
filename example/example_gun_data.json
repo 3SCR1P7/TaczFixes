@@ -11,7 +11,7 @@
     "damage_by_distance": {
       // 优势射程，能被配件的effective_range修改
       "effective_range": 15,
-      // x为(飞行距离-有效射程)
+      // x为(飞行距离-优势射程)
       // 武器最终造成的伤害为(y*原伤害)
       "function": "if (x >= 30) then y = 1.5 - x / 60 else y = 2.0 - x / 30 end"
     },
