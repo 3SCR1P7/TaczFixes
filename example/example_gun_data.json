@@ -15,6 +15,29 @@
       // 武器最终造成的伤害为(y*原伤害)
       "function": "if (x >= 30) then y = 1.5 - x / 60 else y = 2.0 - x / 30 end"
     },
+    // 自定义开火模式
+    "fire_mode": {
+      // 开火模式id
+      "burst2": {
+        // 开火模式类型，可选auto，semi，burst
+        "type": "burst",
+        // 连发数据。同tacz的burst_data字段
+        // 这个字段只在type为burst时生效，
+        "burst_data": {
+          "continuous_shoot": true,
+          "count": 3,
+          "bpm": 900,
+          "min_interval": 0.3
+        },
+        // 此开火模式的数值调整。
+        // 同tacz的fire_mode_adjust字段。
+        "adjust": {
+          "damage": 1.0
+        },
+        // 开火模式图标，若未填写则按type应用auto/burst/semi的图标。
+        "icon": "tacz:slot/burst2"
+      }
+    },
     // 是否允许加速拉栓/加速换弹时同步加速动画播放
     "allow_animation_zoom": true,
     "bullet_in_barrel": 1,
