@@ -15,6 +15,20 @@
       // 武器最终造成的伤害为(y*原伤害)
       "function": "if (x >= 30) then y = 1.5 - x / 60 else y = 2.0 - x / 30 end"
     },
+    "bullet_ricochet": {
+      "enable": true,
+      "min_angle": 60.0,
+	    "max_angle": 90.0,
+	    "chance_min": 0.0,
+	    "chance_max": 1.0,
+	    "block_tags": [
+        "minecraft:mineable/pickaxe"
+      ],
+	    "damage_multiplier": 0.2,
+	    "reflect_angle_ratio_min": 0.2,
+	    "reflect_angle_ratio_max": 0.8,
+	    "top_bottom_enable": false
+    },
     // 自定义开火模式
     "fire_mode": {
       // 开火模式id
