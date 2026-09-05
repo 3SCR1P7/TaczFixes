@@ -7,7 +7,7 @@ function M.shoot(api)
         local amount = tostring(level)
         api:runCommand("give @s minecraft:diamond",amount)
         api:runCommand("scoreboard players add @s tacz_time 1")
-        api:setExp(api:getExp() - 1 )
+        api:setExp(api:getExp() - 1)
     end
 end
 
