@@ -1,28 +1,50 @@
 package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
+import com.ssscript.taczfixes.common.data.CustomFireModeManager;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.item.ModernKineticGunItem;
+import com.tacz.guns.resource.pojo.data.gun.BurstData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
- * 开火模式解锁/禁用: 切换开火模式时, 循环范围使用
- * 配件 fire_mode_enable/fire_mode_disable 调整后的模式集合。
- * 若当前模式已被禁用, 则切换到原集合顺序中的下一个可用模式。
+ * 开火模式解锁/禁用 + 自定义开火模式:
+ * 切换开火模式时, 循环范围使用配件调整后的模式集合, 并追加 taczfixes.fire_mode 自定义模式。
+ * 自定义模式 id 存于 NBT; 核心模式仍存枚举名。
  */
 @Mixin(ModernKineticGunItem.class)
 public class MixinModernKineticGunItemFireSelect {
+
+    @Unique
+    public String taczfixes$fireSelectCustomId(ItemStack stack) {
+        if (stack == null) return null;
+        CompoundTag tag = stack.getTag();
+        if (tag == null) return null;
+        String custom = tag.getString("TaczFixesCustomFireMode");
+        return custom.isEmpty() ? null : custom;
+    }
+
+    @Unique
+    public void taczfixes$fireSelectSetCustomId(ItemStack stack, String id) {
+        if (stack == null) return;
+        stack.getOrCreateTag().putString("TaczFixesCustomFireMode", id == null ? "" : id);
+    }
 
     @Inject(method = "fireSelect", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$adjustedFireModeCycle(ShooterDataHolder dataHolder, ItemStack gunItem, CallbackInfo ci) {
@@ -39,35 +61,43 @@ public class MixinModernKineticGunItemFireSelect {
         List<FireMode> original = gunData.getFireModeSet();
         List<FireMode> adjusted = AttachmentTaczFixesManager.adjustFireModeSet(gunItem, original);
         if (adjusted == null || adjusted.isEmpty()) {
+            adjusted = original;
+        }
+
+        // 自定义模式列表
+        ResourceLocation dataId = TaczFixesDataManager.resolveDataId(iGun.getGunId(gunItem));
+        List<String> customIds = new ArrayList<>(CustomFireModeManager.ids(dataId));
+
+        // 组装循环项
+        List<String> items = new ArrayList<>();
+        for (FireMode m : adjusted) {
+            items.add(m.name().toLowerCase());
+        }
+        for (String id : customIds) {
+            items.add(id);
+        }
+        if (items.isEmpty()) {
             return;
         }
-        FireMode current = iGun.getFireMode(gunItem);
-        FireMode next = taczfixes$nextFireMode(original, adjusted, current);
-        if (next != null && next != current) {
-            iGun.setFireMode(gunItem, next);
+
+        String currentId = taczfixes$fireSelectCustomId(gunItem);
+        int idx;
+        if (currentId != null) {
+            idx = items.indexOf(currentId);
+            if (idx < 0) idx = 0;
+        } else {
+            FireMode current = iGun.getFireMode(gunItem);
+            idx = items.indexOf(current.name().toLowerCase());
+            if (idx < 0) idx = 0;
+        }
+        String next = items.get((idx + 1) % items.size());
+        if (CustomFireModeManager.hasCustomMode(dataId, next)) {
+            taczfixes$fireSelectSetCustomId(gunItem, next);
+            iGun.setFireMode(gunItem, FireMode.UNKNOWN);
+        } else {
+            taczfixes$fireSelectSetCustomId(gunItem, null);
+            iGun.setFireMode(gunItem, FireMode.valueOf(next.toUpperCase()));
         }
         ci.cancel();
-    }
-
-    @Nullable
-    private static FireMode taczfixes$nextFireMode(List<FireMode> original, List<FireMode> adjusted, FireMode current) {
-        if (adjusted.isEmpty()) {
-            return null;
-        }
-        int idx = adjusted.indexOf(current);
-        if (idx >= 0) {
-            return adjusted.get((idx + 1) % adjusted.size());
-        }
-        // 当前模式被禁用: 从原集合顺序中找当前之后的第一个可用模式
-        int curIdx = original.indexOf(current);
-        if (curIdx >= 0) {
-            for (int step = 1; step <= original.size(); step++) {
-                FireMode candidate = original.get((curIdx + step) % original.size());
-                if (adjusted.contains(candidate)) {
-                    return candidate;
-                }
-            }
-        }
-        return adjusted.get(0);
     }
 }

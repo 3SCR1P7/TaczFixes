@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.accessor.EntityKineticBulletAccessor;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.ssscript.taczfixes.common.util.MultishotHelper;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
@@ -26,13 +25,6 @@ public class MixinModernKineticGunDoBulletSpread {
         com.ssscript.taczfixes.common.util.DoubleShotHelper.spawnExtraBullet(shooter, gunItem, projectile,
                 processedSpeed, inaccuracy, pitch, yaw);
         com.ssscript.taczfixes.common.util.PatienceHelper.onShot(shooter, gunItem, projectile);
-        if (projectile instanceof com.tacz.guns.entity.EntityKineticBullet kineticBullet && gunItem != null) {
-            net.minecraft.resources.ResourceLocation replaced = com.ssscript.taczfixes.common.util.AmmoReplaceHelper
-                    .resolveAmmoId(gunItem, kineticBullet.getAmmoId());
-            if (replaced != null) {
-                ((EntityKineticBulletAccessor) kineticBullet).taczfixes$setAmmoId(replaced);
-            }
-        }
     }
 
     @Inject(method = "doBulletSpread", at = @At("TAIL"), remap = false)

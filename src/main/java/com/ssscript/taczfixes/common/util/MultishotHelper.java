@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.common.util;
 
 import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.accessor.EntityKineticBulletAccessor;
+import com.ssscript.taczfixes.common.mixin.MixinEntityKineticBulletAccessor;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.resources.ResourceLocation;
@@ -64,7 +64,7 @@ public class MultishotHelper {
         ResourceLocation gunId = bullet.getGunId();
         ResourceLocation gunDisplayId = bullet.getGunDisplayId();
         boolean isTracer = bullet.isTracerAmmo();
-        float damageMultiplier = ((EntityKineticBulletAccessor) bullet).taczfixes$getShotDamageMultiplier();
+        float damageMultiplier = ((MixinEntityKineticBulletAccessor) bullet).taczfixes$getShotDamageMultiplier();
         float speedFactor = GunEnchantmentHelper.getRiptideSpeedFactor(shooter);
         Level world = shooter.level();
 

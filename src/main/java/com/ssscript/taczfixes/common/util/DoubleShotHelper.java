@@ -44,7 +44,7 @@ public class DoubleShotHelper {
         net.minecraft.resources.ResourceLocation gunId = bullet.getGunId();
         net.minecraft.resources.ResourceLocation gunDisplayId = bullet.getGunDisplayId();
         boolean isTracer = bullet.isTracerAmmo();
-        float damageMultiplier = ((com.ssscript.taczfixes.common.accessor.EntityKineticBulletAccessor) bullet)
+        float damageMultiplier = ((com.ssscript.taczfixes.common.mixin.MixinEntityKineticBulletAccessor) bullet)
                 .taczfixes$getShotDamageMultiplier();
         Level world = shooter.level();
         TimelessAPI.getCommonGunIndex(gunId).ifPresent(index -> {

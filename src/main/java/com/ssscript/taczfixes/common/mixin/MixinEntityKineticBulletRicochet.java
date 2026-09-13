@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.common.mixin;
 
+import com.ssscript.taczfixes.common.data.GunTaczFixesData;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.register.Config;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.core.Direction;
@@ -35,11 +37,12 @@ public class MixinEntityKineticBulletRicochet {
             at = @At(value = "INVOKE", target = "Lcom/tacz/guns/entity/EntityKineticBullet;m_146870_()V", ordinal = 1),
             cancellable = true, remap = false)
     private void beforeDiscard(BlockHitResult result, Vec3 startVec, Vec3 endVec, CallbackInfo ci) {
-        if (!Config.BULLET_RICOCHET_ENABLE.get()) return;
+        EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
+        GunTaczFixesData.RicochetConfig ric = gunId == null ? null : TaczFixesDataManager.resolveRicochet(gunId);
+        if (ric == null || !ric.enable) return;
         if (result.getType() == HitResult.Type.MISS) return;
 
-        EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
-        if (!hasRicochetTag(bullet.level().getBlockState(result.getBlockPos()))) return;
+        if (!hasRicochetTag(ric.block_tags, bullet.level().getBlockState(result.getBlockPos()))) return;
         if (isGunDisabled()) return;
 
         Vec3 velocity = bullet.getDeltaMovement();
@@ -49,19 +52,19 @@ public class MixinEntityKineticBulletRicochet {
         Vec3 normal = Vec3.atLowerCornerOf(result.getDirection().getNormal());
         double cosAngle = Math.abs(velocity.dot(normal) / speed);
         double angle = Math.acos(Math.min(cosAngle, 1.0));
-        double minAngle = Math.toRadians(Config.BULLET_RICOCHET_MIN_ANGLE.get());
+        double minAngle = Math.toRadians(ric.min_angle);
         if (angle < minAngle) return;
         if (this.pierce < 1) return;
 
-        if (!Config.BULLET_RICOCHET_TOP_BOTTOM_ENABLE.get()
+        if (!ric.top_bottom_enable
                 && (result.getDirection() == Direction.UP
                 || result.getDirection() == Direction.DOWN)) {
             return;
         }
 
-        double maxAngle = Math.toRadians(Config.BULLET_RICOCHET_MAX_ANGLE.get());
-        double chanceMin = Config.BULLET_RICOCHET_CHANCE_MIN.get();
-        double chanceMax = Config.BULLET_RICOCHET_CHANCE_MAX.get();
+        double maxAngle = Math.toRadians(ric.max_angle);
+        double chanceMin = ric.chance_min;
+        double chanceMax = ric.chance_max;
         double chance = angle >= maxAngle ? chanceMax
                 : chanceMin + (chanceMax - chanceMin) * (angle - minAngle) / (maxAngle - minAngle);
         if (Math.random() >= chance) return;
@@ -70,8 +73,8 @@ public class MixinEntityKineticBulletRicochet {
         this.pierce--;
 
         double dot = velocity.dot(normal);
-        double ratioMin = Config.BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MIN.get();
-        double ratioMax = Config.BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MAX.get();
+        double ratioMin = ric.reflect_angle_ratio_min;
+        double ratioMax = ric.reflect_angle_ratio_max;
         double ratio = ratioMin + Math.random() * (ratioMax - ratioMin);
         if (ratio < 0.0) ratio = 0.0;
         if (ratio > 1.0) ratio = 1.0;
@@ -97,7 +100,7 @@ public class MixinEntityKineticBulletRicochet {
         bullet.setDeltaMovement(Vec3.ZERO);
 
         this.taczfixes_ricocheted = true;
-        this.taczfixes_ricochetDamage = Config.BULLET_RICOCHET_DAMAGE_MULTIPLIER.get().floatValue();
+        this.taczfixes_ricochetDamage = ric.damage_multiplier.floatValue();
         this.taczfixes_rx = reflected.x;
         this.taczfixes_ry = reflected.y;
         this.taczfixes_rz = reflected.z;
@@ -119,8 +122,8 @@ public class MixinEntityKineticBulletRicochet {
         }
     }
 
-    private static boolean hasRicochetTag(BlockState state) {
-        List<? extends String> tags = Config.BULLET_RICOCHET_BLOCK_TAGS.get();
+    private static boolean hasRicochetTag(java.util.List<String> tags, BlockState state) {
+        if (tags == null) return false;
         for (String tagStr : tags) {
             ResourceLocation loc = ResourceLocation.tryParse(tagStr);
             if (loc == null) continue;

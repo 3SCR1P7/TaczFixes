@@ -9,8 +9,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityKineticBullet.class)
 public class MixinBulletTrackingFlag {
-    @Inject(method = "m_8097_", at = @At("HEAD"), remap = false)
+    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
     private void taczfixes$defineTrackingFlag(CallbackInfo ci) {
-        ((EntityKineticBullet) (Object) this).getEntityData().define(BulletTrackingFlag.TRACKING_DISABLED, false);
+        BulletTrackingFlag.define();
+        ((EntityKineticBullet) (Object) this).getEntityData().define(BulletTrackingFlag.TRACKING_DISABLED(), false);
     }
 }

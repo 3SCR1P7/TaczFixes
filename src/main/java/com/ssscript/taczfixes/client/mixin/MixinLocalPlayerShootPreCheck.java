@@ -23,6 +23,18 @@ public class MixinLocalPlayerShootPreCheck {
     @Shadow(remap = false)
     private LocalPlayer player;
 
+    @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private void taczfixes$blockLowAimingStamina(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                                 ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                                 boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.AimingStaminaConfig cfg =
+                com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager.resolveAimingStamina(mainHandItem);
+        float cost = cfg.shoot_cost.floatValue();
+        if (cost > 0f && com.ssscript.taczfixes.client.util.AimingStaminaClientState.isInsufficient(cost)) {
+            cir.setReturnValue(ShootResult.COOL_DOWN);
+        }
+    }
+
     @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
     private void onPreCheckTail(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
                                 ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,

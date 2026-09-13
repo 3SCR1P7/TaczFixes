@@ -15,7 +15,8 @@ public class MixinInaccuracyType {
     private static void taczfixes$parcoolSlideAsMove(LivingEntity entity, CallbackInfoReturnable<InaccuracyType> cir) {
         if (!Config.PARCOOL_SLIDE_AS_MOVE_INACCURACY.get()) return;
         if (cir.getReturnValue() != InaccuracyType.LIE) return;
-        if (ParCoolHelper.isCrawling(entity)) {
+        // 仅滑铲改为移动散布; ParCool 爬行仍然使用 tacz 的趴伏(LIE)散布
+        if (ParCoolHelper.isSliding(entity)) {
             cir.setReturnValue(InaccuracyType.MOVE);
         }
     }

@@ -197,6 +197,41 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
     public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_ANVIL_MULT;
 
+    public static final ForgeConfigSpec.BooleanValue AIMING_STAMINA_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MAX;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_RECOVERY;
+    public static final ForgeConfigSpec.IntValue AIMING_STAMINA_RECOVERY_DELAY_MS;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MIN_TO_AIM;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_HOLD_BREATH_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_WEIGHT_PER_KG;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_AMPLITUDE;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_SPEED;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_LOW_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_HOLD_BREATH_LOW_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_SNEAK_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_CRAWL_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MELEE_COST;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SHOOT_COST;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_LR_MELEE_LIGHT_COST;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_LR_MELEE_HEAVY_COST;
+    public static final ForgeConfigSpec.IntValue AIMING_STAMINA_SWAY_CALM_MS;
+    public static final ForgeConfigSpec.EnumValue<AimingStaminaBarMode> AIMING_STAMINA_BAR_MODE;
+
+    public static final ForgeConfigSpec.BooleanValue STAMINA_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_MAX;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_RECOVERY;
+    public static final ForgeConfigSpec.IntValue STAMINA_RECOVERY_DELAY_MS;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_WALK_RECOVERY_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_JUMP_COST;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_SPRINT_CONSUMPTION_PER_SECOND;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_WEIGHT_CONSUMPTION_PER_KG;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_EXHAUSTION_END;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_EXHAUSTION_RECOVERY_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_SLIDE_COST;
+    public static final ForgeConfigSpec.EnumValue<AimingStaminaBarMode> STAMINA_BAR_MODE;
+
     public static final ForgeConfigSpec.BooleanValue GUN_BOTTLE_ENABLED;
     public static final ForgeConfigSpec.IntValue GUN_BOTTLE_EXP_PER_BOTTLE;
     public static final ForgeConfigSpec.IntValue GUN_BOTTLE_COST;
@@ -468,8 +503,8 @@ public class Config {
                 .comment("子弹命中实体后，此子弹是否在一定时间内忽略此实体。默认值：true")
                 .define("ignore_damaged_entity_enable", true);
         BULLET_IGNORE_ENTITY_COOLDOWN_MS = BUILDER
-                .comment("子弹命中实体后，此子弹忽略此实体的时间。默认值：5000")
-                .defineInRange("ignore_damaged_entity_cooldown_ms", 5000, 0, 600000);
+                .comment("子弹命中实体后，此子弹忽略此实体的时间。默认值：500")
+                .defineInRange("ignore_damaged_entity_cooldown_ms", 500, 0, 600000);
         BUILDER.pop();
 
         BUILDER.push("debug");
@@ -1013,6 +1048,113 @@ public class Config {
         ENCH_PATIENCE_ANVIL_MULT = BUILDER
                 .comment("耐心：经验等级乘数。默认值：2")
                 .defineInRange("patience_cost_multiplier", 2, 1, 100);
+        BUILDER.pop();
+
+        BUILDER.push("aiming_stamina");
+        AIMING_STAMINA_ENABLED = BUILDER
+                .comment("是否启用上肢耐力系统。默认值：true")
+                .define("enabled", true);
+        AIMING_STAMINA_MAX = BUILDER
+                .comment("上肢耐力上限的默认值。默认值：100")
+                .defineInRange("max_stamina", 100.0, 1.0, 100000.0);
+        AIMING_STAMINA_CONSUMPTION = BUILDER
+                .comment("上肢耐力消耗速度的默认值，每秒消耗。默认值：2")
+                .defineInRange("consumption_per_second", 2.0, 0.0, 100000.0);
+        AIMING_STAMINA_RECOVERY = BUILDER
+                .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：20")
+                .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
+        AIMING_STAMINA_RECOVERY_DELAY_MS = BUILDER
+                .comment("未开镜持续多少毫秒后开始恢复上肢耐力。默认值：1000")
+                .defineInRange("recovery_delay_ms", 1000, 0, 600000);
+        AIMING_STAMINA_MIN_TO_AIM = BUILDER
+                .comment("上肢耐力低于此值时无法重新开镜。默认值：20")
+                .defineInRange("min_stamina_to_aim", 20.0, 0.0, 100000.0);
+        AIMING_STAMINA_HOLD_BREATH_MULTIPLIER = BUILDER
+                .comment("屏息时上肢耐力消耗速度的倍率。默认值：2.5")
+                .defineInRange("hold_breath_consumption_multiplier", 2.5, 1.0, 100.0);
+        AIMING_STAMINA_WEIGHT_PER_KG = BUILDER
+                .comment("枪械每 1kg 重量增加的耐力消耗速度比例。默认值：0.03")
+                .defineInRange("weight_consumption_per_kg", 0.03, 0.0, 10.0);
+        AIMING_STAMINA_SWAY_AMPLITUDE = BUILDER
+                .comment("开镜时准星晃动的基础幅度(角度)。默认值：0.35")
+                .defineInRange("sway_amplitude", 0.35, 0.0, 30.0);
+        AIMING_STAMINA_SWAY_SPEED = BUILDER
+                .comment("开镜时准星晃动的基础速度(每tick相位增量)。默认值：0.06")
+                .defineInRange("sway_speed", 0.06, 0.001, 10.0);
+        AIMING_STAMINA_SWAY_LOW_MULTIPLIER = BUILDER
+                .comment("耐力为 0 时准星晃动幅度与速度的倍率(耐力低于阈值时线性增大)。默认值：2.5")
+                .defineInRange("sway_low_stamina_multiplier", 2.5, 1.0, 20.0);
+        AIMING_STAMINA_SWAY_HOLD_BREATH_LOW_MULTIPLIER = BUILDER
+                .comment("屏息时，低耐力附加晃动幅度的倍率。默认值：2.0")
+                .defineInRange("sway_hold_breath_low_multiplier", 2.0, 1.0, 20.0);
+        AIMING_STAMINA_SWAY_SNEAK_MULTIPLIER = BUILDER
+                .comment("潜行时晃动幅度与速度的倍率。默认值：0.75")
+                .defineInRange("sway_sneak_multiplier", 0.75, 0.0, 20.0);
+        AIMING_STAMINA_SWAY_CRAWL_MULTIPLIER = BUILDER
+                .comment("爬行时晃动幅度与速度的倍率。默认值：0.5")
+                .defineInRange("sway_crawl_multiplier", 0.5, 0.0, 20.0);
+        AIMING_STAMINA_MELEE_COST = BUILDER
+                .comment("枪械近战消耗的上肢耐力。默认值：12")
+                .defineInRange("melee_cost", 12.0, 0.0, 100000.0);
+        AIMING_STAMINA_SHOOT_COST = BUILDER
+                .comment("枪械每次开火消耗的上肢耐力。默认值：0")
+                .defineInRange("shoot_cost", 0.0, 0.0, 100000.0);
+        AIMING_STAMINA_LR_MELEE_LIGHT_COST = BUILDER
+                .comment("lrtactical 近战武器轻击消耗的上肢耐力。默认值：8",
+                        "需要LesRaisins Tactical Equipments模组。")
+                .defineInRange("lr_melee_light_cost", 8.0, 0.0, 100000.0);
+        AIMING_STAMINA_LR_MELEE_HEAVY_COST = BUILDER
+                .comment("lrtactical 近战武器重击消耗的上肢耐力。默认值：20",
+                        "需要LesRaisins Tactical Equipments模组。")
+                .defineInRange("lr_melee_heavy_cost", 20.0, 0.0, 100000.0);
+        AIMING_STAMINA_SWAY_CALM_MS = BUILDER
+                .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：1000")
+                .defineInRange("sway_hold_breath_calm_ms", 1000, 0, 60000);
+        AIMING_STAMINA_BAR_MODE = BUILDER
+                .comment("上肢耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
+                .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
+        BUILDER.pop();
+
+        BUILDER.push("stamina");
+        STAMINA_ENABLED = BUILDER
+                .comment("是否启用耐力系统。默认值：false")
+                .define("enabled", false);
+        STAMINA_MAX = BUILDER
+                .comment("耐力上限的默认值。默认值：100")
+                .defineInRange("max_stamina", 100.0, 1.0, 100000.0);
+        STAMINA_RECOVERY = BUILDER
+                .comment("耐力恢复速度的默认值，每秒恢复。默认值：20")
+                .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
+        STAMINA_RECOVERY_DELAY_MS = BUILDER
+                .comment("持续多少毫秒没有消耗耐力后开始恢复。默认值：1000")
+                .defineInRange("recovery_delay_ms", 1000, 0, 600000);
+        STAMINA_WALK_RECOVERY_MULTIPLIER = BUILDER
+                .comment("行走时耐力恢复速度的倍率。默认值：0.5")
+                .defineInRange("walk_recovery_multiplier", 0.5, 0.0, 10.0);
+        STAMINA_JUMP_COST = BUILDER
+                .comment("每次原版跳跃消耗的耐力。默认值：3")
+                .defineInRange("jump_cost", 3.0, 0.0, 100000.0);
+        STAMINA_SPRINT_CONSUMPTION_PER_SECOND = BUILDER
+                .comment("使用原版疾跑或游泳时每秒消耗的耐力。默认值：1")
+                .defineInRange("sprint_consumption_per_second", 1.0, 0.0, 100000.0);
+        STAMINA_WEIGHT_CONSUMPTION_PER_KG = BUILDER
+                .comment("枪械每 1kg 重量增加的耐力消耗比例。默认值：0.03")
+                .defineInRange("weight_consumption_per_kg", 0.03, 0.0, 10.0);
+        STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER = BUILDER
+                .comment("ParCool 消耗耐力时，改为消耗本模组耐力的倍率。默认值：0.1")
+                .defineInRange("parcool_consumption_multiplier", 0.1, 0.0, 1000.0);
+        STAMINA_EXHAUSTION_END = BUILDER
+                .comment("力竭状态结束所需的耐力值(耐力归零进入力竭, 恢复到该值后结束)。默认值：20")
+                .defineInRange("exhaustion_end", 20.0, 0.0, 100000.0);
+        STAMINA_EXHAUSTION_RECOVERY_MULTIPLIER = BUILDER
+                .comment("力竭期间耐力恢复速度的倍率。默认值：2")
+                .defineInRange("exhaustion_recovery_multiplier", 2.0, 0.0, 100.0);
+        STAMINA_SLIDE_COST = BUILDER
+                .comment("ParCool 滑铲开始时消耗的耐力。默认值：15")
+                .defineInRange("slide_cost", 15.0, 0.0, 100000.0);
+        STAMINA_BAR_MODE = BUILDER
+                .comment("耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
+                .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
         BUILDER.pop();
 
         BUILDER.pop();

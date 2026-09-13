@@ -10,12 +10,21 @@ public class ParCoolHelper {
     private static Boolean parcoolLoaded = null;
     private static Method parkourabilityGet = null;
     private static Method getAction = null;
+    private static Method isDoing = null;
     private static Class<?> crawlClass = null;
+    private static Class<?> slideClass = null;
 
     public static boolean isCrawling(LivingEntity entity) {
         if (!isParCoolLoaded()) return false;
         if (!(entity instanceof Player player)) return false;
-        return checkCrawl(player);
+        return checkAction(player, crawlClass());
+    }
+
+    /** ParCool 滑铲(Slide)动作是否进行中。 */
+    public static boolean isSliding(LivingEntity entity) {
+        if (!isParCoolLoaded()) return false;
+        if (!(entity instanceof Player player)) return false;
+        return checkAction(player, slideClass());
     }
 
     public static boolean isParCoolLoaded() {
@@ -25,17 +34,39 @@ public class ParCoolHelper {
         return parcoolLoaded;
     }
 
-    private static boolean checkCrawl(Player player) {
+    private static Class<?> crawlClass() {
+        if (crawlClass == null) {
+            try {
+                crawlClass = Class.forName("com.alrex.parcool.common.action.impl.Crawl");
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+        return crawlClass;
+    }
+
+    private static Class<?> slideClass() {
+        if (slideClass == null) {
+            try {
+                slideClass = Class.forName("com.alrex.parcool.common.action.impl.Slide");
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+        return slideClass;
+    }
+
+    private static boolean checkAction(Player player, Class<?> actionClass) {
+        if (actionClass == null) return false;
         try {
             Object parkourability = getParkourability(player);
             if (parkourability == null) return false;
-            if (crawlClass == null) {
-                crawlClass = Class.forName("com.alrex.parcool.common.action.impl.Crawl");
+            Object action = getAction.invoke(parkourability, actionClass);
+            if (action == null) return false;
+            if (isDoing == null) {
+                isDoing = Class.forName("com.alrex.parcool.common.action.Action").getMethod("isDoing");
             }
-            Object crawl = getAction.invoke(parkourability, crawlClass);
-            if (crawl == null) return false;
-            Method isDoing = crawl.getClass().getMethod("isDoing");
-            return (boolean) isDoing.invoke(crawl);
+            return (boolean) isDoing.invoke(action);
         } catch (Exception e) {
             return false;
         }

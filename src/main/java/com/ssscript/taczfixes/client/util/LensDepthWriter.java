@@ -38,10 +38,7 @@ public final class LensDepthWriter {
                                       ItemDisplayContext displayContext, int light, int overlay) {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) return;
-        Optional<ClientAttachmentIndex> index = SwitchedDisplayManager.getClientAttachmentIndex(gun, attachment.getAttachmentId(item));
-        if (!index.isPresent()) {
-            index = TimelessAPI.getClientAttachmentIndex(attachment.getAttachmentId(item));
-        }
+        Optional<ClientAttachmentIndex> index = TimelessAPI.getClientAttachmentIndex(attachment.getAttachmentId(item));
         index.ifPresent(indexOpt -> {
             BedrockAttachmentModel model = indexOpt.getAttachmentModel();
             if (model == null) return;

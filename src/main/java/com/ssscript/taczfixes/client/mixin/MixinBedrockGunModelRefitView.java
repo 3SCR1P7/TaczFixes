@@ -40,9 +40,16 @@ public abstract class MixinBedrockGunModelRefitView {
         ResourceLocation gunId = igun.getGunId(gunStack);
         CustomSlotDefinition def = slotId == null ? null : CustomSlotManager.getSlot(gunId, slotId);
         if (slotId != null && def == null) return;
-        if (slotId == null && RefitTransform.getTransformProgress() >= 1f) {
-            CustomSlotGuiState.clearViewTransition();
-            return;
+        if (slotId == null) {
+            // 界面内: 视图切换缓动结束即可清理; 退出界面: 需等收枪缓动(opening)结束再清理,
+            // 否则收枪过程中路径回退到 tacz 原始(可能为 null), 枪械会从 0,0,0 缓动回。
+            boolean screenOpen = Minecraft.getInstance().screen
+                    instanceof com.tacz.guns.client.gui.GunRefitScreen;
+            if (screenOpen ? RefitTransform.getTransformProgress() >= 1f
+                    : RefitTransform.getOpeningProgress() <= 0f) {
+                CustomSlotGuiState.clearViewTransition();
+                return;
+            }
         }
 
         boolean oldCall = ((++taczfixes$viewCallCount) & 1L) != 0L;

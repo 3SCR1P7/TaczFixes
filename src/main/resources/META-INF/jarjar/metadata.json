@@ -1,0 +1,16 @@
+{
+  "jars": [
+    {
+      "identifier": {
+        "group": "com.VvvV",
+        "artifact": "tacz_charms"
+      },
+      "version": {
+        "range": "[1.1.1,)",
+        "artifactVersion": "1.1.1"
+      },
+      "path": "META-INF/jarjar/tacz_charms-bootleg.jar",
+      "isObfuscated": false
+    }
+  ]
+}

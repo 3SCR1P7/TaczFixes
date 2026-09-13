@@ -34,9 +34,6 @@ mixin {
     add sourceSets.main, "${mod_id}.refmap.json"
     config "${mod_id}.mixins.json"
     config "${mod_id}.client.mixins.json"
-    config "${mod_id}.addon.mixins.json"
-    config "${mod_id}.accessor.mixins.json"
-    config "${mod_id}.gunsmithlib.mixins.json"
 }
 
 minecraft {
@@ -101,7 +98,7 @@ dependencies {
 
     compileOnly files('libs/taczaddon-1.20.1-1.1.6.jar')
 
-    compileOnly files('libs/taczarcana-full.jar')
+    compileOnly files('libs/arcana-mod-129.jar')
 compileOnly files('libs/simplebedrockmodel-2.5.6-forge-mc1.20.1.jar')
 
     compileOnly files('libs/gunsmithlib-forge-1.20.1-tacz1.1.8-6.4.2.jar')
@@ -110,9 +107,16 @@ compileOnly files('libs/simplebedrockmodel-2.5.6-forge-mc1.20.1.jar')
 
     compileOnly files('libs/mixinextras-0.3.6.jar')
 
+    compileOnly files('libs/luaj-core-3.0.8-figura.jar')
+    compileOnly files('libs/luaj-jse-3.0.8-figura.jar')
+
     compileOnly fg.deobf("gd656peek:gd656peek:0.1.1-1.20.1-forge")
+    compileOnly files('libs/ParCool-1.20.1-3.4.3.3.jar')
+    compileOnly files('libs/lrtactical-1.20.1-0.4.3.jar')
 
     compileOnly fg.deobf(files('libs/cloth-config-11.1.136-forge.jar'))
+
+    compileOnly files('libs/commons-math3-3.6.1.jar')
 
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
@@ -146,7 +150,7 @@ tasks.named('jar', Jar).configure {
                 'Implementation-Version'  : project.jar.archiveVersion,
                 'Implementation-Vendor'   : mod_authors,
                 'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
-                'MixinConfigs'            : "${mod_id}.mixins.json,${mod_id}.client.mixins.json,${mod_id}.addon.mixins.json,${mod_id}.accessor.mixins.json,${mod_id}.gunsmithlib.mixins.json"
+                'MixinConfigs'            : "${mod_id}.mixins.json,${mod_id}.client.mixins.json"
         ])
     }
 

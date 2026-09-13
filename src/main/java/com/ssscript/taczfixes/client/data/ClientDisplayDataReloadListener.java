@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-import com.ssscript.taczfixes.client.util.SwitchedDisplayManager;
 import com.ssscript.taczfixes.common.data.AttachmentGroupOffsetManager;
 import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
@@ -37,7 +36,7 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                     AttachmentGroupOffsetManager.putAll(result.getKey());
                     GunPosAlterManager.putAll(result.getValue());
                     TaczFixesDataManager.putAll(TaczFixesDataReloadListener.scanFileSystemGunData());
-                    SwitchedDisplayManager.refresh();
+                    com.ssscript.taczfixes.client.hud.CustomHudManager.clear();
                 }, gameExecutor);
     }
 

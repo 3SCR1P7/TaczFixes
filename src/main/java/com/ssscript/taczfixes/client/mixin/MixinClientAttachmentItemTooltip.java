@@ -26,6 +26,7 @@ import java.util.Locale;
 public class MixinClientAttachmentItemTooltip {
     private static final Style GOOD = Style.EMPTY.withColor(ChatFormatting.GREEN);
     private static final Style BAD = Style.EMPTY.withColor(ChatFormatting.RED);
+    private static final Style YELLOW = Style.EMPTY.withColor(ChatFormatting.YELLOW);
 
     @Shadow
     @Final
@@ -51,6 +52,10 @@ public class MixinClientAttachmentItemTooltip {
         appendIncreaseIsGood(data.limb_factor, "taczfixes.tooltip.limb_factor");
         appendFireModes(data.fire_mode_enable, "taczfixes.tooltip.fire_mode_enable", GOOD);
         appendFireModes(data.fire_mode_disable, "taczfixes.tooltip.fire_mode_disable", BAD);
+        if (data.refit_point_consume != null) {
+            components.add(Component.literal(data.refit_point_consume + " ").withStyle(YELLOW)
+                    .append(Component.translatable("taczfixes.tooltip.refit_point_consume").withStyle(YELLOW)));
+        }
     }
 
     /** 数值增大为负面: 增大显示红色(+), 减小显示绿色(-)。 */

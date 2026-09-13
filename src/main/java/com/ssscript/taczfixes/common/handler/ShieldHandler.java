@@ -8,12 +8,8 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.entity.living.ShieldBlockEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 public class ShieldHandler {
-    private static final Logger LOGGER = LogManager.getLogger("taczfixes");
-
     /** 子弹格挡: gsm(High)取消事件后，按 resistance 修整格挡量计数，并结算泄漏伤害。 */
     @SubscribeEvent
     public void onBulletBlock(EntityHurtByGunEvent.Pre event) {
@@ -22,13 +18,8 @@ public class ShieldHandler {
         if (victim.level().isClientSide()) return;
         ItemStack weapon = victim.getMainHandItem();
         GunTaczFixesData.ShieldConfig cfg = GunShieldHelper.resolveShieldConfig(weapon);
-        if (cfg == null) {
-            LOGGER.info("taczfixes[debug]: bullet blocked, but no shield cfg for weapon {}", weapon);
-            return;
-        }
+        if (cfg == null) return;
         float amount = event.getBaseAmount();
-        LOGGER.info("taczfixes[debug]: bullet blocked weapon={} amount={} resistance={}",
-                weapon, amount, cfg.resistance);
         GunShieldHelper.onBlocked(victim, weapon, cfg, amount * cfg.resistance);
         applyLeak(victim, event.getDamageSource(GunDamageSourcePart.NON_ARMOR_PIERCING), amount, cfg.resistance);
         playBlockSound(victim, cfg.resistance);

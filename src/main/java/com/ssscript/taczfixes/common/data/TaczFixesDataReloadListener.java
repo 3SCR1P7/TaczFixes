@@ -44,8 +44,8 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
                 .thenAcceptAsync(result -> {
                     TaczFixesDataManager.putAll(result.gunData);
                     TaczFixesDataManager.putAll(scanFileSystemGunData());
+                    syncCustomFireModes();
                     CustomSlotManager.putAllTags(result.allowTags);
-                    SwitchedDisplayDataManager.putAll(result.switchedDisplays);
                 }, gameExecutor);
     }
 
@@ -97,7 +97,6 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
             }
             result.allowTags.put(entry.getKey(), ids);
         }
-        result.switchedDisplays.putAll(scanSwitchedDisplays(resourceManager));
         return result;
     }
 
@@ -179,6 +178,13 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
         }
     }
 
+    /** 把当前数据表中的自定义开火模式同步到运行时管理器。 */
+    private static void syncCustomFireModes() {
+        for (Map.Entry<ResourceLocation, GunTaczFixesData> e : TaczFixesDataManager.getAll().entrySet()) {
+            CustomFireModeManager.put(e.getKey(), e.getValue().fire_mode);
+        }
+    }
+
     private static JsonObject parseLenientJson(Path file) throws IOException {
         try (Reader reader = Files.newBufferedReader(file, StandardCharsets.UTF_8)) {
             JsonReader jr = new JsonReader(reader);
@@ -187,40 +193,8 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
         }
     }
 
-    private static Map<ResourceLocation, List<ResourceLocation>> scanSwitchedDisplays(ResourceManager resourceManager) {
-        Map<ResourceLocation, List<ResourceLocation>> result = new HashMap<>();
-        for (String prefix : new String[]{"index/attachments", "data/index/attachments"}) {
-            Map<ResourceLocation, JsonElement> indexes =
-                    ResourceScanner.scanDirectory(resourceManager, prefix, GSON);
-            if (!indexes.isEmpty()) {
-                for (Map.Entry<ResourceLocation, JsonElement> entry : indexes.entrySet()) {
-                    JsonElement element = entry.getValue();
-                    if (element == null || !element.isJsonObject()) continue;
-                    JsonObject root = element.getAsJsonObject();
-                    if (!root.has("display_switched")) continue;
-                    JsonArray array = root.getAsJsonArray("display_switched");
-                    if (array == null || array.isEmpty()) continue;
-                    List<ResourceLocation> list = new ArrayList<>();
-                    boolean valid = false;
-                    for (JsonElement item : array) {
-                        if (item == null || !item.isJsonPrimitive()) continue;
-                        ResourceLocation displayId = ResourceLocation.tryParse(item.getAsString());
-                        if (displayId == null) continue;
-                        list.add(displayId);
-                        valid = true;
-                    }
-                    if (valid) {
-                        result.put(entry.getKey(), list);
-                    }
-                }
-            }
-        }
-        return result;
-    }
-
     private static class ScanResult {
         private final Map<ResourceLocation, GunTaczFixesData> gunData = new HashMap<>();
         private final Map<ResourceLocation, Set<ResourceLocation>> allowTags = new HashMap<>();
-        private final Map<ResourceLocation, List<ResourceLocation>> switchedDisplays = new HashMap<>();
     }
 }

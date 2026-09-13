@@ -1,0 +1,32 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# Forge / 运行目录
+run/
+run-data/
+logs/
+crash-reports/
+
+# IDE
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.settings/
+.classpath
+.project
+.factorypath
+
+# 本地第三方依赖 jar (需自行放入 libs/)
+libs/
+
+# 源码备份压缩包
+src*.zip
+
+# 系统/杂项
+*.log
+.DS_Store
+Thumbs.db

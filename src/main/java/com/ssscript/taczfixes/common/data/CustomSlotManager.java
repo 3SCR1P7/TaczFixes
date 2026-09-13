@@ -27,12 +27,30 @@ public class CustomSlotManager {
     }
 
     public static Map<String, CustomSlotDefinition> getSlots(ResourceLocation gunId) {
-        if (gunId == null) return Collections.emptyMap();
+        AttachmentSlotsConfig cfg = getConfig(gunId);
+        return cfg == null || cfg.slots == null
+                ? Collections.emptyMap()
+                : cfg.slots;
+    }
+
+    /** 获取 attachment_slots 配置块(含两个开关), 未配置返回 null。 */
+    public static AttachmentSlotsConfig getConfig(ResourceLocation gunId) {
+        if (gunId == null) return null;
         ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
         GunTaczFixesData data = TaczFixesDataManager.get(dataId);
-        return data == null || data.attachment_slots == null
-                ? Collections.emptyMap()
-                : data.attachment_slots;
+        return data == null ? null : data.attachment_slots;
+    }
+
+    /** hidden_unavailable: false 时 dependence/conflict 未满足的自定义槽仍显示(用不可用图标)。默认 true(隐藏)。 */
+    public static boolean isHiddenUnavailable(ResourceLocation gunId) {
+        AttachmentSlotsConfig cfg = getConfig(gunId);
+        return cfg == null || cfg.hidden_unavailable == null || cfg.hidden_unavailable;
+    }
+
+    /** hidden_unavailable_default: true 时 tacz 默认槽在类型未开放时直接隐藏。默认 false。 */
+    public static boolean isHiddenUnavailableDefault(ResourceLocation gunId) {
+        AttachmentSlotsConfig cfg = getConfig(gunId);
+        return cfg != null && Boolean.TRUE.equals(cfg.hidden_unavailable_default);
     }
 
     public static CustomSlotDefinition getSlot(ResourceLocation gunId, String slotId) {

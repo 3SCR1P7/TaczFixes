@@ -287,6 +287,117 @@ public class AttachmentTaczFixesManager {
                 shotAddend);
     }
 
+    /** 上肢耐力最终数值: 枪械 data 覆盖或配置文件默认值, 再叠加所有已安装配件的修饰符。 */
+    public static GunTaczFixesData.AimingStaminaConfig resolveAimingStamina(ItemStack gunItem) {
+        GunTaczFixesData.AimingStaminaConfig gunCfg = TaczFixesDataManager.resolveAimingStamina(gunItem);
+        double consumption = gunCfg != null && gunCfg.consumption_multiplier != null
+                ? gunCfg.consumption_multiplier : 1.0;
+        double recovery = gunCfg != null && gunCfg.recovery_multiplier != null
+                ? gunCfg.recovery_multiplier : 1.0;
+        double recoveryDelay = gunCfg != null && gunCfg.recovery_delay != null
+                ? gunCfg.recovery_delay : Config.AIMING_STAMINA_RECOVERY_DELAY_MS.get();
+        double minToAim = gunCfg != null && gunCfg.min_stamina_to_aim != null
+                ? gunCfg.min_stamina_to_aim : Config.AIMING_STAMINA_MIN_TO_AIM.get();
+        double holdBreath = gunCfg != null && gunCfg.hold_breath_consumption_multiplier != null
+                ? gunCfg.hold_breath_consumption_multiplier : Config.AIMING_STAMINA_HOLD_BREATH_MULTIPLIER.get();
+        double weight = gunCfg != null && gunCfg.weight_consumption != null
+                ? gunCfg.weight_consumption : Config.AIMING_STAMINA_WEIGHT_PER_KG.get();
+        double swayAmplitude = gunCfg != null && gunCfg.sway_amplitude != null
+                ? gunCfg.sway_amplitude : Config.AIMING_STAMINA_SWAY_AMPLITUDE.get();
+        double swaySpeed = gunCfg != null && gunCfg.sway_speed != null
+                ? gunCfg.sway_speed : Config.AIMING_STAMINA_SWAY_SPEED.get();
+        double swayLow = gunCfg != null && gunCfg.sway_low_stamina_multiplier != null
+                ? gunCfg.sway_low_stamina_multiplier : Config.AIMING_STAMINA_SWAY_LOW_MULTIPLIER.get();
+        double swayCalm = gunCfg != null && gunCfg.sway_hold_breath_calm != null
+                ? gunCfg.sway_hold_breath_calm : Config.AIMING_STAMINA_SWAY_CALM_MS.get();
+        double swayHoldLow = gunCfg != null && gunCfg.sway_hold_breath_low_multiplier != null
+                ? gunCfg.sway_hold_breath_low_multiplier
+                : Config.AIMING_STAMINA_SWAY_HOLD_BREATH_LOW_MULTIPLIER.get();
+        double swaySneak = gunCfg != null && gunCfg.sway_sneak_multiplier != null
+                ? gunCfg.sway_sneak_multiplier : Config.AIMING_STAMINA_SWAY_SNEAK_MULTIPLIER.get();
+        double swayCrawl = gunCfg != null && gunCfg.sway_crawl_multiplier != null
+                ? gunCfg.sway_crawl_multiplier : Config.AIMING_STAMINA_SWAY_CRAWL_MULTIPLIER.get();
+        double meleeCost = gunCfg != null && gunCfg.melee_cost != null
+                ? gunCfg.melee_cost : Config.AIMING_STAMINA_MELEE_COST.get();
+        double shootCost = gunCfg != null && gunCfg.shoot_cost != null
+                ? gunCfg.shoot_cost : Config.AIMING_STAMINA_SHOOT_COST.get();
+
+        consumption = applyAimingModifier(gunItem, consumption,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.consumption_multiplier);
+        recovery = applyAimingModifier(gunItem, recovery,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.recovery_multiplier);
+        recoveryDelay = applyAimingModifier(gunItem, recoveryDelay,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.recovery_delay);
+        minToAim = applyAimingModifier(gunItem, minToAim,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.min_stamina_to_aim);
+        holdBreath = applyAimingModifier(gunItem, holdBreath,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.hold_breath_consumption_multiplier);
+        weight = applyAimingModifier(gunItem, weight,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.weight_consumption);
+        swayAmplitude = applyAimingModifier(gunItem, swayAmplitude,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_amplitude);
+        swaySpeed = applyAimingModifier(gunItem, swaySpeed,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_speed);
+        swayLow = applyAimingModifier(gunItem, swayLow,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_low_stamina_multiplier);
+        swayCalm = applyAimingModifier(gunItem, swayCalm,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_hold_breath_calm);
+        swayHoldLow = applyAimingModifier(gunItem, swayHoldLow,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_hold_breath_low_multiplier);
+        swaySneak = applyAimingModifier(gunItem, swaySneak,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_sneak_multiplier);
+        swayCrawl = applyAimingModifier(gunItem, swayCrawl,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.sway_crawl_multiplier);
+        meleeCost = applyAimingModifier(gunItem, meleeCost,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.melee_cost);
+        shootCost = applyAimingModifier(gunItem, shootCost,
+                data -> data.aiming_stamina == null ? null : data.aiming_stamina.shoot_cost);
+
+        GunTaczFixesData.AimingStaminaConfig result = new GunTaczFixesData.AimingStaminaConfig();
+        result.consumption_multiplier = Math.max(0.0, consumption);
+        result.recovery_multiplier = Math.max(0.0, recovery);
+        result.recovery_delay = (int) Math.max(0, Math.round(recoveryDelay));
+        result.min_stamina_to_aim = Math.max(0.0, minToAim);
+        result.hold_breath_consumption_multiplier = Math.max(0.0, holdBreath);
+        result.weight_consumption = Math.max(0.0, weight);
+        result.sway_amplitude = Math.max(0.0, swayAmplitude);
+        result.sway_speed = Math.max(0.0, swaySpeed);
+        result.sway_low_stamina_multiplier = Math.max(1.0, swayLow);
+        result.sway_hold_breath_low_multiplier = Math.max(1.0, swayHoldLow);
+        result.sway_sneak_multiplier = Math.max(0.0, swaySneak);
+        result.sway_crawl_multiplier = Math.max(0.0, swayCrawl);
+        result.melee_cost = Math.max(0.0, meleeCost);
+        result.shoot_cost = Math.max(0.0, shootCost);
+        result.sway_hold_breath_calm = (int) Math.max(0, Math.round(swayCalm));
+        return result;
+    }
+
+    /** 耐力最终倍率: 枪械 data 覆盖或 1.0, 再叠加所有已安装配件的修饰符。 */
+    public static GunTaczFixesData.StaminaConfig resolveStamina(ItemStack gunItem) {
+        GunTaczFixesData.StaminaConfig gunCfg = TaczFixesDataManager.resolveStamina(gunItem);
+        double consumption = gunCfg != null && gunCfg.consumption_multiplier != null
+                ? gunCfg.consumption_multiplier : 1.0;
+        double recovery = gunCfg != null && gunCfg.recovery_multiplier != null
+                ? gunCfg.recovery_multiplier : 1.0;
+        consumption = applyAimingModifier(gunItem, consumption,
+                data -> data.stamina == null ? null : data.stamina.consumption_multiplier);
+        recovery = applyAimingModifier(gunItem, recovery,
+                data -> data.stamina == null ? null : data.stamina.recovery_multiplier);
+        GunTaczFixesData.StaminaConfig result = new GunTaczFixesData.StaminaConfig();
+        result.consumption_multiplier = Math.max(0.0, consumption);
+        result.recovery_multiplier = Math.max(0.0, recovery);
+        return result;
+    }
+
+    private static double applyAimingModifier(ItemStack gunItem, double base,
+                                              Function<AttachmentTaczFixesData, Modifier> getter) {
+        List<Modifier> modifiers = collectValues(gunItem, getter);
+        if (modifiers.isEmpty()) {
+            return base;
+        }
+        return AttachmentPropertyManager.eval(modifiers, base);
+    }
+
     private static <T> List<T> collectValues(ItemStack gunItem, Function<AttachmentTaczFixesData, T> getter) {
         List<T> result = new ArrayList<>();
         for (AttachmentTaczFixesData data : collectData(gunItem)) {

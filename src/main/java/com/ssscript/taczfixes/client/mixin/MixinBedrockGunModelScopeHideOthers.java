@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.LensDepthWriter;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
@@ -14,9 +15,6 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
-import com.tacz.guns.util.RenderHelper;
-import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderType;
@@ -31,8 +29,14 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.List;
 
+/**
+ * 自定义槽位瞄具渲染: 玩家未使用的瞄具(standby), 其 ocular 一律作为普通 cube 渲染,
+ * 不触发任何 ocular 功能; 玩家当前使用中的瞄具(active)走 TACZ 原生功能路径。
+ */
 @Mixin(BedrockGunModel.class)
 public abstract class MixinBedrockGunModelScopeHideOthers {
 
@@ -46,106 +50,97 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
     private static final String TACZFIXES_SUPER_RENDER_TARGET =
             "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
     private static final String TACZFIXES_ACCEL_SUPER_TARGET =
-            "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
+            "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
 
     @Inject(method = "render" + TACZFIXES_RENDER_DESC, at = @At(value = "INVOKE",
             target = TACZFIXES_SUPER_RENDER_TARGET, remap = false), remap = false)
-    private void taczfixes$stencilForActiveScope(PoseStack pose, ItemStack itemStack,
-                                                 ItemDisplayContext displayContext, RenderType renderType,
-                                                 int light, int overlay, float red, float green, float blue, float alpha,
-                                                 net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
-                                                 CallbackInfo ci) {
-        renderStandbyMasked(pose, displayContext, light, overlay, false);
+    private void taczfixes$renderStandbySlots(PoseStack pose, ItemStack itemStack,
+                                              ItemDisplayContext displayContext, RenderType renderType,
+                                              int light, int overlay, float red, float green, float blue, float alpha,
+                                              net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                              CallbackInfo ci) {
+        renderStandby(pose, displayContext, light, overlay);
     }
 
     @Inject(method = "renderAccelerated" + TACZFIXES_ACCEL_DESC, at = @At(value = "INVOKE",
-            target = TACZFIXES_SUPER_RENDER_TARGET, remap = false), remap = false)
-    private void taczfixes$stencilForActiveScopeAccelerated(PoseStack pose, ItemStack itemStack,
-                                                            ItemDisplayContext displayContext, RenderType renderType,
-                                                            int light, int overlay,
-                                                            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
-                                                            CallbackInfo ci) {
-        renderStandbyMasked(pose, displayContext, light, overlay, true);
+            target = TACZFIXES_ACCEL_SUPER_TARGET, remap = false), remap = false)
+    private void taczfixes$renderStandbySlotsAccelerated(PoseStack pose, ItemStack itemStack,
+                                                         ItemDisplayContext displayContext, RenderType renderType,
+                                                         int light, int overlay,
+                                                         net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                                         CallbackInfo ci) {
+        renderStandby(pose, displayContext, light, overlay);
     }
 
+    /**
+     * standby 槽位(玩家未使用的瞄具): 瞄具 ocular 作为普通 cube 渲染, 其它不做任何处理。
+     * active 槽位(玩家使用中的瞄具)按 TACZ 原生功能路径渲染。
+     */
     @Unique
-    private void renderStandbyMasked(PoseStack pose, ItemDisplayContext displayContext,
-                                     int light, int overlay, boolean accelerated) {
+    private void renderStandby(PoseStack pose, ItemDisplayContext displayContext,
+                               int light, int overlay) {
         ItemStack gun = this.currentGunItem;
         if (gun == null || gun.isEmpty()) return;
-        List<Object[]> standby = StandbySlotBuffer.takePending();
-        boolean aiming = taczfixes$isAimingScopeView(gun) && taczfixes$hasScopeViewAttachment(gun);
-        if (accelerated) {
-            for (Object[] slot : standby) {
-                renderStandbySlot((ItemStack) slot[0], gun,
-                        (BedrockPart) slot[1],
-                        (String) slot[2],
-                        pose, displayContext, light, overlay, aiming);
-            }
-            return;
-        }
-        renderActiveSlotLast(pose, displayContext, light, overlay);
+        // 1) active 槽位(玩家使用中的自定义瞄具): 先渲染, 写镜内参考值+分划
+        renderActiveSlot(pose, displayContext, light, overlay);
+        // 2) 渲染完 active 后即设置模板剔除语义, 使其后所有内容(standby 瞄具、配件、枪身)受剔除。
         taczfixes$applyActiveScopeStencil(gun);
+        com.mojang.blaze3d.systems.RenderSystem.stencilOp(org.lwjgl.opengl.GL11.GL_KEEP,
+                org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_KEEP);
+        // 3) standby 瞄具(未使用)渲染: displayContext(ocular 正常显示为普通 cube)。
+        //    第一人称时 renderScope 内部会 clearStencil, 破坏 active 参考值。
+        List<Object[]> standby = StandbySlotBuffer.takePending();
         for (Object[] slot : standby) {
-            // 备用镜帧: 抑制火控预测框(仅瞄准场景的核心镜才绘制)
-            com.ssscript.taczfixes.client.util.RangefinderDrawBudget.setAimingScene(false);
             renderStandbySlot((ItemStack) slot[0], gun,
                     (BedrockPart) slot[1],
                     (String) slot[2],
-                    pose, displayContext, light, overlay, aiming);
-            com.ssscript.taczfixes.client.util.RangefinderDrawBudget.setAimingScene(aiming);
+                    pose, displayContext, light, overlay);
         }
-        if (!aiming) {
-            return;
-        }
-        if (ScopeSwitchState.getActiveSlot(gun) == null) {
-            taczfixes$rerenderStandardScope(pose, displayContext, light, overlay);
+        // 4) standby 渲染破坏参考值后: 重写参考值+语义, 保证 super.render 内渲染被剔。
+        //    active 存在 → 重渲染 active; 无 active(默认槽镜/铁瞄) → 复刻 TACZ 标准槽镜渲染。
+        String activeSlot = ScopeSwitchState.getActiveSlot(gun);
+        if (activeSlot != null && !activeSlot.isEmpty()) {
+            renderActiveSlot(pose, displayContext, light, overlay);
+        } else {
+            rerenderStandardScope(pose, displayContext, light, overlay);
         }
         taczfixes$applyActiveScopeStencil(gun);
+        com.mojang.blaze3d.systems.RenderSystem.stencilOp(org.lwjgl.opengl.GL11.GL_KEEP,
+                org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_KEEP);
     }
 
+    /** 无 active 槽时: 复刻 TACZ 标准槽 scope 渲染(scopePosPath + renderAttachment), 重写镜内参考值。 */
     @Unique
-    private void renderStandbySlot(ItemStack item, ItemStack gun, BedrockPart node,
-                                   String slotId, PoseStack pose, ItemDisplayContext displayContext,
-                                   int light, int overlay, boolean aiming) {
-        if (isScopeLikeAttachment(item)) {
-            // 镜类配件: 临时关闭模板测试, 避免被 active ocular 的 stencil 值(GL_EQUAL 0)剔除自身镜片玻璃;
-            // 渲染后恢复, 保留后续枪体在镜筒外被裁剪的原版语义
-            RenderHelper.disableItemEntityStencilTest();
-            StandbySlotBuffer.renderRawMesh(item, gun, node, pose, displayContext, light, overlay, slotId);
-            taczfixes$applyActiveScopeStencil(gun);
-        } else if (aiming) {
-            // 非镜配件(laser 等): 瞄准时保持模板测试开启, 使镜筒内(stencil 非 0)被正确剔除;
-            // 但镜外正常渲染
-            StandbySlotBuffer.renderSlotAttachment(item, gun, node, pose, displayContext, light, overlay, slotId);
-            taczfixes$applyActiveScopeStencil(gun);
-        } else {
-            // 未瞄准: 无镜片语义, 关闭模板测试保证附件完整可见
-            RenderHelper.disableItemEntityStencilTest();
-            StandbySlotBuffer.renderSlotAttachment(item, gun, node, pose, displayContext, light, overlay, slotId);
-            taczfixes$applyActiveScopeStencil(gun);
-        }
-    }
-
-    @Unique
-    private void taczfixes$rerenderStandardScope(PoseStack pose, ItemDisplayContext displayContext,
-                                                 int light, int overlay) {
+    private void rerenderStandardScope(PoseStack pose, ItemDisplayContext displayContext,
+                                       int light, int overlay) {
         ItemStack gun = this.currentGunItem;
         if (gun == null || gun.isEmpty()) return;
+        if (this.scopePosPath == null) return;
         ItemStack scope = readStandardScope(gun);
-        if (scope.isEmpty() || this.scopePosPath == null) return;
+        if (scope.isEmpty()) {
+            IGun igun = IGun.getIGunOrNull(gun);
+            if (igun != null) {
+                scope = igun.getBuiltinAttachment(gun, AttachmentType.SCOPE);
+            }
+        }
+        if (scope.isEmpty()) return;
         pose.pushPose();
         for (BedrockPart part : this.scopePosPath) {
             part.translateAndRotateAndScale(pose);
         }
-        AttachmentRender.renderAttachment(scope, gun, AttachmentType.SCOPE,
+        AttachmentRender.renderAttachment(
+                scope, gun, AttachmentType.SCOPE,
                 pose, displayContext, light, overlay);
         pose.popPose();
     }
 
+    /**
+     * active 槽位(玩家使用中的自定义瞄具): 与原生槽瞄具一致——按调用方 displayContext 渲染,
+     * 瞄准时为第一人称即走 TACZ renderScope/renderBoth(写镜片 stencil + 分划), ocular 不遮挡画面。
+     */
     @Unique
-    private void renderActiveSlotLast(PoseStack pose, ItemDisplayContext displayContext,
-                                      int light, int overlay) {
+    private void renderActiveSlot(PoseStack pose, ItemDisplayContext displayContext,
+                                  int light, int overlay) {
         ItemStack gun = this.currentGunItem;
         if (gun == null || gun.isEmpty()) return;
         String active = ScopeSwitchState.getActiveSlot(gun);
@@ -158,7 +153,6 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         pose.pushPose();
         StandbySlotBuffer.applyNodePathTransform(actNode, pose);
         pose.translate(0.0F, -1.5F, 0.0F);
-        // 按槽适配器(Model+mountOffset) 与配件同一层级(与原版 renderAttachment 布局一致)
         StandbySlotBuffer.applySlotAdapterOffset(actItem, gun, active, pose, displayContext, light, overlay);
         IAttachment ia = IAttachment.getIAttachmentOrNull(actItem);
         if (ia != null) {
@@ -168,89 +162,11 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
                 ResourceLocation actTexture = index.getModelTexture();
                 if (actModel != null && actTexture != null) {
                     RenderType renderType = RenderType.entityCutout(actTexture);
-                    // 未瞄准时以普通 cube 渲染 ocular(与 standby 一致):
-                    // 筒状可见/红点不可见, 渲染后恢复; 瞄准时走第一人称模板路径(原版语义)
-                    java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore = new java.util.ArrayList<>();
-                    boolean suppressed = !taczfixes$isAimingScopeView(gun);
-                    if (suppressed) {
-                        StandbySlotBuffer.ensureOcularVisibility(actModel, restore);
-                    }
-                    // 瞄准场景: 允许火控预测框绘制(核心镜)
-                    com.ssscript.taczfixes.client.util.RangefinderDrawBudget.setAimingScene(!suppressed);
-                    try {
-                        actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
-                    } finally {
-                        com.ssscript.taczfixes.client.util.RangefinderDrawBudget.setAimingScene(false);
-                        StandbySlotBuffer.restoreOcularVisibility(restore);
-                    }
-                    // active 槽渲染可能走 renderScope/renderBoth: 内部 clearStencil + clear 会清掉模板,
-                    // 未瞄准时无有效镜片语义, 这里先关闭模板并清空, 避免污染后续枪体 stencil 流程
-                    if (!taczfixes$isAimingScopeView(gun)) {
-                        RenderHelper.disableItemEntityStencilTest();
-                    }
+                    actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
                 }
             });
         }
-        if (isScopeLikeAttachment(actItem) && taczfixes$isAimingScopeView(gun)) {
-            LensDepthWriter.writeLensDepth(actItem, gun, pose, displayContext, light, overlay);
-        }
         pose.popPose();
-    }
-
-    @Unique
-    private static AttachmentType attachmentTypeOf(ItemStack item, AttachmentType fallback) {
-        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
-        if (ia == null) return fallback;
-        AttachmentType type = ia.getType(item);
-        return type == null || type == AttachmentType.NONE ? fallback : type;
-    }
-
-    @Unique
-    private static boolean taczfixes$hasScopeViewAttachment(ItemStack gun) {
-        String active = ScopeSwitchState.getActiveSlot(gun);
-        if (active != null) {
-            ItemStack actItem = CustomSlotStorage.get(gun, active);
-            if (isScopeLikeAttachment(actItem)) return true;
-        }
-        ItemStack standardScope = readStandardScope(gun);
-        if (standardScope.isEmpty()) {
-            IGun igun = IGun.getIGunOrNull(gun);
-            if (igun != null) {
-                standardScope = igun.getBuiltinAttachment(gun, AttachmentType.SCOPE);
-            }
-        }
-        return isScopeLikeAttachment(standardScope);
-    }
-
-    @Unique
-    private static boolean isScopeLikeAttachment(ItemStack item) {
-        if (item == null || item.isEmpty()) return false;
-        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
-        if (ia == null) return false;
-        return TimelessAPI.getClientAttachmentIndex(ia.getAttachmentId(item))
-                .map(index -> index.isScope() || index.isSight()).orElse(false);
-    }
-
-    @Unique
-    private static ItemStack readStandardScope(ItemStack gun) {
-        CompoundTag tag = gun.getTag();
-        if (tag != null) {
-            String key = com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + AttachmentType.SCOPE.name();
-            if (tag.contains(key, 10)) {
-                ItemStack scope = ItemStack.of(tag.getCompound(key));
-                if (!scope.isEmpty()) return scope;
-            }
-        }
-        return ItemStack.EMPTY;
-    }
-
-    @Unique
-    private static boolean taczfixes$isAimingScopeView(ItemStack gun) {
-        Minecraft mc = Minecraft.getInstance();
-        if (!(mc.getCameraEntity() instanceof LocalPlayer player) || !player.isAlive()) return false;
-        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
-        if (operator == null) return false;
-        return operator.getClientAimingProgress(mc.getFrameTime()) > 0.001f;
     }
 
     @Unique
@@ -270,8 +186,9 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
                 lens = igun.getBuiltinAttachment(gun, AttachmentType.SCOPE);
             }
         }
-        if (!isScopeLikeAttachment(lens)) return;
-        taczfixes$applyScopeStencilFunc(lens);
+        if (isScopeLikeAttachment(lens)) {
+            taczfixes$applyScopeStencilFunc(lens);
+        }
     }
 
     @Unique
@@ -279,17 +196,160 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(lens);
         if (attachment == null) return;
         TimelessAPI.getClientAttachmentIndex(attachment.getAttachmentId(lens)).ifPresent(index -> {
-            RenderHelper.enableItemEntityStencilTest();
             if (index.isScope() && index.isSight()) {
-                RenderSystem.stencilFunc(org.lwjgl.opengl.GL11.GL_GREATER, 127, 255);
-                com.ssscript.taczfixes.common.util.StencilStandbyState.set(516, 127, 255);
+                // 组合镜: renderBoth 只把 ocular_scope 区域写成 >127 的高 stencil 值,
+                // 用 GREATER 127 只剔除 ocular_scope 区域, ocular_sight 区域(低值)保留。
+                com.tacz.guns.util.RenderHelper.enableItemEntityStencilTest();
+                com.mojang.blaze3d.systems.RenderSystem.stencilFunc(org.lwjgl.opengl.GL11.GL_GREATER, 127, 255);
             } else if (index.isScope()) {
-                RenderSystem.stencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 0, 255);
-                com.ssscript.taczfixes.common.util.StencilStandbyState.set(514, 0, 255);
-            } else {
-                RenderHelper.disableItemEntityStencilTest();
-                com.ssscript.taczfixes.common.util.StencilStandbyState.end();
+                // 纯筒状镜: 镜片外(EQUAL 0)剔除
+                com.tacz.guns.util.RenderHelper.enableItemEntityStencilTest();
+                com.mojang.blaze3d.systems.RenderSystem.stencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 0, 255);
             }
+            // sight 型(红点/全息): 与 TACZ 原版一致, 不设置任何模板语义, 不剔除
         });
+    }
+
+    @Unique
+    private void renderStandbySlot(ItemStack item, ItemStack gun, BedrockPart node,
+                                   String slotId, PoseStack pose, ItemDisplayContext displayContext,
+                                   int light, int overlay) {
+        if (node == null) return;
+        if (!isScopeLikeAttachment(item)) {
+            // 非瞄具配件(laser/grip 等): 走原版 renderSlotAttachment 管线(含 mount 处理), 位置正确
+            StandbySlotBuffer.renderSlotAttachment(item, gun, node, pose, displayContext, light, overlay, slotId);
+            return;
+        }
+        pose.pushPose();
+        StandbySlotBuffer.applyNodePathTransform(node, pose);
+        pose.translate(0.0F, -1.5F, 0.0F);
+        StandbySlotBuffer.applySlotAdapterOffset(item, gun, slotId, pose, displayContext, light, overlay);
+        // 与原生槽一致: 用 AttachmentRender.renderAttachment 管线(内部含 LOD 与 mount 处理),
+        // 传入调用方 displayContext 保持与原生槽相同的第一人称/第三人称/LOD 判定。
+        renderLikeNative(item, gun, pose, displayContext, light, overlay);
+        pose.popPose();
+    }
+
+    /** 与原生槽瞄具同管线渲染: standby(未使用)瞄具以 displayContext 渲染(ocular 正确),
+     * 但渲染前后关闭/恢复 isScope/isSight, 功能分支(renderScope 等)不会执行,
+     * 不触碰模板(active 参考值与剔除语义完好); 渲染前完整激活瞄具专属节点使几何可见。 */
+    @Unique
+    private static void renderLikeNative(ItemStack item, ItemStack gun, PoseStack pose,
+                                         ItemDisplayContext displayContext, int light, int overlay) {
+        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
+        if (ia == null) return;
+        ResourceLocation id = ia.getAttachmentId(item);
+        if (id == null) return;
+        java.util.Optional<com.tacz.guns.client.resource.index.ClientAttachmentIndex> idx =
+                TimelessAPI.getClientAttachmentIndex(id);
+        if (!idx.isPresent()) return;
+        com.tacz.guns.client.model.BedrockAttachmentModel model = idx.get().getAttachmentModel();
+        ResourceLocation texture = idx.get().getModelTexture();
+        if (model == null || texture == null) return;
+        java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore = new java.util.ArrayList<>();
+        // standby(未使用)的组合镜: ocular_scope 应渲染为普通 cube, ocular_sight 隐藏。
+        StandbySlotBuffer.ensureScopeOcularVisible(model, restore);
+        MixinBedrockAttachmentModelScopeSuppress acc = (MixinBedrockAttachmentModelScopeSuppress) model;
+        // 完整激活瞄具专属节点(scopeBody/ocularRing/ocular 末节点), 否则 super.render 不渲染;
+        // division(分划板)不激活且强制隐藏——standby 瞄具不应显示分划。
+        try {
+            taczfixes$activateIfPresent(restore, acc.taczfixes$scopeBodyPath());
+            taczfixes$activateIfPresent(restore, acc.taczfixes$ocularRingPath());
+            java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> oculars = acc.taczfixes$ocularNodePaths();
+            if (oculars != null) {
+                java.util.List<Boolean> ocularFlags = acc.taczfixes$isScopeOcular();
+                for (int i = 0; i < oculars.size(); i++) {
+                    boolean isScopeOcular = ocularFlags != null && i < ocularFlags.size()
+                            && Boolean.TRUE.equals(ocularFlags.get(i));
+                    if (isScopeOcular) {
+                        taczfixes$activateIfPresent(restore, oculars.get(i));
+                    } else {
+                        taczfixes$hideIfPresent(restore, oculars.get(i));
+                    }
+                }
+            }
+            java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> divisions = acc.taczfixes$divisionNodePaths();
+            if (divisions != null) {
+                for (java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path : divisions) {
+                    taczfixes$hideIfPresent(restore, path);
+                }
+            }
+            boolean oldScope = acc.taczfixes$isScope();
+            boolean oldSight = acc.taczfixes$isSight();
+            acc.taczfixes$setIsScope(false);
+            acc.taczfixes$setIsSight(false);
+            try {
+                model.render(item, gun, pose, displayContext,
+                        RenderType.entityCutout(texture), light, overlay);
+            } finally {
+                acc.taczfixes$setIsScope(oldScope);
+                acc.taczfixes$setIsSight(oldSight);
+            }
+        } finally {
+            StandbySlotBuffer.restoreOcularVisibility(restore);
+        }
+    }
+
+    @Unique
+    private static void taczfixes$activateIfPresent(java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore,
+                                                    java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path) {
+        if (path == null || path.isEmpty()) return;
+        com.tacz.guns.client.model.bedrock.BedrockPart part = path.get(path.size() - 1);
+        if (!part.visible) {
+            part.visible = true;
+            restore.add(part);
+        }
+    }
+
+    @Unique
+    private static void taczfixes$hideIfPresent(java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore,
+                                                java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path) {
+        if (path == null || path.isEmpty()) return;
+        com.tacz.guns.client.model.bedrock.BedrockPart part = path.get(path.size() - 1);
+        if (part.visible) {
+            part.visible = false;
+            restore.add(part);
+        }
+    }
+
+    @Unique
+    private static boolean isScopeLikeAttachment(ItemStack item) {
+        if (item == null || item.isEmpty()) return false;
+        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
+        if (ia == null) return false;
+        return TimelessAPI.getClientAttachmentIndex(ia.getAttachmentId(item))
+                .map(index -> index.isScope() || index.isSight()).orElse(false);
+    }
+
+    /** 机瞄折叠: TACZ scopeHiddenRender 每帧按 currentAttachmentItem 的 SCOPE 值判定 SIGHT/SIGHT_FOLDED
+     * 可见性; active 模式我们将其置 EMPTY 导致默认槽有镜时机瞄不折叠。
+     * 拦截其 EnumMap.get(SCOPE), 返回标准槽真实镜值, 使 TACZ 判定恢复正确。 */
+    @com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation(
+            method = "scopeHiddenRender",
+            at = @At(value = "INVOKE",
+                    target = "Ljava/util/EnumMap;get(Ljava/lang/Object;)Ljava/lang/Object;", remap = false),
+            remap = false)
+    private Object taczfixes$realStandardScope(EnumMap<AttachmentType, ItemStack> map, Object key,
+                                               com.llamalad7.mixinextras.injector.wrapoperation.Operation<Object> original) {
+        if (key == AttachmentType.SCOPE) {
+            ItemStack real = readStandardScope(this.currentGunItem);
+            if (real != null && !real.isEmpty()) {
+                return real;
+            }
+        }
+        return original.call(map, key);
+    }
+
+    @Unique
+    private static ItemStack readStandardScope(ItemStack gun) {
+        CompoundTag tag = gun.getTag();
+        if (tag != null) {
+            String key = com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + AttachmentType.SCOPE.name();
+            if (tag.contains(key, 10)) {
+                ItemStack scope = ItemStack.of(tag.getCompound(key));
+                if (!scope.isEmpty()) return scope;
+            }
+        }
+        return ItemStack.EMPTY;
     }
 }

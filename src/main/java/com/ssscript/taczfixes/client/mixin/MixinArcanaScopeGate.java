@@ -18,10 +18,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(targets = "group/taczexpands/dist/binq9IpL", remap = false)
+@Mixin(targets = "group/taczexpands/dist/WFkyOIm9", remap = false)
 public class MixinArcanaScopeGate {
 
-    @Inject(method = "Iwtki3eC", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "VR4u5uBF", at = @At("HEAD"), cancellable = true)
     private void taczfixes$onIwtki3eC(CallbackInfoReturnable<Boolean> cir) {
         if (!Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT.get()) return;
 

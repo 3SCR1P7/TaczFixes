@@ -30,8 +30,57 @@ public class ConfigScreen {
         buildRefitScreen(builder.getOrCreateCategory(cat("refitscreen")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
         buildEnchantment(builder.getOrCreateCategory(cat("enchantment")), entry);
+        buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
+        buildStamina(builder.getOrCreateCategory(cat("stamina")), entry);
 
         return builder.build();
+    }
+
+    private static void buildStamina(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "stamina.enabled", Config.STAMINA_ENABLED);
+        dbl_(cat, entry, "stamina.max_stamina", Config.STAMINA_MAX);
+        dbl_(cat, entry, "stamina.recovery_per_second", Config.STAMINA_RECOVERY);
+        int_(cat, entry, "stamina.recovery_delay_ms", Config.STAMINA_RECOVERY_DELAY_MS);
+        dbl_(cat, entry, "stamina.walk_recovery_multiplier", Config.STAMINA_WALK_RECOVERY_MULTIPLIER);
+        dbl_(cat, entry, "stamina.jump_cost", Config.STAMINA_JUMP_COST);
+        dbl_(cat, entry, "stamina.sprint_consumption_per_second", Config.STAMINA_SPRINT_CONSUMPTION_PER_SECOND);
+        dbl_(cat, entry, "stamina.weight_consumption_per_kg", Config.STAMINA_WEIGHT_CONSUMPTION_PER_KG);
+        dbl_(cat, entry, "stamina.parcool_consumption_multiplier", Config.STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER);
+        dbl_(cat, entry, "stamina.exhaustion_end", Config.STAMINA_EXHAUSTION_END);
+        dbl_(cat, entry, "stamina.exhaustion_recovery_multiplier", Config.STAMINA_EXHAUSTION_RECOVERY_MULTIPLIER);
+        dbl_(cat, entry, "stamina.slide_cost", Config.STAMINA_SLIDE_COST);
+        enum_(cat, entry, "stamina.bar_mode", Config.STAMINA_BAR_MODE);
+    }
+
+    private static void buildAimingStamina(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "aiming_stamina.enabled", Config.AIMING_STAMINA_ENABLED);
+        dbl_(cat, entry, "aiming_stamina.max_stamina", Config.AIMING_STAMINA_MAX);
+        dbl_(cat, entry, "aiming_stamina.consumption_per_second", Config.AIMING_STAMINA_CONSUMPTION);
+        dbl_(cat, entry, "aiming_stamina.recovery_per_second", Config.AIMING_STAMINA_RECOVERY);
+        int_(cat, entry, "aiming_stamina.recovery_delay_ms", Config.AIMING_STAMINA_RECOVERY_DELAY_MS);
+        dbl_(cat, entry, "aiming_stamina.min_stamina_to_aim", Config.AIMING_STAMINA_MIN_TO_AIM);
+        dbl_(cat, entry, "aiming_stamina.hold_breath_consumption_multiplier", Config.AIMING_STAMINA_HOLD_BREATH_MULTIPLIER);
+        dbl_(cat, entry, "aiming_stamina.weight_consumption_per_kg", Config.AIMING_STAMINA_WEIGHT_PER_KG);
+        dbl_(cat, entry, "aiming_stamina.sway_amplitude", Config.AIMING_STAMINA_SWAY_AMPLITUDE);
+        dbl_(cat, entry, "aiming_stamina.sway_speed", Config.AIMING_STAMINA_SWAY_SPEED);
+        dbl_(cat, entry, "aiming_stamina.sway_low_stamina_multiplier", Config.AIMING_STAMINA_SWAY_LOW_MULTIPLIER);
+        dbl_(cat, entry, "aiming_stamina.sway_hold_breath_low_multiplier", Config.AIMING_STAMINA_SWAY_HOLD_BREATH_LOW_MULTIPLIER);
+        dbl_(cat, entry, "aiming_stamina.sway_sneak_multiplier", Config.AIMING_STAMINA_SWAY_SNEAK_MULTIPLIER);
+        dbl_(cat, entry, "aiming_stamina.sway_crawl_multiplier", Config.AIMING_STAMINA_SWAY_CRAWL_MULTIPLIER);
+        dbl_(cat, entry, "aiming_stamina.melee_cost", Config.AIMING_STAMINA_MELEE_COST);
+        dbl_(cat, entry, "aiming_stamina.shoot_cost", Config.AIMING_STAMINA_SHOOT_COST);
+        dbl_(cat, entry, "aiming_stamina.lr_melee_light_cost", Config.AIMING_STAMINA_LR_MELEE_LIGHT_COST);
+        dbl_(cat, entry, "aiming_stamina.lr_melee_heavy_cost", Config.AIMING_STAMINA_LR_MELEE_HEAVY_COST);
+        int_(cat, entry, "aiming_stamina.sway_hold_breath_calm_ms", Config.AIMING_STAMINA_SWAY_CALM_MS);
+        enum_(cat, entry, "aiming_stamina.bar_mode", Config.AIMING_STAMINA_BAR_MODE);
+    }
+
+    private static <T extends Enum<T>> void enum_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
+                                                  ForgeConfigSpec.EnumValue<T> v) {
+        cat.addEntry(entry.startEnumSelector(entry(slug), v.get().getDeclaringClass(), v.get())
+                .setDefaultValue(v.getDefault())
+                .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .build());
     }
 
     private static void buildRefitScreen(ConfigCategory cat, ConfigEntryBuilder entry) {

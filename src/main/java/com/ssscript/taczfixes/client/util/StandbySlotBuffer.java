@@ -1,10 +1,9 @@
 package com.ssscript.taczfixes.client.util;
 
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
-import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
-import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import net.minecraft.client.renderer.RenderType;
@@ -13,6 +12,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.vertex.PoseStack;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -52,6 +52,11 @@ public final class StandbySlotBuffer {
         poseStack.popPose();
     }
 
+    /**
+     * 渲染非原生槽位的瞄具(玩家未使用时): 按普通配件(如 laser)管线渲染 —— AttachmentRender.renderAttachment
+     * 处理模型/UV/贴图, 传入 THIRD_PERSON 避免触发 TACZ 第一人称 renderScope/renderSight/renderBoth 的
+     * ocular 功能路径与模板剔除。不手动设置 ocular 可见性。
+     */
     public static void renderRawMesh(ItemStack item, ItemStack gun, BedrockPart node,
                                      PoseStack poseStack, ItemDisplayContext displayContext,
                                      int light, int overlay, String slotId) {
@@ -61,57 +66,40 @@ public final class StandbySlotBuffer {
         poseStack.translate(0.0F, -1.5F, 0.0F);
         applySlotAdapterOffset(item, gun, slotId, poseStack, displayContext, light, overlay);
         IAttachment ia = IAttachment.getIAttachmentOrNull(item);
-        if (ia != null) {
-            ResourceLocation id = ia.getAttachmentId(item);
-            TimelessAPI.getClientAttachmentIndex(id).ifPresent(index -> {
-                BedrockAttachmentModel model = index.getAttachmentModel();
-                ResourceLocation texture = index.getModelTexture();
-                if (model != null && texture != null) {
-                    // 完整渲染(设置模型上下文, 部件可见性/动画正确), 但伪装为第三人称:
-                    // 9-param 分支走非第一人称路径(renderTempPart + super.render),
-                    // 完全不触发 renderScope/renderSight/clearStencil 的模板逻辑。
-                    // ocular 节点以普通 cube 身份参与树遍历: 渲染前按类型设置可见性,
-                    // 筒状(scope 型)可见、红点(sight 型)不可见, 渲染后恢复原状。
-                    RenderType renderType = RenderType.entityCutout(texture);
-                    java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore = new java.util.ArrayList<>();
-                    ensureOcularVisibility(model, restore);
-                    try {
-                        model.render(item, gun, poseStack,
-                                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                                renderType, light, overlay);
-                    } finally {
-                        restoreOcularVisibility(restore);
-                    }
-                }
-            });
+        if (ia == null) {
+            poseStack.popPose();
+            return;
         }
+        com.tacz.guns.api.item.attachment.AttachmentType type = ia.getType(item);
+        if (type == null || type == com.tacz.guns.api.item.attachment.AttachmentType.NONE) {
+            type = com.tacz.guns.api.item.attachment.AttachmentType.SCOPE;
+        }
+        // 与普通配件一致: 用 AttachmentRender 渲染; 强制 THIRD_PERSON 避免 ocular 功能路径/模板
+        AttachmentRender.renderAttachment(item, gun, type, poseStack,
+                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, overlay);
         poseStack.popPose();
     }
 
-   /**
-     * 渲染前调用: 将 ocular 节点设为"普通 cube"可见性 ——
-     * 筒状(scope 型)ocular 置为可见, 红点/全息(sight 型)ocular 置为不可见,
-     * 使非开镜渲染时 ocular 以常规树遍历显示(而非手动 renderTempPart 补绘)。
-     * 通过 restoreOcularVisibility 恢复原值。
-     */
-    public static void ensureOcularVisibility(BedrockAttachmentModel model,
-                                              java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore) {
+    /** 隐藏该瞄具的 sight 型 ocular(ocular_sight/红点镜片), 组合镜的 sight 部分一并隐藏。 */
+    public static void hideOcularSightParts(BedrockAttachmentModel model,
+                                            List<BedrockPart> restore) {
         try {
             com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
                     (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
-            java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> ocular = acc.taczfixes$ocularNodePaths();
-            java.util.List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
-            if (ocular != null) {
-                for (int i = 0; i < ocular.size(); i++) {
-                    java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path = ocular.get(i);
-                    if (path == null || path.isEmpty()) continue;
-                    java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> all = new java.util.ArrayList<>(path);
-                    boolean wantVisible = isScopeOcular == null || i >= isScopeOcular.size() || isScopeOcular.get(i);
-                    for (com.tacz.guns.client.model.bedrock.BedrockPart p : all) {
-                        if (p.visible != wantVisible) {
-                            p.visible = wantVisible;
-                            restore.add(p);
-                        }
+            List<List<BedrockPart>> ocular = acc.taczfixes$ocularNodePaths();
+            List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
+            if (ocular == null) return;
+            for (int i = 0; i < ocular.size(); i++) {
+                // sight 型(ocular_sight)隐藏; scope 型(ocular_scope)保持可见
+                if (isScopeOcular != null && i < isScopeOcular.size() && isScopeOcular.get(i)) {
+                    continue;
+                }
+                List<BedrockPart> path = ocular.get(i);
+                if (path == null || path.isEmpty()) continue;
+                for (BedrockPart p : path) {
+                    if (p.visible) {
+                        p.visible = false;
+                        restore.add(p);
                     }
                 }
             }
@@ -119,8 +107,34 @@ public final class StandbySlotBuffer {
         }
     }
 
-    public static void restoreOcularVisibility(java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore) {
-        for (com.tacz.guns.client.model.bedrock.BedrockPart part : restore) {
+    /** standby(未使用)渲染前: 保证 scope 型 ocular(含其祖先链)可见、sight 型 ocular 隐藏。
+     *  renderTempPart/树遍历可能把父节点设为 false, 导致子树(ocular_scope)不渲染, 故连同祖先一起恢复可见。 */
+    public static void ensureScopeOcularVisible(BedrockAttachmentModel model,
+                                                List<BedrockPart> restore) {
+        try {
+            com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
+                    (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
+            List<List<BedrockPart>> ocular = acc.taczfixes$ocularNodePaths();
+            List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
+            if (ocular == null) return;
+            for (int i = 0; i < ocular.size(); i++) {
+                boolean scopeType = isScopeOcular != null && i < isScopeOcular.size() && isScopeOcular.get(i);
+                List<BedrockPart> path = ocular.get(i);
+                if (path == null || path.isEmpty()) continue;
+                boolean wantVisible = scopeType;
+                for (BedrockPart p : path) {
+                    if (p.visible != wantVisible) {
+                        p.visible = wantVisible;
+                        restore.add(p);
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    public static void restoreOcularVisibility(List<BedrockPart> restore) {
+        for (BedrockPart part : restore) {
             part.visible = !part.visible;
         }
         restore.clear();
@@ -171,7 +185,7 @@ public final class StandbySlotBuffer {
     }
 
     public static void applyNodePathTransform(BedrockPart node, PoseStack pose) {
-        java.util.List<BedrockPart> path = new java.util.ArrayList<>();
+        List<BedrockPart> path = new ArrayList<>();
         BedrockPart cur = node;
         while (cur != null) {
             path.add(cur);

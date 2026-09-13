@@ -55,6 +55,28 @@ public class TaczFixesMod {
 
     public static final DeferredRegister<Enchantment> ENCHANTMENTS =
             DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, MOD_ID);
+    public static final DeferredRegister<net.minecraft.world.entity.ai.attributes.Attribute> ATTRIBUTES =
+            DeferredRegister.create(ForgeRegistries.ATTRIBUTES, MOD_ID);
+    public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> AIMING_STAMINA_ATTRIBUTE =
+            ATTRIBUTES.register("aiming_stamina",
+                    () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
+                            "attribute.name.taczfixes.aiming_stamina", 100.0, 0.0, 100000.0).setSyncable(true));
+    public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> AIMING_STAMINA_CONSUMPTION_ATTRIBUTE =
+            ATTRIBUTES.register("aiming_stamina_consumption",
+                    () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
+                            "attribute.name.taczfixes.aiming_stamina_consumption", 1.0, 0.0, 100000.0).setSyncable(true));
+    public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> AIMING_STAMINA_RECOVERY_ATTRIBUTE =
+            ATTRIBUTES.register("aiming_stamina_recovery",
+                    () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
+                            "attribute.name.taczfixes.aiming_stamina_recovery", 20.0, 0.0, 100000.0).setSyncable(true));
+    public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> STAMINA_ATTRIBUTE =
+            ATTRIBUTES.register("stamina",
+                    () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
+                            "attribute.name.taczfixes.stamina", 100.0, 0.0, 100000.0).setSyncable(true));
+    public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> STAMINA_RECOVERY_ATTRIBUTE =
+            ATTRIBUTES.register("stamina_recovery",
+                    () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
+                            "attribute.name.taczfixes.stamina_recovery", 5.0, 0.0, 100000.0).setSyncable(true));
     public static final RegistryObject<Enchantment> OVERLOAD_ENCHANTMENT =
             ENCHANTMENTS.register("overload", OverloadEnchantment::new);
     public static final RegistryObject<Enchantment> ANNIHILATION_ENCHANTMENT =
@@ -112,17 +134,43 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new SpreadRampHandler());
         MinecraftForge.EVENT_BUS.register(new JumpInaccuracyHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ShieldHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.InputStateCleanHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDataOverrideReloadHandler());
         MinecraftForge.EVENT_BUS.register(new TaczFixesDataHandler());
         MinecraftForge.EVENT_BUS.register(new GunLevelHandler());
         MinecraftForge.EVENT_BUS.register(new GunAnvilHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
         NetworkHandler.init();
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ENCHANTMENTS.register(modBus);
+        ATTRIBUTES.register(modBus);
+        modBus.addListener(this::onEntityAttributeModification);
+        modBus.addListener(this::onCommonSetup);
         if (net.minecraftforge.fml.loading.FMLLoader.getDist().isClient()) {
             modBus.addListener(this::onClientSetup);
             modBus.addListener(this::onRegisterKeyMappings);
             modBus.addListener(this::onRegisterClientReloadListeners);
+            modBus.addListener(this::onRegisterGuiOverlays);
         }
+    }
+
+    private void onRegisterGuiOverlays(net.minecraftforge.client.event.RegisterGuiOverlaysEvent event) {
+        event.registerAboveAll("aiming_stamina", new com.ssscript.taczfixes.client.hud.AimingStaminaOverlay());
+        event.registerAboveAll("stamina", new com.ssscript.taczfixes.client.hud.StaminaOverlay());
+    }
+
+    /** 启动时应用 gun data 覆盖(zip/目录枪包重写需在包被读取前)。 */
+    private void onCommonSetup(net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) {
+        com.ssscript.taczfixes.common.util.GunDataOverrideStorage.applyAll();
+    }
+
+    private void onEntityAttributeModification(net.minecraftforge.event.entity.EntityAttributeModificationEvent event) {
+        event.add(net.minecraft.world.entity.EntityType.PLAYER, AIMING_STAMINA_ATTRIBUTE.get());
+        event.add(net.minecraft.world.entity.EntityType.PLAYER, AIMING_STAMINA_CONSUMPTION_ATTRIBUTE.get());
+        event.add(net.minecraft.world.entity.EntityType.PLAYER, AIMING_STAMINA_RECOVERY_ATTRIBUTE.get());
+        event.add(net.minecraft.world.entity.EntityType.PLAYER, STAMINA_ATTRIBUTE.get());
+        event.add(net.minecraft.world.entity.EntityType.PLAYER, STAMINA_RECOVERY_ATTRIBUTE.get());
     }
 
     private void onRegisterClientReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
@@ -132,7 +180,8 @@ public class TaczFixesMod {
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {
         event.register(com.ssscript.taczfixes.client.handler.ScopeSwitchHandler.SWITCH_SCOPE_KEY);
         event.register(com.ssscript.taczfixes.client.handler.ConfigKeyHandler.OPEN_CONFIG_KEY);
-        event.register(com.ssscript.taczfixes.client.handler.DisplaySwitchKeyHandler.SWITCH_FORM_KEY);
+        event.register(com.ssscript.taczfixes.client.handler.EditDataKeyHandler.EDIT_DATA_KEY);
+        event.register(com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler.HOLD_BREATH_KEY);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
@@ -140,8 +189,13 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());
-            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DisplaySwitchKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunEnchantmentHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.EditDataKeyHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDataMessageHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.InputSyncHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.AimSwayHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.StaminaClientHandler());
         });
     }
 }

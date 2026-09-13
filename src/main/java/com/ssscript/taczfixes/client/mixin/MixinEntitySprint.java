@@ -39,6 +39,11 @@ public class MixinEntitySprint {
                 && IClientPlayerGunOperator.fromLocalPlayer(player).isAim()) {
             ci.cancel();
         }
+        // ParCool 会在 aiStep 里重新开启疾跑, 覆盖 tacz 开火/换弹时的打断, 导致跑射延迟永不结束
+        if (com.ssscript.taczfixes.common.util.ParCoolHelper.isParCoolLoaded()
+                && com.ssscript.taczfixes.client.util.SprintInterruptHelper.taczBlocksSprintReengage(player)) {
+            ci.cancel();
+        }
         if (taczfixes$isTiltHolding(player) && Config.PREVENT_SPRINT_REENGAGE_WHEN_TILT.get()) {
             ci.cancel();
         }

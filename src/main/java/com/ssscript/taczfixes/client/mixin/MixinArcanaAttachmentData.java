@@ -8,7 +8,7 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.item.ModernKineticGunItem;
 import group.taczexpands.common.accessor.IAccessorAttachmentData;
-import group.taczexpands.dist.cvk1FWQh;
+import group.taczexpands.dist.YKThsud9;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,25 +16,25 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
-@Mixin(targets = "group/taczexpands/dist/binq9IpL", remap = false)
+@Mixin(targets = "group/taczexpands/dist/WFkyOIm9", remap = false)
 public class MixinArcanaAttachmentData {
 
     @Redirect(method = "*", at = @At(value = "INVOKE",
-            target = "Lgroup/taczexpands/common/accessor/IAccessorAttachmentData;GYNU6f48" +
+            target = "Lgroup/taczexpands/common/accessor/IAccessorAttachmentData;hnV6aO6D" +
                     "(Lnet/minecraft/world/item/ItemStack;" +
                     "Lcom/tacz/guns/api/item/attachment/AttachmentType;)" +
-                    "Lgroup/taczexpands/dist/cvk1FWQh;",
+                    "Lgroup/taczexpands/dist/YKThsud9;",
             remap = false), remap = false)
-    private cvk1FWQh taczfixes$useActiveCustomScope(ItemStack stack, AttachmentType type) {
-        cvk1FWQh custom = taczfixes$activeCustomScopeData(stack);
+    private YKThsud9 taczfixes$useActiveCustomScope(ItemStack stack, AttachmentType type) {
+        YKThsud9 custom = taczfixes$activeCustomScopeData(stack);
         if (custom != null) {
             return custom;
         }
-        return IAccessorAttachmentData.GYNU6f48(stack, type);
+        return IAccessorAttachmentData.hnV6aO6D(stack, type);
     }
 
     @Unique
-    private static cvk1FWQh taczfixes$activeCustomScopeData(ItemStack stack) {
+    private static YKThsud9 taczfixes$activeCustomScopeData(ItemStack stack) {
         if (stack == null || stack.isEmpty()) return null;
         if (!(stack.getItem() instanceof ModernKineticGunItem)) return null;
 
@@ -51,7 +51,7 @@ public class MixinArcanaAttachmentData {
         if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return null;
 
         return TimelessAPI.getCommonAttachmentIndex(id)
-                .map(index -> IAccessorAttachmentData.zTuz5Apz(index.getData()))
+                .map(index -> IAccessorAttachmentData.RdZw8JA8(index.getData()))
                 .orElse(null);
     }
 }

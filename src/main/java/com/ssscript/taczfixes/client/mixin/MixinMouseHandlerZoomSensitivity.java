@@ -4,7 +4,6 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.ssscript.taczfixes.client.handler.SteplessZoomHandler;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
-import com.ssscript.taczfixes.client.util.SwitchedDisplayManager;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
@@ -57,10 +56,7 @@ public abstract class MixinMouseHandlerZoomSensitivity {
         if (DefaultAssets.isEmptyAttachmentId(scopeId)) {
             return TimelessAPI.getGunDisplay(gun).map(GunDisplayInstance::getIronZoom).orElse(1f);
         }
-        Optional<ClientAttachmentIndex> optional = SwitchedDisplayManager.getClientAttachmentIndex(gun, scopeId);
-        if (!optional.isPresent()) {
-            optional = TimelessAPI.getClientAttachmentIndex(scopeId);
-        }
+        Optional<ClientAttachmentIndex> optional = TimelessAPI.getClientAttachmentIndex(scopeId);
         if (optional.isPresent()) {
             float[] zoom = optional.get().getZoom();
             if (zoom != null && zoom.length > 0) {

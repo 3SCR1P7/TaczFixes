@@ -23,6 +23,6 @@ public class MixinTrackingDisableOnPenetration {
             return;
         }
         GunsmithLibHelper.disableTracking(bullet);
-        bullet.getEntityData().set(BulletTrackingFlag.TRACKING_DISABLED, true);
+        bullet.getEntityData().set(BulletTrackingFlag.TRACKING_DISABLED(), true);
     }
 }

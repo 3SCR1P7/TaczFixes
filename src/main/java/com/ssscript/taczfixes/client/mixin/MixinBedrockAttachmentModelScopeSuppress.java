@@ -15,17 +15,14 @@ import java.util.List;
 @Mixin(BedrockAttachmentModel.class)
 public interface MixinBedrockAttachmentModelScopeSuppress {
 
-    @Accessor("divisionNodePaths")
-    List<List<BedrockPart>> taczfixes$divisionNodePaths();
-
     @Accessor("ocularNodePaths")
     List<List<BedrockPart>> taczfixes$ocularNodePaths();
 
     @Accessor("isScopeOcular")
     List<Boolean> taczfixes$isScopeOcular();
 
-    @Accessor("scopeViewRadiusModifier")
-    float taczfixes$scopeViewRadiusModifier();
+    @Accessor("divisionNodePaths")
+    List<List<BedrockPart>> taczfixes$divisionNodePaths();
 
     @Accessor("currentGunItem")
     void taczfixes$setCurrentGunItem(ItemStack gun);
@@ -33,14 +30,26 @@ public interface MixinBedrockAttachmentModelScopeSuppress {
     @Accessor("attachmentItem")
     void taczfixes$setAttachmentItem(ItemStack item);
 
-    @Invoker("renderTempPart")
-    void taczfixes$renderTempPart(PoseStack poseStack, ItemDisplayContext displayContext,
-                                  RenderType renderType, int light, int overlay,
-                                  List<BedrockPart> path);
-
     @Accessor("scopeBodyPath")
     List<BedrockPart> taczfixes$scopeBodyPath();
 
     @Accessor("ocularRingPath")
     List<BedrockPart> taczfixes$ocularRingPath();
+
+    @Accessor("isScope")
+    boolean taczfixes$isScope();
+
+    @Accessor("isScope")
+    void taczfixes$setIsScope(boolean isScope);
+
+    @Accessor("isSight")
+    boolean taczfixes$isSight();
+
+    @Accessor("isSight")
+    void taczfixes$setIsSight(boolean isSight);
+
+    @Invoker("renderTempPart")
+    void taczfixes$renderTempPart(PoseStack poseStack, ItemDisplayContext displayContext,
+                                  RenderType renderType, int light, int overlay,
+                                  List<BedrockPart> path);
 }

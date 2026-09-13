@@ -12,9 +12,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = ShieldBehavior.class, remap = false)
 public class MixinShieldBehavior {
+
     @Inject(method = "canBlockVanillaDamage", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczfixes$gateVanilla(LivingEntity user, Vec3 sourcePos, ItemStack weapon,
-                                              CallbackInfoReturnable<Boolean> cir) {
+                                               CallbackInfoReturnable<Boolean> cir) {
         if (GunShieldHelper.isShieldUnavailable(user)) {
             cir.setReturnValue(false);
         }

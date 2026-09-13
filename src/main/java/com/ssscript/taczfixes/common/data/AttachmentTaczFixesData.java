@@ -21,6 +21,8 @@ public class AttachmentTaczFixesData {
     public List<String> fire_mode_disable;
     public InaccuracyAdjust inaccuracy_multiplier;
     public JumpInaccuracyAdjust jump_inaccuracy;
+    public AimingStaminaAdjust aiming_stamina;
+    public StaminaAdjust stamina;
     public GunTaczFixesData.ShieldConfig shield;
 
     public static class InaccuracyAdjust {
@@ -33,5 +35,30 @@ public class AttachmentTaczFixesData {
     public static class JumpInaccuracyAdjust {
         public Modifier multiplier;
         public Modifier speed;
+    }
+
+    /** 对上肢耐力各数值的修饰符(在枪械 data / 配置文件的值之上生效)。 */
+    public static class AimingStaminaAdjust {
+        public Modifier consumption_multiplier;
+        public Modifier recovery_multiplier;
+        public Modifier recovery_delay;
+        public Modifier min_stamina_to_aim;
+        public Modifier hold_breath_consumption_multiplier;
+        public Modifier weight_consumption;
+        public Modifier sway_amplitude;
+        public Modifier sway_speed;
+        public Modifier sway_low_stamina_multiplier;
+        public Modifier sway_hold_breath_low_multiplier;
+        public Modifier sway_sneak_multiplier;
+        public Modifier sway_crawl_multiplier;
+        public Modifier melee_cost;
+        public Modifier shoot_cost;
+        public Modifier sway_hold_breath_calm;
+    }
+
+    /** 对耐力消耗/恢复倍率的修饰符。 */
+    public static class StaminaAdjust {
+        public Modifier consumption_multiplier;
+        public Modifier recovery_multiplier;
     }
 }

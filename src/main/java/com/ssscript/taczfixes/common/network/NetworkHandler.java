@@ -53,5 +53,50 @@ public class NetworkHandler {
                 ClientMessageSetCustomSlotAdapter::decode,
                 ClientMessageSetCustomSlotAdapter::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(7, ClientMessageApplyGunData.class,
+                ClientMessageApplyGunData::encode,
+                ClientMessageApplyGunData::decode,
+                ClientMessageApplyGunData::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(8, ClientMessageInputSync.class,
+                ClientMessageInputSync::encode,
+                ClientMessageInputSync::decode,
+                ClientMessageInputSync::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(9, ClientMessageReplaceGun.class,
+                ClientMessageReplaceGun::encode,
+                ClientMessageReplaceGun::decode,
+                ClientMessageReplaceGun::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(10, ClientMessageHoldBreath.class,
+                ClientMessageHoldBreath::encode,
+                ClientMessageHoldBreath::decode,
+                ClientMessageHoldBreath::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(11, ServerMessageAimingStamina.class,
+                ServerMessageAimingStamina::encode,
+                ServerMessageAimingStamina::decode,
+                ServerMessageAimingStamina::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(12, ServerMessageStamina.class,
+                ServerMessageStamina::encode,
+                ServerMessageStamina::decode,
+                ServerMessageStamina::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(13, ClientMessageStaminaConsume.class,
+                ClientMessageStaminaConsume::encode,
+                ClientMessageStaminaConsume::decode,
+                ClientMessageStaminaConsume::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(14, ClientMessageStaminaConsumeRaw.class,
+                ClientMessageStaminaConsumeRaw::encode,
+                ClientMessageStaminaConsumeRaw::decode,
+                ClientMessageStaminaConsumeRaw::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(15, ClientMessageSprintState.class,
+                ClientMessageSprintState::encode,
+                ClientMessageSprintState::decode,
+                ClientMessageSprintState::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }

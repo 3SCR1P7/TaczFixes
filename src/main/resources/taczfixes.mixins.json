@@ -7,6 +7,9 @@
   "refmap": "taczfixes.refmap.json",
   "mixins": [
     "MixinEntityKineticBullet",
+    "MixinEntityKineticBulletScript",
+    "MixinEntityKineticBulletAccessor",
+    "MixinEntityKineticBulletDamageByDistance",
     "MixinEntityKineticBulletRicochet",
     "MixinEntityKineticBulletLevelDamage",
     "MixinLivingEntityShoot",
@@ -18,10 +21,19 @@
     "MixinGunScriptAPIGetReloadTime",
     "MixinGunScriptAPIGetBoltTime",
     "MixinLivingEntityAimSprintTime",
+    "MixinLivingEntityAim",
+    "MixinLivingEntityJump",
     "MixinLivingEntityShootBoltCooldown",
     "MixinLivingEntityReloadExtraAmmo",
     "MixinAttachmentDataUtilsAmmoAmount",
+    "MixinAttachmentCachePropertyEffectiveRange",
     "MixinModernKineticGunItemFireSelect",
+    "MixinGunItemDataAccessor",
+    "MixinGunDataBurstAccessor",
+    "MixinBurstDataAccessor",
+    "MixinGunDataAdjustAccessor",
+    "MixinGunDataCustomBehavior",
+    "MixinAttachmentPropertyManager",
     "MixinTaczProjectileExplosion",
     "MixinGunLevelMethods",
     "MixinBulletPenetrationBlocker",
@@ -43,6 +55,7 @@
     "MixinAnvilMenuGunConflict",
     "MixinAbstractGunStandardAmmo",
     "MixinGunDataShootInterval",
+    "MixinCommonGunIndexAccessor",
     "MixinExplodeUtil",
     "MixinEntityKineticBulletDecapitation",
     "MixinClientMessageRefitGunAccessor",
@@ -52,12 +65,10 @@
     "MixinEntityKineticBulletBulletProperty",
     "MixinClientMessageRefitGunRefitPoint",
     "MixinModernKineticGunScriptAPI",
-    "MixinAbstractGunAmmoCheck"
-  ],
-  "client": [
-    "MixinClientGunTooltip",
-    "MixinGunHudOverlay",
-    "MixinLocalPlayerShootBoltCooldown",
-    "MixinLocalPlayerDataHolderStateLock"
+    "MixinLiberateAttachment",
+    "MixinShieldBehavior",
+    "MixinLivingEntityMelee",
+    "MixinLrMeleeWeaponIndex",
+    "MixinLrMeleeItemAttack"
   ]
 }

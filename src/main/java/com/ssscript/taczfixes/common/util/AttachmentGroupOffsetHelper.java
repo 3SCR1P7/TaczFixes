@@ -15,25 +15,33 @@ public final class AttachmentGroupOffsetHelper {
     }
 
     public static void apply(PoseStack pose, EnumMap<AttachmentType, ItemStack> attachments, String slotTypeName) {
+        float[] sum = sumOffsets(attachments, slotTypeName);
+        if (sum != null) {
+            pose.translate(sum[0] / 16.0F, sum[1] / 16.0F, sum[2] / 16.0F);
+        }
+    }
+
+    /** 汇总所有已安装配件在该槽位(slotTypeName)的 group_offset, 返回 16 单位 {x, y, z}; 无任何偏移返回 null。 */
+    public static float[] sumOffsets(EnumMap<AttachmentType, ItemStack> attachments, String slotTypeName) {
         float x = 0.0F;
         float y = 0.0F;
         float z = 0.0F;
         boolean any = false;
-        for (AttachmentType slot : AttachmentType.values()) {
-            ItemStack stack = attachments.get(slot);
-            if (stack == null || stack.isEmpty()) continue;
-            Item item = stack.getItem();
-            if (!(item instanceof IAttachment attachment)) continue;
-            ResourceLocation id = attachment.getAttachmentId(stack);
-            float[] offset = AttachmentGroupOffsetManager.getOffset(id, slotTypeName);
-            if (offset == null) continue;
-            x += offset[0];
-            y += offset[1];
-            z += offset[2];
-            any = true;
+        if (attachments != null) {
+            for (AttachmentType slot : AttachmentType.values()) {
+                ItemStack stack = attachments.get(slot);
+                if (stack == null || stack.isEmpty()) continue;
+                Item item = stack.getItem();
+                if (!(item instanceof IAttachment attachment)) continue;
+                ResourceLocation id = attachment.getAttachmentId(stack);
+                float[] offset = AttachmentGroupOffsetManager.getOffset(id, slotTypeName);
+                if (offset == null) continue;
+                x += offset[0];
+                y += offset[1];
+                z += offset[2];
+                any = true;
+            }
         }
-        if (any) {
-            pose.translate(x / 16.0F, y / 16.0F, z / 16.0F);
-        }
+        return any ? new float[]{x, y, z} : null;
     }
 }

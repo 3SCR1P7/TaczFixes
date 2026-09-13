@@ -28,6 +28,16 @@ public class MixinLocalPlayerAim {
     @Inject(method = "aim", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$onAim(boolean aiming, CallbackInfo ci) {
         if (aiming) {
+            if (Config.AIMING_STAMINA_ENABLED.get()) {
+                float threshold = com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager
+                        .resolveAimingStamina(player.getMainHandItem()).min_stamina_to_aim.floatValue();
+                if (threshold > 0f
+                        && com.ssscript.taczfixes.client.util.AimingStaminaClientState.isKnown()
+                        && com.ssscript.taczfixes.client.util.AimingStaminaClientState.getStamina() < threshold) {
+                    ci.cancel();
+                    return;
+                }
+            }
             if (Config.ADS_INTERRUPT_SPRINT.get() && player.isSprinting()) {
                 player.setSprinting(false);
             }

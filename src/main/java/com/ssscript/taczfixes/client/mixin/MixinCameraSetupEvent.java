@@ -8,18 +8,21 @@ import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.ssscript.taczfixes.common.util.RecoilMultiplierResolver;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
+import com.tacz.guns.resource.pojo.data.gun.GunRecoil;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
@@ -91,13 +94,39 @@ public class MixinCameraSetupEvent {
         taczfixes$recoilMultiplierYaw *= stabilityFactor;
     }
 
-    @ModifyArg(method = "initialCameraRecoil", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genPitchSplineFunction(F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"), index = 0, remap = false)
-    private static float taczfixes$modifyPitchScale(float scale) {
-        return scale * taczfixes$recoilMultiplierPitch;
+    /** 原生调用签名 (F)。 */
+    @WrapOperation(method = "initialCameraRecoil",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genPitchSplineFunction(F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"),
+            require = 0, remap = false)
+    private static PolynomialSplineFunction taczfixes$wrapPitchScaleV1(GunRecoil recoil, float scale,
+                                                                       Operation<PolynomialSplineFunction> original) {
+        return original.call(recoil, scale * taczfixes$recoilMultiplierPitch);
     }
 
-    @ModifyArg(method = "initialCameraRecoil", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genYawSplineFunction(F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"), index = 0, remap = false)
-    private static float taczfixes$modifyYawScale(float scale) {
-        return scale * taczfixes$recoilMultiplierYaw;
+    /** arcana 修改后的调用签名 (GunRecoil, F)。 */
+    @WrapOperation(method = "initialCameraRecoil",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genPitchSplineFunction(Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"),
+            require = 0, remap = false)
+    private static PolynomialSplineFunction taczfixes$wrapPitchScaleV2(GunRecoil recoil, float scale,
+                                                                       Operation<PolynomialSplineFunction> original) {
+        return original.call(recoil, scale * taczfixes$recoilMultiplierPitch);
+    }
+
+    /** 原生调用签名 (F)。 */
+    @WrapOperation(method = "initialCameraRecoil",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genYawSplineFunction(F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"),
+            require = 0, remap = false)
+    private static PolynomialSplineFunction taczfixes$wrapYawScaleV1(GunRecoil recoil, float scale,
+                                                                     Operation<PolynomialSplineFunction> original) {
+        return original.call(recoil, scale * taczfixes$recoilMultiplierYaw);
+    }
+
+    /** arcana 修改后的调用签名 (GunRecoil, F)。 */
+    @WrapOperation(method = "initialCameraRecoil",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;genYawSplineFunction(Lcom/tacz/guns/resource/pojo/data/gun/GunRecoil;F)Lorg/apache/commons/math3/analysis/polynomials/PolynomialSplineFunction;"),
+            require = 0, remap = false)
+    private static PolynomialSplineFunction taczfixes$wrapYawScaleV2(GunRecoil recoil, float scale,
+                                                                     Operation<PolynomialSplineFunction> original) {
+        return original.call(recoil, scale * taczfixes$recoilMultiplierYaw);
     }
 }

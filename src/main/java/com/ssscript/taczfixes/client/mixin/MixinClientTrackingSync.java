@@ -16,7 +16,7 @@ public class MixinClientTrackingSync {
         if (!bullet.level().isClientSide()) {
             return;
         }
-        if (!bullet.getEntityData().get(BulletTrackingFlag.TRACKING_DISABLED)) {
+        if (!bullet.getEntityData().get(BulletTrackingFlag.TRACKING_DISABLED())) {
             return;
         }
         bullet.getPersistentData().putBoolean(GunsmithLibHelper.TRACKING_ENABLED_KEY, false);

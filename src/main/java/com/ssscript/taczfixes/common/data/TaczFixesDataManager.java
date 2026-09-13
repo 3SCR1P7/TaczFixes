@@ -9,7 +9,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,6 +25,16 @@ public class TaczFixesDataManager {
 
     public static GunTaczFixesData get(ResourceLocation dataId) {
         return DATA.get(dataId);
+    }
+
+    public static void put(ResourceLocation dataId, GunTaczFixesData data) {
+        if (dataId != null && data != null) {
+            DATA.put(dataId, data);
+        }
+    }
+
+    public static Map<ResourceLocation, GunTaczFixesData> getAll() {
+        return DATA;
     }
 
     public static ResourceLocation resolveDataId(ResourceLocation gunId) {
@@ -49,6 +58,28 @@ public class TaczFixesDataManager {
         return data == null ? null : data.refit_point;
     }
 
+    /** 枪械 data 中的上肢耐力覆盖配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.AimingStaminaConfig resolveAimingStamina(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.aiming_stamina;
+    }
+
+    /** 枪械 data 中的耐力倍率配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.StaminaConfig resolveStamina(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.stamina;
+    }
+
     public static GunTaczFixesData.RecoilConfig resolveRecoil(ResourceLocation dataId, FireMode mode) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         if (data == null || data.recoil_multiplier == null || data.recoil_multiplier.isEmpty()) {
@@ -61,12 +92,6 @@ public class TaczFixesDataManager {
             case UNKNOWN -> null;
         };
         return key == null ? null : data.recoil_multiplier.get(key);
-    }
-
-    public static Map<String, String> resolveAmmoReplace(ResourceLocation gunId) {
-        ResourceLocation dataId = resolveDataId(gunId);
-        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
-        return data == null || data.ammo_replace == null ? Collections.emptyMap() : data.ammo_replace;
     }
 
     /**
@@ -95,6 +120,34 @@ public class TaczFixesDataManager {
     public static GunTaczFixesData.FireKnockbackConfig resolveFireKnockback(ResourceLocation dataId) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         return data == null ? null : data.fire_knockback;
+    }
+
+    /**
+     * 枪械 data 字段 bullet_ricochet: 字段存在则覆盖配置文件(含 enable), 未填写的字段回退配置文件值。
+     * data 缺省时完全使用配置文件值。仅以 gunId 为 key, 与禁用名单(disabled_guns)共同生效。
+     */
+    public static GunTaczFixesData.RicochetConfig resolveRicochet(ResourceLocation gunId) {
+        ResourceLocation dataId = resolveDataId(gunId);
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        GunTaczFixesData.RicochetConfig gun = data == null ? null : data.bullet_ricochet;
+
+        GunTaczFixesData.RicochetConfig result = new GunTaczFixesData.RicochetConfig();
+        result.enable = gun != null && gun.enable != null ? gun.enable : Config.BULLET_RICOCHET_ENABLE.get();
+        result.min_angle = gun != null && gun.min_angle != null ? gun.min_angle : Config.BULLET_RICOCHET_MIN_ANGLE.get();
+        result.max_angle = gun != null && gun.max_angle != null ? gun.max_angle : Config.BULLET_RICOCHET_MAX_ANGLE.get();
+        result.chance_min = gun != null && gun.chance_min != null ? gun.chance_min : Config.BULLET_RICOCHET_CHANCE_MIN.get();
+        result.chance_max = gun != null && gun.chance_max != null ? gun.chance_max : Config.BULLET_RICOCHET_CHANCE_MAX.get();
+        result.block_tags = java.util.List.copyOf(gun != null && gun.block_tags != null && !gun.block_tags.isEmpty()
+                ? gun.block_tags : Config.BULLET_RICOCHET_BLOCK_TAGS.get());
+        result.damage_multiplier = gun != null && gun.damage_multiplier != null ? gun.damage_multiplier
+                : Config.BULLET_RICOCHET_DAMAGE_MULTIPLIER.get();
+        result.reflect_angle_ratio_min = gun != null && gun.reflect_angle_ratio_min != null ? gun.reflect_angle_ratio_min
+                : Config.BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MIN.get();
+        result.reflect_angle_ratio_max = gun != null && gun.reflect_angle_ratio_max != null ? gun.reflect_angle_ratio_max
+                : Config.BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MAX.get();
+        result.top_bottom_enable = gun != null && gun.top_bottom_enable != null ? gun.top_bottom_enable
+                : Config.BULLET_RICOCHET_TOP_BOTTOM_ENABLE.get();
+        return result;
     }
 
     /** 枪械 data 字段 jump_inaccuracy: 滞空散布倍率及其涨落速度。

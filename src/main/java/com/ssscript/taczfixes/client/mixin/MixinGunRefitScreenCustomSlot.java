@@ -1,21 +1,20 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.data.AttachmentSlotsConfig;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
+import com.ssscript.taczfixes.client.util.CustomSlotButton;
+import com.ssscript.taczfixes.client.util.CustomSlotEntry;
 import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.animation.screen.RefitTransform;
-import com.tacz.guns.client.gui.GunRefitScreen;
+import com.tacz.guns.client.gui.components.refit.GunAttachmentSlot;
 import com.tacz.guns.client.gui.components.refit.RefitUnloadButton;
-import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Renderable;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -31,13 +30,16 @@ import java.util.EnumMap;
 import java.util.Locale;
 import java.util.Map;
 
-@Mixin(GunRefitScreen.class)
+@Mixin(com.tacz.guns.client.gui.GunRefitScreen.class)
 public abstract class MixinGunRefitScreenCustomSlot extends Screen {
 
     protected MixinGunRefitScreenCustomSlot(LocalPlayer player) {
         super(Component.literal(""));
     }
 
+    /** 自定义槽位/默认槽位可见性入口: 重排所有槽位列, 并插入自定义槽按钮。
+     *  hidden_unavailable=true 时未启用的自定义槽隐藏, false 时以 tacz 不可用图标显示;
+     *  hidden_unavailable_default=true 时未开放的默认槽隐藏, 其余槽位紧凑排列。 */
     @Inject(method = "addAttachmentTypeButtons", at = @At("TAIL"), remap = false)
     private void taczfixes$addCustomSlotButtons(CallbackInfo ci) {
         Minecraft mc = Minecraft.getInstance();
@@ -47,32 +49,40 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
         ResourceLocation gunId = igun.getGunId(gunStack);
+        AttachmentSlotsConfig cfg = CustomSlotManager.getConfig(gunId);
+        if (cfg == null) return;
         Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
-        if (slots.isEmpty()) {
-            return;
-        }
         if (CustomSlotGuiState.get() != null && !slots.containsKey(CustomSlotGuiState.get())) {
             CustomSlotGuiState.reset();
         }
+        boolean hiddenUnavailable = CustomSlotManager.isHiddenUnavailable(gunId);
+        boolean hiddenDefault = CustomSlotManager.isHiddenUnavailableDefault(gunId);
+
         java.util.List<AttachmentType> order = new java.util.ArrayList<>();
         for (AttachmentType t : AttachmentType.values()) {
             if (t != AttachmentType.NONE) {
                 order.add(t);
             }
         }
-        EnumMap<AttachmentType, Integer> cnt = new EnumMap<>(AttachmentType.class);
-        EnumMap<AttachmentType, java.util.List<Map.Entry<String, CustomSlotDefinition>>> grouped = new EnumMap<>(AttachmentType.class);
+        EnumMap<AttachmentType, java.util.List<CustomSlotEntry>> grouped = new EnumMap<>(AttachmentType.class);
         for (AttachmentType t : order) {
-            cnt.put(t, 0);
             grouped.put(t, new java.util.ArrayList<>());
         }
-        java.util.List<Map.Entry<String, CustomSlotDefinition>> customList = new java.util.ArrayList<>();
+        java.util.List<CustomSlotEntry> customList = new java.util.ArrayList<>();
         for (Map.Entry<String, CustomSlotDefinition> entry : slots.entrySet()) {
             CustomSlotDefinition def = entry.getValue();
-            if (!CustomSlotManager.isDependenceMet(gunId, gunStack, def)) continue;
-            if (CustomSlotManager.isConflictOccupied(gunId, gunStack, def)) continue;
+            if (def == null) continue;
+            boolean available = CustomSlotManager.isDependenceMet(gunId, gunStack, def)
+                    && !CustomSlotManager.isConflictOccupied(gunId, gunStack, def);
+            if (!available) {
+                if (entry.getKey().equals(CustomSlotGuiState.get())) {
+                    CustomSlotGuiState.reset();
+                }
+                if (hiddenUnavailable) continue;
+            }
+            CustomSlotEntry se = new CustomSlotEntry(entry.getKey(), def, !available);
             if (def.isCustom()) {
-                customList.add(entry);
+                customList.add(se);
                 continue;
             }
             AttachmentType t;
@@ -82,78 +92,72 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
                 continue;
             }
             if (t == AttachmentType.NONE) {
-                customList.add(entry);
+                customList.add(se);
                 continue;
             }
-            grouped.get(t).add(entry);
-            cnt.put(t, cnt.get(t) + 1);
+            grouped.get(t).add(se);
         }
-        int totalCustom = 0;
-        for (int c : cnt.values()) {
-            totalCustom += c;
+
+        EnumMap<AttachmentType, GunAttachmentSlot> defaultSlots = new EnumMap<>(AttachmentType.class);
+        for (Renderable r : new java.util.ArrayList<>(this.renderables)) {
+            if (r instanceof GunAttachmentSlot slot && slot.getType() != AttachmentType.NONE) {
+                defaultSlots.putIfAbsent(slot.getType(), slot);
+            }
         }
-        if (totalCustom == 0 && customList.isEmpty()) {
-            return;
-        }
-        EnumMap<AttachmentType, Integer> leftCnt = new EnumMap<>(AttachmentType.class);
-        int acc = 0;
-        for (AttachmentType t : order) {
-            leftCnt.put(t, acc);
-            acc += cnt.get(t);
-        }
+
         int startX = this.width - 30;
-        for (net.minecraft.client.gui.components.Renderable r : new java.util.ArrayList<>(this.renderables)) {
-            if (r instanceof com.tacz.guns.client.gui.components.refit.GunAttachmentSlot slot) {
-                AttachmentType t = slot.getType();
-                Integer lc = leftCnt.get(t);
-                if (lc != null && lc > 0) {
-                    slot.setX(slot.getX() - 18 * lc);
-                }
-            }
-        }
-        AttachmentType view = RefitTransform.getCurrentTransformType();
-        Integer viewShift = leftCnt.get(view);
-        if (view != AttachmentType.NONE && viewShift != null && viewShift > 0) {
-            for (net.minecraft.client.gui.components.Renderable r : new java.util.ArrayList<>(this.renderables)) {
-                if (r instanceof RefitUnloadButton unload && !ownUnloadButtons.contains(unload)) {
-                    unload.setX(unload.getX() - 18 * viewShift);
-                }
-            }
-        }
         int y = 10;
+        int col = 0;
         int selectedX = 0;
         int selectedY = 0;
         boolean hasSelected = false;
-        for (int i = 0; i < order.size(); i++) {
-            AttachmentType t = order.get(i);
-            int k = 0;
-            for (Map.Entry<String, CustomSlotDefinition> entry : grouped.get(t)) {
-                k++;
-                int x = startX - 18 * (i + leftCnt.get(t)) - 18 * k;
-                CustomSlotButton button = createCustomSlotButton(x, y, entry, gunStack);
-                if (button == null) continue;
-                if (entry.getKey().equals(CustomSlotGuiState.get())) {
+        for (AttachmentType t : order) {
+            GunAttachmentSlot defSlot = defaultSlots.get(t);
+            if (defSlot != null) {
+                if (hiddenDefault && !defSlot.isAllow()) {
+                    defSlot.visible = false;
+                    defSlot.active = false;
+                    this.renderables.remove(defSlot);
+                    this.children().remove(defSlot);
+                } else {
+                    int x = startX - 18 * col;
+                    defSlot.setX(x);
+                    if (RefitTransform.getCurrentTransformType() == t) {
+                        for (Renderable r : new java.util.ArrayList<>(this.renderables)) {
+                            if (r instanceof RefitUnloadButton unload && !ownUnloadButtons.contains(unload)) {
+                                unload.setX(x + 5);
+                            }
+                        }
+                    }
+                    col++;
+                }
+            }
+            for (CustomSlotEntry se : grouped.get(t)) {
+                int x = startX - 18 * col;
+                CustomSlotButton button = createCustomSlotButton(x, y, se, gunStack);
+                if (button != null) {
+                    if (se.id.equals(CustomSlotGuiState.get())) {
+                        selectedX = x;
+                        selectedY = y;
+                        hasSelected = true;
+                    }
+                    this.addRenderableWidget(button);
+                }
+                col++;
+            }
+        }
+        for (CustomSlotEntry se : customList) {
+            int x = startX - 18 * col;
+            CustomSlotButton button = createCustomSlotButton(x, y, se, gunStack);
+            if (button != null) {
+                if (se.id.equals(CustomSlotGuiState.get())) {
                     selectedX = x;
                     selectedY = y;
                     hasSelected = true;
                 }
                 this.addRenderableWidget(button);
             }
-        }
-        int last = order.size() - 1;
-        AttachmentType lastT = order.get(last);
-        int k = 0;
-        for (Map.Entry<String, CustomSlotDefinition> entry : customList) {
-            k++;
-            int x = startX - 18 * (last + leftCnt.get(lastT)) - 18 * cnt.get(lastT) - 18 * k;
-            CustomSlotButton button = createCustomSlotButton(x, y, entry, gunStack);
-            if (button == null) continue;
-            if (entry.getKey().equals(CustomSlotGuiState.get())) {
-                selectedX = x;
-                selectedY = y;
-                hasSelected = true;
-            }
-            this.addRenderableWidget(button);
+            col++;
         }
         String selected = CustomSlotGuiState.get();
         if (hasSelected && selected != null && !CustomSlotStorage.get(gunStack, selected).isEmpty()) {
@@ -170,29 +174,34 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
     }
 
     @Unique
-    private CustomSlotButton createCustomSlotButton(int x, int y, Map.Entry<String, CustomSlotDefinition> entry,
-                                                    ItemStack gunStack) {
-        CustomSlotDefinition def = entry.getValue();
-        final String slotId = entry.getKey();
+    private CustomSlotButton createCustomSlotButton(int x, int y, CustomSlotEntry entry, ItemStack gunStack) {
+        CustomSlotDefinition def = entry.def;
+        final String slotId = entry.id;
         final AttachmentType view;
         try {
             view = def.isCustom() ? AttachmentType.NONE : AttachmentType.valueOf(def.type.toUpperCase(Locale.US));
         } catch (IllegalArgumentException ex) {
             return null;
         }
-        CustomSlotButton button = new CustomSlotButton(x, y, def, slotId, gunStack, btn -> {
+        CustomSlotButton button = new CustomSlotButton(x, y, def, slotId, gunStack, entry.unavailable, btn -> {
+            if (entry.unavailable) return;
             RefitTransform.changeRefitScreenView(view);
             CustomSlotGuiState.set(slotId);
             this.init();
         });
+        if (entry.unavailable) {
+            button.active = false;
+        }
         return button;
     }
 
     @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
     private void taczfixes$onClose(CallbackInfo ci) {
         sendCustomSlotLaserColor();
+        // 记录退出时选中的自定义槽: 收枪缓动期间仍需按该槽的 refit 路径(含 refit_view 回退)解析,
+        // 否则会退回 tacz 原始路径(null 时定位矩阵为单位阵, 枪械从 0,0,0 缓动回)。
+        CustomSlotGuiState.beginRefitViewTransition();
         CustomSlotGuiState.reset();
-        CustomSlotGuiState.clearViewTransition();
     }
 
     @Unique
@@ -215,106 +224,4 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
     }
 
     private final java.util.Set<RefitUnloadButton> ownUnloadButtons = new java.util.HashSet<>();
-
-    private static class CustomSlotButton extends Button implements com.tacz.guns.client.gui.components.refit.IStackTooltip {
-        private final CustomSlotDefinition definition;
-        private final String slotId;
-        private final ItemStack gunStack;
-        private final com.ssscript.taczfixes.client.util.GunPackIconLoader.LoadedIcon iconTexture;
-        private boolean selected;
-
-        CustomSlotButton(int x, int y, CustomSlotDefinition definition, String slotId, ItemStack gunStack, OnPress onPress) {
-            super(x, y, 18, 18, Component.literal(""), onPress, DEFAULT_NARRATION);
-            this.definition = definition;
-            this.slotId = slotId;
-            this.gunStack = gunStack;
-            com.ssscript.taczfixes.client.util.GunPackIconLoader.LoadedIcon icon = null;
-            if (definition.slot != null) {
-                ResourceLocation tex = ResourceLocation.tryParse(definition.slot);
-                if (tex != null) {
-                    icon = com.ssscript.taczfixes.client.util.GunPackIconLoader.load(tex);
-                }
-            }
-            this.iconTexture = icon;
-        }
-
-        @Override
-        public void renderTooltip(java.util.function.Consumer<ItemStack> consumer) {
-            if (!isHoveredOrFocused()) return;
-            ItemStack item = CustomSlotStorage.get(gunStack, slotId);
-            if (!item.isEmpty()) {
-                consumer.accept(item);
-            }
-        }
-
-        @Override
-        public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-            this.selected = slotId.equals(CustomSlotGuiState.get());
-            int x = getX();
-            int y = getY();
-            boolean hovered = isHoveredOrFocused();
-            if (hovered) {
-                Font font = Minecraft.getInstance().font;
-                Component name = getSlotName();
-                int nameX = x + (this.width - font.width(name)) / 2;
-                int nameY = y + 20;
-                if (this.selected && !CustomSlotStorage.get(gunStack, slotId).isEmpty()) {
-                    nameY = y + 30;
-                }
-                graphics.drawString(font, name, nameX, nameY, 0xFFFFFF);
-            }
-            RenderSystem.disableDepthTest();
-            RenderSystem.enableBlend();
-            if (this.selected || hovered) {
-                graphics.blit(GunRefitScreen.SLOT_TEXTURE, x, y, 0, 0, this.width, this.height, 18, 18);
-            } else {
-                graphics.blit(GunRefitScreen.SLOT_TEXTURE, x + 1, y + 1, 1, 1, this.width - 2, this.height - 2, 18, 18);
-            }
-            ItemStack item = CustomSlotStorage.get(gunStack, slotId);
-            if (definition.isCustom()) {
-                if (item.isEmpty() && this.iconTexture != null) {
-                    graphics.blit(this.iconTexture.texture(),
-                            x + 2, y + 2, 14, 14,
-                            0f, 0f,
-                            this.iconTexture.width(), this.iconTexture.height(),
-                            this.iconTexture.width(), this.iconTexture.height());
-                }
-            } else {
-                if (item.isEmpty() && this.iconTexture != null) {
-                    graphics.blit(this.iconTexture.texture(),
-                            x + 2, y + 2, 14, 14,
-                            0f, 0f,
-                            this.iconTexture.width(), this.iconTexture.height(),
-                            this.iconTexture.width(), this.iconTexture.height());
-                } else if (item.isEmpty()) {
-                    try {
-                        int offset = GunRefitScreen.getSlotTextureXOffset(gunStack,
-                                AttachmentType.valueOf(definition.type.toUpperCase()));
-                        if (offset >= 0 && offset != 192) {
-                            graphics.blit(GunRefitScreen.ICONS_TEXTURE, x + 2, y + 2,
-                                    this.width - 4, this.height - 4,
-                                    (float) offset, 0f, 32, 32,
-                                    GunRefitScreen.getSlotsTextureWidth(), 32);
-                        }
-                    } catch (IllegalArgumentException ignored) {
-                    }
-                }
-            }
-            if (!item.isEmpty()) {
-                graphics.renderItem(item, x + 1, y + 1);
-            }
-            RenderSystem.enableDepthTest();
-            RenderSystem.disableBlend();
-        }
-
-        private Component getSlotName() {
-            if (definition.name != null && !definition.name.isEmpty()) {
-                return Component.translatable(definition.name);
-            }
-            if (!definition.isCustom()) {
-                return Component.translatable("tooltip.tacz.attachment." + definition.type.toLowerCase(Locale.US));
-            }
-            return Component.literal(slotId);
-        }
-    }
 }
