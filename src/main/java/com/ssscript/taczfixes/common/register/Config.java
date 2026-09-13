@@ -1108,8 +1108,8 @@ public class Config {
                         "需要LesRaisins Tactical Equipments模组。")
                 .defineInRange("lr_melee_heavy_cost", 20.0, 0.0, 100000.0);
         AIMING_STAMINA_SWAY_CALM_MS = BUILDER
-                .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：1000")
-                .defineInRange("sway_hold_breath_calm_ms", 1000, 0, 60000);
+                .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：500")
+                .defineInRange("sway_hold_breath_calm_ms", 500, 0, 60000);
         AIMING_STAMINA_BAR_MODE = BUILDER
                 .comment("上肢耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
