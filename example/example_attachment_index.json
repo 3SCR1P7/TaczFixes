@@ -1,7 +1,0 @@
-{
-  "display_switched": [
-    // 装上此配件后，按N键让display在两者间切换
-    "tacz:sight_552_display",
-    "tacz:sight_exp3_display"
-  ]
-}
