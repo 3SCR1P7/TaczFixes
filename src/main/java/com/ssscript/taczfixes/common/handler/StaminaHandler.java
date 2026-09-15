@@ -2,19 +2,15 @@ package com.ssscript.taczfixes.common.handler;
 
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.network.ServerMessageStamina;
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.ParCoolStaminaHelper;
 import com.ssscript.taczfixes.common.util.StaminaHelper;
 import com.ssscript.taczfixes.common.util.StaminaState;
-import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.api.item.IGun;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
@@ -140,11 +136,6 @@ public class StaminaHandler {
     }
 
     private static float gunWeight(ServerPlayer player) {
-        ItemStack stack = player.getMainHandItem();
-        IGun gun = IGun.getIGunOrNull(stack);
-        if (gun == null) return 0f;
-        ResourceLocation gunId = gun.getGunId(stack);
-        if (gunId == null) return 0f;
-        return TimelessAPI.getCommonGunIndex(gunId).map(index -> index.getGunData().getWeight()).orElse(0f);
+        return StaminaHelper.gunWeight(player);
     }
 }

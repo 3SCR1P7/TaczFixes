@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;

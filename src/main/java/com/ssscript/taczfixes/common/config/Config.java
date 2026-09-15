@@ -1,4 +1,6 @@
-package com.ssscript.taczfixes.common.register;
+package com.ssscript.taczfixes.common.config;
+
+import com.ssscript.taczfixes.TaczFixesMod;
 
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.common.Mod;
@@ -239,6 +241,14 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_ENABLED;
     public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_CTRL_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_ALT_MULTIPLIER;
+
+    public static final ForgeConfigSpec.BooleanValue DUAL_WIELD_ALLOW_OTHER_GUN_TYPES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_TYPES;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_GUNS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_DENIED_GUNS;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RECOIL_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_LEFT_X_OFFSET;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RIGHT_X_OFFSET;
 
     static {
         BUILDER.push("gun_level");
@@ -1153,10 +1163,39 @@ public class Config {
                 .comment("ParCool 滑铲开始时消耗的耐力。默认值：15")
                 .defineInRange("slide_cost", 15.0, 0.0, 100000.0);
         STAMINA_BAR_MODE = BUILDER
-                .comment("耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
+                .comment("耐力条显示模式。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
         BUILDER.pop();
 
+        BUILDER.push("dual_wield");
+        DUAL_WIELD_ALLOW_OTHER_GUN_TYPES = BUILDER
+                .comment("是否允许所有枪械双持。默认值：false")
+                .define("allowOtherGunTypes", false);
+        DUAL_WIELD_ALLOWED_TYPES = BUILDER
+                .comment("允许双持的枪械类型列表。默认值：pistol, smg")
+                .defineListAllowEmpty("allowedGunTypes", List.of("pistol", "smg"),
+                        value -> value instanceof String text && !text.isBlank());
+        DUAL_WIELD_ALLOWED_GUNS = BUILDER
+                .comment("允许双持的枪械列表。")
+                .defineListAllowEmpty("allowedGunIds", List.of(),
+                        value -> value instanceof String text && !text.isBlank());
+        DUAL_WIELD_DENIED_GUNS = BUILDER
+                .comment("禁用双持的枪械列表。")
+                .defineListAllowEmpty("deniedGunIds",
+                        List.of("applied_armorer:niklas_pistol_double_win_win",
+                                "eos:elp_13_t3x2", "eos:eos_m_57cw_t2x2", "sfms:inf_x", "sfms:inf_xj",
+                                "emxarms:emx_tknife", "sfms:sword_life", "sfms:trident_dea",
+                                "sfms:emergency_baton", "sfms:katana", "sfms:tb23"),
+                        value -> value instanceof String text && !text.isBlank());
+        DUAL_WIELD_RECOIL_MULTIPLIER = BUILDER
+                .comment("Final procedural camera recoil multiplier while dual-wielding. 1.5 means 50% more recoil after attachment, aiming, and crawl modifiers.")
+                .defineInRange("dualWieldRecoilMultiplier", 2.0d, 0.0d, 10.0d);
+        DUAL_WIELD_LEFT_X_OFFSET = BUILDER
+                .comment("左手枪械的坐标偏移。默认值：-0.58")
+                .defineInRange("leftGunXOffset", -0.58d, -2.0d, 0.0d);
+        DUAL_WIELD_RIGHT_X_OFFSET = BUILDER
+                .comment("右手枪械的坐标偏移。默认值：0.24")
+                .defineInRange("rightGunXOffset", 0.24d, 0.0d, 2.0d);
         BUILDER.pop();
     }
 

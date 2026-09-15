@@ -8,7 +8,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.pojo.data.attachment.Modifier;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.RecoilMultiplierResolver;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import net.minecraft.resources.ResourceLocation;

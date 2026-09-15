@@ -13,7 +13,7 @@ public final class StaminaHelper {
     public static float max(Player player) {
         if (player == null) return 1f;
         return Math.max(1f, (float) player.getAttributeValue(
-                com.ssscript.taczfixes.common.register.TaczFixesMod.STAMINA_ATTRIBUTE.get()));
+                com.ssscript.taczfixes.TaczFixesMod.STAMINA_ATTRIBUTE.get()));
     }
 
     public static float current(Player player) {
@@ -61,10 +61,18 @@ public final class StaminaHelper {
                 () -> () -> false);
     }
 
-    /** 枪械重量(kg)。 */
+    /** 枪械重量(kg), 双持时计入副手枪械。 */
     public static float gunWeight(Player player) {
         if (player == null) return 0f;
-        net.minecraft.world.item.ItemStack stack = player.getMainHandItem();
+        float weight = stackWeight(player.getMainHandItem());
+        if (com.ssscript.taczfixes.common.util.DualWieldEligibility.isDualWielding(player)) {
+            weight += stackWeight(player.getOffhandItem());
+        }
+        return weight;
+    }
+
+    private static float stackWeight(net.minecraft.world.item.ItemStack stack) {
+        if (stack == null || stack.isEmpty()) return 0f;
         com.tacz.guns.api.item.IGun gun = com.tacz.guns.api.item.IGun.getIGunOrNull(stack);
         if (gun == null) return 0f;
         net.minecraft.resources.ResourceLocation gunId = gun.getGunId(stack);

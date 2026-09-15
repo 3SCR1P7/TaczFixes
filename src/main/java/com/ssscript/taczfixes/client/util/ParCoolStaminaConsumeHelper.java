@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.util;
 
 import com.ssscript.taczfixes.common.network.ClientMessageStaminaConsume;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.entity.player.Player;
 

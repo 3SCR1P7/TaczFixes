@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.network.ClientMessageLoadRefitPreset;
@@ -92,7 +92,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         ResourceLocation gunId = igun.getGunId(gunStack);
         int y = this.height - 28;
         int right = this.width - 20;
-        boolean showPreset = com.ssscript.taczfixes.common.register.Config.REFITSCREEN_SHOW_PRESET_BUTTONS.get();
+        boolean showPreset = com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_PRESET_BUTTONS.get();
         if (showPreset) {
             Component saveLabel = Component.translatable("gui.taczfixes.refit_preset.save");
             int saveW = this.font.width(saveLabel) + 10;
@@ -105,7 +105,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
             this.addRenderableWidget(new com.ssscript.taczfixes.client.util.TransparentButton(saveLabel,
                     b -> openPresetSave(gunStack, gunId)).bounds(saveX, y, saveW, 18));
         }
-        if (com.ssscript.taczfixes.common.register.Config.REFITSCREEN_SHOW_SEARCH_BOX.get()) {
+        if (com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_SEARCH_BOX.get()) {
             taczfixes$ensureSearchBox();
         } else {
             taczfixes$removeSearchBox();

@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.DefaultAssets;

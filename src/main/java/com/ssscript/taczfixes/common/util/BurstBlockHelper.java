@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.util;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;

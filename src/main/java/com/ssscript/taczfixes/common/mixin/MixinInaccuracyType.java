@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.ParCoolHelper;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
 import net.minecraft.world.entity.LivingEntity;

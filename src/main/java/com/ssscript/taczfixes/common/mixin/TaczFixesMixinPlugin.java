@@ -11,11 +11,15 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean GD656PEEK_PRESENT;
     private static final boolean PARCOOL_PRESENT;
     private static final boolean LRTACTICAL_PRESENT;
+    private static final boolean TOUHOU_LITTLE_MAID_PRESENT;
+    private static final boolean YES_STEVE_MODEL_PRESENT;
 
     static {
         GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
         PARCOOL_PRESENT = hasResource("com/alrex/parcool/client/hud/impl/StaminaHUDController.class");
         LRTACTICAL_PRESENT = hasResource("me/xjqsh/lrtactical/item/MeleeItem.class");
+        TOUHOU_LITTLE_MAID_PRESENT = hasResource("com/github/tartaricacid/touhoulittlemaid/TouhouLittleMaid.class");
+        YES_STEVE_MODEL_PRESENT = hasResource("com/elfmcys/yesstevemodel/YesSteveModel.class");
     }
 
     private static boolean hasResource(String path) {
@@ -36,6 +40,12 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinLr")) {
             return LRTACTICAL_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinTouhouMaid")) {
+            return TOUHOU_LITTLE_MAID_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinYsm")) {
+            return YES_STEVE_MODEL_PRESENT;
         }
         return true;
     }

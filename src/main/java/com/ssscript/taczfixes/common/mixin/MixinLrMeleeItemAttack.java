@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.data.LrMeleeStaminaManager;
 import com.ssscript.taczfixes.common.handler.AimingStaminaHandler;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import me.xjqsh.lrtactical.api.melee.MeleeAction;
 import net.minecraft.resources.ResourceLocation;

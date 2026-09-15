@@ -1,30 +1,53 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.util.CustomSlotStorage;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
+import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
+import com.ssscript.taczfixes.common.util.CustomSlotStorage;
+import com.ssscript.taczfixes.common.util.DualReloadTimeController;
+import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
+import com.ssscript.taczfixes.common.util.OffhandShooterManager;
+import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
+import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
+import com.tacz.guns.resource.pojo.data.gun.BulletData;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.util.CycleTaskHelper;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.BooleanSupplier;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(ModernKineticGunScriptAPI.class)
-public class MixinModernKineticGunScriptAPI {
+@Mixin(value = {ModernKineticGunScriptAPI.class}, remap = false)
+public abstract class MixinModernKineticGunScriptAPI {
 
     @Shadow
     private ItemStack itemStack;
 
     @Shadow
     private LivingEntity shooter;
+
+    @Shadow
+    private ShooterDataHolder dataHolder;
 
     @Unique
     public String tfGetCustomAttachment(String slotId) {
@@ -86,7 +109,7 @@ public class MixinModernKineticGunScriptAPI {
         CustomFireModeManager.activateFor(itemStack);
     }
 
-    /** lua: api:getScoreboardValue("aaaa") 获取开火者玩家在名称为 "aaaa"(或任意名称)的计分板上的值。
+    /** lua: api:getScoreboardValue("aaaa") 获取开火者玩家在名称 "aaaa"(或任意名字)的计分板上的值。
      *  计分板不存在或开火者无该值返回 0; 仅服务端生效。 */
     @Unique
     public int getScoreboardValue(String objectiveName) {
@@ -103,7 +126,7 @@ public class MixinModernKineticGunScriptAPI {
         return score == null ? 0 : score.getScore();
     }
 
-    /** lua: api:getPlayerFacing() 开火者面向方向 {偏航, 俯仰} (MC 角度, 俯仰正值朝下)。 */
+    /** lua: api:getPlayerFacing() 开火者面向方向 {偏航, 俯仰} (MC 角度, 俯仰正值朝上)。 */
     @Unique
     public org.luaj.vm2.LuaValue getPlayerFacing() {
         return com.ssscript.taczfixes.common.util.ShooterLuaHelper.facing(shooter);
@@ -151,7 +174,7 @@ public class MixinModernKineticGunScriptAPI {
         IGun gun = IGun.getIGunOrNull(itemStack);
         if (gun == null) return false;
         if (!display) {
-            // gun data 为共通(服务端)资源, 校验存在性; display 是客户端资源, 服务端无索引, 不校验
+            // gun data 为共享(服务端)资源, 校验存在性; display 是客户端资源, 服务端无索引, 不校验。
             com.tacz.guns.resource.ICommonResourceProvider provider = com.tacz.guns.resource.CommonAssetsManager.get();
             if (provider == null || provider.getGunIndex(id) == null) return false;
         }
@@ -170,5 +193,148 @@ public class MixinModernKineticGunScriptAPI {
             serverPlayer.inventoryMenu.broadcastChanges();
         }
         return true;
+    }
+
+    @Inject(method = {"getReloadTime"}, at = {@At("RETURN")}, cancellable = true)
+    private void dualWield$slowReloadClock(CallbackInfoReturnable<Long> callback) {
+        callback.setReturnValue(Long.valueOf(DualReloadTimeController.toVirtualDuration(this.dataHolder, this.itemStack, callback.getReturnValue().longValue())));
+    }
+
+    @ModifyVariable(method = {"adjustReloadTime"}, at = @At("HEAD"), argsOnly = true, ordinal = ServerMessageOffhandActionResult.ACTION_SHOOT)
+    private long dualWield$compensateReloadAdjustment(long alpha) {
+        return DualReloadTimeController.toRealAdjustment(this.dataHolder, this.itemStack, alpha);
+    }
+
+    @Redirect(method = {"safeAsyncTask"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/util/CycleTaskHelper;addCycleTask(Ljava/util/function/BooleanSupplier;JJI)V"), require = 0)
+    private void dualWield$guardSafeAsyncTask(BooleanSupplier task, long delayMillis, long periodMillis, int cycles) {
+        CycleTaskHelper.addCycleTask(dualWield$wrapManualSafeAsyncTask(task, cycles), delayMillis, periodMillis, cycles);
+    }
+
+    @WrapOperation(method = {"shootOnce"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/util/CycleTaskHelper;addCycleTask(Ljava/util/function/BooleanSupplier;JI)V")}, require = 0)
+    private void dualWield$guardShootOnceTask(BooleanSupplier task, long periodMillis, int cycles, Operation<Void> original) {
+        original.call(new Object[]{dualWield$wrapManualGenerationTask(task), Long.valueOf(periodMillis), Integer.valueOf(cycles)});
+    }
+
+    @Unique
+    private BooleanSupplier dualWield$wrapManualGenerationTask(BooleanSupplier task) {
+        long generation = OffhandShooterManager.captureManualAsyncTaskGeneration(this.dataHolder, this.itemStack);
+        if (generation == Long.MIN_VALUE) {
+            return task;
+        }
+        return () -> {
+            if (!OffhandShooterManager.isManualAsyncTaskGenerationCurrent(this.shooter, this.dataHolder, this.itemStack, generation)) {
+                return false;
+            }
+            OffhandShooterManager.pushActiveData(this.dataHolder);
+            try {
+                boolean asBoolean = task.getAsBoolean();
+                OffhandShooterManager.popActiveData();
+                return asBoolean;
+            } catch (Throwable th) {
+                OffhandShooterManager.popActiveData();
+                throw th;
+            }
+        };
+    }
+
+    @Unique
+    private BooleanSupplier dualWield$wrapManualSafeAsyncTask(BooleanSupplier task, int cycles) {
+        long generation = OffhandShooterManager.captureManualAsyncTaskGeneration(this.dataHolder, this.itemStack);
+        if (generation == Long.MIN_VALUE) {
+            return task;
+        }
+        OffhandShooterManager.recordManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
+        AtomicInteger completedInvocations = new AtomicInteger();
+        AtomicBoolean completionReported = new AtomicBoolean();
+        return () -> {
+            if (!OffhandShooterManager.isManualAsyncTaskGenerationCurrent(this.shooter, this.dataHolder, this.itemStack, generation)) {
+                if (completionReported.compareAndSet(false, true)) {
+                    OffhandShooterManager.finishManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
+                    return false;
+                }
+                return false;
+            }
+            boolean completedNormally = false;
+            OffhandShooterManager.pushActiveData(this.dataHolder);
+            try {
+                boolean continueTask = task.getAsBoolean();
+                completedNormally = true;
+                OffhandShooterManager.popActiveData();
+                if (1 == 0 && completionReported.compareAndSet(false, true)) {
+                    OffhandShooterManager.finishManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
+                }
+                int invocationCount = completedInvocations.incrementAndGet();
+                boolean reachedCycleLimit = cycles > 0 && invocationCount >= cycles;
+                if ((!continueTask || reachedCycleLimit) && completionReported.compareAndSet(false, true)) {
+                    OffhandShooterManager.finishManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
+                }
+                return continueTask;
+            } catch (Throwable th) {
+                OffhandShooterManager.popActiveData();
+                if (!completedNormally && completionReported.compareAndSet(false, true)) {
+                    OffhandShooterManager.finishManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
+                }
+                throw th;
+            }
+        };
+    }
+
+    @Redirect(method = {"shootOnce", "getCachedProperty"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;getCacheProperty()Lcom/tacz/guns/resource/modifier/AttachmentCacheProperty;"))
+    private AttachmentCacheProperty dualWield$resolveCache(IGunOperator operator) {
+        if (OffhandShooterManager.isOffhandData(this.dataHolder) || OffhandGunPropertyResolver.isActive(this.dataHolder)) {
+            return this.dataHolder.cacheProperty;
+        }
+        return operator.getCacheProperty();
+    }
+
+    @Inject(method = {"setAmmoInBarrel"}, at = {@At("HEAD")})
+    private void dualWield$recordManualActionChamberRefill(boolean hasAmmo, CallbackInfo callback) {
+        if (hasAmmo && OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            OffhandShooterManager.recordManualActionChamberRefill(this.dataHolder, this.itemStack);
+        }
+    }
+
+    @Redirect(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = @At(value = "INVOKE", target = "Ljava/lang/Object;equals(Ljava/lang/Object;)Z"), require = 0)
+    private boolean dualWield$matchesBurstGun(Object resolvedMainGun, Object expectedGun) {
+        ItemStack itemStack;
+        if (!OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            return resolvedMainGun != null && resolvedMainGun.equals(expectedGun);
+        }
+        OffhandShooterManager.recordBulletAttempt(this.dataHolder, this.itemStack);
+        if (!OffhandShooterManager.isCurrentOffhandContext(this.shooter, this.dataHolder)) {
+            return false;
+        }
+        if (this.dataHolder.currentGunItem == null) {
+            itemStack = ItemStack.EMPTY;
+        } else {
+            itemStack = this.dataHolder.currentGunItem.get();
+        }
+        ItemStack liveOffhand = itemStack;
+        return liveOffhand == this.itemStack && !liveOffhand.isEmpty();
+    }
+
+    @Inject(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At("RETURN")}, require = 0)
+    private void dualWield$finishBulletAttempt(boolean consumeAmmo, AttachmentCacheProperty cacheProperty, int bulletAmount, GunData gunData, BulletData bulletData, IGunOperator operator, float damageMultiplier, float projectileSpeed, float inaccuracy, int soundDistance, boolean silence, CallbackInfoReturnable<Boolean> callback) {
+        if (OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            OffhandShooterManager.finishBulletAttempt(this.dataHolder, this.itemStack);
+        }
+    }
+
+    @Redirect(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;nextBulletIsTracer(I)Z"))
+    private boolean dualWield$nextTracer(IGunOperator operator, int interval) {
+        if (!OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            return operator.nextBulletIsTracer(interval);
+        }
+        this.dataHolder.shootCount++;
+        return interval != -1 && this.dataHolder.shootCount % (interval + 1) == 0;
+    }
+
+    @WrapOperation(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z", remap = true)}, require = 0)
+    private boolean dualWield$recordAcceptedBullet(Level level, Entity entity, Operation<Boolean> original) {
+        boolean added = original.call(new Object[]{level, entity}).booleanValue();
+        if (added && OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            OffhandShooterManager.recordBulletSpawn(this.dataHolder, this.itemStack);
+        }
+        return added;
     }
 }

@@ -50,7 +50,7 @@ public final class GunPackIconLoader {
                 if (image != null) return image;
             }
         } catch (Exception e) {
-            com.ssscript.taczfixes.common.register.TaczFixesMod.LOGGER.warn("taczfixes: gun pack scan failed for {}", icon, e);
+            com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn("taczfixes: gun pack scan failed for {}", icon, e);
         }
         return null;
     }

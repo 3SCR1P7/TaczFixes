@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.tooltip.ClientGunTooltip;
 import net.minecraft.ChatFormatting;

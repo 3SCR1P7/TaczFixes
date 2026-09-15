@@ -98,5 +98,45 @@ public class NetworkHandler {
                 ClientMessageSprintState::decode,
                 ClientMessageSprintState::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(16, ClientMessageOffhandShoot.class,
+                ClientMessageOffhandShoot::encode,
+                ClientMessageOffhandShoot::decode,
+                ClientMessageOffhandShoot::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(17, ClientMessageOffhandReload.class,
+                ClientMessageOffhandReload::encode,
+                ClientMessageOffhandReload::decode,
+                ClientMessageOffhandReload::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(18, ClientMessageOffhandCancelReload.class,
+                ClientMessageOffhandCancelReload::encode,
+                ClientMessageOffhandCancelReload::decode,
+                ClientMessageOffhandCancelReload::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(19, ClientMessageOffhandBolt.class,
+                ClientMessageOffhandBolt::encode,
+                ClientMessageOffhandBolt::decode,
+                ClientMessageOffhandBolt::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(20, ClientMessageOffhandFireSelect.class,
+                ClientMessageOffhandFireSelect::encode,
+                ClientMessageOffhandFireSelect::decode,
+                ClientMessageOffhandFireSelect::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(21, ServerMessageOffhandState.class,
+                ServerMessageOffhandState::encode,
+                ServerMessageOffhandState::decode,
+                ServerMessageOffhandState::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(22, ServerMessageOffhandActionResult.class,
+                ServerMessageOffhandActionResult::encode,
+                ServerMessageOffhandActionResult::decode,
+                ServerMessageOffhandActionResult::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(23, ServerMessageDualWieldEligibility.class,
+                ServerMessageDualWieldEligibility::encode,
+                ServerMessageDualWieldEligibility::decode,
+                ServerMessageDualWieldEligibility::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 }

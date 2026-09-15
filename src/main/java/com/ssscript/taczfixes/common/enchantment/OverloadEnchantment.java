@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.enchantment;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 
 public class OverloadEnchantment extends BaseGunEnchantment {
     public OverloadEnchantment() {

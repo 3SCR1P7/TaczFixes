@@ -3,7 +3,7 @@ package com.ssscript.taczfixes.client.handler;
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import com.ssscript.taczfixes.common.network.ClientMessageHoldBreath;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;

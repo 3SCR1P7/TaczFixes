@@ -45,7 +45,7 @@ public abstract class MixinGunRefitScreenViewMode extends Screen {
 
     @Inject(method = "addAttachmentTypeButtons", at = @At("TAIL"), remap = false)
     private void taczfixes$ensureViewModeButton(CallbackInfo ci) {
-        if (!com.ssscript.taczfixes.common.register.Config.REFITSCREEN_SHOW_VIEW_BUTTON.get()) {
+        if (!com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_VIEW_BUTTON.get()) {
             return;
         }
         int leftmost = Integer.MAX_VALUE;

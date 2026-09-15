@@ -1,6 +1,6 @@
-package com.ssscript.taczfixes.client.register;
+package com.ssscript.taczfixes.client.screen;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import me.shedaniel.clothconfig2.api.AbstractConfigListEntry;
 import me.shedaniel.clothconfig2.api.ConfigBuilder;
 import me.shedaniel.clothconfig2.api.ConfigCategory;
@@ -32,8 +32,19 @@ public class ConfigScreen {
         buildEnchantment(builder.getOrCreateCategory(cat("enchantment")), entry);
         buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
         buildStamina(builder.getOrCreateCategory(cat("stamina")), entry);
+        buildDualWield(builder.getOrCreateCategory(cat("dual_wield")), entry);
 
         return builder.build();
+    }
+
+    private static void buildDualWield(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "dual_wield.allow_other_gun_types", Config.DUAL_WIELD_ALLOW_OTHER_GUN_TYPES);
+        lst_(cat, entry, "dual_wield.allowed_gun_types", Config.DUAL_WIELD_ALLOWED_TYPES);
+        lst_(cat, entry, "dual_wield.allowed_gun_ids", Config.DUAL_WIELD_ALLOWED_GUNS);
+        lst_(cat, entry, "dual_wield.denied_gun_ids", Config.DUAL_WIELD_DENIED_GUNS);
+        dbl_(cat, entry, "dual_wield.recoil_multiplier", Config.DUAL_WIELD_RECOIL_MULTIPLIER);
+        dbl_(cat, entry, "dual_wield.left_offset", Config.DUAL_WIELD_LEFT_X_OFFSET);
+        dbl_(cat, entry, "dual_wield.right_offset", Config.DUAL_WIELD_RIGHT_X_OFFSET);
     }
 
     private static void buildStamina(ConfigCategory cat, ConfigEntryBuilder entry) {

@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;

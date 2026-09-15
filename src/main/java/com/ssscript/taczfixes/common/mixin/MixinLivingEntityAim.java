@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.AimingStaminaState;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;

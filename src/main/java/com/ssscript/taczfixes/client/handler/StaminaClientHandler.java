@@ -3,7 +3,7 @@ package com.ssscript.taczfixes.client.handler;
 import com.ssscript.taczfixes.client.util.StaminaClientState;
 import com.ssscript.taczfixes.common.network.ClientMessageStaminaConsumeRaw;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.ParCoolHelper;
 import com.ssscript.taczfixes.common.util.ParCoolStaminaHelper;
 import net.minecraft.client.Minecraft;

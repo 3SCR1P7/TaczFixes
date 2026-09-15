@@ -22,6 +22,7 @@ public class GunTaczFixesData {
     public Map<String, CustomFireModeConfig> fire_mode;
     public Map<String, Object> fire_mode_adjust;
     public RicochetConfig bullet_ricochet;
+    public DualWieldConfig dual_wield;
 
     /** 枪械 data 中的上肢耐力覆盖配置; 未填写的字段使用配置文件中的值。 */
     public static class AimingStaminaConfig {
@@ -109,6 +110,14 @@ public class GunTaczFixesData {
         public Double reflect_angle_ratio_min;
         public Double reflect_angle_ratio_max;
         public Boolean top_bottom_enable;
+    }
+
+    /** 枪械 data 中 taczfixes.dual_wield: 逐枪覆盖双持模组配置, 优先级高于其 config 文件。 */
+    public static class DualWieldConfig {
+        public Boolean enable;
+        public Double recoil_multiplier;
+        public Double left_offset;
+        public Double right_offset;
     }
 
     /** 自定义开火模式。</summary> */

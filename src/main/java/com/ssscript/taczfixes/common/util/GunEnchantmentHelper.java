@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.common.util;
 
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -43,7 +43,7 @@ public class GunEnchantmentHelper {
         if (base <= 0) {
             return 0;
         }
-        Enchantment eden = com.ssscript.taczfixes.common.register.TaczFixesMod.ARCANA_EDEN_ENCHANTMENT.get();
+        Enchantment eden = com.ssscript.taczfixes.TaczFixesMod.ARCANA_EDEN_ENCHANTMENT.get();
         if (eden != null && enchantment != eden && enchantment.getMaxLevel() > 1) {
             int edenLevel = EnchantmentHelper.getTagEnchantmentLevel(eden, stack);
             if (edenLevel > 0) {
@@ -188,7 +188,7 @@ public class GunEnchantmentHelper {
     }
 
     public static int getOverloadLevel(ItemStack stack) {
-        return getLevel(stack, com.ssscript.taczfixes.common.register.TaczFixesMod.OVERLOAD_ENCHANTMENT.get());
+        return getLevel(stack, com.ssscript.taczfixes.TaczFixesMod.OVERLOAD_ENCHANTMENT.get());
     }
 
     public static float getEfficiencyFireRateFactor(ItemStack gun) {
@@ -216,7 +216,7 @@ public class GunEnchantmentHelper {
     }
 
     public static float getCoilSpeedFactor(ItemStack stack) {
-        int level = getLevel(stack, com.ssscript.taczfixes.common.register.TaczFixesMod.ELECTROMAGNETIC_COIL_ENCHANTMENT.get());
+        int level = getLevel(stack, com.ssscript.taczfixes.TaczFixesMod.ELECTROMAGNETIC_COIL_ENCHANTMENT.get());
         if (level <= 0) {
             return 1.0f;
         }
@@ -224,7 +224,7 @@ public class GunEnchantmentHelper {
     }
 
     public static float getCoilInaccuracyFactor(ItemStack stack) {
-        int level = getLevel(stack, com.ssscript.taczfixes.common.register.TaczFixesMod.ELECTROMAGNETIC_COIL_ENCHANTMENT.get());
+        int level = getLevel(stack, com.ssscript.taczfixes.TaczFixesMod.ELECTROMAGNETIC_COIL_ENCHANTMENT.get());
         if (level <= 0) {
             return 1.0f;
         }

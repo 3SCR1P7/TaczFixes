@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;

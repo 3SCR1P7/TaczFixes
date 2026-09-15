@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.client.render.DualFocusAimKey;
+import com.ssscript.taczfixes.client.render.DualWieldClient;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.DefaultAssets;
@@ -14,6 +16,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -52,5 +55,13 @@ public class MixinZoomKey {
         com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.sendToServer(
                 new com.ssscript.taczfixes.common.network.ClientMessageCustomSlotZoom(active));
         ci.cancel();
+    }
+
+    @Inject(method = {"onZoomKeyPress"}, at = {@At("HEAD")}, cancellable = true)
+    private static void dualWield$reserveFocusAimKey(InputEvent.Key event, CallbackInfo callback) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.screen == null && DualWieldClient.isDualMode(minecraft.player) && DualFocusAimKey.matches(event)) {
+            callback.cancel();
+        }
     }
 }

@@ -1,4 +1,6 @@
-package com.ssscript.taczfixes.common.register;
+package com.ssscript.taczfixes;
+
+import com.ssscript.taczfixes.common.config.Config;
 
 import com.ssscript.taczfixes.common.data.TaczFixesDataHandler;
 import com.ssscript.taczfixes.common.enchantment.AnnihilationEnchantment;
@@ -130,6 +132,7 @@ public class TaczFixesMod {
 
     public TaczFixesMod() {
         ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        
         MinecraftForge.EVENT_BUS.register(new LimbDamageHandler());
         MinecraftForge.EVENT_BUS.register(new SpreadRampHandler());
         MinecraftForge.EVENT_BUS.register(new JumpInaccuracyHandler());
@@ -142,6 +145,12 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
         NetworkHandler.init();
+        com.ssscript.taczfixes.common.util.DualWieldOverrides.setProvider(gunId -> {
+            com.ssscript.taczfixes.common.data.GunTaczFixesData.DualWieldConfig cfg =
+                    com.ssscript.taczfixes.common.data.TaczFixesDataManager.resolveDualWield(gunId);
+            return cfg == null ? null : new com.ssscript.taczfixes.common.util.DualWieldOverrides.Value(
+                    cfg.enable, cfg.recoil_multiplier, cfg.left_offset, cfg.right_offset);
+        });
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ENCHANTMENTS.register(modBus);
         ATTRIBUTES.register(modBus);

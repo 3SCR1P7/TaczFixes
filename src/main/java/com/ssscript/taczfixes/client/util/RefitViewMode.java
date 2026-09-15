@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 
 public final class RefitViewMode {
     private static final float SENSITIVITY = 0.4f;

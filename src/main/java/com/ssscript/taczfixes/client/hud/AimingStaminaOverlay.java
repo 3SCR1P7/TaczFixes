@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.hud;
 
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
-import com.ssscript.taczfixes.common.register.AimingStaminaBarMode;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.AimingStaminaBarMode;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;

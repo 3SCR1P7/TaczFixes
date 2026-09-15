@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.util;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.InaccuracyParams;
 import net.minecraft.resources.ResourceLocation;
 

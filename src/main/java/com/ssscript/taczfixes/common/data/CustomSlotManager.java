@@ -108,7 +108,7 @@ public class CustomSlotManager {
             }
             return result;
         } catch (Exception e) {
-            com.ssscript.taczfixes.common.register.TaczFixesMod.LOGGER.warn("taczfixes: tacz tag lookup failed for {}", tagId, e);
+            com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn("taczfixes: tacz tag lookup failed for {}", tagId, e);
             return null;
         }
     }

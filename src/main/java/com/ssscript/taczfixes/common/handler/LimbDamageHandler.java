@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.LimbDamageHelper;

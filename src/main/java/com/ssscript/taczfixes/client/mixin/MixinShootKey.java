@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.client.render.DualWieldClient;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
 import com.tacz.guns.client.input.ShootKey;
 import net.minecraft.client.Minecraft;
@@ -35,5 +36,20 @@ public class MixinShootKey {
     @Inject(method = "shootControllerTick", at = @At("HEAD"), remap = false)
     private static void taczfixes$activateController(boolean shoot, CallbackInfoReturnable<Boolean> cir) {
         activateForMainHand();
+    }
+
+    @Inject(method = {"autoShoot"}, at = {@At("HEAD")}, cancellable = true)
+    private static void dualWield$stopMainLeftClick(TickEvent.ClientTickEvent event, CallbackInfo callback) {
+        if (DualWieldClient.isDualMode(Minecraft.getInstance().player)) {
+            callback.cancel();
+        }
+    }
+
+    @Inject(method = {"shootControllerTick"}, at = {@At("HEAD")}, cancellable = true)
+    private static void dualWield$stopMainController(boolean isPress, CallbackInfoReturnable<Boolean> callback) {
+        if (DualWieldClient.isDualMode(Minecraft.getInstance().player)) {
+            DualWieldClient.setControllerShootDown(isPress);
+            callback.setReturnValue(false);
+        }
     }
 }

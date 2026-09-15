@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.data;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
@@ -115,6 +115,14 @@ public class TaczFixesDataManager {
         ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         return data == null ? null : data.bullet_in_barrel;
+    }
+
+    /** 枪械 data 中的双持覆盖配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.DualWieldConfig resolveDualWield(ResourceLocation gunId) {
+        ResourceLocation dataId = resolveDataId(gunId);
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.dual_wield;
     }
 
     public static GunTaczFixesData.FireKnockbackConfig resolveFireKnockback(ResourceLocation dataId) {

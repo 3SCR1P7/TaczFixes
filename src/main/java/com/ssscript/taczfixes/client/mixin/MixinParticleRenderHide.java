@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.util.ArcanaThermalState;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.common.compat.ArcanaThermalState;
 import com.tacz.guns.api.entity.IGunOperator;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;

@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.core.Direction;
 import net.minecraft.core.registries.Registries;

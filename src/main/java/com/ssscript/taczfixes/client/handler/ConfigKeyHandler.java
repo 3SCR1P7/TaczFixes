@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.handler;
 
 import com.mojang.blaze3d.platform.InputConstants;
-import com.ssscript.taczfixes.client.register.ConfigScreen;
+import com.ssscript.taczfixes.client.screen.ConfigScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraftforge.client.settings.KeyConflictContext;

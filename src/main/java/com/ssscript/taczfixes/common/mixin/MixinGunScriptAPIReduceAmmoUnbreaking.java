@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
 import net.minecraft.world.entity.LivingEntity;

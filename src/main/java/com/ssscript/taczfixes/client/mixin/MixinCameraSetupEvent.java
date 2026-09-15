@@ -1,7 +1,8 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.client.render.DualRecoilMultiplier;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
@@ -13,6 +14,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.resource.pojo.data.gun.GunRecoil;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
@@ -100,7 +102,7 @@ public class MixinCameraSetupEvent {
             require = 0, remap = false)
     private static PolynomialSplineFunction taczfixes$wrapPitchScaleV1(GunRecoil recoil, float scale,
                                                                        Operation<PolynomialSplineFunction> original) {
-        return original.call(recoil, scale * taczfixes$recoilMultiplierPitch);
+        return original.call(recoil, DualRecoilMultiplier.apply(Minecraft.getInstance().player, scale * taczfixes$recoilMultiplierPitch));
     }
 
     /** arcana 修改后的调用签名 (GunRecoil, F)。 */
@@ -109,7 +111,7 @@ public class MixinCameraSetupEvent {
             require = 0, remap = false)
     private static PolynomialSplineFunction taczfixes$wrapPitchScaleV2(GunRecoil recoil, float scale,
                                                                        Operation<PolynomialSplineFunction> original) {
-        return original.call(recoil, scale * taczfixes$recoilMultiplierPitch);
+        return original.call(recoil, DualRecoilMultiplier.apply(Minecraft.getInstance().player, scale * taczfixes$recoilMultiplierPitch));
     }
 
     /** 原生调用签名 (F)。 */
@@ -118,7 +120,7 @@ public class MixinCameraSetupEvent {
             require = 0, remap = false)
     private static PolynomialSplineFunction taczfixes$wrapYawScaleV1(GunRecoil recoil, float scale,
                                                                      Operation<PolynomialSplineFunction> original) {
-        return original.call(recoil, scale * taczfixes$recoilMultiplierYaw);
+        return original.call(recoil, DualRecoilMultiplier.apply(Minecraft.getInstance().player, scale * taczfixes$recoilMultiplierYaw));
     }
 
     /** arcana 修改后的调用签名 (GunRecoil, F)。 */
@@ -127,6 +129,6 @@ public class MixinCameraSetupEvent {
             require = 0, remap = false)
     private static PolynomialSplineFunction taczfixes$wrapYawScaleV2(GunRecoil recoil, float scale,
                                                                      Operation<PolynomialSplineFunction> original) {
-        return original.call(recoil, scale * taczfixes$recoilMultiplierYaw);
+        return original.call(recoil, DualRecoilMultiplier.apply(Minecraft.getInstance().player, scale * taczfixes$recoilMultiplierYaw));
     }
 }

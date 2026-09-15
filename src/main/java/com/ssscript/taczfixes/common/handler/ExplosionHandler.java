@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.TaczExplosionContext;
 import net.minecraft.world.entity.Entity;
 import net.minecraftforge.event.entity.living.LivingHurtEvent;

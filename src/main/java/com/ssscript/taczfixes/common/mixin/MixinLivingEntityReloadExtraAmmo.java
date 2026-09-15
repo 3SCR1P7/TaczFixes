@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.ReloadExtraTracker;
 import com.tacz.guns.api.entity.ReloadState;

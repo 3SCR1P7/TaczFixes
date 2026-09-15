@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.util.PeekState;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.common.compat.PeekState;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.client.Minecraft;

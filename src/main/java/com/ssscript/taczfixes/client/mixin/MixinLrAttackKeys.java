@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import com.ssscript.taczfixes.common.data.LrMeleeStaminaManager;
-import com.ssscript.taczfixes.common.register.Config;
+import com.ssscript.taczfixes.common.config.Config;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;

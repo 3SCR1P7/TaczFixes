@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.common.register;
+package com.ssscript.taczfixes.common.config;
 
 import java.util.Locale;
 

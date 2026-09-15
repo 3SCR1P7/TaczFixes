@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.common.util;
+package com.ssscript.taczfixes.common.compat;
 
 public final class ArcanaThermalState {
     public static volatile boolean scopeViewActive;

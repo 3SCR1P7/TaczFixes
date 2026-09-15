@@ -1,9 +1,12 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssscript.taczfixes.client.render.DualWieldClient;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.client.model.BedrockGunModel;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -26,5 +29,17 @@ public class MixinFirstPersonRenderGunEvent {
                                                            BedrockGunModel model, float partialTick, CallbackInfo ci) {
         if (model == null) return;
         CustomScopeViewShift.apply(poseStack, model, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
+    }
+
+    @Inject(method = {"onGunFire"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getMainHandItem()Lnet/minecraft/world/item/ItemStack;", shift = At.Shift.BEFORE, remap = true)}, cancellable = true, remap = false)
+    private static void dualWield$skipMainHandMuzzleForOffhandFire(GunFireEvent event, CallbackInfo callback) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || event.getShooter() != player || !DualWieldClient.isDualMode(player)) {
+            return;
+        }
+        ItemStack firedStack = event.getGunItemStack();
+        if (firedStack != null && firedStack == player.getOffhandItem()) {
+            callback.cancel();
+        }
     }
 }

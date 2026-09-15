@@ -98,7 +98,7 @@ public final class CustomHudManager {
                 }
             }
         } catch (Exception e) {
-            com.ssscript.taczfixes.common.register.TaczFixesMod.LOGGER.warn("taczfixes: custom hud scan failed for {}", id, e);
+            com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn("taczfixes: custom hud scan failed for {}", id, e);
         }
         return null;
     }

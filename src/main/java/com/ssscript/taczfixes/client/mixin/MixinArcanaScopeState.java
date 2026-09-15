@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.util.ArcanaThermalState;
+import com.ssscript.taczfixes.common.compat.ArcanaThermalState;
 import group.taczexpands.dist.WFkyOIm9;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

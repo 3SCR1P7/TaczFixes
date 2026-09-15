@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.common.util;
 
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.world.entity.LivingEntity;

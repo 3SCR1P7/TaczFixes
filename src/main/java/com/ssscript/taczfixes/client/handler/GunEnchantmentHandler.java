@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.handler;
 
-import com.ssscript.taczfixes.common.register.Config;
-import com.ssscript.taczfixes.common.register.TaczFixesMod;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.DecapitationHelper;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.tacz.guns.api.DefaultAssets;
