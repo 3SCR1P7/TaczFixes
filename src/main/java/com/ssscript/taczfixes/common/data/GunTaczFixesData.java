@@ -23,6 +23,24 @@ public class GunTaczFixesData {
     public Map<String, Object> fire_mode_adjust;
     public RicochetConfig bullet_ricochet;
     public DualWieldConfig dual_wield;
+    /** 配件位置微调范围: {槽位id: [min, max]}。*/
+    public Map<String, java.util.List<Double>> pos_alter;
+    /** 枪械电量(FE)配置。 */
+    public ChargeConfig charge;
+
+    /** 枪械 data 的 charge: 有该字段的枪械可在充电站等位置充能。 */
+    public static class ChargeConfig {
+        /** 电量上限(FE)。 */
+        public Integer power_max;
+        /** 每次开火消耗的电量(FE)。 */
+        public Integer fire_consumption;
+        /** 是否将弹药显示替换为电量百分比显示。 */
+        public Boolean replace_ammo_hud;
+        /** 电量不足时是否阻拦开火(并播放 dry_fire 音效)。 */
+        public Boolean blocking_fire;
+        /** 是否用耐久栏显示剩余电量。 */
+        public Boolean durability_bar;
+    }
 
     /** 枪械 data 中的上肢耐力覆盖配置; 未填写的字段使用配置文件中的值。 */
     public static class AimingStaminaConfig {
@@ -116,8 +134,27 @@ public class GunTaczFixesData {
     public static class DualWieldConfig {
         public Boolean enable;
         public Double recoil_multiplier;
+        public Double inaccuracy_multiplier;
+        public Double focus_aim_recoil_multiplier;
+        public Double focus_aim_inaccuracy_multiplier;
         public Double left_offset;
         public Double right_offset;
+        public HandPosConfig hand_pos;
+    }
+
+    /** 第一人称手臂锚点来源配置。on_left 用于左手枪, on_right 用于右手枪。 */
+    public static class HandPosConfig {
+        public HandPosEntry on_left;
+        public HandPosEntry on_right;
+
+        public static class HandPosEntry {
+            /** 手臂锚点来源, 可选 left、right、none。*/
+            public String pos;
+            /** 是否镜像锚点位姿。*/
+            public Boolean mirror;
+            /** 手臂定位组的 xyz 偏移, 数组 [x,y,z], 单位为 1/16 格。*/
+            public java.util.List<Double> offset;
+        }
     }
 
     /** 自定义开火模式。</summary> */

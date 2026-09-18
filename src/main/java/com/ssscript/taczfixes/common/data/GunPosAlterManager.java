@@ -19,6 +19,10 @@ public class GunPosAlterManager {
     public static float[] getRange(ResourceLocation gunId, String slotKey) {
         if (gunId == null || slotKey == null) return null;
         Map<String, float[]> ranges = RANGES.get(gunId);
+        if (ranges == null) {
+            ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
+            ranges = dataId == null ? null : RANGES.get(dataId);
+        }
         return ranges == null ? null : ranges.get(slotKey);
     }
 }

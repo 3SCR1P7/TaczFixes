@@ -496,21 +496,7 @@ public class GunDataEditScreen extends Screen {
             }
         }
         if (keyCode == GLFW.GLFW_KEY_ENTER || keyCode == GLFW.GLFW_KEY_KP_ENTER) {
-            this.followCaret = true;
-            snapshotUndo();
-            char newline = '\n';
-            if (hasSelection()) {
-                int low = selectionLow();
-                int high = selectionHigh();
-                this.content = this.content.substring(0, low) + newline + this.content.substring(high);
-                this.cursor = low + 1;
-                clearSelection();
-            } else {
-                this.content = this.content.substring(0, this.cursor) + newline
-                        + this.content.substring(this.cursor);
-                this.cursor++;
-            }
-            markModified();
+            taczfixes$insertIndentedNewline();
             return true;
         }
         if (keyCode == GLFW.GLFW_KEY_TAB) {
@@ -621,12 +607,48 @@ public class GunDataEditScreen extends Screen {
         return lineStart(lineIndex) + lines[Math.min(lineIndex, lines.length - 1)].length();
     }
 
+    /** 回车换行时自动补上当前行的缩进; 若光标前最后一个非空白字符是 { 或 [ 则额外补一级缩进。 */
+    private void taczfixes$insertIndentedNewline() {
+        this.followCaret = true;
+        snapshotUndo();
+        int[] pos = cursorPos();
+        String[] lines = lines();
+        String line = lines[Math.min(pos[0], lines.length - 1)];
+        int col = Math.min(pos[1], line.length());
+        int indentEnd = 0;
+        while (indentEnd < col && (line.charAt(indentEnd) == ' ' || line.charAt(indentEnd) == '\t')) {
+            indentEnd++;
+        }
+        String indent = line.substring(0, indentEnd);
+        int before = this.cursor - 1;
+        while (before >= 0 && (this.content.charAt(before) == ' ' || this.content.charAt(before) == '\t')) {
+            before--;
+        }
+        if (before >= 0 && (this.content.charAt(before) == '{' || this.content.charAt(before) == '[')) {
+            indent = indent + "  ";
+        }
+        String insert = "\n" + indent;
+        if (hasSelection()) {
+            int low = selectionLow();
+            int high = selectionHigh();
+            this.content = this.content.substring(0, low) + insert + this.content.substring(high);
+            this.cursor = low + insert.length();
+            clearSelection();
+        } else {
+            this.content = this.content.substring(0, this.cursor) + insert + this.content.substring(this.cursor);
+            this.cursor += insert.length();
+        }
+        markModified();
+    }
+
     @Override
     public boolean charTyped(char codePoint, int modifiers) {
-        char insertChar;
         if (codePoint == '\r' || codePoint == '\n') {
-            insertChar = '\n';
-        } else if (codePoint >= 32) {
+            taczfixes$insertIndentedNewline();
+            return true;
+        }
+        char insertChar;
+        if (codePoint >= 32) {
             insertChar = codePoint;
         } else {
             return super.charTyped(codePoint, modifiers);

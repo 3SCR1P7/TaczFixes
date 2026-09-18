@@ -259,7 +259,7 @@ public final class ClientOffhandState {
             return 1L;
         }
         double timeScale = DualWieldBalance.getReloadTimeScale(stack);
-        double durationMillis = (durationSeconds * 1000.0d) / timeScale;
+        double durationMillis = durationSeconds * 1000.0d * timeScale;
         return (long) Math.min(Math.max(durationMillis, 1.0d), 9.223372036854776E18d);
     }
 

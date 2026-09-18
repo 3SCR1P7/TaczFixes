@@ -5,6 +5,7 @@ import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockGunModel;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -19,22 +20,20 @@ import java.util.Locale;
 @Mixin(BedrockGunModel.class)
 public abstract class MixinBedrockGunModelScopeGroupOffset {
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", at = @At(value = "FIELD",
-            target = "Lcom/tacz/guns/client/model/BedrockGunModel;scopePosPath:Ljava/util/List;",
-            remap = false), remap = false)
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/functional/AttachmentRender;renderAttachment(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/api/item/attachment/AttachmentType;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", shift = At.Shift.BEFORE, remap = false), remap = false)
     private void taczfixes$applyScopeGroupOffset(PoseStack pose, ItemStack itemStack,
                                                  ItemDisplayContext displayContext, RenderType renderType,
                                                  int light, int overlay, float red, float green, float blue, float alpha,
-                                                 net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+                                                 MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
         applyOffset(pose);
     }
 
-    @Inject(method = "renderAccelerated(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", at = @At(value = "FIELD",
-            target = "Lcom/tacz/guns/client/model/BedrockGunModel;scopePosPath:Ljava/util/List;",
-            remap = false), remap = false)
+    @Inject(method = "renderAccelerated(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/functional/AttachmentRender;renderAttachment(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/api/item/attachment/AttachmentType;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", shift = At.Shift.BEFORE, remap = false), remap = false)
     private void taczfixes$applyScopeGroupOffsetAccelerated(PoseStack pose, ItemStack itemStack,
                                                             ItemDisplayContext displayContext, RenderType renderType,
-                                                            int light, int overlay, net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+                                                            int light, int overlay, MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
         applyOffset(pose);
     }
 

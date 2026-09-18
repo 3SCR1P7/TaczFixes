@@ -32,7 +32,8 @@ public class AimingStaminaHandler {
         UUID uuid = player.getUUID();
         float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
         if (max <= 0) max = 1;
-        float consumption = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE.get());
+        float consumption = Config.AIMING_STAMINA_CONSUMPTION.get().floatValue();
+        float consumptionMultiplier = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE.get());
         float recovery = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_RECOVERY_ATTRIBUTE.get());
 
         IGunOperator operator = IGunOperator.fromLivingEntity(player);
@@ -50,7 +51,7 @@ public class AimingStaminaHandler {
             float weightFactor = 1f + gunWeight(player) * weightPerKg;
             float holdMultiplier = AimingStaminaState.isHoldingBreath(uuid)
                     ? aimCfg.hold_breath_consumption_multiplier.floatValue() : 1f;
-            stamina -= consumption * consumptionMul * weightFactor * holdMultiplier / 20f;
+            stamina -= consumption * consumptionMultiplier * consumptionMul * weightFactor * holdMultiplier / 20f;
             AimingStaminaState.setLastAimTick(uuid, gameTime);
             if (stamina <= 0f) {
                 stamina = 0f;
@@ -129,7 +130,7 @@ public class AimingStaminaHandler {
         applyModifier(player, TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get(), MAX_MODIFIER_ID,
                 Config.AIMING_STAMINA_MAX.get());
         applyModifier(player, TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE.get(), CONSUMPTION_MODIFIER_ID,
-                Config.AIMING_STAMINA_CONSUMPTION.get());
+                Config.AIMING_STAMINA_CONSUMPTION_MULTIPLIER.get());
         applyModifier(player, TaczFixesMod.AIMING_STAMINA_RECOVERY_ATTRIBUTE.get(), RECOVERY_MODIFIER_ID,
                 Config.AIMING_STAMINA_RECOVERY.get());
     }

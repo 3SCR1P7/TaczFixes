@@ -629,6 +629,15 @@ public final class DualWieldClient {
             SoundPlayManager.playDryFireSound(player, display);
             return false;
         }
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig chargeCfg =
+                com.ssscript.taczfixes.common.util.ChargeStorage.config(stack);
+        if (chargeCfg != null && Boolean.TRUE.equals(chargeCfg.blocking_fire)
+                && chargeCfg.fire_consumption != null && chargeCfg.fire_consumption.intValue() > 0
+                && com.ssscript.taczfixes.common.util.ChargeStorage.getMax(stack) > 0
+                && com.ssscript.taczfixes.common.util.ChargeStorage.get(stack) < chargeCfg.fire_consumption.intValue()) {
+            SoundPlayManager.playDryFireSound(player, display);
+            return false;
+        }
         if (bolt == Bolt.MANUAL_ACTION && !inBarrel) {
             tryStartOffhandBolt(player, stack, state);
             return false;
@@ -988,10 +997,13 @@ public final class DualWieldClient {
                     ammoCount++;
                 }
                 boolean empty = ammoCount <= 0;
+                float feedTime;
                 if (empty) {
-                    tacticalTime = data.getReloadData().getCooldown().getEmptyTime();
+                    feedTime = data.getReloadData().getFeed().getEmptyTime();
+                    tacticalTime = feedTime + data.getReloadData().getCooldown().getEmptyTime();
                 } else {
-                    tacticalTime = data.getReloadData().getCooldown().getTacticalTime();
+                    feedTime = data.getReloadData().getFeed().getTacticalTime();
+                    tacticalTime = feedTime + data.getReloadData().getCooldown().getTacticalTime();
                 }
                 float duration = tacticalTime;
                 UUID sourceStackId = DualWieldStackId.get(stack);
@@ -1002,7 +1014,7 @@ public final class DualWieldClient {
                 state.beginReload(stack, sourceStackId, empty, duration);
                 NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandReload(sourceStackId, state.getReloadRequestId()));
                 SoundPlayManager.stopPlayGunSound();
-                DualReloadAnimationManager.beginOffhandReload(player, stack, data, duration);
+                DualReloadAnimationManager.beginOffhandReload(player, stack, data, feedTime);
                 if (display != null) {
                     DualReloadSoundFilter.playOffhandLegacyReload(player, stack, display, empty);
                 }

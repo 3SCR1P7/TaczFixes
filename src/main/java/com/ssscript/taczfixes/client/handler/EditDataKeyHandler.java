@@ -16,7 +16,7 @@ public class EditDataKeyHandler {
             KeyConflictContext.UNIVERSAL,
             KeyModifier.NONE,
             InputConstants.Type.KEYSYM,
-            GLFW.GLFW_KEY_O,
+            GLFW.GLFW_KEY_U,
             "key.categories.taczfixes");
 
     private static boolean wasDown = false;

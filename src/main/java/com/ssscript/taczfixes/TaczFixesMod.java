@@ -79,6 +79,10 @@ public class TaczFixesMod {
             ATTRIBUTES.register("stamina_recovery",
                     () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
                             "attribute.name.taczfixes.stamina_recovery", 5.0, 0.0, 100000.0).setSyncable(true));
+    public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> STAMINA_CONSUMPTION_ATTRIBUTE =
+            ATTRIBUTES.register("stamina_consumption",
+                    () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
+                            "attribute.name.taczfixes.stamina_consumption", 1.0, 0.0, 100000.0).setSyncable(true));
     public static final RegistryObject<Enchantment> OVERLOAD_ENCHANTMENT =
             ENCHANTMENTS.register("overload", OverloadEnchantment::new);
     public static final RegistryObject<Enchantment> ANNIHILATION_ENCHANTMENT =
@@ -144,12 +148,21 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new GunAnvilHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ChargeCapabilityHandler());
         NetworkHandler.init();
         com.ssscript.taczfixes.common.util.DualWieldOverrides.setProvider(gunId -> {
             com.ssscript.taczfixes.common.data.GunTaczFixesData.DualWieldConfig cfg =
                     com.ssscript.taczfixes.common.data.TaczFixesDataManager.resolveDualWield(gunId);
             return cfg == null ? null : new com.ssscript.taczfixes.common.util.DualWieldOverrides.Value(
-                    cfg.enable, cfg.recoil_multiplier, cfg.left_offset, cfg.right_offset);
+                    cfg.enable, cfg.recoil_multiplier, cfg.inaccuracy_multiplier,
+                    cfg.focus_aim_recoil_multiplier, cfg.focus_aim_inaccuracy_multiplier,
+                    cfg.left_offset, cfg.right_offset,
+                    com.ssscript.taczfixes.common.util.DualWieldOverrides.parseHandPos(
+                            cfg.hand_pos == null ? null : cfg.hand_pos.on_left,
+                            com.ssscript.taczfixes.common.util.DualWieldOverrides.DEFAULT_ON_LEFT),
+                    com.ssscript.taczfixes.common.util.DualWieldOverrides.parseHandPos(
+                            cfg.hand_pos == null ? null : cfg.hand_pos.on_right,
+                            com.ssscript.taczfixes.common.util.DualWieldOverrides.DEFAULT_ON_RIGHT));
         });
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ENCHANTMENTS.register(modBus);
@@ -180,6 +193,7 @@ public class TaczFixesMod {
         event.add(net.minecraft.world.entity.EntityType.PLAYER, AIMING_STAMINA_RECOVERY_ATTRIBUTE.get());
         event.add(net.minecraft.world.entity.EntityType.PLAYER, STAMINA_ATTRIBUTE.get());
         event.add(net.minecraft.world.entity.EntityType.PLAYER, STAMINA_RECOVERY_ATTRIBUTE.get());
+        event.add(net.minecraft.world.entity.EntityType.PLAYER, STAMINA_CONSUMPTION_ATTRIBUTE.get());
     }
 
     private void onRegisterClientReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {

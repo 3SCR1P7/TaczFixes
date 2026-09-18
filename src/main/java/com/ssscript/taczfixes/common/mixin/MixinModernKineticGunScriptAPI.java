@@ -145,10 +145,91 @@ public abstract class MixinModernKineticGunScriptAPI {
     }
 
     /** lua: api:getInput() 开火者(本地玩家)当前按下的所有按键, 列表如 {"key.mouse.left","key.keyboard.1","key.keyboard.down"}。
-     *  仅本地客户端玩家有效, 其他情况返回空表。 */
+     *  仅本地客户端玩家有效, 其他情况返回空表。*/
     @Unique
     public org.luaj.vm2.LuaValue getInput() {
         return com.ssscript.taczfixes.common.util.ShooterLuaHelper.input(shooter);
+    }
+
+    /** lua: api:getDualWieldState() 当前枪械在双持中的位置: "right"(主手), "left"(副手), "none"(未双持)。 */
+    @Unique
+    public org.luaj.vm2.LuaValue getDualWieldState() {
+        if (shooter == null || !com.ssscript.taczfixes.common.util.DualWieldEligibility.isDualWielding(shooter)) {
+            return org.luaj.vm2.LuaValue.valueOf("none");
+        }
+        if (com.ssscript.taczfixes.common.util.OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            return org.luaj.vm2.LuaValue.valueOf("left");
+        }
+        return org.luaj.vm2.LuaValue.valueOf("right");
+    }
+
+    /** lua: api:getChargePower() 当前电量(FE)。 */
+    @Unique
+    public int getChargePower() {
+        return com.ssscript.taczfixes.common.util.ChargeStorage.get(this.itemStack);
+    }
+
+    /** lua: api:setChargePower(int) 设置当前电量(FE), 自动截断到 [0, 上限]。 */
+    @Unique
+    public void setChargePower(int value) {
+        com.ssscript.taczfixes.common.util.ChargeStorage.set(this.itemStack, value);
+    }
+
+    /** lua: api:getChargePowerMax() 电量上限(FE)。 */
+    @Unique
+    public int getChargePowerMax() {
+        return com.ssscript.taczfixes.common.util.ChargeStorage.getMax(this.itemStack);
+    }
+
+    /** lua: api:textShow("Ssscript","vvvv") 将语言文件中的 %vvvv% 占位符替换为 Ssscript。 */
+    @Unique
+    public void textShow(String value, String name) {
+        String key = com.ssscript.taczfixes.common.util.TextShowStorage.normalizeName(name);
+        if (key.isEmpty()) {
+            return;
+        }
+        com.ssscript.taczfixes.common.util.TextShowStorage.set(this.itemStack, key, value);
+        if (this.shooter != null && this.shooter.level() != null && this.shooter.level().isClientSide) {
+            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
+                    () -> () -> com.ssscript.taczfixes.client.util.TextShowPapiCompat.register(key));
+        }
+    }
+
+    /** 开火消耗电量; 电量不足且 blocking_fire 时取消本次射击并播放 dry_fire。 */
+    @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void taczfixes$consumeCharge(boolean needConsumeAmmo, CallbackInfo ci) {
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig cfg =
+                com.ssscript.taczfixes.common.util.ChargeStorage.config(this.itemStack);
+        if (cfg == null || cfg.fire_consumption == null || cfg.fire_consumption.intValue() <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.ChargeStorage.getMax(this.itemStack) <= 0) {
+            return;
+        }
+        if (!com.ssscript.taczfixes.common.util.ChargeStorage.consume(this.itemStack, cfg.fire_consumption.intValue())
+                && Boolean.TRUE.equals(cfg.blocking_fire)) {
+            taczfixes$playDryFire();
+            ci.cancel();
+        }
+    }
+
+    @Unique
+    private void taczfixes$playDryFire() {
+        if (this.shooter == null || !this.shooter.level().isClientSide) {
+            return;
+        }
+        if (!(this.shooter instanceof net.minecraft.client.player.LocalPlayer player)) {
+            return;
+        }
+        com.tacz.guns.api.TimelessAPI.getGunDisplay(this.itemStack).ifPresent(display -> {
+            net.minecraft.resources.ResourceLocation sound = display.getSounds(com.tacz.guns.sound.SoundManager.DRY_FIRE_SOUND);
+            if (sound == null) {
+                return;
+            }
+            com.tacz.guns.client.sound.SoundPlayManager.stopPlayGunSound();
+            com.tacz.guns.client.sound.SoundPlayManager.playClientSound(player, sound, 1.0f, 1.0f,
+                    ((Integer) com.tacz.guns.config.common.GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get()).intValue());
+        });
     }
 
     /** lua: api:replaceData("tacz:ak47_data") 将此枪械的 data 替换为指定 id 的枪械数据, 成功返回 true。 */

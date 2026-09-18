@@ -171,6 +171,41 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
         if (CustomSlotGuiState.get() != null) {
             this.renderables.removeIf(r -> r instanceof RefitUnloadButton && !ownUnloadButtons.contains(r));
         }
+        taczfixes$addCustomLaserSliders(gunStack, gunId);
+    }
+
+    /** 自定义 laser 槽位选中且装有可调色激光时, 补上 TACZ 只给默认 laser 槽位创建的调色滑条。 */
+    @Unique
+    private void taczfixes$addCustomLaserSliders(ItemStack gunStack, ResourceLocation gunId) {
+        String slotId = CustomSlotGuiState.get();
+        if (slotId == null) return;
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, slotId);
+        if (def == null || def.isCustom()) return;
+        AttachmentType defType;
+        try {
+            defType = AttachmentType.valueOf(def.type.toUpperCase(Locale.US));
+        } catch (IllegalArgumentException ex) {
+            return;
+        }
+        if (defType != AttachmentType.LASER) return;
+        for (net.minecraft.client.gui.components.events.GuiEventListener child : this.children()) {
+            if (child instanceof com.tacz.guns.client.gui.components.refit.HSVSliderGroup.LaserColorSlider) return;
+        }
+        ItemStack item = CustomSlotStorage.get(gunStack, slotId);
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return;
+        com.tacz.guns.client.resource.pojo.display.LaserConfig laserConfig = com.tacz.guns.api.TimelessAPI
+                .getClientAttachmentIndex(attachment.getAttachmentId(item))
+                .map(index -> index.getLaserConfig()).orElse(null);
+        if (laserConfig == null || !laserConfig.canEdit()) return;
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null) return;
+        net.minecraft.world.entity.player.Inventory inventory = player.getInventory();
+        com.tacz.guns.client.gui.components.refit.HSVSliderGroup group =
+                new com.tacz.guns.client.gui.components.refit.HSVSliderGroup(this.width - 140, this.height - 64, 120, 16, inventory, inventory.selected, AttachmentType.LASER);
+        this.addRenderableWidget(group.getHueSlider());
+        this.addRenderableWidget(group.getSaturationSlider());
     }
 
     @Unique

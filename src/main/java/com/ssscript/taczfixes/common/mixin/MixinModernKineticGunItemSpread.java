@@ -11,7 +11,9 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
+import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import com.ssscript.taczfixes.common.util.OffhandBulletSource;
+import net.minecraft.world.item.ItemStack;
 
 @Mixin(value = {ModernKineticGunItem.class}, remap = false)
 /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/mixin/MixinModernKineticGunItemSpread.class */
@@ -48,9 +50,10 @@ public abstract class MixinModernKineticGunItemSpread {
             return 1.0f;
         }
         boolean offhand = bullet instanceof OffhandBulletSource source && source.dualWield$isOffhandSource();
+        ItemStack firedStack = offhand ? shooter.getOffhandItem() : shooter.getMainHandItem();
         if (!offhand && InaccuracyType.getInaccuracyType(shooter) == InaccuracyType.AIM) {
-            return 1.15f;
+            return (float) DualWieldOverrides.withFallback(DualWieldOverrides.focusAimInaccuracyMultiplier(firedStack), DualWieldEligibility.getServerFocusAimInaccuracyMultiplier());
         }
-        return 1.5f;
+        return (float) DualWieldOverrides.withFallback(DualWieldOverrides.inaccuracyMultiplier(firedStack), DualWieldEligibility.getServerInaccuracyMultiplier());
     }
 }

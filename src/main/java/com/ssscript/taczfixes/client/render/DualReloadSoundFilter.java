@@ -39,12 +39,12 @@ public final class DualReloadSoundFilter {
     private DualReloadSoundFilter() {
     }
 
-    public static void triggerNativeReload(LuaAnimationStateMachine<GunAnimationStateContext> stateMachine, String input, int overlayTrack, double reloadTimeScale) {
+    public static void triggerNativeReload(LuaAnimationStateMachine<GunAnimationStateContext> stateMachine, String input, int overlayTrack) {
         if (stateMachine == null || !stateMachine.isInitialized()) {
             return;
         }
         AnimationController controller = stateMachine.getAnimationController();
-        ReloadSession session = getOrCreateSession(controller, reloadTimeScale);
+        ReloadSession session = getOrCreateSession(controller, 1.0d);
         session.acceptFutureReloadClips = true;
         if (overlayTrack >= 0) {
             session.overlayTracks.add(Integer.valueOf(overlayTrack));
@@ -236,8 +236,7 @@ public final class DualReloadSoundFilter {
             } else {
                 d = 1.0d;
             }
-            double safeTimeScale = d;
-            this.timelineScale = 1.0d / safeTimeScale;
+            this.timelineScale = d;
         }
 
         private ReloadTrack getOrCreateTrack(int track) {

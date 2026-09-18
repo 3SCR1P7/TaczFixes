@@ -46,11 +46,11 @@ public abstract class MixinLocalPlayerReload {
         }
         boolean empty = z;
         if (empty) {
-            tacticalTime = gunData.getReloadData().getCooldown().getEmptyTime();
+            tacticalTime = gunData.getReloadData().getFeed().getEmptyTime();
         } else {
-            tacticalTime = gunData.getReloadData().getCooldown().getTacticalTime();
+            tacticalTime = gunData.getReloadData().getFeed().getTacticalTime();
         }
-        float duration = tacticalTime;
-        DualReloadAnimationManager.beginMainReload(player, mainHandItem, gunData, duration, stateMachine, input);
+        float feedTime = tacticalTime;
+        DualReloadAnimationManager.beginMainReload(player, mainHandItem, gunData, feedTime, stateMachine, input);
     }
 }

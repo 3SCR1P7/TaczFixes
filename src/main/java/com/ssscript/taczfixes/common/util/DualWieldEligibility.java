@@ -66,7 +66,33 @@ public final class DualWieldEligibility {
         return new Rules(Config.DUAL_WIELD_ALLOW_OTHER_GUN_TYPES.get(),
                 normalizeAll(Config.DUAL_WIELD_ALLOWED_TYPES.get()), normalizeAll(Config.DUAL_WIELD_ALLOWED_GUNS.get()),
                 normalizeAll(Config.DUAL_WIELD_DENIED_GUNS.get()), Config.DUAL_WIELD_RECOIL_MULTIPLIER.get(),
-                Config.DUAL_WIELD_LEFT_X_OFFSET.get(), Config.DUAL_WIELD_RIGHT_X_OFFSET.get());
+                Config.DUAL_WIELD_LEFT_X_OFFSET.get(), Config.DUAL_WIELD_RIGHT_X_OFFSET.get(),
+                Config.DUAL_WIELD_INACCURACY_MULTIPLIER.get(),
+                Config.DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER.get(),
+                Config.DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER.get());
+    }
+
+    public static double getClientInaccuracyMultiplier() {
+        Rules rules = clientRules;
+        return rules == null ? 1.5d : rules.dualWieldInaccuracyMultiplier();
+    }
+
+    public static double getClientFocusAimRecoilMultiplier() {
+        Rules rules = clientRules;
+        return rules == null ? 1.5d : rules.focusAimRecoilMultiplier();
+    }
+
+    public static double getClientFocusAimInaccuracyMultiplier() {
+        Rules rules = clientRules;
+        return rules == null ? 1.25d : rules.focusAimInaccuracyMultiplier();
+    }
+
+    public static double getServerInaccuracyMultiplier() {
+        return getServerRules().dualWieldInaccuracyMultiplier();
+    }
+
+    public static double getServerFocusAimInaccuracyMultiplier() {
+        return getServerRules().focusAimInaccuracyMultiplier();
     }
 
     public static double getClientRecoilMultiplier() {
@@ -124,7 +150,7 @@ public final class DualWieldEligibility {
     }
 
     /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/DualWieldEligibility$Rules.class */
-    public record Rules(boolean allowOtherGunTypes, List<String> allowedTypes, List<String> allowedGuns, List<String> deniedGuns, double dualWieldRecoilMultiplier, double leftGunXOffset, double rightGunXOffset) {
+    public record Rules(boolean allowOtherGunTypes, List<String> allowedTypes, List<String> allowedGuns, List<String> deniedGuns, double dualWieldRecoilMultiplier, double leftGunXOffset, double rightGunXOffset, double dualWieldInaccuracyMultiplier, double focusAimRecoilMultiplier, double focusAimInaccuracyMultiplier) {
 
         public boolean allowOtherGunTypes() {
             return this.allowOtherGunTypes;
@@ -154,13 +180,16 @@ public final class DualWieldEligibility {
             return this.rightGunXOffset;
         }
 
-        public Rules(boolean allowOtherGunTypes, List<String> allowedTypes, List<String> allowedGuns, List<String> deniedGuns, double dualWieldRecoilMultiplier, double leftGunXOffset, double rightGunXOffset) {
+        public Rules(boolean allowOtherGunTypes, List<String> allowedTypes, List<String> allowedGuns, List<String> deniedGuns, double dualWieldRecoilMultiplier, double leftGunXOffset, double rightGunXOffset, double dualWieldInaccuracyMultiplier, double focusAimRecoilMultiplier, double focusAimInaccuracyMultiplier) {
             List<String> allowedTypes2 = List.copyOf(allowedTypes);
             List<String> allowedGuns2 = List.copyOf(allowedGuns);
             List<String> deniedGuns2 = List.copyOf(deniedGuns);
             DualWieldEligibility.validateRange("dualWieldRecoilMultiplier", dualWieldRecoilMultiplier, 0.0d, 10.0d);
             DualWieldEligibility.validateRange("leftGunXOffset", leftGunXOffset, -2.0d, 0.0d);
             DualWieldEligibility.validateRange("rightGunXOffset", rightGunXOffset, 0.0d, 2.0d);
+            DualWieldEligibility.validateRange("dualWieldInaccuracyMultiplier", dualWieldInaccuracyMultiplier, 0.0d, 10.0d);
+            DualWieldEligibility.validateRange("focusAimRecoilMultiplier", focusAimRecoilMultiplier, 0.0d, 10.0d);
+            DualWieldEligibility.validateRange("focusAimInaccuracyMultiplier", focusAimInaccuracyMultiplier, 0.0d, 10.0d);
             this.allowOtherGunTypes = allowOtherGunTypes;
             this.allowedTypes = allowedTypes2;
             this.allowedGuns = allowedGuns2;
@@ -168,6 +197,9 @@ public final class DualWieldEligibility {
             this.dualWieldRecoilMultiplier = dualWieldRecoilMultiplier;
             this.leftGunXOffset = leftGunXOffset;
             this.rightGunXOffset = rightGunXOffset;
+            this.dualWieldInaccuracyMultiplier = dualWieldInaccuracyMultiplier;
+            this.focusAimRecoilMultiplier = focusAimRecoilMultiplier;
+            this.focusAimInaccuracyMultiplier = focusAimInaccuracyMultiplier;
         }
     }
 }

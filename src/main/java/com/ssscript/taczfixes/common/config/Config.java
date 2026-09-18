@@ -202,6 +202,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue AIMING_STAMINA_ENABLED;
     public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MAX;
     public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION;
+    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_RECOVERY;
     public static final ForgeConfigSpec.IntValue AIMING_STAMINA_RECOVERY_DELAY_MS;
     public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MIN_TO_AIM;
@@ -223,6 +224,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue STAMINA_ENABLED;
     public static final ForgeConfigSpec.DoubleValue STAMINA_MAX;
     public static final ForgeConfigSpec.DoubleValue STAMINA_RECOVERY;
+    public static final ForgeConfigSpec.DoubleValue STAMINA_CONSUMPTION_MULTIPLIER;
     public static final ForgeConfigSpec.IntValue STAMINA_RECOVERY_DELAY_MS;
     public static final ForgeConfigSpec.DoubleValue STAMINA_WALK_RECOVERY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue STAMINA_JUMP_COST;
@@ -247,6 +249,9 @@ public class Config {
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_GUNS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_DENIED_GUNS;
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RECOIL_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_INACCURACY_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_LEFT_X_OFFSET;
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RIGHT_X_OFFSET;
 
@@ -1070,6 +1075,9 @@ public class Config {
         AIMING_STAMINA_CONSUMPTION = BUILDER
                 .comment("上肢耐力消耗速度的默认值，每秒消耗。默认值：2")
                 .defineInRange("consumption_per_second", 2.0, 0.0, 100000.0);
+        AIMING_STAMINA_CONSUMPTION_MULTIPLIER = BUILDER
+                .comment("上肢耐力消耗倍率(属性 aiming_stamina_consumption 的默认值)。默认值：1.0")
+                .defineInRange("consumption_multiplier", 1.0d, 0.0d, 100000.0d);
         AIMING_STAMINA_RECOVERY = BUILDER
                 .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：20")
                 .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
@@ -1135,6 +1143,9 @@ public class Config {
         STAMINA_RECOVERY = BUILDER
                 .comment("耐力恢复速度的默认值，每秒恢复。默认值：20")
                 .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
+        STAMINA_CONSUMPTION_MULTIPLIER = BUILDER
+                .comment("耐力消耗倍率(属性 stamina_consumption 的默认值)。默认值：1.0")
+                .defineInRange("consumption_multiplier", 1.0d, 0.0d, 100000.0d);
         STAMINA_RECOVERY_DELAY_MS = BUILDER
                 .comment("持续多少毫秒没有消耗耐力后开始恢复。默认值：1000")
                 .defineInRange("recovery_delay_ms", 1000, 0, 600000);
@@ -1188,8 +1199,17 @@ public class Config {
                                 "sfms:emergency_baton", "sfms:katana", "sfms:tb23"),
                         value -> value instanceof String text && !text.isBlank());
         DUAL_WIELD_RECOIL_MULTIPLIER = BUILDER
-                .comment("Final procedural camera recoil multiplier while dual-wielding. 1.5 means 50% more recoil after attachment, aiming, and crawl modifiers.")
+                .comment("Final procedural camera recoil multiplier while dual-wielding. Default: 2.0")
                 .defineInRange("dualWieldRecoilMultiplier", 2.0d, 0.0d, 10.0d);
+        DUAL_WIELD_INACCURACY_MULTIPLIER = BUILDER
+                .comment("Final inaccuracy (spread) multiplier while dual-wielding. Default: 1.5")
+                .defineInRange("dualWieldInaccuracyMultiplier", 1.5d, 0.0d, 10.0d);
+        DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER = BUILDER
+                .comment("Recoil multiplier of the aiming hand while one-hand aiming during dual-wield. Default: 1.5")
+                .defineInRange("focusAimRecoilMultiplier", 1.5d, 0.0d, 10.0d);
+        DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER = BUILDER
+                .comment("Inaccuracy (spread) multiplier of the aiming hand while one-hand aiming during dual-wield. Default: 1.25")
+                .defineInRange("focusAimInaccuracyMultiplier", 1.25d, 0.0d, 10.0d);
         DUAL_WIELD_LEFT_X_OFFSET = BUILDER
                 .comment("左手枪械的坐标偏移。默认值：-0.58")
                 .defineInRange("leftGunXOffset", -0.58d, -2.0d, 0.0d);

@@ -5,7 +5,6 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.ssscript.taczfixes.common.data.AttachmentGroupOffsetManager;
-import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataReloadListener;
 import com.tacz.guns.util.ResourceScanner;
@@ -33,21 +32,17 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
         return CompletableFuture.supplyAsync(() -> scan(resourceManager), backgroundExecutor)
                 .thenCompose(barrier::wait)
                 .thenAcceptAsync(result -> {
-                    AttachmentGroupOffsetManager.putAll(result.getKey());
-                    GunPosAlterManager.putAll(result.getValue());
+                    AttachmentGroupOffsetManager.putAll(result);
                     TaczFixesDataManager.putAll(TaczFixesDataReloadListener.scanFileSystemGunData());
+                    TaczFixesDataManager.syncPosAlterRanges();
                     com.ssscript.taczfixes.client.hud.CustomHudManager.clear();
                 }, gameExecutor);
     }
 
-    private static java.util.AbstractMap.SimpleImmutableEntry<
-            Map<ResourceLocation, Map<String, float[]>>,
-            Map<ResourceLocation, Map<String, float[]>>> scan(ResourceManager resourceManager) {
+    private static Map<ResourceLocation, Map<String, float[]>> scan(ResourceManager resourceManager) {
         Map<ResourceLocation, Map<String, float[]>> offsets = new HashMap<>();
         scanGroupOffsets(resourceManager, offsets);
-        Map<ResourceLocation, Map<String, float[]>> posAlters = new HashMap<>();
-        scanPosAlters(resourceManager, posAlters);
-        return new java.util.AbstractMap.SimpleImmutableEntry<>(offsets, posAlters);
+        return offsets;
     }
 
     private static void scanGroupOffsets(ResourceManager resourceManager,
@@ -85,39 +80,6 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
             }
             if (!offsets.isEmpty()) {
                 result.put(attachmentId, offsets);
-            }
-        }
-    }
-
-    private static void scanPosAlters(ResourceManager resourceManager,
-                                      Map<ResourceLocation, Map<String, float[]>> result) {
-        Map<ResourceLocation, JsonElement> displays =
-                ResourceScanner.scanDirectory(resourceManager, "display/guns", GSON);
-        for (Map.Entry<ResourceLocation, JsonElement> entry : displays.entrySet()) {
-            JsonElement element = entry.getValue();
-            if (element == null || !element.isJsonObject()) continue;
-            JsonObject root = element.getAsJsonObject();
-            if (!root.has("pos_alter")) continue;
-            JsonElement posAlterElement = root.get("pos_alter");
-            if (posAlterElement == null || !posAlterElement.isJsonObject()) continue;
-            ResourceLocation gunId = parseId(entry.getKey());
-            if (gunId == null) continue;
-            Map<String, float[]> ranges = new HashMap<>();
-            for (Map.Entry<String, JsonElement> rangeEntry : posAlterElement.getAsJsonObject().entrySet()) {
-                JsonElement value = rangeEntry.getValue();
-                if (value == null || !value.isJsonArray()) continue;
-                JsonArray array = value.getAsJsonArray();
-                if (array.size() < 2) continue;
-                JsonElement minElement = array.get(0);
-                JsonElement maxElement = array.get(1);
-                if (minElement == null || maxElement == null
-                        || !minElement.isJsonPrimitive() || !maxElement.isJsonPrimitive()) continue;
-                float min = (float) minElement.getAsDouble();
-                float max = (float) maxElement.getAsDouble();
-                ranges.put(rangeEntry.getKey(), new float[]{Math.min(min, max), Math.max(min, max)});
-            }
-            if (!ranges.isEmpty()) {
-                result.put(gunId, ranges);
             }
         }
     }

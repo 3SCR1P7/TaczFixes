@@ -35,12 +35,14 @@ public final class StaminaHelper {
         consume(player, amount * consumptionMultiplier(player));
     }
 
-    /** 手持枪械/配件的耐力消耗倍率。 */
+    /** 手持枪械/配件的耐力消耗倍率 × 耐力消耗属性倍率。 */
     public static float consumptionMultiplier(Player player) {
         if (player == null) return 1f;
         com.ssscript.taczfixes.common.data.GunTaczFixesData.StaminaConfig cfg =
                 com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager.resolveStamina(player.getMainHandItem());
-        return cfg == null || cfg.consumption_multiplier == null ? 1f : cfg.consumption_multiplier.floatValue();
+        float dataMultiplier = cfg == null || cfg.consumption_multiplier == null ? 1f : cfg.consumption_multiplier.floatValue();
+        float attributeMultiplier = (float) player.getAttributeValue(com.ssscript.taczfixes.TaczFixesMod.STAMINA_CONSUMPTION_ATTRIBUTE.get());
+        return dataMultiplier * attributeMultiplier;
     }
 
     /** 手持枪械/配件的耐力恢复倍率。 */

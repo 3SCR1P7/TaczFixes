@@ -43,6 +43,9 @@ public class ConfigScreen {
         lst_(cat, entry, "dual_wield.allowed_gun_ids", Config.DUAL_WIELD_ALLOWED_GUNS);
         lst_(cat, entry, "dual_wield.denied_gun_ids", Config.DUAL_WIELD_DENIED_GUNS);
         dbl_(cat, entry, "dual_wield.recoil_multiplier", Config.DUAL_WIELD_RECOIL_MULTIPLIER);
+        dbl_(cat, entry, "dual_wield.inaccuracy_multiplier", Config.DUAL_WIELD_INACCURACY_MULTIPLIER);
+        dbl_(cat, entry, "dual_wield.focus_aim_recoil_multiplier", Config.DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER);
+        dbl_(cat, entry, "dual_wield.focus_aim_inaccuracy_multiplier", Config.DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER);
         dbl_(cat, entry, "dual_wield.left_offset", Config.DUAL_WIELD_LEFT_X_OFFSET);
         dbl_(cat, entry, "dual_wield.right_offset", Config.DUAL_WIELD_RIGHT_X_OFFSET);
     }
@@ -51,6 +54,7 @@ public class ConfigScreen {
         bool_(cat, entry, "stamina.enabled", Config.STAMINA_ENABLED);
         dbl_(cat, entry, "stamina.max_stamina", Config.STAMINA_MAX);
         dbl_(cat, entry, "stamina.recovery_per_second", Config.STAMINA_RECOVERY);
+        dbl_(cat, entry, "stamina.consumption_multiplier", Config.STAMINA_CONSUMPTION_MULTIPLIER);
         int_(cat, entry, "stamina.recovery_delay_ms", Config.STAMINA_RECOVERY_DELAY_MS);
         dbl_(cat, entry, "stamina.walk_recovery_multiplier", Config.STAMINA_WALK_RECOVERY_MULTIPLIER);
         dbl_(cat, entry, "stamina.jump_cost", Config.STAMINA_JUMP_COST);
@@ -67,6 +71,7 @@ public class ConfigScreen {
         bool_(cat, entry, "aiming_stamina.enabled", Config.AIMING_STAMINA_ENABLED);
         dbl_(cat, entry, "aiming_stamina.max_stamina", Config.AIMING_STAMINA_MAX);
         dbl_(cat, entry, "aiming_stamina.consumption_per_second", Config.AIMING_STAMINA_CONSUMPTION);
+        dbl_(cat, entry, "aiming_stamina.consumption_multiplier", Config.AIMING_STAMINA_CONSUMPTION_MULTIPLIER);
         dbl_(cat, entry, "aiming_stamina.recovery_per_second", Config.AIMING_STAMINA_RECOVERY);
         int_(cat, entry, "aiming_stamina.recovery_delay_ms", Config.AIMING_STAMINA_RECOVERY_DELAY_MS);
         dbl_(cat, entry, "aiming_stamina.min_stamina_to_aim", Config.AIMING_STAMINA_MIN_TO_AIM);

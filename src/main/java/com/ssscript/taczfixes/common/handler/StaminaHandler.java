@@ -22,6 +22,7 @@ public class StaminaHandler {
 
     private static final UUID MAX_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f11");
     private static final UUID RECOVERY_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f12");
+    private static final UUID CONSUMPTION_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f13");
 
     @SubscribeEvent
     public void onPlayerTick(TickEvent.PlayerTickEvent event) {
@@ -118,6 +119,8 @@ public class StaminaHandler {
         applyModifier(player, TaczFixesMod.STAMINA_ATTRIBUTE.get(), MAX_MODIFIER_ID, Config.STAMINA_MAX.get());
         applyModifier(player, TaczFixesMod.STAMINA_RECOVERY_ATTRIBUTE.get(), RECOVERY_MODIFIER_ID,
                 Config.STAMINA_RECOVERY.get());
+        applyModifier(player, TaczFixesMod.STAMINA_CONSUMPTION_ATTRIBUTE.get(), CONSUMPTION_MODIFIER_ID,
+                Config.STAMINA_CONSUMPTION_MULTIPLIER.get());
     }
 
     private static void applyModifier(ServerPlayer player, Attribute attribute, UUID id, double configured) {

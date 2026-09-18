@@ -73,6 +73,8 @@
                    "MixinClientAttachmentItemTooltip",
                    "MixinShootKey",
                    "MixinGunHudOverlay",
+                   "MixinGunHudOverlayCharge",
+                   "MixinItemStackChargeBar",
                    "MixinLocalPlayerShootStamina",
                    "MixinLocalPlayerMeleeStamina",
                    "MixinLrAttackKeys",
@@ -95,7 +97,6 @@
                    "MixinDualWieldClientMuzzleParticles",
                    "MixinDualWieldClientInspect",
                    "MixinDualReloadCoordinatorFallback",
-                   "MixinDualRecoilMultiplier",
                    "MixinOffhandGunHudOverlayHeat",
                    "MixinMuzzleParticleManager",
                    "MixinDualFirstPersonRendererParticles",
@@ -120,7 +121,9 @@
                    "MixinYsmItemInHandLayer",
                    "MixinYsmBackGun",
                    "MixinYsmTacAnimation",
-                   "MixinYsmTacBinding"
+                   "MixinYsmTacBinding",
+                   "MixinGunDisplayInstancePlayerAnimator",
+                   "MixinPlayerAnimatorCompat"
                ],
     "injectors":  {
                       "defaultRequire":  1

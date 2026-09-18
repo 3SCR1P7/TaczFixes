@@ -45,6 +45,7 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
                     TaczFixesDataManager.putAll(result.gunData);
                     TaczFixesDataManager.putAll(scanFileSystemGunData());
                     syncCustomFireModes();
+                    TaczFixesDataManager.syncPosAlterRanges();
                     CustomSlotManager.putAllTags(result.allowTags);
                 }, gameExecutor);
     }

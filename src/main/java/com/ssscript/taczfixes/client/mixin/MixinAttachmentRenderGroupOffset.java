@@ -24,9 +24,10 @@ public abstract class MixinAttachmentRenderGroupOffset {
     @Shadow(remap = false) private BedrockGunModel bedrockGunModel;
     @Shadow(remap = false) private AttachmentType type;
 
-    @Inject(method = "render", at = @At("HEAD"), remap = false)
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", at = @At("HEAD"), remap = false)
     private void taczfixes$applyGroupOffset(PoseStack poseStack, VertexConsumer vertexConsumer,
                                             ItemDisplayContext displayContext, int light, int overlay,
+                                            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
                                             CallbackInfo ci) {
         if (this.bedrockGunModel == null || this.type == null) return;
         EnumMap<AttachmentType, ItemStack> attachments = this.bedrockGunModel.getCurrentAttachmentItem();

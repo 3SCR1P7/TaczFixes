@@ -35,6 +35,27 @@ public class MixinLocalPlayerShootPreCheck {
         }
     }
 
+    @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private void taczfixes$blockLowCharge(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                          ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                          boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig chargeCfg =
+                com.ssscript.taczfixes.common.util.ChargeStorage.config(mainHandItem);
+        if (chargeCfg == null || !Boolean.TRUE.equals(chargeCfg.blocking_fire)
+                || chargeCfg.fire_consumption == null || chargeCfg.fire_consumption.intValue() <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.ChargeStorage.getMax(mainHandItem) <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.ChargeStorage.get(mainHandItem) < chargeCfg.fire_consumption.intValue()) {
+            if (playDrySound) {
+                SoundPlayManager.playDryFireSound(player, display);
+            }
+            cir.setReturnValue(ShootResult.NO_AMMO);
+        }
+    }
+
     @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
     private void onPreCheckTail(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
                                 ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,

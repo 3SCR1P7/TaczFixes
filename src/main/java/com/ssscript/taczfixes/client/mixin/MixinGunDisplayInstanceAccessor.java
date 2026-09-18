@@ -11,4 +11,7 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 public interface MixinGunDisplayInstanceAccessor {
     @Accessor("animationStateMachine")
     void dualWield$setAnimationStateMachine(LuaAnimationStateMachine<GunAnimationStateContext> luaAnimationStateMachine);
+
+    @Accessor("thirdPersonAnimation")
+    String dualWield$getThirdPersonAnimationRaw();
 }

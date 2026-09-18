@@ -37,6 +37,41 @@ public class TaczFixesDataManager {
         return DATA;
     }
 
+    /** 把枪械 data 中的 pos_alter 范围同步到运行时管理器。 */
+    public static void syncPosAlterRanges() {
+        Map<ResourceLocation, Map<String, float[]>> ranges = new java.util.HashMap<>();
+        for (Map.Entry<ResourceLocation, GunTaczFixesData> entry : DATA.entrySet()) {
+            Map<String, java.util.List<Double>> configured = entry.getValue() == null ? null : entry.getValue().pos_alter;
+            if (configured == null || configured.isEmpty()) continue;
+            Map<String, float[]> slotRanges = new java.util.HashMap<>();
+            for (Map.Entry<String, java.util.List<Double>> slot : configured.entrySet()) {
+                java.util.List<Double> values = slot.getValue();
+                if (values == null || values.size() < 2) continue;
+                Double minValue = values.get(0);
+                Double maxValue = values.get(1);
+                if (minValue == null || maxValue == null || !Double.isFinite(minValue.doubleValue()) || !Double.isFinite(maxValue.doubleValue())) continue;
+                float min = (float) minValue.doubleValue();
+                float max = (float) maxValue.doubleValue();
+                slotRanges.put(slot.getKey(), new float[]{Math.min(min, max), Math.max(min, max)});
+            }
+            if (!slotRanges.isEmpty()) {
+                ranges.put(entry.getKey(), slotRanges);
+            }
+        }
+        try {
+            for (Map.Entry<ResourceLocation, com.tacz.guns.resource.index.CommonGunIndex> gunEntry : TimelessAPI.getAllCommonGunIndex()) {
+                com.tacz.guns.resource.index.CommonGunIndex gunIndex = gunEntry.getValue();
+                ResourceLocation dataId = gunIndex == null || gunIndex.getPojo() == null ? null : gunIndex.getPojo().getData();
+                Map<String, float[]> slotRanges = dataId == null ? null : ranges.get(dataId);
+                if (slotRanges != null) {
+                    ranges.put(gunEntry.getKey(), slotRanges);
+                }
+            }
+        } catch (RuntimeException ignored) {
+        }
+        GunPosAlterManager.putAll(ranges);
+    }
+
     public static ResourceLocation resolveDataId(ResourceLocation gunId) {
         if (gunId == null) return null;
         return TimelessAPI.getCommonGunIndex(gunId)
@@ -78,6 +113,17 @@ public class TaczFixesDataManager {
         ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         return data == null ? null : data.stamina;
+    }
+
+    /** 枪械 data 中的电量配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.ChargeConfig resolveCharge(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.charge;
     }
 
     public static GunTaczFixesData.RecoilConfig resolveRecoil(ResourceLocation dataId, FireMode mode) {

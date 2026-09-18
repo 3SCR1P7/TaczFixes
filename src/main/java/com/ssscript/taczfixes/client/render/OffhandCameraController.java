@@ -108,8 +108,8 @@ public final class OffhandCameraController {
         } catch (RuntimeException exception) {
             TaczFixesMod.LOGGER.warn("Failed to resolve offhand recoil modifiers; using base gun recoil", exception);
         }
-        float pitchModifier = DualRecoilMultiplier.apply(player, stack, cacheProperty, pitchBaseModifier);
-        float yawModifier = DualRecoilMultiplier.apply(player, stack, cacheProperty, yawBaseModifier);
+        float pitchModifier = DualRecoilMultiplier.applyOffhand(player, pitchBaseModifier);
+        float yawModifier = DualRecoilMultiplier.applyOffhand(player, yawBaseModifier);
         pitchSplineFunction = buildOffhandRecoilSpline(recoil.getPitch(), pitchModifier, gunId, "pitch");
         yawSplineFunction = buildOffhandRecoilSpline(recoil.getYaw(), yawModifier, gunId, "yaw");
         beginRecoilTimeline(estimateRecoilPeak(recoil.getPitch(), pitchModifier, MAX_MODEL_PITCH_DEGREES), estimateRecoilPeak(recoil.getYaw(), yawModifier, MAX_MODEL_YAW_DEGREES));

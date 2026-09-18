@@ -29,10 +29,13 @@ public final class ServerMessageDualWieldEligibility {
         buffer.writeDouble(rules.dualWieldRecoilMultiplier());
         buffer.writeDouble(rules.leftGunXOffset());
         buffer.writeDouble(rules.rightGunXOffset());
+        buffer.writeDouble(rules.dualWieldInaccuracyMultiplier());
+        buffer.writeDouble(rules.focusAimRecoilMultiplier());
+        buffer.writeDouble(rules.focusAimInaccuracyMultiplier());
     }
 
     public static ServerMessageDualWieldEligibility decode(FriendlyByteBuf buffer) {
-        return new ServerMessageDualWieldEligibility(new DualWieldEligibility.Rules(buffer.readBoolean(), readStrings(buffer), readStrings(buffer), readStrings(buffer), buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
+        return new ServerMessageDualWieldEligibility(new DualWieldEligibility.Rules(buffer.readBoolean(), readStrings(buffer), readStrings(buffer), readStrings(buffer), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble(), buffer.readDouble()));
     }
 
     public static void handle(ServerMessageDualWieldEligibility packet, Supplier<NetworkEvent.Context> contextSupplier) {

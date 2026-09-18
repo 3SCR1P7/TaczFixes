@@ -118,6 +118,14 @@ public abstract class MixinGunItemRendererWrapper {
         }
     }
 
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)
+    private void dualWield$captureMainModelBase(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+        if (DualRenderContext.getPhase() != DualRenderContext.HandPhase.MAIN || display == null) {
+            return;
+        }
+        DualRenderContext.captureMainModelBase(display.getGunModel(), poseStack.last().pose());
+    }
+
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At("HEAD")})
     private void dualWield$enterMainRenderInvocation(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
         int invocationDepth = DUAL_WIELD_RENDER_INVOCATION_DEPTH.get().intValue();

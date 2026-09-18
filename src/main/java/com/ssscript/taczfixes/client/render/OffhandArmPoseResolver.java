@@ -28,7 +28,7 @@ public final class OffhandArmPoseResolver {
     private OffhandArmPoseResolver() {
     }
 
-    public static Matrix4f resolve(BedrockAnimatedModel model, Matrix4f modelBase, Matrix4f rightArmPose) {
+    public static Matrix4f resolve(BedrockAnimatedModel model, Matrix4f modelBase, Matrix4f rightArmPose, boolean mirror) {
         if (model == null || modelBase == null || rightArmPose == null) {
             return rightArmPose;
         }
@@ -46,11 +46,11 @@ public final class OffhandArmPoseResolver {
         if (!isFinite(relativePose)) {
             return rightArmPose;
         }
-        Matrix4f reflectedRelative = new Matrix4f(REFLECTION_X).mul(relativePose).mul(REFLECTION_X);
         if (OffhandDisplayManager.shouldUseInwardHoldingArmForManualAction(model)) {
             return rightArmPose;
         }
-        Matrix4f result = new Matrix4f(carrierPose).mul(reflectedRelative);
+        Matrix4f appliedRelative = mirror ? new Matrix4f(REFLECTION_X).mul(relativePose).mul(REFLECTION_X) : relativePose;
+        Matrix4f result = new Matrix4f(carrierPose).mul(appliedRelative);
         return isFinite(result) ? result : rightArmPose;
     }
 
@@ -255,7 +255,7 @@ public final class OffhandArmPoseResolver {
         return model.getRootNode();
     }
 
-    private static BedrockPart findHoldingEndpoint(BedrockPart part) {
+    public static BedrockPart findHoldingEndpoint(BedrockPart part) {
         if (part == null) {
             return null;
         }
@@ -291,7 +291,7 @@ public final class OffhandArmPoseResolver {
         return false;
     }
 
-    private static BedrockPart findSupportEndpoint(BedrockPart part) {
+    public static BedrockPart findSupportEndpoint(BedrockPart part) {
         if (part == null) {
             return null;
         }
