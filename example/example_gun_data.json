@@ -1,12 +1,49 @@
 {
   "taczfixes": {
     "custom_hud": "tacz:custom_hud_1",
+	"charge": {
+      // 电量上限，单位fe
+      "power_max": 100000,
+      // 开火时消耗的电量
+      "fire_consumption": 10000,
+      // 是否将弹药显示替换为电量显示（百分比）
+      // 这样在电量低时，gun hud也会像低弹药一样变红
+      "replace_ammo_hud": false,
+      // 是否在电量不足时阻拦开火
+      // 阻拦开火时会发出此枪械的dry_fire音效
+      "blocking_fire": true,
+      // 是否用耐久栏显示剩余电量
+      "durability_bar": false
+    },
+	"dual_wield": {
+      "enable": true,
+      "recoil_multiplier": 1.5,
+      "inaccuracy_multiplier": 1.5,
+      "focus_aim_recoil_multiplier": 1.25,
+      "focus_aim_inaccuracy_multiplier": 1.25,
+      "left_offset": -0.58,
+      "right_offset": 0.18,
+      "hand_pos": {
+        //在左手时使用的手臂定位组以及是否镜像
+        "on_left": {
+          //使用的手臂定位组，可选left、right、none
+          "pos": "left",
+          "mirror": true,
+          "offset": [1,2,3]
+        },
+        //在右手时使用的手臂定位组以及是否镜像
+        "on_right": {
+          "pos": "right",
+          "mirror": true,
+          "offset": [3,4,5]
+        }
+      }
+	},
     "aiming_stamina": {
       // 耐力消耗倍率
       "consumption_multiplier": 2.0,
       // 耐力恢复倍率
       "recovery_multiplier": 2.0,
-
       // 这些会取代配置文件中的值
       "recovery_delay": 100,
       "min_stamina_to_aim": 20,
@@ -15,7 +52,12 @@
       "sway_amplitude": 0.32,
       "sway_speed": 0.08,
       "sway_low_stamina_multiplier": 5.0,
-      "sway_hold_breath_calm": 200
+      "sway_hold_breath_calm": 200,
+	  "shoot_cost": 1,
+	  "melee_cost": 10,
+	  "sway_hold_breath_low_multiplier": 2.0,
+	  "sway_sneak_multiplier": 0.8,
+	  "sway_crawl_multiplier": 0.4
     },
     "stamina": {
       // 耐力消耗倍率
