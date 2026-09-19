@@ -44,6 +44,8 @@
 
 --Cloth Config API 11.1.136 (可选)
 
+注意，测试版TaCZ需要在永恒计划获取。
+
 联动模组：
 
 --LesRaisins Tactical Equipements
