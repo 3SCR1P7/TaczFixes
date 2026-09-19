@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssscript.taczfixes.client.render.DualFocusAimState;
 import com.ssscript.taczfixes.client.render.DualWieldClient;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
@@ -30,6 +31,8 @@ public class MixinFirstPersonRenderGunEvent {
         if (model == null) return;
         CustomScopeViewShift.apply(poseStack, model, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
     }
+
+
 
     @Inject(method = {"onGunFire"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getMainHandItem()Lnet/minecraft/world/item/ItemStack;", shift = At.Shift.BEFORE, remap = true)}, cancellable = true, remap = false)
     private static void dualWield$skipMainHandMuzzleForOffhandFire(GunFireEvent event, CallbackInfo callback) {

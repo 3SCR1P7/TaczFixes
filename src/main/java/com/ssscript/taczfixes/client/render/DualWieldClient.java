@@ -500,6 +500,7 @@ public final class DualWieldClient {
             event.setCanceled(true);
             return;
         }
+
         if (puttingAway) {
             itemStackM_21206_ = OffhandDisplayManager.getPutAwayStack();
         } else {

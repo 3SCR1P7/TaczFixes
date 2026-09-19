@@ -8,6 +8,7 @@
     "mixins":  [
                    "MixinEntityKineticBullet",
                    "MixinEntityKineticBulletScript",
+                   "MixinEntityKineticBulletHitLight",
                    "MixinEntityKineticBulletAccessor",
                    "MixinEntityKineticBulletDamageByDistance",
                    "MixinEntityKineticBulletRicochet",

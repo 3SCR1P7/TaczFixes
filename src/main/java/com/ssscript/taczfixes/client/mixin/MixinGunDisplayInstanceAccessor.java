@@ -14,4 +14,7 @@ public interface MixinGunDisplayInstanceAccessor {
 
     @Accessor("thirdPersonAnimation")
     String dualWield$getThirdPersonAnimationRaw();
+
+    @Accessor("display")
+    com.tacz.guns.client.resource.pojo.display.gun.GunDisplay dualWield$getDisplayRaw();
 }

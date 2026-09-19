@@ -222,6 +222,10 @@ public class ConfigScreen {
         bool_(explosion, entry, "misc.explosion_bullet_only", Config.EXPLOSION_BULLET_ONLY);
         cat.addEntry(entry.startSubCategory(cat("explosion"), explosion).build());
 
+        List<AbstractConfigListEntry> gunLight = new ArrayList<>();
+        int_(gunLight, entry, "misc.gun_light_max_lights", Config.GUN_LIGHT_MAX_LIGHTS);
+        cat.addEntry(entry.startSubCategory(cat("gun_light"), gunLight).build());
+
         List<AbstractConfigListEntry> peek = new ArrayList<>();
         bool_(peek, entry, "misc.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
         cat.addEntry(entry.startSubCategory(cat("peek"), peek).build());
@@ -244,7 +248,6 @@ public class ConfigScreen {
 
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "compat.disable_arcana_magnification_for_sight", Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT);
-        lst_(cat, entry, "compat.hide_particles_in_arcana_thermal", Config.HIDE_PARTICLES_IN_ARCANA_THERMAL);
         bool_(cat, entry, "compat.parcool_slide_as_move_inaccuracy", Config.PARCOOL_SLIDE_AS_MOVE_INACCURACY);
         bool_(cat, entry, "compat.disable_tracking_after_penetration", Config.DISABLE_TRACKING_AFTER_PENETRATION);
         dbl_(cat, entry, "compat.peek_headshot_height", Config.PEEK_HEADSHOT_HEIGHT);

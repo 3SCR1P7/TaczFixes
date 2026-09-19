@@ -138,5 +138,10 @@ public class NetworkHandler {
                 ServerMessageDualWieldEligibility::decode,
                 ServerMessageDualWieldEligibility::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(24, ServerMessageGunLight.class,
+                ServerMessageGunLight::encode,
+                ServerMessageGunLight::decode,
+                ServerMessageGunLight::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
     }
 }

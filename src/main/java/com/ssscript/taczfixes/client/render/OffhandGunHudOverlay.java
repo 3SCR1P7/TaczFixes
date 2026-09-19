@@ -121,12 +121,30 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
         if (!useInventoryAmmo && gunData.getReloadData().isInfinite()) {
             inventoryAmmoCountText = "∞";
         }
-        renderNumbers(graphics, minecraft.font, height, currentAmmoCountText, inventoryAmmoCountText, ammoCountColor, inventoryAmmoCountColor);
-        renderGunAndFireMode(graphics, minecraft.font, stack, gun, display, height, currentAmmoCountText, ammoCount2, overheatLocked);
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig chargeCfg =
+                com.ssscript.taczfixes.common.util.ChargeStorage.config(stack);
+        boolean chargeHud = chargeCfg != null && Boolean.TRUE.equals(chargeCfg.replace_ammo_hud)
+                && com.ssscript.taczfixes.common.util.ChargeStorage.getMax(stack) > 0;
+        int chargePercent = 0;
+        int gunIconAmmo = ammoCount2;
+        if (chargeHud) {
+            int chargeMax = com.ssscript.taczfixes.common.util.ChargeStorage.getMax(stack);
+            chargePercent = chargeMax <= 0 ? 0 : Math.round(com.ssscript.taczfixes.common.util.ChargeStorage.get(stack) * 100.0f / chargeMax);
+            currentAmmoCountText = String.format("%03d%%", Integer.valueOf(chargePercent));
+            inventoryAmmoCountText = "";
+            ammoCountColor = (chargePercent < 25 || overheatLocked) ? 16733525 : 16777215;
+            gunIconAmmo = chargePercent <= 0 ? 0 : 1;
+        }
+        String ammoTypeName = com.ssscript.taczfixes.client.util.GunsmithLibAmmoNameCompat.resolve(stack);
+        Component sideLabel = ammoTypeName != null && !ammoTypeName.isBlank()
+                ? Component.literal(ammoTypeName)
+                : Component.translatable("taczfixes.hud.left");
+        renderNumbers(graphics, minecraft.font, height, currentAmmoCountText, inventoryAmmoCountText, ammoCountColor, inventoryAmmoCountColor, sideLabel);
+        renderGunAndFireMode(graphics, minecraft.font, stack, gun, display, height, currentAmmoCountText, gunIconAmmo, overheatLocked);
         renderHeat(gui, graphics, stack, gun, gunData, height);
     }
 
-    private static void renderNumbers(GuiGraphics graphics, Font font, int height, String currentAmmoCountText, String inventoryAmmoCountText, int ammoCountColor, int inventoryAmmoCountColor) {
+    private static void renderNumbers(GuiGraphics graphics, Font font, int height, String currentAmmoCountText, String inventoryAmmoCountText, int ammoCountColor, int inventoryAmmoCountColor, Component sideLabel) {
         graphics.fill(61, height - 43, 62, height - 25, -1);
         PoseStack poseStack = graphics.pose();
         poseStack.pushPose();
@@ -140,7 +158,7 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
         poseStack.popPose();
         poseStack.pushPose();
         poseStack.scale(0.5f, 0.5f, 1.0f);
-        graphics.drawString(font, Component.translatable("taczfixes.hud.left"), 132, (int) ((height - 29.0f) / 0.5f), -5592406, false);
+        graphics.drawString(font, sideLabel, 132, (int) ((height - 29.0f) / 0.5f), -5592406, false);
         poseStack.popPose();
     }
 

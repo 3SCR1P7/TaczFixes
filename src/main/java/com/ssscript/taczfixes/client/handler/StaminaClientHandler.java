@@ -40,8 +40,8 @@ public class StaminaClientHandler {
 
         if (!StaminaClientState.isKnown()) return;
 
-        // 上报本地疾跑状态(每 tick 变化时发送), 服务端据此消耗
-        boolean sprinting = player.isSprinting();
+        // 上报本地疾跑状态(每 tick 变化时发送), 服务端据此消耗; 潜行(按住shift)时不算疾跑
+        boolean sprinting = player.isSprinting() && !player.isShiftKeyDown();
         if (sprinting != lastSprintingSent || player.tickCount % 20 == 0) {
             lastSprintingSent = sprinting;
             NetworkHandler.CHANNEL.sendToServer(new com.ssscript.taczfixes.common.network.ClientMessageSprintState(sprinting));

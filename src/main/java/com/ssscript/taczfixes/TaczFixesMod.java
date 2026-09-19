@@ -218,6 +218,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.InputSyncHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.AimSwayHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeStencilHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.StaminaClientHandler());
         });
     }

@@ -181,6 +181,32 @@ public final class CustomScopeViewShift {
                 .map(ClientAttachmentIndex::isScope).orElse(false);
     }
 
+    /** 瞄具的"眼睛位置"节点在模型空间中的坐标(无瞄具时用机瞄路径), 供开镜对位使用。 */
+    public static Vec3 scopeEyePosition(com.tacz.guns.client.model.BedrockGunModel model, ItemStack gun) {
+        if (model == null || gun == null || gun.isEmpty()) {
+            return null;
+        }
+        ItemStack scope = readStandardScope(gun);
+        if (scope.isEmpty()) {
+            com.tacz.guns.api.item.IGun igun = com.tacz.guns.api.item.IGun.getIGunOrNull(gun);
+            if (igun != null) {
+                scope = igun.getBuiltinAttachment(gun, AttachmentType.SCOPE);
+            }
+        }
+        if (scope.isEmpty()) {
+            List<com.tacz.guns.client.model.bedrock.BedrockPart> ironPath = model.getIronSightPath();
+            if (ironPath == null || ironPath.isEmpty()) {
+                return null;
+            }
+            return slotCenterWorld(ironPath.get(ironPath.size() - 1), ItemStack.EMPTY, gun, null);
+        }
+        List<com.tacz.guns.client.model.bedrock.BedrockPart> scopePath = model.getScopePosPath();
+        if (scopePath == null || scopePath.isEmpty()) {
+            return null;
+        }
+        return slotCenterWorld(scopePath.get(scopePath.size() - 1), scope, gun, getStandardScopeAdapterOffset(gun, scope));
+    }
+
     public static ItemStack readStandardScope(ItemStack gun) {
         CompoundTag tag = gun.getTag();
         if (tag != null) {

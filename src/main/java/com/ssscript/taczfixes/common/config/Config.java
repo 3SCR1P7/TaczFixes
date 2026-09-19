@@ -26,7 +26,6 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> HIDE_PARTICLES_IN_ARCANA_THERMAL;
     public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
     public static final ForgeConfigSpec.BooleanValue DISABLE_TRACKING_AFTER_PENETRATION;
     public static final ForgeConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
@@ -45,6 +44,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
     public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
+    public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
@@ -495,6 +495,12 @@ public class Config {
                 .define("bullet_only", false);
         BUILDER.pop();
 
+        BUILDER.push("gun_light");
+        GUN_LIGHT_MAX_LIGHTS = BUILDER
+                .comment("枪械动态光照的最大同时存在光源数量。默认值：2048")
+                .defineInRange("max_lights", 2048, 1, 4096);
+        BUILDER.pop();
+
         BUILDER.push("peek_aim");
         AUTO_AIM_WHEN_PEEKING = BUILDER
                 .comment("是否启用探头自动开镜。默认值：true",
@@ -537,12 +543,6 @@ public class Config {
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
                         "需要TaCZ: Arcana模组。")
                 .define("disable_arcana_magnification_for_sight", true);
-        HIDE_PARTICLES_IN_ARCANA_THERMAL = BUILDER
-                .comment("在热成像瞄具视野内隐藏的粒子列表，使用粒子ID，如lrtactical:smoke_cloud。",
-                        "需要TaCZ: Arcana模组。")
-                .defineList("hide_particles_in_arcana_thermal",
-                        List.of("lrtactical:smoke_cloud"),
-                        it -> it instanceof String);
         PARCOOL_SLIDE_AS_MOVE_INACCURACY = BUILDER
                 .comment("滑铲时，应用移动时而非爬行时的腰射散布。默认值：true",
                         "需要ParCool模组。")
@@ -1077,7 +1077,7 @@ public class Config {
                 .defineInRange("consumption_per_second", 2.0, 0.0, 100000.0);
         AIMING_STAMINA_CONSUMPTION_MULTIPLIER = BUILDER
                 .comment("上肢耐力消耗倍率(属性 aiming_stamina_consumption 的默认值)。默认值：1.0")
-                .defineInRange("consumption_multiplier", 1.0d, 0.0d, 100000.0d);
+                .defineInRange("consumption_multiplier", 1.0, 0.0, 100000.0);
         AIMING_STAMINA_RECOVERY = BUILDER
                 .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：20")
                 .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
@@ -1145,7 +1145,7 @@ public class Config {
                 .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
         STAMINA_CONSUMPTION_MULTIPLIER = BUILDER
                 .comment("耐力消耗倍率(属性 stamina_consumption 的默认值)。默认值：1.0")
-                .defineInRange("consumption_multiplier", 1.0d, 0.0d, 100000.0d);
+                .defineInRange("consumption_multiplier", 1.0, 0.0, 100000.0);
         STAMINA_RECOVERY_DELAY_MS = BUILDER
                 .comment("持续多少毫秒没有消耗耐力后开始恢复。默认值：1000")
                 .defineInRange("recovery_delay_ms", 1000, 0, 600000);
@@ -1153,8 +1153,8 @@ public class Config {
                 .comment("行走时耐力恢复速度的倍率。默认值：0.5")
                 .defineInRange("walk_recovery_multiplier", 0.5, 0.0, 10.0);
         STAMINA_JUMP_COST = BUILDER
-                .comment("每次原版跳跃消耗的耐力。默认值：3")
-                .defineInRange("jump_cost", 3.0, 0.0, 100000.0);
+                .comment("每次原版跳跃消耗的耐力。默认值：2")
+                .defineInRange("jump_cost", 2.0, 0.0, 100000.0);
         STAMINA_SPRINT_CONSUMPTION_PER_SECOND = BUILDER
                 .comment("使用原版疾跑或游泳时每秒消耗的耐力。默认值：1")
                 .defineInRange("sprint_consumption_per_second", 1.0, 0.0, 100000.0);
@@ -1162,8 +1162,8 @@ public class Config {
                 .comment("枪械每 1kg 重量增加的耐力消耗比例。默认值：0.03")
                 .defineInRange("weight_consumption_per_kg", 0.03, 0.0, 10.0);
         STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER = BUILDER
-                .comment("ParCool 消耗耐力时，改为消耗本模组耐力的倍率。默认值：0.1")
-                .defineInRange("parcool_consumption_multiplier", 0.1, 0.0, 1000.0);
+                .comment("ParCool 消耗耐力时，改为消耗本模组耐力的倍率。默认值：0.05")
+                .defineInRange("parcool_consumption_multiplier", 0.05, 0.0, 1000.0);
         STAMINA_EXHAUSTION_END = BUILDER
                 .comment("力竭状态结束所需的耐力值(耐力归零进入力竭, 恢复到该值后结束)。默认值：20")
                 .defineInRange("exhaustion_end", 20.0, 0.0, 100000.0);
@@ -1171,8 +1171,8 @@ public class Config {
                 .comment("力竭期间耐力恢复速度的倍率。默认值：2")
                 .defineInRange("exhaustion_recovery_multiplier", 2.0, 0.0, 100.0);
         STAMINA_SLIDE_COST = BUILDER
-                .comment("ParCool 滑铲开始时消耗的耐力。默认值：15")
-                .defineInRange("slide_cost", 15.0, 0.0, 100000.0);
+                .comment("ParCool 滑铲开始时消耗的耐力。默认值：10")
+                .defineInRange("slide_cost", 10.0, 0.0, 100000.0);
         STAMINA_BAR_MODE = BUILDER
                 .comment("耐力条显示模式。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
@@ -1199,23 +1199,23 @@ public class Config {
                                 "sfms:emergency_baton", "sfms:katana", "sfms:tb23"),
                         value -> value instanceof String text && !text.isBlank());
         DUAL_WIELD_RECOIL_MULTIPLIER = BUILDER
-                .comment("Final procedural camera recoil multiplier while dual-wielding. Default: 2.0")
-                .defineInRange("dualWieldRecoilMultiplier", 2.0d, 0.0d, 10.0d);
+                .comment("双持时的后坐力倍率。默认值：2.0")
+                .defineInRange("dualWieldRecoilMultiplier", 2.0, 0.0, 10.0);
         DUAL_WIELD_INACCURACY_MULTIPLIER = BUILDER
-                .comment("Final inaccuracy (spread) multiplier while dual-wielding. Default: 1.5")
-                .defineInRange("dualWieldInaccuracyMultiplier", 1.5d, 0.0d, 10.0d);
+                .comment("双持时的散布倍率。默认值：1.5")
+                .defineInRange("dualWieldInaccuracyMultiplier", 1.5, 0.0, 10.0);
         DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER = BUILDER
-                .comment("Recoil multiplier of the aiming hand while one-hand aiming during dual-wield. Default: 1.5")
-                .defineInRange("focusAimRecoilMultiplier", 1.5d, 0.0d, 10.0d);
+                .comment("单手瞄准时的后坐力倍率。默认值：1.5")
+                .defineInRange("focusAimRecoilMultiplier", 1.5, 0.0, 10.0);
         DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER = BUILDER
-                .comment("Inaccuracy (spread) multiplier of the aiming hand while one-hand aiming during dual-wield. Default: 1.25")
-                .defineInRange("focusAimInaccuracyMultiplier", 1.25d, 0.0d, 10.0d);
+                .comment("单手瞄准时的散布倍率。默认值：1.25")
+                .defineInRange("focusAimInaccuracyMultiplier", 1.25, 0.0, 10.0);
         DUAL_WIELD_LEFT_X_OFFSET = BUILDER
-                .comment("左手枪械的坐标偏移。默认值：-0.58")
-                .defineInRange("leftGunXOffset", -0.58d, -2.0d, 0.0d);
+                .comment("左手枪械的坐标偏移。默认值：-0.62")
+                .defineInRange("leftGunXOffset", -0.62, -2.0, 0.0);
         DUAL_WIELD_RIGHT_X_OFFSET = BUILDER
-                .comment("右手枪械的坐标偏移。默认值：0.24")
-                .defineInRange("rightGunXOffset", 0.24d, 0.0d, 2.0d);
+                .comment("右手枪械的坐标偏移。默认值：0.22")
+                .defineInRange("rightGunXOffset", 0.22, 0.0, 2.0);
         BUILDER.pop();
     }
 

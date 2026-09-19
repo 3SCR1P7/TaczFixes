@@ -18,4 +18,5 @@ public abstract class MixinEntityKineticBulletScript {
     private void taczfixes$invokeBulletTick(CallbackInfo ci) {
         BulletTickHelper.runBulletTick((EntityKineticBullet) (Object) this);
     }
+
 }

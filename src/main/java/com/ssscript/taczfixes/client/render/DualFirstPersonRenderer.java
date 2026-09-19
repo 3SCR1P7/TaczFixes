@@ -32,10 +32,8 @@ import org.joml.Vector3f;
 @OnlyIn(Dist.CLIENT)
 /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualFirstPersonRenderer.class */
 public final class DualFirstPersonRenderer {
-
     private DualFirstPersonRenderer() {
     }
-
     public static boolean renderOffhand(LocalPlayer player, ItemStack stack, PoseStack poseStack, MultiBufferSource bufferSource, int light, float partialTick) {
         if (!(stack.getItem() instanceof IGun)) {
             return false;
@@ -96,6 +94,7 @@ public final class DualFirstPersonRenderer {
                     }
                     if (model.getMuzzleFlashPosPath() == null || model.getMuzzleFlashPosPath().isEmpty()) {
                         DualMuzzleFlashState.invalidateMuzzle(DualRenderContext.HandPhase.OFFHAND);
+                        com.ssscript.taczfixes.client.util.CustomScopeViewShift.pop(poseStack);
                     } else {
                         Vector3f previousMuzzle = new Vector3f(GunItemRendererWrapper.muzzleRenderOffset);
                         try {

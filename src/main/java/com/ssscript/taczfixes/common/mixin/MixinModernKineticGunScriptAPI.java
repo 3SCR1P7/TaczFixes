@@ -181,6 +181,29 @@ public abstract class MixinModernKineticGunScriptAPI {
         return com.ssscript.taczfixes.common.util.ChargeStorage.getMax(this.itemStack);
     }
 
+    /** lua: api:getEnchantments() 返回此枪械全部附魔及等级, 如 {{"taczfixes:abyssgazer",1},{"taczfixes:pandora_paradox",2}}。 */
+    @Unique
+    public org.luaj.vm2.LuaValue getEnchantments() {
+        org.luaj.vm2.LuaTable result = new org.luaj.vm2.LuaTable();
+        if (itemStack == null || itemStack.isEmpty()) {
+            return result;
+        }
+        net.minecraft.nbt.ListTag list = itemStack.getEnchantmentTags();
+        int index = 1;
+        for (int i = 0; i < list.size(); i++) {
+            net.minecraft.nbt.CompoundTag entry = list.getCompound(i);
+            String id = entry.getString("id");
+            if (id.isEmpty()) {
+                continue;
+            }
+            org.luaj.vm2.LuaTable pair = new org.luaj.vm2.LuaTable();
+            pair.set(1, org.luaj.vm2.LuaValue.valueOf(id));
+            pair.set(2, org.luaj.vm2.LuaValue.valueOf(entry.getInt("lvl")));
+            result.set(index++, pair);
+        }
+        return result;
+    }
+
     /** lua: api:textShow("Ssscript","vvvv") 将语言文件中的 %vvvv% 占位符替换为 Ssscript。 */
     @Unique
     public void textShow(String value, String name) {

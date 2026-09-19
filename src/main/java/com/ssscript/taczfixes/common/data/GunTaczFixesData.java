@@ -27,6 +27,21 @@ public class GunTaczFixesData {
     public Map<String, java.util.List<Double>> pos_alter;
     /** 枪械电量(FE)配置。 */
     public ChargeConfig charge;
+    /** 客户端动态光照配置(开火/爆炸/曳光弹)。 */
+    public LightConfig light;
+
+    /** 客户端动态光照: 各事件按 time(ms) 从 level_max 线性衰减到 level_min。 */
+    public static class LightConfig {
+        public LightEntry fire;
+        public LightEntry explosion;
+        public LightEntry bullet;
+    }
+
+    public static class LightEntry {
+        public Integer time;
+        public Integer level_max;
+        public Integer level_min;
+    }
 
     /** 枪械 data 的 charge: 有该字段的枪械可在充电站等位置充能。 */
     public static class ChargeConfig {

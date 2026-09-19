@@ -126,6 +126,23 @@ public class TaczFixesDataManager {
         return data == null ? null : data.charge;
     }
 
+    /** 枪械 data 中的动态光照配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.LightConfig resolveLight(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        return resolveLight(gun.getGunId(gunStack));
+    }
+
+    /** 按枪械 id 取动态光照配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.LightConfig resolveLight(ResourceLocation gunId) {
+        ResourceLocation dataId = resolveDataId(gunId);
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.light;
+    }
+
     public static GunTaczFixesData.RecoilConfig resolveRecoil(ResourceLocation dataId, FireMode mode) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         if (data == null || data.recoil_multiplier == null || data.recoil_multiplier.isEmpty()) {

@@ -22,9 +22,8 @@ import java.util.Locale;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.animation.AnimationListenerSupplier;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualFocusAimState.class */
 public final class DualFocusAimState {
-    private static final float PROGRESS_PER_TICK = 0.25f;
+    private static final float PROGRESS_PER_TICK = 0.16f;
     private static final float OFFHAND_DROP_Y = 0.82f;
     private static final float OFFHAND_DROP_Z = 0.16f;
     private static final float OFFHAND_PITCH_DEGREES = 24.0f;
@@ -47,7 +46,7 @@ public final class DualFocusAimState {
             releasePreservedMainAim();
         }
         previousProgress = progress;
-        progress = Mth.clamp(progress + (shouldBeActive ? PROGRESS_PER_TICK : -0.25f), 0.0f, 1.0f);
+        progress = Mth.clamp(progress + (shouldBeActive ? PROGRESS_PER_TICK : -PROGRESS_PER_TICK), 0.0f, 1.0f);
         return changed;
     }
 
@@ -58,11 +57,6 @@ public final class DualFocusAimState {
         clearPreservedMainAim();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:32:0x0078  */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
     public static boolean handleMainAimAnimationRun(AnimationController controller, AnimationListenerSupplier listenerSupplier, int track, String animationName) {
         if (controller == null || animationName == null) {
             return false;
@@ -139,8 +133,8 @@ public final class DualFocusAimState {
     }
 
     public static float getProgress(float partialTick) {
-        float interpolated = Mth.lerp(Mth.clamp(partialTick, 0.0f, 1.0f), previousProgress, progress);
-        return interpolated * interpolated * (3.0f - (2.0f * interpolated));
+        float interpolated = Mth.clamp(Mth.lerp(Mth.clamp(partialTick, 0.0f, 1.0f), previousProgress, progress), 0.0f, 1.0f);
+        return interpolated * interpolated * interpolated * (interpolated * ((6.0f * interpolated) - 15.0f) + 10.0f);
     }
 
     public static float getFrameProgress() {
@@ -170,6 +164,7 @@ public final class DualFocusAimState {
         return TOUHOU_MAID_ENTITY_ID.equals(entityId);
     }
 
+    /** 主手单手瞄准时, 副手枪械降下到低位。 */
     public static void applyFirstPersonOffhandLowReady(PoseStack poseStack, float partialTick) {
         float amount = getProgress(partialTick);
         if (poseStack == null || amount <= 0.0f) {
