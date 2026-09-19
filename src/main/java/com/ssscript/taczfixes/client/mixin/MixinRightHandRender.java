@@ -44,7 +44,9 @@ public abstract class MixinRightHandRender {
             return;
         }
         callback.cancel();
-        if (handPos.anchor() != DualWieldOverrides.ArmAnchor.RIGHT || !this.bedrockGunModel.getRenderHand()) {
+        boolean render = handPos.anchor() == DualWieldOverrides.ArmAnchor.RIGHT
+                || handPos.anchor() == DualWieldOverrides.ArmAnchor.BOTH;
+        if (!render || !this.bedrockGunModel.getRenderHand()) {
             return;
         }
         FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, HumanoidArm.RIGHT, handPos.mirror(), handPos.offset());

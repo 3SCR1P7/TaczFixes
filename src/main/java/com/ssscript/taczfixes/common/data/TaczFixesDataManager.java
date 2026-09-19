@@ -126,21 +126,92 @@ public class TaczFixesDataManager {
         return data == null ? null : data.charge;
     }
 
-    /** 枪械 data 中的动态光照配置, 未配置返回 null。 */
+    /** 枪械最终动态光照配置(枪械 data 或全局配置, 再叠加配件增量调整); 全部禁用或命中黑名单时返回 null。 */
     @Nullable
     public static GunTaczFixesData.LightConfig resolveLight(ItemStack gunStack) {
         if (gunStack == null || gunStack.isEmpty()) return null;
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) return null;
-        return resolveLight(gun.getGunId(gunStack));
+        ResourceLocation gunId = gun.getGunId(gunStack);
+        if (isLightDisabled(gunId, resolveDataId(gunId))) {
+            return null;
+        }
+        return AttachmentTaczFixesManager.applyLight(gunStack, resolveLight(gunId));
     }
 
-    /** 按枪械 id 取动态光照配置, 未配置返回 null。 */
+    /** 按枪械 id 取动态光照配置; 黑名单枪械返回 null, data 中无 light 字段时使用全局配置。 */
     @Nullable
     public static GunTaczFixesData.LightConfig resolveLight(ResourceLocation gunId) {
         ResourceLocation dataId = resolveDataId(gunId);
+        if (isLightDisabled(gunId, dataId)) {
+            return null;
+        }
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
-        return data == null ? null : data.light;
+        if (data != null && data.light != null) {
+            return data.light;
+        }
+        return globalLight(gunId);
+    }
+
+    /** gun_light.blacklist: 枪械 id 或其 data id 命中则禁用该枪所有动态光照。 */
+    public static boolean isLightDisabled(@Nullable ResourceLocation gunId, @Nullable ResourceLocation dataId) {
+        if (gunId == null) {
+            return false;
+        }
+        java.util.List<? extends String> disabled = Config.GUN_LIGHT_DISABLED_GUNS.get();
+        if (disabled.isEmpty()) {
+            return false;
+        }
+        String id = gunId.toString();
+        if (disabled.contains(id)) {
+            return true;
+        }
+        return dataId != null && !dataId.equals(gunId) && disabled.contains(dataId.toString());
+    }
+
+    /**
+     * 全局光照配置: 按枪械类型(gun_light.&lt;type&gt;)取该类型的值, data 中未配置 light 的枪械使用;
+     * 某类 time 为 0 时该项为 null, 全部为 0 时整体返回 null。
+     */
+    @Nullable
+    public static GunTaczFixesData.LightConfig globalLight(@Nullable ResourceLocation gunId) {
+        Config.GunLightTypeConfig type = gunLightTypeConfig(gunId);
+        if (type == null) {
+            return null;
+        }
+        GunTaczFixesData.LightConfig light = new GunTaczFixesData.LightConfig();
+        light.fire = globalLightEntry(type.fireTime.get(), type.fireLevelMax.get(), type.fireLevelMin.get());
+        light.explosion = globalLightEntry(type.explosionTime.get(), type.explosionLevelMax.get(),
+                type.explosionLevelMin.get());
+        light.bullet = globalLightEntry(type.bulletTime.get(), type.bulletLevelMax.get(), type.bulletLevelMin.get());
+        if (light.fire == null && light.explosion == null && light.bullet == null) {
+            return null;
+        }
+        return light;
+    }
+
+    @Nullable
+    private static Config.GunLightTypeConfig gunLightTypeConfig(@Nullable ResourceLocation gunId) {
+        if (gunId == null) {
+            return null;
+        }
+        try {
+            String type = TimelessAPI.getCommonGunIndex(gunId).map(index -> index.getType()).orElse(null);
+            return type == null ? null : Config.GUN_LIGHT_TYPE_CONFIGS.get(type.toLowerCase(Locale.ROOT));
+        } catch (RuntimeException ignored) {
+            return null;
+        }
+    }
+
+    private static GunTaczFixesData.LightEntry globalLightEntry(int time, int levelMax, int levelMin) {
+        if (time <= 0) {
+            return null;
+        }
+        GunTaczFixesData.LightEntry entry = new GunTaczFixesData.LightEntry();
+        entry.time = time;
+        entry.level_max = levelMax;
+        entry.level_min = levelMin;
+        return entry;
     }
 
     public static GunTaczFixesData.RecoilConfig resolveRecoil(ResourceLocation dataId, FireMode mode) {
@@ -186,6 +257,19 @@ public class TaczFixesDataManager {
         ResourceLocation dataId = resolveDataId(gunId);
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         return data == null ? null : data.dual_wield;
+    }
+
+    /** dual_wield.reload_animation: 双持换弹是否直接使用枪械自身换弹动画(未配置默认 false)。 */
+    public static boolean usesNativeReloadAnimation(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) {
+            return false;
+        }
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) {
+            return false;
+        }
+        GunTaczFixesData.DualWieldConfig cfg = resolveDualWield(gun.getGunId(gunStack));
+        return cfg != null && Boolean.TRUE.equals(cfg.reload_animation);
     }
 
     public static GunTaczFixesData.FireKnockbackConfig resolveFireKnockback(ResourceLocation dataId) {

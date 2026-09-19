@@ -45,6 +45,13 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
     public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
+    /** 枪械类型（tacz 枪械 data 的 type 字段）名称, 与 GunTabType 一致。 */
+    public static final String[] GUN_LIGHT_TYPE_NAMES = {"pistol", "sniper", "rifle", "shotgun", "smg", "rpg", "mg"};
+    /** 每种枪械类型的全局光照覆盖配置(time>0 时覆盖通用全局值)。 */
+    public static final java.util.Map<String, GunLightTypeConfig> GUN_LIGHT_TYPE_CONFIGS = new java.util.LinkedHashMap<>();
+    /** 枪口配件未配置 light 字段时, 对光照参数的全局增量调整。 */
+    public static final GunLightTypeConfig GUN_LIGHT_MUZZLE_ADJUST;
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
@@ -254,6 +261,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_LEFT_X_OFFSET;
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RIGHT_X_OFFSET;
+    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_MELEE_SWITCH_PERCENT;
 
     static {
         BUILDER.push("gun_level");
@@ -438,6 +446,27 @@ public class Config {
                 .defineInRange("semi_factor", 4.0, 1.0, 10.0);
         BUILDER.pop();
 
+        BUILDER.push("gun_light");
+        GUN_LIGHT_MAX_LIGHTS = BUILDER
+                .comment("枪械动态光照的最大同时存在光源数量。默认值：2048")
+                .defineInRange("max_lights", 2048, 1, 4096);
+        GUN_LIGHT_DISABLED_GUNS = BUILDER
+                .comment("禁用动态光照的枪械列表（黑名单），优先级高于 data 与全局配置。",
+                        "Example: [\"tacz:ak47\"]")
+                .defineListAllowEmpty("blacklist", List.of(), value -> value instanceof String text && !text.isBlank());
+
+        BUILDER.push("muzzle_adjust");
+        GUN_LIGHT_MUZZLE_ADJUST = new GunLightTypeConfig(BUILDER, true);
+        BUILDER.pop();
+
+        for (String gunType : GUN_LIGHT_TYPE_NAMES) {
+            BUILDER.push(gunType);
+            GUN_LIGHT_TYPE_CONFIGS.put(gunType, new GunLightTypeConfig(BUILDER));
+            BUILDER.pop();
+        }
+
+        BUILDER.pop();
+
         BUILDER.push("misc");
 
         BUILDER.push("stepless_zoom");
@@ -493,12 +522,6 @@ public class Config {
         EXPLOSION_BULLET_ONLY = BUILDER
                 .comment("爆炸击退是否仅对子弹生效。默认值：true")
                 .define("bullet_only", false);
-        BUILDER.pop();
-
-        BUILDER.push("gun_light");
-        GUN_LIGHT_MAX_LIGHTS = BUILDER
-                .comment("枪械动态光照的最大同时存在光源数量。默认值：2048")
-                .defineInRange("max_lights", 2048, 1, 4096);
         BUILDER.pop();
 
         BUILDER.push("peek_aim");
@@ -1216,7 +1239,69 @@ public class Config {
         DUAL_WIELD_RIGHT_X_OFFSET = BUILDER
                 .comment("右手枪械的坐标偏移。默认值：0.22")
                 .defineInRange("rightGunXOffset", 0.22, 0.0, 2.0);
+        DUAL_WIELD_MELEE_SWITCH_PERCENT = BUILDER
+                .comment("一把枪的近战冷却进行到该比例后, 另一只手的枪就可以近战。默认值：0.7")
+                .defineInRange("meleeSwitchPercent", 0.7, 0.0, 1.0);
         BUILDER.pop();
+    }
+
+    /** 某种枪械类型的全局光照值(data 中未配置 light 的该类型枪械使用; time 为 0 表示该类不发光)。 */
+    public static final class GunLightTypeConfig {
+        public final ForgeConfigSpec.IntValue fireTime;
+        public final ForgeConfigSpec.IntValue fireLevelMax;
+        public final ForgeConfigSpec.IntValue fireLevelMin;
+        public final ForgeConfigSpec.IntValue explosionTime;
+        public final ForgeConfigSpec.IntValue explosionLevelMax;
+        public final ForgeConfigSpec.IntValue explosionLevelMin;
+        public final ForgeConfigSpec.IntValue bulletTime;
+        public final ForgeConfigSpec.IntValue bulletLevelMax;
+        public final ForgeConfigSpec.IntValue bulletLevelMin;
+
+        GunLightTypeConfig(ForgeConfigSpec.Builder builder) {
+            this(builder, false);
+        }
+
+        /** adjust=true 时为增量调整(可为负), false 时为该类型的绝对值。 */
+        GunLightTypeConfig(ForgeConfigSpec.Builder builder, boolean adjust) {
+            int timeMin = adjust ? -60000 : 0;
+            int levelMin = adjust ? -15 : 0;
+            this.fireTime = builder
+                    .comment(adjust ? "开火光照时间增量（毫秒，可为负）。默认值：0"
+                            : "开火光照持续时间（毫秒）。0 表示不发光。默认值：0")
+                    .defineInRange("fire_time", 0, timeMin, 60000);
+            this.fireLevelMax = builder
+                    .comment(adjust ? "开火最大光照等级增量（可为负）。默认值：0"
+                            : "开火瞬间的光照等级（0-15）。默认值：15")
+                    .defineInRange("fire_level_max", adjust ? 0 : 15, levelMin, 15);
+            this.fireLevelMin = builder
+                    .comment(adjust ? "开火最小光照等级增量（可为负）。默认值：0"
+                            : "开火光照结束时的光照等级（0-15，期间线性插值）。默认值：0")
+                    .defineInRange("fire_level_min", 0, levelMin, 15);
+            this.explosionTime = builder
+                    .comment(adjust ? "爆炸光照时间增量（毫秒，可为负）。默认值：0"
+                            : "爆炸光照持续时间（毫秒）。0 表示不发光。默认值：0")
+                    .defineInRange("explosion_time", 0, timeMin, 60000);
+            this.explosionLevelMax = builder
+                    .comment(adjust ? "爆炸最大光照等级增量（可为负）。默认值：0"
+                            : "爆炸瞬间的光照等级（0-15）。默认值：15")
+                    .defineInRange("explosion_level_max", adjust ? 0 : 15, levelMin, 15);
+            this.explosionLevelMin = builder
+                    .comment(adjust ? "爆炸最小光照等级增量（可为负）。默认值：0"
+                            : "爆炸光照结束时的光照等级（0-15，期间线性插值）。默认值：0")
+                    .defineInRange("explosion_level_min", 0, levelMin, 15);
+            this.bulletTime = builder
+                    .comment(adjust ? "弹道光照时间增量（毫秒，可为负）。默认值：0"
+                            : "弹道光照持续时间（毫秒）。0 表示不发光。默认值：0")
+                    .defineInRange("bullet_time", 0, timeMin, 60000);
+            this.bulletLevelMax = builder
+                    .comment(adjust ? "弹道最大光照等级增量（可为负）。默认值：0"
+                            : "弹道光照初始等级（0-15）。默认值：15")
+                    .defineInRange("bullet_level_max", adjust ? 0 : 15, levelMin, 15);
+            this.bulletLevelMin = builder
+                    .comment(adjust ? "弹道最小光照等级增量（可为负）。默认值：0"
+                            : "弹道光照结束时的光照等级（0-15，期间线性插值）。默认值：0")
+                    .defineInRange("bullet_level_min", 0, levelMin, 15);
+        }
     }
 
     public static final ForgeConfigSpec SPEC = BUILDER.build();

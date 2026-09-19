@@ -8,6 +8,7 @@ import com.ssscript.taczfixes.client.render.DualFirstPersonRenderer;
 import com.ssscript.taczfixes.client.render.DualRenderContext;
 import com.ssscript.taczfixes.client.render.OffhandArmPoseResolver;
 import com.ssscript.taczfixes.client.render.OffhandDisplayManager;
+import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.item.ItemStack;
@@ -32,7 +33,17 @@ public abstract class MixinDualFirstPersonRendererArm {
         if (model == null || !model.getRenderHand()) {
             return;
         }
-        for (String name : OffhandArmPoseResolver.resolveHoldingArmAnimationNodes(model)) {
+        DualWieldOverrides.HandPos handPos = DualRenderContext.offhandHandPos();
+        boolean keepLeft = handPos.anchor() == DualWieldOverrides.ArmAnchor.LEFT
+                || handPos.anchor() == DualWieldOverrides.ArmAnchor.BOTH;
+        boolean keepRight = handPos.anchor() == DualWieldOverrides.ArmAnchor.RIGHT
+                || handPos.anchor() == DualWieldOverrides.ArmAnchor.BOTH;
+        java.util.Set<String> holdingNodes = OffhandArmPoseResolver.resolveHoldingArmAnimationNodes(model);
+        if ((keepLeft && holdingNodes.contains("lefthandpos"))
+                || (keepRight && holdingNodes.contains("righthandpos"))) {
+            return;
+        }
+        for (String name : holdingNodes) {
             BedrockPart part = model.getNode(name);
             if (part != null) {
                 part.offsetY += 1000.0f;

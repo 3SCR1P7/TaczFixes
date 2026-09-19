@@ -38,6 +38,10 @@ public final class DualFirstPersonRenderer {
         if (!(stack.getItem() instanceof IGun)) {
             return false;
         }
+        if (DualReloadAnimationManager.areArmsHidden(net.minecraft.world.InteractionHand.OFF_HAND)) {
+            OffhandDisplayManager.updateAnimation(stack, partialTick);
+            return true;
+        }
         try {
             GunDisplayInstance display = OffhandDisplayManager.getOrCreate(stack);
             BedrockGunModel model = display == null ? null : display.getGunModel();

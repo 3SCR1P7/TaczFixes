@@ -398,6 +398,122 @@ public class AttachmentTaczFixesManager {
         return AttachmentPropertyManager.eval(modifiers, base);
     }
 
+    /**
+     * 配件对动态光照的增量调整: 所有已安装配件的 light.time / level_max / level_min 累加后叠加在 base 上,
+     * 时间结果 ≤ 0 表示该类型不发光, 等级钳制到 0-15。无配件调整时原样返回 base。
+     */
+    @Nullable
+    public static GunTaczFixesData.LightConfig applyLight(@Nullable ItemStack gunItem,
+                                                          @Nullable GunTaczFixesData.LightConfig base) {
+        if (gunItem == null || gunItem.isEmpty()) {
+            return base;
+        }
+        int fireTime = 0;
+        int fireMax = 0;
+        int fireMin = 0;
+        int explosionTime = 0;
+        int explosionMax = 0;
+        int explosionMin = 0;
+        int bulletTime = 0;
+        int bulletMax = 0;
+        int bulletMin = 0;
+        boolean hasFire = false;
+        boolean hasExplosion = false;
+        boolean hasBullet = false;
+        for (AttachmentTaczFixesData data : collectData(gunItem)) {
+            AttachmentTaczFixesData.LightAdjust adjust = data.light;
+            if (adjust == null) {
+                continue;
+            }
+            if (adjust.fire != null) {
+                fireTime += valueOrZero(adjust.fire.time);
+                fireMax += valueOrZero(adjust.fire.level_max);
+                fireMin += valueOrZero(adjust.fire.level_min);
+                hasFire = true;
+            }
+            if (adjust.explosion != null) {
+                explosionTime += valueOrZero(adjust.explosion.time);
+                explosionMax += valueOrZero(adjust.explosion.level_max);
+                explosionMin += valueOrZero(adjust.explosion.level_min);
+                hasExplosion = true;
+            }
+            if (adjust.bullet != null) {
+                bulletTime += valueOrZero(adjust.bullet.time);
+                bulletMax += valueOrZero(adjust.bullet.level_max);
+                bulletMin += valueOrZero(adjust.bullet.level_min);
+                hasBullet = true;
+            }
+        }
+        if (muzzleWithoutLightAdjust(gunItem)) {
+            fireTime += Config.GUN_LIGHT_MUZZLE_ADJUST.fireTime.get();
+            fireMax += Config.GUN_LIGHT_MUZZLE_ADJUST.fireLevelMax.get();
+            fireMin += Config.GUN_LIGHT_MUZZLE_ADJUST.fireLevelMin.get();
+            explosionTime += Config.GUN_LIGHT_MUZZLE_ADJUST.explosionTime.get();
+            explosionMax += Config.GUN_LIGHT_MUZZLE_ADJUST.explosionLevelMax.get();
+            explosionMin += Config.GUN_LIGHT_MUZZLE_ADJUST.explosionLevelMin.get();
+            bulletTime += Config.GUN_LIGHT_MUZZLE_ADJUST.bulletTime.get();
+            bulletMax += Config.GUN_LIGHT_MUZZLE_ADJUST.bulletLevelMax.get();
+            bulletMin += Config.GUN_LIGHT_MUZZLE_ADJUST.bulletLevelMin.get();
+            hasFire = true;
+            hasExplosion = true;
+            hasBullet = true;
+        }
+        if (!hasFire && !hasExplosion && !hasBullet) {
+            return base;
+        }
+        GunTaczFixesData.LightConfig result = new GunTaczFixesData.LightConfig();
+        result.fire = hasFire ? adjustedLightEntry(base == null ? null : base.fire, fireTime, fireMax, fireMin)
+                : (base == null ? null : base.fire);
+        result.explosion = hasExplosion
+                ? adjustedLightEntry(base == null ? null : base.explosion, explosionTime, explosionMax, explosionMin)
+                : (base == null ? null : base.explosion);
+        result.bullet = hasBullet ? adjustedLightEntry(base == null ? null : base.bullet, bulletTime, bulletMax, bulletMin)
+                : (base == null ? null : base.bullet);
+        if (result.fire == null && result.explosion == null && result.bullet == null) {
+            return null;
+        }
+        return result;
+    }
+
+    /** 枪口槽位已安装配件且该配件没有配置 light 字段时返回 true(此时叠加全局枪口光照增量)。 */
+    private static boolean muzzleWithoutLightAdjust(ItemStack gunItem) {
+        IGun gun = IGun.getIGunOrNull(gunItem);
+        if (gun == null) {
+            return false;
+        }
+        ResourceLocation muzzleId = gun.getAttachmentId(gunItem, AttachmentType.MUZZLE);
+        if (DefaultAssets.isEmptyAttachmentId(muzzleId)) {
+            return false;
+        }
+        AttachmentTaczFixesData data = resolveData(muzzleId);
+        return data == null || data.light == null;
+    }
+
+    private static int valueOrZero(@Nullable Integer value) {
+        return value == null ? 0 : value;
+    }
+
+    @Nullable
+    private static GunTaczFixesData.LightEntry adjustedLightEntry(@Nullable GunTaczFixesData.LightEntry base,
+                                                                  int addTime, int addLevelMax, int addLevelMin) {
+        int time = (base == null || base.time == null ? 0 : base.time) + addTime;
+        if (time <= 0) {
+            return null;
+        }
+        int levelMax = Math.max(0, Math.min(15,
+                (base == null || base.level_max == null ? 15 : base.level_max) + addLevelMax));
+        int levelMin = Math.max(0, Math.min(15,
+                (base == null || base.level_min == null ? 0 : base.level_min) + addLevelMin));
+        if (levelMax < levelMin) {
+            levelMax = levelMin;
+        }
+        GunTaczFixesData.LightEntry entry = new GunTaczFixesData.LightEntry();
+        entry.time = time;
+        entry.level_max = levelMax;
+        entry.level_min = levelMin;
+        return entry;
+    }
+
     private static <T> List<T> collectValues(ItemStack gunItem, Function<AttachmentTaczFixesData, T> getter) {
         List<T> result = new ArrayList<>();
         for (AttachmentTaczFixesData data : collectData(gunItem)) {

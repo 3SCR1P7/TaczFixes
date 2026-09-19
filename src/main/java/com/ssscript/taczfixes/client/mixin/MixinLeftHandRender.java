@@ -42,7 +42,9 @@ public abstract class MixinLeftHandRender {
             return;
         }
         callback.cancel();
-        if (handPos.anchor() != DualWieldOverrides.ArmAnchor.LEFT || !this.bedrockGunModel.getRenderHand()) {
+        boolean render = handPos.anchor() == DualWieldOverrides.ArmAnchor.LEFT
+                || handPos.anchor() == DualWieldOverrides.ArmAnchor.BOTH;
+        if (!render || !this.bedrockGunModel.getRenderHand()) {
             return;
         }
         FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, HumanoidArm.LEFT, handPos.mirror(), handPos.offset());

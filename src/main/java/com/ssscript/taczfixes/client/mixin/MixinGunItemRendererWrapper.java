@@ -9,6 +9,7 @@ import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.ssscript.taczfixes.client.render.DualFocusAimState;
 import com.ssscript.taczfixes.client.render.DualMuzzleFlashState;
+import com.ssscript.taczfixes.client.render.DualReloadAnimationManager;
 import com.ssscript.taczfixes.client.render.DualRenderContext;
 import com.ssscript.taczfixes.client.render.DualWieldClient;
 import com.ssscript.taczfixes.client.render.OffhandDisplayManager;
@@ -116,6 +117,17 @@ public abstract class MixinGunItemRendererWrapper {
         } else {
             DualMuzzleFlashState.captureMuzzle(phase, GunItemRendererWrapper.muzzleRenderOffset);
         }
+    }
+
+    /** 双持换弹: 丢枪动画结束到掏枪动画开始之间只跳过主手枪械模型渲染, 其余流程照常。 */
+    @WrapOperation(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", remap = false)}, require = 0, remap = false)
+    private void dualWield$hideMainGunWhileReloading(BedrockGunModel model, PoseStack poseStack, ItemStack stack, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, MultiBufferSource.BufferSource bufferSource, Operation<Void> original) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && DualWieldClient.isDualMode(player)
+                && DualReloadAnimationManager.areArmsHidden(net.minecraft.world.InteractionHand.MAIN_HAND)) {
+            return;
+        }
+        original.call(model, poseStack, stack, transformType, renderType, light, overlay, bufferSource);
     }
 
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)

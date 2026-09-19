@@ -35,7 +35,8 @@ public abstract class MixinLocalPlayerReload {
         boolean z;
         float tacticalTime;
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !DualWieldClient.isDualMode(player)) {
+        if (player == null || !DualWieldClient.isDualMode(player)
+                || com.ssscript.taczfixes.common.data.TaczFixesDataManager.usesNativeReloadAnimation(mainHandItem)) {
             stateMachine.trigger(input);
             return;
         }

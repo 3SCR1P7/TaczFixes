@@ -143,5 +143,10 @@ public class NetworkHandler {
                 ServerMessageGunLight::decode,
                 ServerMessageGunLight::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(25, ClientMessageOffhandMelee.class,
+                ClientMessageOffhandMelee::encode,
+                ClientMessageOffhandMelee::decode,
+                ClientMessageOffhandMelee::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }

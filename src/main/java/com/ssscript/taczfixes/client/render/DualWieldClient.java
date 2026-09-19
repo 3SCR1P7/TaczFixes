@@ -6,7 +6,9 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ShootResult;
 import com.tacz.guns.api.event.common.GunFireEvent;
+import com.tacz.guns.api.event.common.GunMeleeEvent;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.api.item.gun.AbstractGunItem;
 import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
@@ -28,6 +30,8 @@ import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.modifier.custom.SilenceModifier;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.resource.pojo.data.gun.GunDefaultMeleeData;
+import com.tacz.guns.resource.pojo.data.gun.GunMeleeData;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.client.render.DualRenderContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
@@ -36,6 +40,7 @@ import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandBolt;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandCancelReload;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandFireSelect;
+import com.ssscript.taczfixes.common.network.ClientMessageOffhandMelee;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandReload;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandShoot;
 import it.unimi.dsi.fastutil.Pair;
@@ -78,6 +83,9 @@ public final class DualWieldClient {
     private static boolean waitAimReleaseAfterFocusChange;
     private static boolean focusAimToggle;
     private static boolean lastFocusAimPhysicalDown;
+    private static boolean lastMeleeWasOffhand = true;
+    private static long lastOffhandMeleeTimestamp;
+    private static long offhandMeleeEndTimestamp;
     private static boolean lastFocusRequested;
     private static boolean focusInputChangedThisTick;
     private static boolean waitLeftReleaseAfterScreen;
@@ -140,6 +148,9 @@ public final class DualWieldClient {
         if (!dual) {
             boolean dualEnded = dualWasActive;
             dualWasActive = false;
+            lastMeleeWasOffhand = true;
+            lastOffhandMeleeTimestamp = 0L;
+            offhandMeleeEndTimestamp = 0L;
             DualReloadAnimationManager.clear();
             if (dualEnded || DualFocusAimState.isPoseVisible()) {
                 resetFocusAimImmediately(player);
@@ -183,6 +194,9 @@ public final class DualWieldClient {
         ItemStack currentOffhandStack = player.getOffhandItem();
         boolean stackPairChanged = (dualStarted || (sameLogicalStack(lastDualMainStack, currentMainStack) && sameLogicalStack(lastDualOffhandStack, currentOffhandStack))) ? false : true;
         if (stackPairChanged && !OffhandDisplayManager.isPuttingAway()) {
+            lastMeleeWasOffhand = true;
+            lastOffhandMeleeTimestamp = 0L;
+            offhandMeleeEndTimestamp = 0L;
             DualReloadAnimationManager.clear();
             MainhandMovementAnimation.resetMovementBoundary(lastDualMainStack);
             cancelPendingOffhandShot();
@@ -344,19 +358,31 @@ public final class DualWieldClient {
         IGunOperator syncedOperator = IGunOperator.fromLivingEntity(player);
         LocalPlayerDataHolder mainData = operator.getDataHolder();
         boolean inspectBlocksFocus = isInspectActive(rightGun, false) || isInspectActive(leftGun, true);
-        if (syncedOperator.getSynReloadState().getStateType().isReloading() || syncedOperator.getSynDrawCoolDown() != 0 || syncedOperator.getSynMeleeCoolDown() != 0 || DualReloadAnimationManager.isHandActive(InteractionHand.MAIN_HAND)) {
+        if (syncedOperator.getSynReloadState().getStateType().isReloading() || syncedOperator.getSynDrawCoolDown() != 0 || DualReloadAnimationManager.isHandActive(InteractionHand.MAIN_HAND)) {
             return false;
         }
         if (inspectBlocksFocus && !alreadyActive && !focusInputChangedThisTick) {
             return false;
         }
         if (!alreadyActive) {
-            if (leftState.isDrawing() || leftState.isBolting() || leftState.isManualShotAwaitingChamberSync() || leftState.isServerManualActionBoltReady() || leftState.isFireSelectRequestPending() || leftState.isShootTransitionLocked(player, leftGun) || syncedOperator.getSynIsBolting() || mainData.isBolting || mainData.clientStateLock || operator.getClientShootCoolDown() > 0 || leftState.getShootCoolDown(player, leftGun) > 0 || hasPendingOffhandShotSequence()) {
+            if (leftState.isDrawing() || leftState.isBolting() || leftState.isManualShotAwaitingChamberSync() || leftState.isServerManualActionBoltReady() || leftState.isFireSelectRequestPending() || leftState.isShootTransitionLocked(player, leftGun) || syncedOperator.getSynIsBolting() || mainData.isBolting || mainHandLockedForOffhand(mainData, syncedOperator) || operator.getClientShootCoolDown() > 0 || leftState.getShootCoolDown(player, leftGun) > 0 || hasPendingOffhandShotSequence()) {
                 return false;
             }
             return true;
         }
         return true;
+    }
+
+    /** 主手状态锁: 因近战冷却而保持的锁不影响副手; 其余持锁状态(换弹/射击冷却/切枪/拉栓)仍视为忙。 */
+    private static boolean mainHandLockedForOffhand(LocalPlayerDataHolder data, IGunOperator operator) {
+        if (!data.clientStateLock) {
+            return false;
+        }
+        if (operator.getSynMeleeCoolDown() == 0) {
+            return true;
+        }
+        return operator.getSynReloadState().getStateType().isReloading() || operator.getSynShootCoolDown() > 0
+                || operator.getSynDrawCoolDown() > 0 || operator.getSynIsBolting() || data.isBolting;
     }
 
     private static boolean isInspectActive(ItemStack stack, boolean offhand) {
@@ -774,7 +800,7 @@ public final class DualWieldClient {
     }
 
     private static boolean isGlobalShootInputBlocked(LocalPlayer player) {
-        return System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp < 50 || IGunOperator.fromLivingEntity(player).getSynMeleeCoolDown() != 0;
+        return System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp < 50;
     }
 
     private static boolean isOffhandShotVisualBlocked(ClientOffhandState state) {
@@ -888,6 +914,21 @@ public final class DualWieldClient {
         DualMuzzleFlashState.record(DualRenderContext.HandPhase.OFFHAND);
         MuzzleFlashRender.onShoot();
         playShootSound(player, stack, display, gunData);
+        taczfixes$addOffhandFireLight(player, stack);
+    }
+
+    /** 副手开火的枪口光照(客户端预测, 规则与主手 GunLightHandler 一致, 位置偏向左手的枪口)。 */
+    private static void taczfixes$addOffhandFireLight(LocalPlayer player, ItemStack stack) {
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.LightConfig light =
+                com.ssscript.taczfixes.common.data.TaczFixesDataManager.resolveLight(stack);
+        if (light == null || light.fire == null || light.fire.time == null || light.fire.time <= 0) {
+            return;
+        }
+        net.minecraft.world.phys.Vec3 look = player.getLookAngle();
+        net.minecraft.world.phys.Vec3 left = new net.minecraft.world.phys.Vec3(look.z, 0.0d, -look.x);
+        left = left.lengthSqr() > 1.0E-4d ? left.normalize().scale(0.3d) : net.minecraft.world.phys.Vec3.ZERO;
+        net.minecraft.world.phys.Vec3 pos = player.getEyePosition().add(look.scale(0.5d)).add(left);
+        ClientGunLightManager.add(net.minecraft.core.BlockPos.containing(pos), light.fire);
     }
 
     private static void scheduleOffhandBurstShots(LocalPlayer player, UUID sourceStackId, ResourceLocation sourceGunId, ItemStack recoilStack, GunData gunData, int availableAmmo, ShotVisualReservation reservation) {
@@ -1015,7 +1056,11 @@ public final class DualWieldClient {
                 state.beginReload(stack, sourceStackId, empty, duration);
                 NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandReload(sourceStackId, state.getReloadRequestId()));
                 SoundPlayManager.stopPlayGunSound();
-                DualReloadAnimationManager.beginOffhandReload(player, stack, data, feedTime);
+                if (com.ssscript.taczfixes.common.data.TaczFixesDataManager.usesNativeReloadAnimation(stack)) {
+                    OffhandDisplayManager.triggerNative("reload");
+                } else {
+                    DualReloadAnimationManager.beginOffhandReload(player, stack, data, feedTime);
+                }
                 if (display != null) {
                     DualReloadSoundFilter.playOffhandLegacyReload(player, stack, display, empty);
                 }
@@ -1069,6 +1114,222 @@ public final class DualWieldClient {
         NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandFireSelect(sourceStackId, requestId));
         SoundPlayManager.playFireSelectSound(player, display);
         OffhandDisplayManager.triggerNative("fire_select");
+    }
+
+    /* ---------- 双持近战: 两把枪都支持时奇数次主手、偶数次副手 ---------- */
+
+    private enum MeleeKind { MUZZLE, STOCK, PUSH }
+
+    /** 双持近战键处理: 返回 true 表示由副手执行(需取消 TACZ 的主手近战)。 */
+    public static boolean handleDualMeleeKey(LocalPlayer player) {
+        if (player == null || !isDualMode(player)) {
+            return false;
+        }
+        ItemStack mainStack = player.getMainHandItem();
+        ItemStack offhandStack = player.getOffhandItem();
+        boolean mainSupported = supportsMelee(mainStack);
+        boolean offhandSupported = supportsMelee(offhandStack);
+        if (!mainSupported && !offhandSupported) {
+            return false;
+        }
+        boolean mainReady = mainSupported && isMainHandMeleeReady(player);
+        boolean offhandReady = offhandSupported && isOffhandMeleeReady(player);
+        if (!mainReady && !offhandReady) {
+            return false;
+        }
+        // 上次是主手 → 优先副手(不能则主手); 上次是副手(或尚未近战) → 优先主手(不能则副手)。
+        boolean useOffhand = lastMeleeWasOffhand ? !mainReady : offhandReady;
+        if (!useOffhand) {
+            if (mainReady) {
+                lastMeleeWasOffhand = false;
+            }
+            return false;
+        }
+        if (meleeOffhand(player)) {
+            lastMeleeWasOffhand = true;
+        }
+        return true;
+    }
+
+    /** 主手是否可以近战: 副手近战冷却(未到切换比例)或主手正在换弹/切枪/拉栓/开火/状态锁定时不可用。 */
+    private static boolean isMainHandMeleeReady(LocalPlayer player) {
+        if (offhandMeleeBlocksMainHand()) {
+            return false;
+        }
+        IGunOperator operator = IGunOperator.fromLivingEntity(player);
+        if (operator.getSynMeleeCoolDown() > 0
+                || operator.getSynReloadState().getStateType().isReloading()
+                || operator.getSynDrawCoolDown() != 0
+                || operator.getSynIsBolting()
+                || operator.getSynShootCoolDown() > 0) {
+            return false;
+        }
+        return !IClientPlayerGunOperator.fromLocalPlayer(player).getDataHolder().clientStateLock;
+    }
+
+    /** 副手是否可以近战: 主手近战冷却(未到切换比例)、副手自身近战冷却中或副手正在切枪/换弹/拉栓/开火/连发视觉中不可用。 */
+    private static boolean isOffhandMeleeReady(LocalPlayer player) {
+        if (mainHandMeleeBlocksOffhand(player) || isOffhandMeleeCoolingDown()) {
+            return false;
+        }
+        ItemStack stack = player.getOffhandItem();
+        ClientOffhandState state = OffhandDisplayManager.getClientState();
+        if (state.isDrawing() || state.isReloading() || state.isBolting()
+                || state.isManualShotAwaitingChamberSync() || state.isServerManualActionBoltReady()
+                || offhandShotPending || DualReloadAnimationManager.isActive()
+                || state.getShootCoolDown(player, stack) > 0) {
+            return false;
+        }
+        return true;
+    }
+
+    private static boolean meleeOffhand(LocalPlayer player) {
+        ItemStack stack = player.getOffhandItem();
+        IGun gun = IGun.getIGunOrNull(stack);
+        GunDisplayInstance display = OffhandDisplayManager.getOrCreate(stack);
+        ClientOffhandState state = OffhandDisplayManager.getClientState();
+        if (gun == null || display == null || state.isDrawing() || state.isReloading() || state.isBolting()
+                || offhandShotPending || DualReloadAnimationManager.isActive()) {
+            return false;
+        }
+        if (mainHandMeleeBlocksOffhand(player)) {
+            return false;
+        }
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.AimingStaminaConfig staminaCfg =
+                com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager.resolveAimingStamina(stack);
+        float meleeCost = staminaCfg.melee_cost.floatValue();
+        if (meleeCost > 0.0f && com.ssscript.taczfixes.client.util.AimingStaminaClientState.isInsufficient(meleeCost)) {
+            return false;
+        }
+        ClientGunIndex gunIndex = (ClientGunIndex) TimelessAPI.getClientGunIndex(gun.getGunId(stack)).orElse(null);
+        GunData gunData = gunIndex == null ? null : gunIndex.getGunData();
+        MeleeKind kind = resolveMeleeKind(stack, gun, gunData);
+        if (kind == null) {
+            return false;
+        }
+        long now = System.currentTimeMillis();
+        long cooldownMillis = meleeCooldownMillis(stack, gun, gunData, kind);
+        if (now - lastOffhandMeleeTimestamp < cooldownMillis) {
+            return false;
+        }
+        GunMeleeEvent event = new GunMeleeEvent(player, stack, LogicalSide.CLIENT);
+        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) {
+            return false;
+        }
+        lastOffhandMeleeTimestamp = now;
+        offhandMeleeEndTimestamp = now + cooldownMillis;
+        NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandMelee(DualWieldStackId.getOrCreate(stack)));
+        switch (kind) {
+            case MUZZLE -> {
+                SoundPlayManager.playMeleeBayonetSound(player, display);
+                OffhandDisplayManager.triggerNative("bayonet_muzzle");
+            }
+            case STOCK -> {
+                SoundPlayManager.playMeleeStockSound(player, display);
+                OffhandDisplayManager.triggerNative("bayonet_stock");
+            }
+            case PUSH -> {
+                SoundPlayManager.playMeleePushSound(player, display);
+                OffhandDisplayManager.triggerNative("bayonet_push");
+            }
+        }
+        return true;
+    }
+
+    /** 副手近战冷却中(此时副手自身也不能再次近战)。 */
+    public static boolean isOffhandMeleeCoolingDown() {
+        return System.currentTimeMillis() < offhandMeleeEndTimestamp;
+    }
+
+    /** 主手近战冷却是否仍阻挡副手(冷却进行到配置比例后不再阻挡)。 */
+    private static boolean mainHandMeleeBlocksOffhand(LocalPlayer player) {
+        long remaining = IGunOperator.fromLivingEntity(player).getSynMeleeCoolDown();
+        long total = com.ssscript.taczfixes.common.util.MeleeCooldownHelper
+                .totalCooldownMillis(player.getMainHandItem());
+        return meleeStillBlocking(remaining, total);
+    }
+
+    /** 副手近战冷却是否仍阻挡主手(冷却进行到配置比例后不再阻挡)。 */
+    public static boolean offhandMeleeBlocksMainHand() {
+        long now = System.currentTimeMillis();
+        long remaining = offhandMeleeEndTimestamp - now;
+        long total = offhandMeleeEndTimestamp - lastOffhandMeleeTimestamp;
+        return meleeStillBlocking(remaining, total);
+    }
+
+    private static boolean meleeStillBlocking(long remaining, long total) {
+        if (remaining <= 0L) {
+            return false;
+        }
+        if (total <= 0L) {
+            return true;
+        }
+        double switchPercent = com.ssscript.taczfixes.common.config.Config.DUAL_WIELD_MELEE_SWITCH_PERCENT.get();
+        return remaining > total * (1.0d - switchPercent);
+    }
+
+    /** 枪械是否支持近战: 枪口/枪托配件带近战数据, 或枪械 data 有近战默认数据。 */
+    private static boolean supportsMelee(ItemStack stack) {
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return false;
+        }
+        if (attachmentMeleeData(gun.getAttachmentId(stack, AttachmentType.MUZZLE)) != null
+                || attachmentMeleeData(gun.getAttachmentId(stack, AttachmentType.STOCK)) != null) {
+            return true;
+        }
+        GunData data = clientGunData(gun, stack);
+        return data != null && data.getMeleeData() != null && data.getMeleeData().getDefaultMeleeData() != null;
+    }
+
+    private static MeleeKind resolveMeleeKind(ItemStack stack, IGun gun, GunData gunData) {
+        if (attachmentMeleeData(gun.getAttachmentId(stack, AttachmentType.MUZZLE)) != null) {
+            return MeleeKind.MUZZLE;
+        }
+        if (attachmentMeleeData(gun.getAttachmentId(stack, AttachmentType.STOCK)) != null) {
+            return MeleeKind.STOCK;
+        }
+        GunMeleeData meleeData = gunData == null ? null : gunData.getMeleeData();
+        GunDefaultMeleeData defaultMelee = meleeData == null ? null : meleeData.getDefaultMeleeData();
+        if (defaultMelee == null) {
+            return null;
+        }
+        return "melee_stock".equals(defaultMelee.getAnimationType()) ? MeleeKind.STOCK : MeleeKind.PUSH;
+    }
+
+    /** 近战总冷却 = 枪械近战冷却 + 对应近战数据冷却。 */
+    private static long meleeCooldownMillis(ItemStack stack, IGun gun, GunData gunData, MeleeKind kind) {
+        GunMeleeData meleeData = gunData == null ? null : gunData.getMeleeData();
+        float seconds = meleeData == null ? 0.0f : meleeData.getCooldown();
+        if (kind == MeleeKind.MUZZLE) {
+            seconds += attachmentMeleeCooldown(stack, gun, AttachmentType.MUZZLE);
+        } else if (kind == MeleeKind.STOCK) {
+            seconds += attachmentMeleeCooldown(stack, gun, AttachmentType.STOCK);
+        } else if (meleeData != null && meleeData.getDefaultMeleeData() != null) {
+            seconds += meleeData.getDefaultMeleeData().getCooldown();
+        }
+        return Math.max(0L, (long) (seconds * 1000.0f));
+    }
+
+    private static float attachmentMeleeCooldown(ItemStack stack, IGun gun, AttachmentType type) {
+        com.tacz.guns.resource.pojo.data.attachment.MeleeData data =
+                attachmentMeleeData(gun.getAttachmentId(stack, type));
+        return data == null ? 0.0f : data.getCooldown();
+    }
+
+    private static com.tacz.guns.resource.pojo.data.attachment.MeleeData attachmentMeleeData(ResourceLocation attachmentId) {
+        if (attachmentId == null || com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(attachmentId)) {
+            return null;
+        }
+        return TimelessAPI.getClientAttachmentIndex(attachmentId)
+                .map(index -> index.getData().getMeleeData())
+                .orElse(null);
+    }
+
+    private static GunData clientGunData(IGun gun, ItemStack stack) {
+        return (GunData) TimelessAPI.getClientGunIndex(gun.getGunId(stack))
+                .map(index -> index.getGunData())
+                .orElse(null);
     }
 
     private static void playShootSound(LocalPlayer player, ItemStack stack, GunDisplayInstance display, GunData data) {

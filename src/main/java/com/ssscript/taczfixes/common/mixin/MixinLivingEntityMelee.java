@@ -3,6 +3,8 @@ package com.ssscript.taczfixes.common.mixin;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.handler.AimingStaminaHandler;
+import com.ssscript.taczfixes.common.util.OffhandShooterManager;
+import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -19,11 +21,19 @@ public class MixinLivingEntityMelee {
     @Shadow(remap = false)
     private LivingEntity shooter;
 
+    @Shadow(remap = false)
+    private ShooterDataHolder data;
+
     @Inject(method = "melee", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$consumeAimingStamina(CallbackInfo ci) {
         if (shooter == null || shooter.level().isClientSide) return;
         if (!(shooter instanceof ServerPlayer player)) return;
-        ItemStack gun = player.getMainHandItem();
+        boolean offhandMelee = OffhandShooterManager.isOffhandData(data);
+        if (!offhandMelee && OffhandShooterManager.isOffhandMeleeBlockingMainHand(player)) {
+            ci.cancel();
+            return;
+        }
+        ItemStack gun = offhandMelee ? player.getOffhandItem() : player.getMainHandItem();
         GunTaczFixesData.AimingStaminaConfig cfg = AttachmentTaczFixesManager.resolveAimingStamina(gun);
         float cost = cfg.melee_cost.floatValue();
         if (AimingStaminaHandler.isInsufficient(player, cost)) {

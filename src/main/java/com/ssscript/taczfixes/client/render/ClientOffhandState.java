@@ -686,7 +686,7 @@ public final class ClientOffhandState {
             return isChargingInput;
         }
         boolean canChargeDuringCooldown = chargeData.isChargeDuringCooldown() || getShootCoolDown(player, stack) < 50;
-        boolean canCharge = canChargeDuringCooldown && !isDrawing() && !isReloading() && !isBolting() && !isManualShotAwaitingChamberSync() && System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp >= 50 && IGunOperator.fromLivingEntity(player).getSynMeleeCoolDown() == 0 && canFeedShot(player, stack, gun, gunData);
+        boolean canCharge = canChargeDuringCooldown && !isDrawing() && !isReloading() && !isBolting() && !isManualShotAwaitingChamberSync() && System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp >= 50 && canFeedShot(player, stack, gun, gunData);
         float previousProgress = this.chargeProgress;
         ChargeType type = chargeData.getChargeType();
         if (type == ChargeType.AUTO) {

@@ -24,6 +24,14 @@ public class AttachmentTaczFixesData {
     public AimingStaminaAdjust aiming_stamina;
     public StaminaAdjust stamina;
     public GunTaczFixesData.ShieldConfig shield;
+    public LightAdjust light;
+
+    /** 对枪械动态光照的增量调整: time(毫秒)/level_max/level_min 均为加值, 可为负。 */
+    public static class LightAdjust {
+        public GunTaczFixesData.LightEntry fire;
+        public GunTaczFixesData.LightEntry explosion;
+        public GunTaczFixesData.LightEntry bullet;
+    }
 
     public static class InaccuracyAdjust {
         public Modifier max_stack;

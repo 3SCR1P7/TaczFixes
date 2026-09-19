@@ -36,7 +36,7 @@ public class GunLightHandler {
         if (light == null || light.fire == null) {
             return;
         }
-        Vec3 pos = shooter.getEyePosition().add(shooter.getLookAngle().scale(0.6d));
+        Vec3 pos = shooter.getEyePosition().add(shooter.getLookAngle().scale(0.5d));
         ClientGunLightManager.add(BlockPos.containing(pos), light.fire);
     }
 

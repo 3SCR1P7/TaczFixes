@@ -7,6 +7,7 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.ssscript.taczfixes.client.render.DualRenderContext;
 import com.ssscript.taczfixes.client.render.DualWieldClient;
 import com.ssscript.taczfixes.client.render.OffhandArmPoseResolver;
+import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -31,7 +32,17 @@ public abstract class MixinMainHandSupportArm {
         if (model == null) {
             return;
         }
-        for (String name : OffhandArmPoseResolver.resolveSupportArmAnimationNodes(model)) {
+        DualWieldOverrides.HandPos handPos = DualRenderContext.mainHandPos();
+        boolean keepLeft = handPos.anchor() == DualWieldOverrides.ArmAnchor.LEFT
+                || handPos.anchor() == DualWieldOverrides.ArmAnchor.BOTH;
+        boolean keepRight = handPos.anchor() == DualWieldOverrides.ArmAnchor.RIGHT
+                || handPos.anchor() == DualWieldOverrides.ArmAnchor.BOTH;
+        java.util.Set<String> supportNodes = OffhandArmPoseResolver.resolveSupportArmAnimationNodes(model);
+        if ((keepLeft && supportNodes.contains("lefthandpos"))
+                || (keepRight && supportNodes.contains("righthandpos"))) {
+            return;
+        }
+        for (String name : supportNodes) {
             BedrockPart part = model.getNode(name);
             if (part != null) {
                 part.offsetY += 1000.0f;

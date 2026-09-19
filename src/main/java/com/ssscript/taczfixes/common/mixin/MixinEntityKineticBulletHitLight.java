@@ -32,7 +32,12 @@ public class MixinEntityKineticBulletHitLight {
         if (bullet.level().isClientSide) {
             return;
         }
-        GunTaczFixesData.LightConfig light = TaczFixesDataManager.resolveLight(bullet.getGunId());
+        GunTaczFixesData.LightConfig light;
+        if (bullet instanceof com.ssscript.taczfixes.common.util.LightBulletAccess access && access.taczfixes$isLightCaptured()) {
+            light = access.taczfixes$getLightConfig();
+        } else {
+            light = TaczFixesDataManager.resolveLight(bullet.getGunId());
+        }
         if (light == null) {
             return;
         }
@@ -40,13 +45,13 @@ public class MixinEntityKineticBulletHitLight {
         Vec3 start = from == null ? new Vec3(bullet.xo, bullet.yo, bullet.zo) : from;
         PacketDistributor.TargetPoint point = new PacketDistributor.TargetPoint(
                 to.x, to.y, to.z, 64.0d, bullet.level().dimension());
-        if (light.explosion != null && light.explosion.time != null) {
+        if (light.explosion != null && light.explosion.time != null && light.explosion.time > 0) {
             NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> point),
                     new ServerMessageGunLight(true, light.explosion.time,
                             orDefault(light.explosion.level_max, 15), orDefault(light.explosion.level_min, 0),
                             to.x, to.y, to.z, to.x, to.y, to.z));
         }
-        if (light.bullet != null && light.bullet.time != null) {
+        if (light.bullet != null && light.bullet.time != null && light.bullet.time > 0) {
             NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> point),
                     new ServerMessageGunLight(false, light.bullet.time,
                             orDefault(light.bullet.level_max, 15), orDefault(light.bullet.level_min, 0),

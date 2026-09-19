@@ -55,6 +55,8 @@ public class GunTaczFixesData {
         public Boolean blocking_fire;
         /** 是否用耐久栏显示剩余电量。 */
         public Boolean durability_bar;
+        /** 是否用过热条显示剩余电量。 */
+        public Boolean overheat_bar;
     }
 
     /** 枪械 data 中的上肢耐力覆盖配置; 未填写的字段使用配置文件中的值。 */
@@ -154,6 +156,8 @@ public class GunTaczFixesData {
         public Double focus_aim_inaccuracy_multiplier;
         public Double left_offset;
         public Double right_offset;
+        /** 双持换弹是否直接使用枪械自身的换弹动画(不使用收枪-等待-掏枪路径)。默认 false。 */
+        public Boolean reload_animation;
         public HandPosConfig hand_pos;
     }
 

@@ -218,9 +218,32 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
-    /** 开火消耗电量; 电量不足且 blocking_fire 时取消本次射击并播放 dry_fire。 */
+    /** 开火前预检查电量; 电量不足且 blocking_fire 时取消整个连发并播放 dry_fire(实际消耗在每发子弹开火时)。 */
     @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$consumeCharge(boolean needConsumeAmmo, CallbackInfo ci) {
+    private void taczfixes$checkCharge(boolean needConsumeAmmo, CallbackInfo ci) {
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig cfg =
+                com.ssscript.taczfixes.common.util.ChargeStorage.config(this.itemStack);
+        if (cfg == null || cfg.fire_consumption == null || cfg.fire_consumption.intValue() <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.ChargeStorage.getMax(this.itemStack) <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.ChargeStorage.get(this.itemStack) < cfg.fire_consumption.intValue()
+                && Boolean.TRUE.equals(cfg.blocking_fire)) {
+            taczfixes$playDryFire();
+            ci.cancel();
+        }
+    }
+
+    /** 每发实际开火(含 burst 连发的每一发)消耗一次电量; 中途电量不足且 blocking_fire 时终止本轮连发。 */
+    @Inject(method = "lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
+            at = @At(value = "NEW", target = "com/tacz/guns/network/message/event/ServerMessageGunFire"),
+            cancellable = true, remap = false)
+    private void taczfixes$consumeChargePerShot(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
+                                                GunData gunData, BulletData bulletData, IGunOperator operator,
+                                                float damageMultiplier, float bulletSpeed, float inaccuracy,
+                                                int soundDistance, boolean silenced, CallbackInfoReturnable<Boolean> cir) {
         com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig cfg =
                 com.ssscript.taczfixes.common.util.ChargeStorage.config(this.itemStack);
         if (cfg == null || cfg.fire_consumption == null || cfg.fire_consumption.intValue() <= 0) {
@@ -232,7 +255,7 @@ public abstract class MixinModernKineticGunScriptAPI {
         if (!com.ssscript.taczfixes.common.util.ChargeStorage.consume(this.itemStack, cfg.fire_consumption.intValue())
                 && Boolean.TRUE.equals(cfg.blocking_fire)) {
             taczfixes$playDryFire();
-            ci.cancel();
+            cir.setReturnValue(false);
         }
     }
 

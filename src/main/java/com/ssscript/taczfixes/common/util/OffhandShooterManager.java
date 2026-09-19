@@ -12,6 +12,7 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.config.sync.SyncConfig;
 import com.tacz.guns.entity.shooter.LivingEntityBolt;
 import com.tacz.guns.entity.shooter.LivingEntityDrawGun;
+import com.tacz.guns.entity.shooter.LivingEntityMelee;
 import com.tacz.guns.entity.shooter.LivingEntityReload;
 import com.tacz.guns.entity.shooter.LivingEntityShoot;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
@@ -80,6 +81,35 @@ public final class OffhandShooterManager {
     private static final ThreadLocal<Deque<ShooterDataHolder>> ACTIVE_DATA = new ThreadLocal<>();
 
     private OffhandShooterManager() {
+    }
+
+    public static void melee(ServerPlayer player, UUID expectedStackId) {
+        long mainRemaining = com.tacz.guns.api.entity.IGunOperator.fromLivingEntity(player).getSynMeleeCoolDown();
+        if (meleeStillBlocking(mainRemaining, MeleeCooldownHelper.totalCooldownMillis(player.getMainHandItem()))) {
+            return;
+        }
+        OffhandShooter shooter = getValidated(player);
+        if (shooter == null || !shooter.matchesBoundStack(expectedStackId)) {
+            return;
+        }
+        shooter.melee();
+    }
+
+    /** 副手近战冷却是否仍阻挡主手近战(冷却进行到配置比例后不再阻挡)。 */
+    public static boolean isOffhandMeleeBlockingMainHand(ServerPlayer player) {
+        OffhandShooter shooter = getValidated(player);
+        return shooter != null && shooter.meleeBlocksMainHand();
+    }
+
+    private static boolean meleeStillBlocking(long remaining, long total) {
+        if (remaining <= 0L) {
+            return false;
+        }
+        if (total <= 0L) {
+            return true;
+        }
+        double switchPercent = com.ssscript.taczfixes.common.config.Config.DUAL_WIELD_MELEE_SWITCH_PERCENT.get();
+        return remaining > total * (1.0d - switchPercent);
     }
 
     public static void shoot(ServerPlayer player, UUID expectedStackId, long timestamp, float chargeProgress) {
@@ -554,6 +584,7 @@ public final class OffhandShooterManager {
         private final LivingEntityShoot shoot;
         private final LivingEntityReload reload;
         private final LivingEntityBolt bolt;
+        private final LivingEntityMelee melee;
         private ResourceLocation boundGunId;
         private UUID boundStackId;
         private int reloadRequestId;
@@ -601,6 +632,16 @@ public final class OffhandShooterManager {
             this.shoot = new LivingEntityShoot(player, this.data, this.draw);
             this.reload = new LivingEntityReload(player, this.data, this.draw, this.shoot);
             this.bolt = new LivingEntityBolt(this.data, player, this.draw, this.shoot);
+            this.melee = new LivingEntityMelee(player, this.data, this.draw);
+        }
+
+        private void melee() {
+            pushActiveData(this.data);
+            try {
+                this.melee.melee();
+            } finally {
+                popActiveData();
+            }
         }
 
         private void bindIfChanged() {
@@ -757,6 +798,7 @@ public final class OffhandShooterManager {
                 ReloadState reloadState = this.reload.tickReloadState();
                 boolean wasBolting = this.data.isBolting;
                 this.bolt.tickBolt();
+                this.melee.scheduleTickMelee();
                 boolean boltTimedOut = enforceBoltTimeout(wasBolting);
                 updateManualActionEpisodeAfterTick(wasBolting);
                 if (boltTimedOut) {
@@ -900,6 +942,19 @@ public final class OffhandShooterManager {
 
         private long getShootCoolDown() {
             return Math.max(this.shoot.getShootCoolDown(), 0L);
+        }
+
+        private long getMeleeCoolDown() {
+            return Math.max(this.melee.getMeleeCoolDown(), 0L);
+        }
+
+        private boolean meleeBlocksMainHand() {
+            long remaining = getMeleeCoolDown();
+            if (remaining <= 0L) {
+                return false;
+            }
+            long elapsed = Math.max(0L, System.currentTimeMillis() - this.data.meleeTimestamp);
+            return OffhandShooterManager.meleeStillBlocking(remaining, remaining + elapsed);
         }
 
         private boolean reload(int requestId) {

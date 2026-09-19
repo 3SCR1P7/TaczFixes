@@ -10,6 +10,7 @@
                ],
     "client":  [
                    "MixinLocalPlayerShootPreCheck",
+                   "MixinLocalPlayerShootChargeBurst",
                    "MixinLocalPlayerCrawl",
                    "MixinInnerThirdPersonManager",
                    "MixinArcanaScopeGate",
@@ -26,6 +27,7 @@
                    "MixinGunHudOverlayCustomHud",
                    "MixinGunHudOverlayAccessor",
                    "MixinHeatBarOverlayCustomHud",
+                   "MixinHeatBarOverlayChargeBar",
                    "MixinRenderCrosshairEventCustomHud",
                    "MixinLocalPlayerShootRecoilKnockback",
                    "MixinObjectAnimationRunner",

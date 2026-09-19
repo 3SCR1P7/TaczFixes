@@ -9,6 +9,7 @@
                    "MixinEntityKineticBullet",
                    "MixinEntityKineticBulletScript",
                    "MixinEntityKineticBulletHitLight",
+        "MixinEntityKineticBulletLightData",
                    "MixinEntityKineticBulletAccessor",
                    "MixinEntityKineticBulletDamageByDistance",
                    "MixinEntityKineticBulletRicochet",

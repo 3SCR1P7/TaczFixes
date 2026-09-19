@@ -16,7 +16,9 @@ public final class DualWieldOverrides {
         /** 使用 righthand_pos 定位组。 */
         RIGHT,
         /** 不渲染手臂。 */
-        NONE;
+        NONE,
+        /** 不隐藏手臂: 双手臂都按原生方式渲染。 */
+        BOTH;
 
         private static ArmAnchor parse(String value, ArmAnchor fallback) {
             if (value == null) {
@@ -26,6 +28,7 @@ public final class DualWieldOverrides {
                 case "left" -> LEFT;
                 case "right" -> RIGHT;
                 case "none" -> NONE;
+                case "both" -> BOTH;
                 default -> fallback;
             };
         }
@@ -48,11 +51,13 @@ public final class DualWieldOverrides {
     public record Value(Boolean enable, Double recoilMultiplier, Double inaccuracyMultiplier, Double focusAimRecoilMultiplier, Double focusAimInaccuracyMultiplier, Double leftOffset, Double rightOffset, HandPos onLeft, HandPos onRight) {
     }
 
+    /** 解析 hand_pos 条目; mirror 未显式配置时不镜像(按锚点原位置渲染)。 */
     public static HandPos parseHandPos(GunTaczFixesData.HandPosConfig.HandPosEntry entry, HandPos fallback) {
         if (entry == null) {
             return fallback;
         }
-        return new HandPos(ArmAnchor.parse(entry.pos, fallback.anchor()), entry.mirror == null ? fallback.mirror() : entry.mirror.booleanValue(), parseOffset(entry.offset, fallback.offset()));
+        return new HandPos(ArmAnchor.parse(entry.pos, fallback.anchor()),
+                entry.mirror != null && entry.mirror.booleanValue(), parseOffset(entry.offset, fallback.offset()));
     }
 
     private static ArmOffset parseOffset(java.util.List<Double> values, ArmOffset fallback) {

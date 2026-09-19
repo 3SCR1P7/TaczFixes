@@ -155,8 +155,14 @@ public final class ClientGunLightManager {
         int id = bullet.getId();
         TrackedBullet tracked = BULLETS.get(id);
         if (tracked == null) {
-            GunTaczFixesData.LightConfig config = TaczFixesDataManager.resolveLight(bullet.getGunId());
-            if (config == null || config.bullet == null) {
+            GunTaczFixesData.LightConfig config;
+            if (bullet instanceof com.ssscript.taczfixes.common.util.LightBulletAccess access
+                    && access.taczfixes$isLightCaptured()) {
+                config = access.taczfixes$getLightConfig();
+            } else {
+                config = TaczFixesDataManager.resolveLight(bullet.getGunId());
+            }
+            if (config == null || config.bullet == null || config.bullet.time == null || config.bullet.time <= 0) {
                 return;
             }
             tracked = new TrackedBullet(bullet.getGunId().toString(), new Vec3(bullet.xo, bullet.yo, bullet.zo), config.bullet);

@@ -26,6 +26,7 @@ public class ConfigScreen {
         buildInaccuracy(builder.getOrCreateCategory(cat("inaccuracy")), entry);
         buildRicochet(builder.getOrCreateCategory(cat("ricochet")), entry);
         buildRecoilKnockback(builder.getOrCreateCategory(cat("recoil_knockback")), entry);
+        buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
         buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
         buildRefitScreen(builder.getOrCreateCategory(cat("refitscreen")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
@@ -48,6 +49,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "dual_wield.focus_aim_inaccuracy_multiplier", Config.DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER);
         dbl_(cat, entry, "dual_wield.left_offset", Config.DUAL_WIELD_LEFT_X_OFFSET);
         dbl_(cat, entry, "dual_wield.right_offset", Config.DUAL_WIELD_RIGHT_X_OFFSET);
+        dbl_(cat, entry, "dual_wield.melee_switch_percent", Config.DUAL_WIELD_MELEE_SWITCH_PERCENT);
     }
 
     private static void buildStamina(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -189,6 +191,36 @@ public class ConfigScreen {
         dbl_(cat, entry, "recoil_knockback.semi_factor", Config.RECOIL_KNOCKBACK_SEMI_FACTOR);
     }
 
+    private static void buildGunLight(ConfigCategory cat, ConfigEntryBuilder entry) {
+        int_(cat, entry, "gun_light.max_lights", Config.GUN_LIGHT_MAX_LIGHTS);
+        lst_(cat, entry, "gun_light.blacklist", Config.GUN_LIGHT_DISABLED_GUNS);
+        addGunLightGroup(cat, entry, "gun_light_muzzle_adjust", Config.GUN_LIGHT_MUZZLE_ADJUST);
+        for (java.util.Map.Entry<String, Config.GunLightTypeConfig> typeEntry : Config.GUN_LIGHT_TYPE_CONFIGS.entrySet()) {
+            addGunLightGroup(cat, entry, "gun_light_type_" + typeEntry.getKey(), typeEntry.getValue());
+        }
+    }
+
+    private static void addGunLightGroup(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
+                                         Config.GunLightTypeConfig cfg) {
+        sub(cat, entry, slug, group -> {
+            sub(group, entry, "gun_light_fire", e -> {
+                int_(e, entry, "gun_light.fire_time", cfg.fireTime);
+                int_(e, entry, "gun_light.fire_level_max", cfg.fireLevelMax);
+                int_(e, entry, "gun_light.fire_level_min", cfg.fireLevelMin);
+            });
+            sub(group, entry, "gun_light_bullet", e -> {
+                int_(e, entry, "gun_light.bullet_time", cfg.bulletTime);
+                int_(e, entry, "gun_light.bullet_level_max", cfg.bulletLevelMax);
+                int_(e, entry, "gun_light.bullet_level_min", cfg.bulletLevelMin);
+            });
+            sub(group, entry, "gun_light_explosion", e -> {
+                int_(e, entry, "gun_light.explosion_time", cfg.explosionTime);
+                int_(e, entry, "gun_light.explosion_level_max", cfg.explosionLevelMax);
+                int_(e, entry, "gun_light.explosion_level_min", cfg.explosionLevelMin);
+            });
+        });
+    }
+
     private static void buildMisc(ConfigCategory cat, ConfigEntryBuilder entry) {
         List<AbstractConfigListEntry> stepless = new ArrayList<>();
         bool_(stepless, entry, "misc.stepless_zoom_enabled", Config.STEPLESS_ZOOM_ENABLED);
@@ -221,10 +253,6 @@ public class ConfigScreen {
         List<AbstractConfigListEntry> explosion = new ArrayList<>();
         bool_(explosion, entry, "misc.explosion_bullet_only", Config.EXPLOSION_BULLET_ONLY);
         cat.addEntry(entry.startSubCategory(cat("explosion"), explosion).build());
-
-        List<AbstractConfigListEntry> gunLight = new ArrayList<>();
-        int_(gunLight, entry, "misc.gun_light_max_lights", Config.GUN_LIGHT_MAX_LIGHTS);
-        cat.addEntry(entry.startSubCategory(cat("gun_light"), gunLight).build());
 
         List<AbstractConfigListEntry> peek = new ArrayList<>();
         bool_(peek, entry, "misc.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
@@ -447,6 +475,13 @@ public class ConfigScreen {
         List<AbstractConfigListEntry> entries = new ArrayList<>();
         adder.add(entries);
         cat.addEntry(entry.startSubCategory(cat(slug), entries).build());
+    }
+
+    private static void sub(List<AbstractConfigListEntry> target, ConfigEntryBuilder entry, String slug,
+                            EntryAdder adder) {
+        List<AbstractConfigListEntry> entries = new ArrayList<>();
+        adder.add(entries);
+        target.add(entry.startSubCategory(cat(slug), entries).build());
     }
 
     private static void bool_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ForgeConfigSpec.BooleanValue v) {

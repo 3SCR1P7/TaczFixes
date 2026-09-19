@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.render;
 
+import com.ssscript.taczfixes.common.data.GunTaczFixesData;
+import com.ssscript.taczfixes.common.util.ChargeStorage;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.gui.overlay.HeatBarOverlay;
@@ -41,12 +43,22 @@ public final class DualOffhandHeatBar {
         GunData offhandData = TimelessAPI.getClientGunIndex(offhandGun.getGunId(offhandStack))
                 .map(index -> index.getGunData()).orElse(null);
         GunHeatData heatData = offhandData == null ? null : offhandData.getHeatData();
-        if (heatData == null || !offhandGun.hasHeatData(offhandStack) || heatData.getHeatMax() <= 0.0f) {
+        boolean heatBar = heatData != null && offhandGun.hasHeatData(offhandStack) && heatData.getHeatMax() > 0.0f;
+        boolean chargeBar = usesChargeBar(offhandStack);
+        if (!heatBar && !chargeBar) {
             return;
         }
-        float percent = Mth.clamp(offhandGun.getHeatAmount(offhandStack) / heatData.getHeatMax(), 0.0f, 1.0f);
-        boolean locked = offhandGun.isOverheatLocked(offhandStack);
-        float offsetY = mainHandHasHeat(player) ? BOTH_HANDS_OFFSET : 0.0f;
+        float percent;
+        boolean locked;
+        if (chargeBar) {
+            int max = ChargeStorage.getMax(offhandStack);
+            percent = max <= 0 ? 0.0f : Mth.clamp(ChargeStorage.get(offhandStack) / (float) max, 0.0f, 1.0f);
+            locked = false;
+        } else {
+            percent = Mth.clamp(offhandGun.getHeatAmount(offhandStack) / heatData.getHeatMax(), 0.0f, 1.0f);
+            locked = offhandGun.isOverheatLocked(offhandStack);
+        }
+        float offsetY = mainHandHasHeatBar(player) ? BOTH_HANDS_OFFSET : 0.0f;
         animate(percent);
         graphics.pose().pushPose();
         graphics.pose().scale(heatScale, heatScale, 1.0f);
@@ -57,16 +69,27 @@ public final class DualOffhandHeatBar {
         graphics.pose().popPose();
     }
 
-    private static boolean mainHandHasHeat(LocalPlayer player) {
+    private static boolean mainHandHasHeatBar(LocalPlayer player) {
         ItemStack mainStack = player.getMainHandItem();
         IGun mainGun = IGun.getIGunOrNull(mainStack);
         if (mainGun == null) {
             return false;
         }
+        if (usesChargeBar(mainStack)) {
+            return true;
+        }
         GunData mainData = TimelessAPI.getClientGunIndex(mainGun.getGunId(mainStack))
                 .map(index -> index.getGunData()).orElse(null);
         GunHeatData heatData = mainData == null ? null : mainData.getHeatData();
         return heatData != null && mainGun.hasHeatData(mainStack) && heatData.getHeatMax() > 0.0f;
+    }
+
+    private static boolean usesChargeBar(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        GunTaczFixesData.ChargeConfig cfg = ChargeStorage.config(stack);
+        return cfg != null && Boolean.TRUE.equals(cfg.overheat_bar) && ChargeStorage.getMax(stack) > 0;
     }
 
     private static void animate(float percent) {
