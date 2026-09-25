@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.handler;
 
-import com.ssscript.taczfixes.client.util.ScopeFovDebug;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.ScopeViewHelper;
 import com.tacz.guns.api.DefaultAssets;
@@ -51,14 +50,12 @@ public class ScopeFovTransitionHandler {
     /** 由 GameRenderer#renderLevel 开头调用: 标记接下来那次 configured-FOV 调用是真正的世界层调用。 */
     public static void markWorldFovCall() {
         worldFovCallPending = true;
-        ScopeFovDebug.expectWorldCall();
     }
 
     @SubscribeEvent
     public void onRenderTick(TickEvent.RenderTickEvent event) {
         if (event.phase == TickEvent.Phase.START) {
             worldFovCallPending = false;
-            ScopeFovDebug.resetFrame();
         }
     }
 
