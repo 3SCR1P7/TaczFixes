@@ -24,9 +24,11 @@
 
 --改装方案保存
 
---开镜晃动
+--枪械注入法术（联动Iron's Spellbooks）
 
---体力系统
+--体力系统（联动ParCool）
+
+--开镜晃动
 
 --跳弹机制
 
@@ -59,6 +61,8 @@
 --TaCZ Tweaks
 
 --GD656Peek
+
+--Iron's Spellbooks
 
 --ParCool!
 
