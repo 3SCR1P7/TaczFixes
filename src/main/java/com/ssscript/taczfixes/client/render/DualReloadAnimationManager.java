@@ -12,6 +12,7 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
+import com.ssscript.taczfixes.common.util.PausableClock;
 import java.util.Map;
 import java.util.UUID;
 import java.util.WeakHashMap;
@@ -64,7 +65,7 @@ public final class DualReloadAnimationManager {
             clear();
             return;
         }
-        long now = System.currentTimeMillis();
+        long now = PausableClock.millis();
         mainVisual = tickVisual(player, mainVisual, now);
         offhandVisual = tickVisual(player, offhandVisual, now);
     }
@@ -108,7 +109,7 @@ public final class DualReloadAnimationManager {
         if (visual == null) {
             return false;
         }
-        long elapsed = System.currentTimeMillis() - visual.startTimestamp;
+        long elapsed = PausableClock.millis() - visual.startTimestamp;
         return elapsed >= visual.putAwayMillis && elapsed < visual.drawStartTimestamp - visual.startTimestamp;
     }
 
@@ -125,7 +126,7 @@ public final class DualReloadAnimationManager {
 
     private static ReloadVisual beginVisual(ReloadVisual previous, InteractionHand hand, ItemStack stack, GunDisplayInstance display, GunData gunData, float feedSeconds) {
         removeOverlay(previous);
-        long now = System.currentTimeMillis();
+        long now = PausableClock.millis();
         IGun gun = IGun.getIGunOrNull(stack);
         ResourceLocation gunId = gun == null ? null : gun.getGunId(stack);
         long putAwayMillis = toMillis(gunData.getPutAwayTime());
@@ -187,7 +188,7 @@ public final class DualReloadAnimationManager {
             return;
         }
         visual.track = track;
-        visual.drawHardEndTimestamp = System.currentTimeMillis() + MAX_DRAW_DURATION_MS;
+        visual.drawHardEndTimestamp = PausableClock.millis() + MAX_DRAW_DURATION_MS;
         controller.runAnimation(track, "draw", ObjectAnimation.PlayType.PLAY_ONCE_STOP, DRAW_TRANSITION_SECONDS);
         controller.setBlending(track, false);
     }

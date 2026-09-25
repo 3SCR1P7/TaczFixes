@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
+import com.ssscript.taczfixes.common.util.PausableClock;
 import com.tacz.guns.api.client.animation.ObjectAnimation;
 import com.tacz.guns.api.client.animation.ObjectAnimationRunner;
 import net.minecraft.client.Minecraft;
@@ -12,12 +13,19 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(ObjectAnimationRunner.class)
 public class MixinObjectAnimationRunner {
     @Unique
     private float taczfixes_speedFactor = 1.0f;
+
+    /** 动画推进改用可暂停时钟, 游戏暂停时动画不再继续播放。 */
+    @Redirect(method = {"run", "update", "updateSoundOnly"}, at = @At(value = "INVOKE", target = "Ljava/lang/System;nanoTime()J"), remap = false)
+    private long taczfixes$pausableNanos() {
+        return PausableClock.nanos();
+    }
 
     @Inject(method = "<init>", at = @At("TAIL"), remap = false)
     private void taczfixes$initAnimSpeed(ObjectAnimation animation, CallbackInfo ci) {

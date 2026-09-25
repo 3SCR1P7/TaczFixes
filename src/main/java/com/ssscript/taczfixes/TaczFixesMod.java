@@ -228,6 +228,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeStencilHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.StaminaClientHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.PauseClockHandler());
         });
     }
 }

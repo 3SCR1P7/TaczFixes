@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
+import com.ssscript.taczfixes.common.util.ClientOnlyDispatch;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.DualReloadTimeController;
 import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
@@ -213,8 +214,15 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
         com.ssscript.taczfixes.common.util.TextShowStorage.set(this.itemStack, key, value);
         if (this.shooter != null && this.shooter.level() != null && this.shooter.level().isClientSide) {
-            net.minecraftforge.fml.DistExecutor.unsafeRunWhenOn(net.minecraftforge.api.distmarker.Dist.CLIENT,
-                    () -> () -> com.ssscript.taczfixes.client.util.TextShowPapiCompat.register(key));
+            ClientOnlyDispatch.registerTextShow(key);
+        }
+    }
+
+    /** 水下开火拦截: 眼部在水下且按配置/data 禁止时取消整个 shootOnce。 */
+    @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void taczfixes$blockUnderwater(boolean needConsumeAmmo, CallbackInfo ci) {
+        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(this.shooter, this.itemStack)) {
+            ci.cancel();
         }
     }
 
@@ -261,21 +269,10 @@ public abstract class MixinModernKineticGunScriptAPI {
 
     @Unique
     private void taczfixes$playDryFire() {
-        if (this.shooter == null || !this.shooter.level().isClientSide) {
+        if (this.shooter == null || this.shooter.level() == null || !this.shooter.level().isClientSide) {
             return;
         }
-        if (!(this.shooter instanceof net.minecraft.client.player.LocalPlayer player)) {
-            return;
-        }
-        com.tacz.guns.api.TimelessAPI.getGunDisplay(this.itemStack).ifPresent(display -> {
-            net.minecraft.resources.ResourceLocation sound = display.getSounds(com.tacz.guns.sound.SoundManager.DRY_FIRE_SOUND);
-            if (sound == null) {
-                return;
-            }
-            com.tacz.guns.client.sound.SoundPlayManager.stopPlayGunSound();
-            com.tacz.guns.client.sound.SoundPlayManager.playClientSound(player, sound, 1.0f, 1.0f,
-                    ((Integer) com.tacz.guns.config.common.GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get()).intValue());
-        });
+        ClientOnlyDispatch.playDryFireFeedback(this.shooter, this.itemStack);
     }
 
     /** lua: api:replaceData("tacz:ak47_data") 将此枪械的 data 替换为指定 id 的枪械数据, 成功返回 true。 */

@@ -44,6 +44,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
     public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
+    public static final ForgeConfigSpec.BooleanValue PREVENT_SHOOTING_UNDERWATER;
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
     /** 枪械类型（tacz 枪械 data 的 type 字段）名称, 与 GunTabType 一致。 */
@@ -493,6 +494,11 @@ public class Config {
         BUILDER.pop();
 
         BUILDER.push("misc");
+
+        PREVENT_SHOOTING_UNDERWATER = BUILDER
+                .comment("是否阻止水下开火: 玩家眼部浸入水中时无法开火, 只会发出 dry_fire 音效。",
+                        "枪械 data 的 taczfixes.allow_shooting_underwater 可逐枪覆盖: true 强制允许, false 强制禁止, 不填则跟随此配置。默认值：true")
+                .define("prevent_shooting_underwater", true);
 
         BUILDER.push("stepless_zoom");
         STEPLESS_ZOOM_ENABLED = BUILDER
@@ -1170,9 +1176,9 @@ public class Config {
                         "需要LesRaisins Tactical Equipments模组。")
                 .defineInRange("lr_melee_light_cost", 8.0, 0.0, 100000.0);
         AIMING_STAMINA_LR_MELEE_HEAVY_COST = BUILDER
-                .comment("lrtactical 近战武器重击消耗的上肢耐力。默认值：20",
+                .comment("lrtactical 近战武器重击消耗的上肢耐力。默认值：16",
                         "需要LesRaisins Tactical Equipments模组。")
-                .defineInRange("lr_melee_heavy_cost", 20.0, 0.0, 100000.0);
+                .defineInRange("lr_melee_heavy_cost", 16.0, 0.0, 100000.0);
         AIMING_STAMINA_SWAY_CALM_MS = BUILDER
                 .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：500")
                 .defineInRange("sway_hold_breath_calm_ms", 500, 0, 60000);

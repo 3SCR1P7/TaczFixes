@@ -41,8 +41,9 @@ public class StaminaHandler {
 
         // ParCool 消耗通过 ClientMessageStaminaConsume 上报后直接扣除, 此处仅做镜像
 
-        // 原版疾跑/游泳(服务端标记可能不同步, 以客户端上报为准); 潜行(按住shift)时不算疾跑
-        if (!player.isShiftKeyDown() && (player.isSprinting() || player.isSwimming() || StaminaState.isClientSprinting(uuid))) {
+        // 原版疾跑/游泳(服务端标记可能不同步, 以客户端上报为准); 潜行(按住shift)仅抵消疾跑, 游泳/下潜仍消耗
+        boolean sprinting = (player.isSprinting() || StaminaState.isClientSprinting(uuid)) && !player.isShiftKeyDown();
+        if (sprinting || player.isSwimming()) {
             float rate = Config.STAMINA_SPRINT_CONSUMPTION_PER_SECOND.get().floatValue();
             float weightFactor = 1f + gunWeight(player) * Config.STAMINA_WEIGHT_CONSUMPTION_PER_KG.get().floatValue();
             stamina -= rate * weightFactor * StaminaHelper.consumptionMultiplier(player) / 20f;

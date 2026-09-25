@@ -237,6 +237,10 @@ public class ConfigScreen {
         dbl_(stepless, entry, "misc.stepless_zoom_alt_multiplier", Config.STEPLESS_ZOOM_ALT_MULTIPLIER);
         cat.addEntry(entry.startSubCategory(cat("stepless_zoom"), stepless).build());
 
+        List<AbstractConfigListEntry> underwater = new ArrayList<>();
+        bool_(underwater, entry, "misc.prevent_shooting_underwater", Config.PREVENT_SHOOTING_UNDERWATER);
+        cat.addEntry(entry.startSubCategory(cat("underwater"), underwater).build());
+
         List<AbstractConfigListEntry> toast = new ArrayList<>();
         int_(toast, entry, "misc.refit_toast_duration_ms", Config.REFIT_TOAST_DURATION_MS);
         int_(toast, entry, "misc.refit_toast_fade_ms", Config.REFIT_TOAST_FADE_MS);

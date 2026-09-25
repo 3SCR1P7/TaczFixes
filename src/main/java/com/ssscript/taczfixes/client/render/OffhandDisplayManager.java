@@ -294,7 +294,7 @@ public final class OffhandDisplayManager {
             finishPutAway(player);
             return false;
         }
-        long currentTime = System.currentTimeMillis();
+        long currentTime = com.ssscript.taczfixes.common.util.PausableClock.millis();
         if (putAwayTime > Long.MAX_VALUE - currentTime) {
             j = Long.MAX_VALUE;
         } else {
@@ -314,7 +314,7 @@ public final class OffhandDisplayManager {
     }
 
     public static void tickPutAway(LocalPlayer player) {
-        if (putAwayEndTimestamp >= 0 && System.currentTimeMillis() >= putAwayEndTimestamp) {
+        if (putAwayEndTimestamp >= 0 && com.ssscript.taczfixes.common.util.PausableClock.millis() >= putAwayEndTimestamp) {
             finishPutAway(player);
         }
     }

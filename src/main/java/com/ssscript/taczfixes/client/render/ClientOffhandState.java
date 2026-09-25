@@ -16,6 +16,7 @@ import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.ssscript.taczfixes.common.util.DualWieldBalance;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
 import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
+import com.ssscript.taczfixes.common.util.PausableClock;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;
 import java.lang.runtime.ObjectMethods;
@@ -244,7 +245,7 @@ public final class ClientOffhandState {
             iOrdinal = ReloadState.StateType.TACTICAL_RELOAD_FEEDING.ordinal();
         }
         this.reloadStateType = iOrdinal;
-        this.reloadStartTimestamp = System.currentTimeMillis();
+        this.reloadStartTimestamp = PausableClock.millis();
         long durationMillis = getDualReloadDurationMillis(stack, durationSeconds);
         if (durationMillis > Long.MAX_VALUE - this.reloadStartTimestamp) {
             j = Long.MAX_VALUE;
@@ -264,7 +265,8 @@ public final class ClientOffhandState {
     }
 
     public boolean isReloading() {
-        return this.reloadRequestPending ? this.reloadStartTimestamp >= 0 && System.currentTimeMillis() - this.reloadStartTimestamp < 5000 : this.reloadAuthoritative ? this.reloadStateType >= 0 && this.reloadStateType < ReloadState.StateType.values().length && ReloadState.StateType.values()[this.reloadStateType].isReloading() : this.reloadEndTimestamp > System.currentTimeMillis();
+        long now = PausableClock.millis();
+        return this.reloadRequestPending ? this.reloadStartTimestamp >= 0 && now - this.reloadStartTimestamp < 5000 : this.reloadAuthoritative ? this.reloadStateType >= 0 && this.reloadStateType < ReloadState.StateType.values().length && ReloadState.StateType.values()[this.reloadStateType].isReloading() : this.reloadEndTimestamp > now;
     }
 
     public int getReloadRequestId() {
@@ -288,6 +290,7 @@ public final class ClientOffhandState {
 
     public synchronized void applyServerState(int requestId, int serverReloadStateType, long reloadElapsedMillis, long reloadCountDownMillis, boolean serverBolting, int serverBoltRequestId, boolean boltRequestAcknowledged, boolean serverManualActionEpisodeActive, boolean serverManualActionBoltReady, boolean shootRequestAcknowledged, long acknowledgedShootTimestamp) {
         long now = System.currentTimeMillis();
+        long reloadNow = PausableClock.millis();
         this.serverManualActionBoltReady = serverManualActionBoltReady;
         if (!this.reloadRequestPending || requestId == this.reloadRequestId) {
             this.reloadRequestId = requestId;
@@ -301,13 +304,13 @@ public final class ClientOffhandState {
             }
             if (ReloadState.StateType.values()[this.reloadStateType].isReloading()) {
                 if (reloadElapsedMillis >= 0) {
-                    this.reloadStartTimestamp = now - reloadElapsedMillis;
+                    this.reloadStartTimestamp = reloadNow - reloadElapsedMillis;
                 }
                 if (reloadCountDownMillis >= 0) {
-                    this.reloadEndTimestamp = now + reloadCountDownMillis;
+                    this.reloadEndTimestamp = reloadNow + reloadCountDownMillis;
                 }
             } else {
-                this.reloadEndTimestamp = now;
+                this.reloadEndTimestamp = reloadNow;
             }
         }
         boolean matchingShootAcknowledgement = shootRequestAcknowledged && this.manualShotAwaitingChamberSync && acknowledgedShootTimestamp == this.manualShotExpectedServerTimestamp;
@@ -450,7 +453,7 @@ public final class ClientOffhandState {
         this.reloadCancelPending = false;
         this.reloadAuthoritative = true;
         this.reloadStateType = ReloadState.StateType.NOT_RELOADING.ordinal();
-        this.reloadEndTimestamp = System.currentTimeMillis();
+        this.reloadEndTimestamp = PausableClock.millis();
         this.reloadStackId = null;
     }
 
@@ -641,11 +644,11 @@ public final class ClientOffhandState {
 
     public void beginDraw(float durationSeconds) {
         resetCharge();
-        this.drawEndTimestamp = System.currentTimeMillis() + Math.max((long) (durationSeconds * 1000.0f), 0L);
+        this.drawEndTimestamp = PausableClock.millis() + Math.max((long) (durationSeconds * 1000.0f), 0L);
     }
 
     public boolean isDrawing() {
-        return this.drawEndTimestamp > System.currentTimeMillis();
+        return this.drawEndTimestamp > PausableClock.millis();
     }
 
     public int getReloadStateType() {
@@ -662,7 +665,7 @@ public final class ClientOffhandState {
         if (this.reloadStartTimestamp < 0 || this.reloadEndTimestamp <= this.reloadStartTimestamp) {
             return -1.0f;
         }
-        return Mth.clamp((System.currentTimeMillis() - this.reloadStartTimestamp) / (this.reloadEndTimestamp - this.reloadStartTimestamp), 0.0f, 1.0f);
+        return Mth.clamp((PausableClock.millis() - this.reloadStartTimestamp) / (this.reloadEndTimestamp - this.reloadStartTimestamp), 0.0f, 1.0f);
     }
 
     public boolean chargeShoot(LocalPlayer player, ItemStack stack, boolean isChargingInput) {

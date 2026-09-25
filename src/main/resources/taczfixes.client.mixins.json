@@ -128,7 +128,9 @@
         "MixinPlayerAnimatorCompat",
         "MixinIronsCastAnimation",
         "MixinIronsUseInput",
-        "MixinGameRendererWorldFovMark"
+        "MixinGameRendererWorldFovMark",
+        "MixinAnimationStateMachinePause",
+        "MixinAnimateGeoItemRendererPause"
     ],
     "injectors":  {
         "defaultRequire":  1

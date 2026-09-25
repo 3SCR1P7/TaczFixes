@@ -153,6 +153,17 @@ public class TaczFixesDataManager {
         return data == null ? null : data.charge;
     }
 
+    /** 枪械 data 字段 allow_shooting_underwater; 未配置返回 null(跟随配置文件)。 */
+    @Nullable
+    public static Boolean resolveAllowShootingUnderwater(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.allow_shooting_underwater;
+    }
+
     /** 枪械最终动态光照配置(枪械 data 或全局配置, 再叠加配件增量调整); 全部禁用或命中黑名单时返回 null。 */
     @Nullable
     public static GunTaczFixesData.LightConfig resolveLight(ItemStack gunStack) {

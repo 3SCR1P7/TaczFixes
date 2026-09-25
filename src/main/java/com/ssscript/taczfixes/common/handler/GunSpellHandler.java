@@ -17,9 +17,11 @@ import io.redspace.ironsspellbooks.api.spells.ISpellContainer;
 import io.redspace.ironsspellbooks.api.spells.SpellData;
 import io.redspace.ironsspellbooks.api.spells.SpellSlot;
 import io.redspace.ironsspellbooks.capabilities.magic.TargetEntityCastData;
+import io.redspace.ironsspellbooks.entity.mobs.IMagicSummon;
 import io.redspace.ironsspellbooks.network.casting.CancelCastPacket;
 import io.redspace.ironsspellbooks.network.casting.UpdateCastingStatePacket;
 import io.redspace.ironsspellbooks.setup.PacketDistributor;
+import io.redspace.ironsspellbooks.spells.blood.SacrificeSpell;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -29,6 +31,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -273,6 +276,9 @@ public class GunSpellHandler {
      */
     private static boolean cast(ServerPlayer player, ItemStack gun, SpellData data, LivingEntity target) {
         AbstractSpell spell = data.getSpell();
+        if (target != null && !canCastOnTarget(player, spell, target)) {
+            return false;
+        }
         MagicData magicData = MagicData.getPlayerMagicData(player);
         if (spell.getCastType() == CastType.CONTINUOUS) {
             if (magicData.isCasting()) {
@@ -309,6 +315,18 @@ public class GunSpellHandler {
                 magicData.resetAdditionalCastData();
             }
         }
+    }
+
+    /** 目标限制类法术: 命中目标不合法时不施放, 避免白白消耗法力与冷却(如献祭只能作用于自己的召唤物)。 */
+    private static boolean canCastOnTarget(ServerPlayer player, AbstractSpell spell, LivingEntity target) {
+        if (spell instanceof SacrificeSpell) {
+            if (!(target instanceof IMagicSummon summon)) {
+                return false;
+            }
+            Entity summoner = summon.getSummoner();
+            return summoner != null && summoner.getUUID().equals(player.getUUID());
+        }
+        return true;
     }
 
     private static ResourceLocation gunId(ItemStack gun) {

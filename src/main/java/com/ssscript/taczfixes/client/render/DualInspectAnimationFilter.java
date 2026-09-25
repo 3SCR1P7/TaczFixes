@@ -248,11 +248,11 @@ public final class DualInspectAnimationFilter {
     }
 
     private static boolean hasActiveInspectRunnerWithinWindow(InspectSession session) {
-        return System.currentTimeMillis() <= session.continuationUntilMs && hasActiveInspectRunner(session);
+        return com.ssscript.taczfixes.common.util.PausableClock.millis() <= session.continuationUntilMs && hasActiveInspectRunner(session);
     }
 
     private static synchronized void beginInspect(BedrockAnimatedModel model, AnimationController controller) {
-        long now = System.currentTimeMillis();
+        long now = com.ssscript.taczfixes.common.util.PausableClock.millis();
         ACTIVE_INSPECTS.put(model, new InspectSession(controller, now + INSPECT_START_GRACE_MS));
         discardExpiredSessions(now);
     }
@@ -275,7 +275,7 @@ public final class DualInspectAnimationFilter {
             jCeil = 1000;
         }
         long durationMs = jCeil;
-        long now = System.currentTimeMillis();
+        long now = com.ssscript.taczfixes.common.util.PausableClock.millis();
         long boundedDurationMs = Math.min(durationMs, 120000L);
         session.continuationUntilMs = Math.max(session.continuationUntilMs, now + boundedDurationMs + INSPECT_CONTINUATION_GRACE_MS);
         session.expiresAtMs = Math.max(now + Math.min(boundedDurationMs + 5000, 120000L), session.continuationUntilMs);
@@ -335,7 +335,7 @@ public final class DualInspectAnimationFilter {
             return null;
         }
         InspectSession session = ACTIVE_INSPECTS.get(model);
-        long now = System.currentTimeMillis();
+        long now = com.ssscript.taczfixes.common.util.PausableClock.millis();
         if (session != null && (now > session.expiresAtMs || (!session.clipNames.isEmpty() && now > session.continuationUntilMs && !hasActiveInspectRunner(session)))) {
             ACTIVE_INSPECTS.remove(model);
             return null;
@@ -454,7 +454,7 @@ public final class DualInspectAnimationFilter {
             return true;
         }
         if (oneShot) {
-            return session.clipNames.isEmpty() || hasActiveInspectRunner(session) || System.currentTimeMillis() <= session.continuationUntilMs;
+            return session.clipNames.isEmpty() || hasActiveInspectRunner(session) || com.ssscript.taczfixes.common.util.PausableClock.millis() <= session.continuationUntilMs;
         }
         return false;
     }

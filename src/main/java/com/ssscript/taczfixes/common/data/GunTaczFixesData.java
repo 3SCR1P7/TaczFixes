@@ -6,6 +6,8 @@ public class GunTaczFixesData {
     public Integer refit_point;
     public Double limb_factor;
     public Boolean allow_animation_zoom;
+    /** 是否允许水下开火: true 强制允许, false 强制禁止, 不填则跟随配置文件 prevent_shooting_underwater。 */
+    public Boolean allow_shooting_underwater;
     /** 自定义 HUD id(assets/<ns>/hud/<path>.json); 填写后 tacz 原生 HUD 隐藏。 */
     public String custom_hud;
     public Map<String, InaccuracyConfig> inaccuracy_multiplier;

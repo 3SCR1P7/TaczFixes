@@ -24,6 +24,18 @@ public class MixinLocalPlayerShootPreCheck {
     private LocalPlayer player;
 
     @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    private void taczfixes$blockUnderwater(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                           ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                           boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, mainHandItem)) {
+            if (playDrySound) {
+                SoundPlayManager.playDryFireSound(player, display);
+            }
+            cir.setReturnValue(ShootResult.NO_AMMO);
+        }
+    }
+
+    @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private void taczfixes$blockLowAimingStamina(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
                                                  ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
                                                  boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
