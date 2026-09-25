@@ -28,14 +28,6 @@ public abstract class MixinAttachmentRenderGroupOffset {
                                                         MultiBufferSource.BufferSource bufferSource,
                                                         ClientAttachmentIndex attachmentIndex, CallbackInfo ci) {
         if (type == null || gunStack == null || gunStack.isEmpty()) return;
-        if (attachmentIndex != null) {
-            com.tacz.guns.client.model.BedrockAttachmentModel attachmentModel = attachmentIndex.getAttachmentModel();
-            if (attachmentModel != null) {
-                boolean scope = attachmentIndex.isScope();
-                attachmentModel.setIsScope(scope);
-                attachmentModel.setIsSight(!scope && attachmentIndex.isSight());
-            }
-        }
         String slotKey = type.name().toLowerCase(Locale.ROOT);
         AttachmentGroupOffsetHelper.applyForGun(poseStack, gunStack, slotKey);
         float z = PosAlterStorage.get(gunStack, slotKey);

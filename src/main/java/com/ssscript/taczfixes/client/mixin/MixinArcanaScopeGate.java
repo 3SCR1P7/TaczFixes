@@ -1,8 +1,9 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.ssscript.taczfixes.client.util.ScopeViewHelper;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
-import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
@@ -10,6 +11,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.item.ModernKineticGunItem;
 import net.minecraft.client.Minecraft;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
@@ -40,9 +42,9 @@ public class MixinArcanaScopeGate {
                 IAttachment attachment = IAttachment.getIAttachmentOrNull(activeItem);
                 ResourceLocation actId = attachment == null ? null : attachment.getAttachmentId(activeItem);
                 if (actId != null && !DefaultAssets.isEmptyAttachmentId(actId)) {
-                    ResourceLocation finalActId = actId;
-                    TimelessAPI.getClientAttachmentIndex(finalActId).ifPresent(index -> {
-                        if (!index.isScope()) {
+                    CompoundTag tag = ScopeSwitchState.attachmentTag(gun, stack, AttachmentType.SCOPE);
+                    TimelessAPI.getClientAttachmentIndex(actId).ifPresent(index -> {
+                        if (taczfixes$disablesMagnification(index, tag)) {
                             cir.setReturnValue(false);
                         }
                     });
@@ -60,11 +62,19 @@ public class MixinArcanaScopeGate {
             return;
         }
 
-        ResourceLocation finalId = id;
-        TimelessAPI.getClientAttachmentIndex(finalId).ifPresent(index -> {
-            if (!index.isScope()) {
+        CompoundTag tag = gun.getAttachmentTag(stack, AttachmentType.SCOPE);
+        TimelessAPI.getClientAttachmentIndex(id).ifPresent(index -> {
+            if (taczfixes$disablesMagnification(index, tag)) {
                 cir.setReturnValue(false);
             }
         });
+    }
+
+    /** 是否禁用镜内放大: 组合瞄具仅在使用 sight 视图时禁用, 单视图瞄具在非 scope 类型时禁用。 */
+    private static boolean taczfixes$disablesMagnification(ClientAttachmentIndex index, CompoundTag tag) {
+        if (ScopeViewHelper.isCombinedSight(index)) {
+            return ScopeViewHelper.isSightView(index, tag);
+        }
+        return !index.isScope();
     }
 }

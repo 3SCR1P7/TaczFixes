@@ -29,6 +29,22 @@ public class GunTaczFixesData {
     public ChargeConfig charge;
     /** 客户端动态光照配置(开火/爆炸/曳光弹)。 */
     public LightConfig light;
+    /** 法术注入配置(Iron's Spellbooks); 字段存在时覆盖配置文件。 */
+    public ImbuementConfig imbuement;
+
+    /** 枪械 data 中 taczfixes.imbuement: 逐枪覆盖法术注入配置, 优先级高于 config。 */
+    public static class ImbuementConfig {
+        /** 是否允许通过奥术铁砧注入法术。 */
+        public Boolean enable;
+        /** 可注入的法术数量。 */
+        public Integer count;
+        /** 发动法术后的最小触发冷却(秒)。 */
+        public Double cooldown;
+        /** 法术法力值消耗倍率。 */
+        public Double mana_consume_multiplier;
+        /** 法术自身冷却时间倍率(不影响最小触发冷却)。 */
+        public Double cooldown_multiplier;
+    }
 
     /** 客户端动态光照: 各事件按 time(ms) 从 level_max 线性衰减到 level_min。 */
     public static class LightConfig {
@@ -146,6 +162,9 @@ public class GunTaczFixesData {
         public Double reflect_angle_ratio_max;
         public Boolean top_bottom_enable;
     }
+
+    /** 枪械附魔能力: 覆盖配置文件中的 enchantment_value。 */
+    public Integer enchantment_ability;
 
     /** 枪械 data 中 taczfixes.dual_wield: 逐枪覆盖双持模组配置, 优先级高于其 config 文件。 */
     public static class DualWieldConfig {

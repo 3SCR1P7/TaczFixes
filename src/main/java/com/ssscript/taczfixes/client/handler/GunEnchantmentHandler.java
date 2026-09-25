@@ -83,10 +83,10 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int power = GunEnchantmentHelper.getLevelFromShooter(shooter, Enchantments.POWER_ARROWS);
-        int smite = GunEnchantmentHelper.getLevelFromShooter(shooter, Enchantments.SMITE);
-        int bane = GunEnchantmentHelper.getLevelFromShooter(shooter, Enchantments.BANE_OF_ARTHROPODS);
-        int impaling = GunEnchantmentHelper.getLevelFromShooter(shooter, Enchantments.IMPALING);
+        int power = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.POWER_ARROWS);
+        int smite = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.SMITE);
+        int bane = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.BANE_OF_ARTHROPODS);
+        int impaling = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.IMPALING);
 
         float mult = 1.0F;
         if (power > 0) {
@@ -118,7 +118,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        if (GunEnchantmentHelper.getLevelFromShooter(shooter, Enchantments.CHANNELING) <= 0) {
+        if (GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.CHANNELING) <= 0) {
             return;
         }
         if (target.isAlive() && rollChanneling(target)) {
@@ -141,7 +141,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevelFromShooter(shooter,
+        int level = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter,
                 TaczFixesMod.ELECTROMAGNETIC_COIL_ENCHANTMENT.get());
         if (level <= 0 || !target.isAlive()) {
             return;
@@ -165,7 +165,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         if (gun.isEmpty() || !(gun.getItem() instanceof IGun)) {
             return;
         }
@@ -188,7 +188,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.PREEMPTIVE_STRIKE_ENCHANTMENT.get());
         if (level <= 0 || gun.isEmpty() || !(gun.getItem() instanceof AbstractGunItem gunItem)) {
             return;
@@ -224,7 +224,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.COLLECTOR_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -251,7 +251,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target) || !target.isAlive()) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevelFromShooter(shooter,
+        int level = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter,
                 TaczFixesMod.NEUROTOXIN_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -285,7 +285,7 @@ public class GunEnchantmentHandler {
         if (bullet == null || !(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevelFromShooter(shooter,
+        int level = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter,
                 TaczFixesMod.CHAIN_EXPLOSION_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -309,7 +309,7 @@ public class GunEnchantmentHandler {
         if (bullet == null || !(bullet.getOwner() instanceof LivingEntity shooter)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevelFromShooter(shooter,
+        int level = GunEnchantmentHelper.getLevelFromShooter(bullet.getGunId(), shooter,
                 TaczFixesMod.CHAIN_EXPLOSION_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -378,7 +378,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(shooter),
+        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
                 TaczFixesMod.ANNIHILATION_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -411,7 +411,7 @@ public class GunEnchantmentHandler {
         if (shooter == null || killed == null) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(shooter),
+        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
                 TaczFixesMod.LIFE_LEECH_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -431,7 +431,7 @@ public class GunEnchantmentHandler {
         if (shooter == null || !event.isHeadShot()) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(shooter),
+        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
                 TaczFixesMod.SNIPER_ELITE_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -473,7 +473,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(shooter),
+        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
                 TaczFixesMod.PANDORA_PARADOX_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -495,7 +495,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.DEEP_LEARNING_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -520,7 +520,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(shooter),
+        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
                 TaczFixesMod.EQUALIZER_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -545,7 +545,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(shooter),
+        int level = GunEnchantmentHelper.getLevel(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
                 TaczFixesMod.RANDOM_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -578,7 +578,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.DECAPITATION_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -610,7 +610,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.CHARGE_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -748,7 +748,7 @@ public class GunEnchantmentHandler {
         if (shooter == null || event.getKilledEntity() == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int channeling = GunEnchantmentHelper.getLevel(gun, Enchantments.CHANNELING);
         int mending = GunEnchantmentHelper.getLevel(gun, Enchantments.MENDING);
         int silkTouch = GunEnchantmentHelper.getLevel(gun, Enchantments.SILK_TOUCH);
@@ -910,7 +910,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target) || !target.isAlive()) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevelFromShooter(shooter,
+        int level = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter,
                 TaczFixesMod.ABYSS_GAZER_ENCHANTMENT.get());
         if (level <= 0) {
             return;
@@ -943,7 +943,7 @@ public class GunEnchantmentHandler {
         if (shooter == null) {
             return;
         }
-        ItemStack gun = GunEnchantmentHelper.getGunStack(shooter);
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
         int level = GunEnchantmentHelper.getLevel(gun, TaczFixesMod.FOCUSED_AMMO_ENCHANTMENT.get());
         if (level <= 0) {
             return;

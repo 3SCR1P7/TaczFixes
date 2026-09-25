@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.handler;
 
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.ssscript.taczfixes.client.util.ScopeViewHelper;
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
@@ -11,6 +12,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.client.event.ViewportEvent;
@@ -35,14 +37,20 @@ public class AimSwayHandler {
         return isScopeActive(player);
     }
 
-    /** 当前安装并激活的瞄具是否为 scope 类型(而非 sight)。 */
+    /** 当前安装并激活的瞄具是否为 scope 类型(而非 sight; 组合瞄具按当前视图判定)。 */
     public static boolean isScopeActive(LocalPlayer player) {
         ItemStack gun = player.getMainHandItem();
         IGun iGun = IGun.getIGunOrNull(gun);
         if (iGun == null) return false;
         ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
         if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
-        return TimelessAPI.getClientAttachmentIndex(id).map(ClientAttachmentIndex::isScope).orElse(false);
+        CompoundTag tag = ScopeSwitchState.attachmentTag(iGun, gun, AttachmentType.SCOPE);
+        return TimelessAPI.getClientAttachmentIndex(id).map(index -> {
+            if (ScopeViewHelper.isCombinedSight(index)) {
+                return ScopeViewHelper.isScopeView(index, tag);
+            }
+            return index.isScope();
+        }).orElse(false);
     }
 
     @SubscribeEvent

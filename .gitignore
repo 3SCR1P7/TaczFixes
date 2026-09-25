@@ -2,6 +2,7 @@
 .gradle/
 build/
 out/
+backup/
 
 # Forge / 运行目录
 run/

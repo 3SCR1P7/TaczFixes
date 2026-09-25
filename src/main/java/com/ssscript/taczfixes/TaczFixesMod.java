@@ -149,6 +149,13 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ChargeCapabilityHandler());
+        if (net.minecraftforge.fml.ModList.get().isLoaded("irons_spellbooks")) {
+            try {
+                MinecraftForge.EVENT_BUS.register(Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")
+                        .getDeclaredConstructor().newInstance());
+            } catch (Throwable ignored) {
+            }
+        }
         NetworkHandler.init();
         com.ssscript.taczfixes.common.util.DualWieldOverrides.setProvider(gunId -> {
             com.ssscript.taczfixes.common.data.GunTaczFixesData.DualWieldConfig cfg =
@@ -220,6 +227,8 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.AimSwayHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeStencilHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.StaminaClientHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeFovDebugHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler());
         });
     }
 }

@@ -13,6 +13,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean LRTACTICAL_PRESENT;
     private static final boolean TOUHOU_LITTLE_MAID_PRESENT;
     private static final boolean YES_STEVE_MODEL_PRESENT;
+    private static final boolean IRONS_SPELLBOOKS_PRESENT;
 
     static {
         GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
@@ -20,6 +21,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         LRTACTICAL_PRESENT = hasResource("me/xjqsh/lrtactical/item/MeleeItem.class");
         TOUHOU_LITTLE_MAID_PRESENT = hasResource("com/github/tartaricacid/touhoulittlemaid/TouhouLittleMaid.class");
         YES_STEVE_MODEL_PRESENT = hasResource("com/elfmcys/yesstevemodel/YesSteveModel.class");
+        IRONS_SPELLBOOKS_PRESENT = hasResource("io/redspace/ironsspellbooks/api/util/Utils.class");
     }
 
     private static boolean hasResource(String path) {
@@ -46,6 +48,9 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinYsm")) {
             return YES_STEVE_MODEL_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinIrons")) {
+            return IRONS_SPELLBOOKS_PRESENT;
         }
         return true;
     }

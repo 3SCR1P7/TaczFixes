@@ -93,6 +93,33 @@ public class TaczFixesDataManager {
         return data == null ? null : data.refit_point;
     }
 
+    /** 法术注入最终配置: 枪械 data 中的 imbuement 优先于配置文件; 各项均钳制到有效范围。 */
+    public static GunTaczFixesData.ImbuementConfig resolveImbuement(ItemStack gunStack) {
+        GunTaczFixesData.ImbuementConfig raw = null;
+        if (gunStack != null && !gunStack.isEmpty()) {
+            IGun gun = IGun.getIGunOrNull(gunStack);
+            if (gun != null) {
+                ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+                GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+                raw = data == null ? null : data.imbuement;
+            }
+        }
+        boolean enable = raw != null && raw.enable != null ? raw.enable : Config.GUN_SPELL_ENABLED.get();
+        int count = raw != null && raw.count != null ? raw.count : Config.GUN_SPELL_COUNT.get();
+        double cooldown = raw != null && raw.cooldown != null ? raw.cooldown : Config.GUN_SPELL_COOLDOWN.get();
+        double manaMultiplier = raw != null && raw.mana_consume_multiplier != null
+                ? raw.mana_consume_multiplier : Config.GUN_SPELL_MANA_MULTIPLIER.get();
+        double cooldownMultiplier = raw != null && raw.cooldown_multiplier != null
+                ? raw.cooldown_multiplier : Config.GUN_SPELL_COOLDOWN_MULTIPLIER.get();
+        GunTaczFixesData.ImbuementConfig result = new GunTaczFixesData.ImbuementConfig();
+        result.enable = enable;
+        result.count = Math.max(1, count);
+        result.cooldown = Math.max(0.0, cooldown);
+        result.mana_consume_multiplier = Math.max(0.0, manaMultiplier);
+        result.cooldown_multiplier = Math.max(0.0, cooldownMultiplier);
+        return result;
+    }
+
     /** 枪械 data 中的上肢耐力覆盖配置, 未配置返回 null。 */
     @Nullable
     public static GunTaczFixesData.AimingStaminaConfig resolveAimingStamina(ItemStack gunStack) {
@@ -151,6 +178,17 @@ public class TaczFixesDataManager {
             return data.light;
         }
         return globalLight(gunId);
+    }
+
+    /** 枪械 data 中的附魔能力值(taczfixes.enchantment_ability), 未配置返回 null。 */
+    @Nullable
+    public static Integer getEnchantmentAbility(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.enchantment_ability;
     }
 
     /** gun_light.blacklist: 枪械 id 或其 data id 命中则禁用该枪所有动态光照。 */

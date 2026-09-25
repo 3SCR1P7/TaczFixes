@@ -90,6 +90,11 @@ public class Config {
     public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
     public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
+    public static final ForgeConfigSpec.BooleanValue GUN_SPELL_ENABLED;
+    public static final ForgeConfigSpec.IntValue GUN_SPELL_COUNT;
+    public static final ForgeConfigSpec.DoubleValue GUN_SPELL_COOLDOWN;
+    public static final ForgeConfigSpec.DoubleValue GUN_SPELL_MANA_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue GUN_SPELL_COOLDOWN_MULTIPLIER;
 
     public static final ForgeConfigSpec.BooleanValue GUN_ENCHANTMENT_ENABLED;
     public static final ForgeConfigSpec.IntValue GUN_ENCHANTMENT_VALUE;
@@ -465,6 +470,26 @@ public class Config {
             BUILDER.pop();
         }
 
+        BUILDER.pop();
+
+        BUILDER.push("gun_spell");
+        GUN_SPELL_ENABLED = BUILDER
+                .comment("是否允许通过奥术铁砧为枪械注入 Iron's Spells 'n Spellbooks 的法术。",
+                        "注入后开火时发动(需冷却完毕且有足够法力值); 需要锁定目标的法术在子弹命中实体时对目标发动。",
+                        "需要 Iron's Spells 'n Spellbooks 模组。默认值：true")
+                .define("enabled", true);
+        GUN_SPELL_COUNT = BUILDER
+                .comment("每把枪械可注入的法术数量。默认值：1")
+                .defineInRange("count", 1, 1, 16);
+        GUN_SPELL_COOLDOWN = BUILDER
+                .comment("枪械发动法术后的最小触发冷却(秒); 冷却期间无法再次触发法术。默认值：0.5")
+                .defineInRange("cooldown", 0.5, 0.0, 3600.0);
+        GUN_SPELL_MANA_MULTIPLIER = BUILDER
+                .comment("枪械注入法术的法力值消耗倍率, 也受枪械 data 的 imbuement.mana_consume_multiplier 覆盖。默认值：0.5")
+                .defineInRange("mana_consume_multiplier", 0.5, 0.0, 100.0);
+        GUN_SPELL_COOLDOWN_MULTIPLIER = BUILDER
+                .comment("枪械注入法术的自身冷却时间倍率(不影响最小触发冷却), 也受枪械 data 的 imbuement.cooldown_multiplier 覆盖。默认值：0.5")
+                .defineInRange("cooldown_multiplier", 0.5, 0.0, 100.0);
         BUILDER.pop();
 
         BUILDER.push("misc");

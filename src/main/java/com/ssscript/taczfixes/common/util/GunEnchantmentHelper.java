@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.common.util;
 
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.TaczFixesMod;
+import com.tacz.guns.api.item.IGun;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -58,17 +59,40 @@ public class GunEnchantmentHelper {
     }
 
     public static int getLevelFromShooter(@Nullable LivingEntity shooter, Enchantment enchantment) {
-        if (shooter == null) {
-            return 0;
-        }
-        return getLevel(shooter.getMainHandItem(), enchantment);
+        return getLevel(getGunStack(shooter), enchantment);
     }
 
+    /** 当前开火/近战所使用的手枪械: 副手处理上下文中用副手枪, 否则用主手枪。 */
     public static ItemStack getGunStack(@Nullable LivingEntity shooter) {
         if (shooter == null) {
             return ItemStack.EMPTY;
         }
+        ItemStack offhand = OffhandShooterManager.getActiveOffhandGunStack(shooter);
+        if (!offhand.isEmpty()) {
+            return offhand;
+        }
         return shooter.getMainHandItem();
+    }
+
+    /** 按子弹所属枪械 id 选取对应手的枪械(主手/副手), 找不到时回退到 getGunStack(shooter)。 */
+    public static ItemStack getGunStack(@Nullable ResourceLocation gunId, @Nullable LivingEntity shooter) {
+        if (gunId != null && shooter != null) {
+            ItemStack offhand = shooter.getOffhandItem();
+            IGun offhandGun = IGun.getIGunOrNull(offhand);
+            if (offhandGun != null && gunId.equals(offhandGun.getGunId(offhand))) {
+                return offhand;
+            }
+            ItemStack main = shooter.getMainHandItem();
+            IGun mainGun = IGun.getIGunOrNull(main);
+            if (mainGun != null && gunId.equals(mainGun.getGunId(main))) {
+                return main;
+            }
+        }
+        return getGunStack(shooter);
+    }
+
+    public static int getLevelFromShooter(@Nullable ResourceLocation gunId, @Nullable LivingEntity shooter, Enchantment enchantment) {
+        return getLevel(getGunStack(gunId, shooter), enchantment);
     }
 
     public static boolean isWhitelistKey(String key) {

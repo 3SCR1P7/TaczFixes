@@ -165,6 +165,18 @@ public final class OffhandShooterManager {
         return dataHolder != null && OFFHAND_DATA.contains(dataHolder);
     }
 
+    /** 当前线程若正处于该实体的副手处理上下文, 返回其副手枪械; 否则返回空。 */
+    public static ItemStack getActiveOffhandGunStack(LivingEntity entity) {
+        if (entity == null) {
+            return ItemStack.EMPTY;
+        }
+        ShooterDataHolder active = getActiveData();
+        if (active == null || !isCurrentOffhandContext(entity, active)) {
+            return ItemStack.EMPTY;
+        }
+        return entity.getOffhandItem();
+    }
+
     public static void registerExternalContext(LivingEntity entity, ShooterDataHolder dataHolder) {
         if (entity == null || dataHolder == null) {
             return;

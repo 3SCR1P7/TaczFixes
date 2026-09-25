@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.mixin;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesData;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.tooltip.ClientAttachmentItemTooltip;
 import com.tacz.guns.resource.pojo.data.attachment.Modifier;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -48,6 +49,10 @@ public class MixinClientAttachmentItemTooltip {
         appendIncreaseIsBad(data.manual_action_time, "taczfixes.tooltip.manual_action_time");
         appendIncreaseIsBad(data.jump_inaccuracy == null ? null : data.jump_inaccuracy.multiplier,
                 "taczfixes.tooltip.jump_inaccuracy");
+        appendIncreaseIsBad(data.stamina == null ? null : data.stamina.consumption_multiplier,
+                "taczfixes.tooltip.stamina_consumption");
+        appendIncreaseIsGood(data.stamina == null ? null : data.stamina.recovery_multiplier,
+                "taczfixes.tooltip.stamina_recovery");
         appendIncreaseIsGood(data.ammo_amount, "taczfixes.tooltip.ammo_amount");
         appendIncreaseIsGood(data.limb_factor, "taczfixes.tooltip.limb_factor");
         appendFireModes(data.fire_mode_enable, "taczfixes.tooltip.fire_mode_enable", GOOD);
@@ -56,6 +61,36 @@ public class MixinClientAttachmentItemTooltip {
             components.add(Component.literal(data.refit_point_consume + " ").withStyle(YELLOW)
                     .append(Component.translatable("taczfixes.tooltip.refit_point_consume").withStyle(YELLOW)));
         }
+    }
+
+    /**
+     * 扩容弹匣 4 级及以上: 原版只显示 1-3 级, 这里以金色补上"弹药容量 N"一行。
+     * 注入在原版等级文本之后、修饰符列表之前, 保证和 1-3 级同位置。
+     */
+    @Inject(method = "lambda$addText$6", at = @At(value = "INVOKE", target = "Ljava/util/Map;forEach(Ljava/util/function/BiConsumer;)V"), remap = false)
+    private void taczfixes$appendExtendedMagLevelLine(AttachmentType type, ClientAttachmentIndex index, CallbackInfo ci) {
+        if (type != AttachmentType.EXTENDED_MAG) return;
+        int level = index.getData().getExtendedMagLevel();
+        if (level < 4) return;
+        components.add(Component.translatable("taczfixes.tooltip.extended_mag_level", roman(level))
+                .withStyle(ChatFormatting.GOLD));
+    }
+
+    private static String roman(int value) {
+        if (value <= 0) {
+            return String.valueOf(value);
+        }
+        int[] values = {1000, 900, 500, 400, 100, 90, 50, 40, 10, 9, 5, 4, 1};
+        String[] symbols = {"M", "CM", "D", "CD", "C", "XC", "L", "XL", "X", "IX", "V", "IV", "I"};
+        StringBuilder sb = new StringBuilder();
+        int remaining = value;
+        for (int i = 0; i < values.length && remaining > 0; i++) {
+            while (remaining >= values[i]) {
+                sb.append(symbols[i]);
+                remaining -= values[i];
+            }
+        }
+        return sb.toString();
     }
 
     /** 数值增大为负面: 增大显示红色(+), 减小显示绿色(-)。 */

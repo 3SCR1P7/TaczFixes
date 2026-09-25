@@ -27,6 +27,7 @@ public class ConfigScreen {
         buildRicochet(builder.getOrCreateCategory(cat("ricochet")), entry);
         buildRecoilKnockback(builder.getOrCreateCategory(cat("recoil_knockback")), entry);
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
+        buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
         buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
         buildRefitScreen(builder.getOrCreateCategory(cat("refitscreen")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
@@ -189,6 +190,14 @@ public class ConfigScreen {
         dbl_(cat, entry, "recoil_knockback.multiplier", Config.RECOIL_KNOCKBACK_MULTIPLIER);
         dbl_(cat, entry, "recoil_knockback.sneak_multiplier", Config.RECOIL_KNOCKBACK_SNEAK_MULTIPLIER);
         dbl_(cat, entry, "recoil_knockback.semi_factor", Config.RECOIL_KNOCKBACK_SEMI_FACTOR);
+    }
+
+    private static void buildGunSpell(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "gun_spell.enabled", Config.GUN_SPELL_ENABLED);
+        int_(cat, entry, "gun_spell.count", Config.GUN_SPELL_COUNT);
+        dbl_(cat, entry, "gun_spell.cooldown", Config.GUN_SPELL_COOLDOWN);
+        dbl_(cat, entry, "gun_spell.mana_consume_multiplier", Config.GUN_SPELL_MANA_MULTIPLIER);
+        dbl_(cat, entry, "gun_spell.cooldown_multiplier", Config.GUN_SPELL_COOLDOWN_MULTIPLIER);
     }
 
     private static void buildGunLight(ConfigCategory cat, ConfigEntryBuilder entry) {
