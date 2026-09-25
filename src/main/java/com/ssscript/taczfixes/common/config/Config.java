@@ -9,7 +9,9 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
-    private static final ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+    private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
+    /** 每个顶层段落一个配置文件, 值为该段落的 spec。 */
+    public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_STANDING;
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_SNEAKING;
     public static final ForgeConfigSpec.DoubleValue LIMB_FACTOR_DEFAULT;
@@ -281,6 +283,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_MELEE_SWITCH_PERCENT;
 
     static {
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("gun_level");
         GUN_LEVEL_MAX_LEVEL = BUILDER
                 .comment("枪械的等级上限。默认值：500")
@@ -301,7 +304,9 @@ public class Config {
                 .comment("铁砧使用附魔之瓶消耗的玩家经验等级。默认值：1")
                 .defineInRange("bottle_cost", 1, 0, 100);
         BUILDER.pop();
+        SPECS.put("gun_level", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("limb_damage_multiplier");
 
         BUILDER.push("player");
@@ -357,7 +362,9 @@ public class Config {
         BUILDER.pop();
 
         BUILDER.pop();
+        SPECS.put("limb_damage_multiplier", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("recoil_modifier");
         RECOIL_FIRE_RATE_REDUCTION_ENABLED = BUILDER
                 .comment("是否启用首发后坐力倍率。默认值：false")
@@ -382,7 +389,9 @@ public class Config {
                         "Example: [\"rfp:m2hb\", \"rfp:dshkm\"]")
                 .defineList("disabled_guns", List.of("rfp:m2hb", "rfp:dshkm"), it -> it instanceof String);
         BUILDER.pop();
+        SPECS.put("recoil_modifier", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("inaccuracy_modifier");
         SPREAD_RAMP_ENABLED = BUILDER
                 .comment("是否启用连射惩罚。默认值：false")
@@ -409,7 +418,9 @@ public class Config {
                 .comment("枪械data未配置 jump_inaccuracy 时默认的每tick涨落速度。默认值：0.1")
                 .defineInRange("jump_default_speed", 0.1, 0.0001, 1.0);
         BUILDER.pop();
+        SPECS.put("inaccuracy_modifier", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("bullet_ricochet");
         BULLET_RICOCHET_ENABLE = BUILDER
                 .comment("是否启用跳弹。默认值：true")
@@ -447,7 +458,9 @@ public class Config {
                 .comment("是否允许子弹在命中方块顶面或底面时发生跳弹。默认值：false")
                 .define("top_bottom_enable", false);
         BUILDER.pop();
+        SPECS.put("bullet_ricochet", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("recoil_knockback");
         RECOIL_KNOCKBACK_ENABLED = BUILDER
                 .comment("是否启用开火击退。默认值：false")
@@ -462,11 +475,13 @@ public class Config {
                 .comment("半自动模式的开火击退力度倍率。默认值：4")
                 .defineInRange("semi_factor", 4.0, 1.0, 10.0);
         BUILDER.pop();
+        SPECS.put("recoil_knockback", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("gun_light");
         GUN_LIGHT_MAX_LIGHTS = BUILDER
-                .comment("枪械动态光照的最大同时存在光源数量。默认值：2048")
-                .defineInRange("max_lights", 2048, 1, 4096);
+                .comment("枪械动态光照的最大同时存在光源数量。默认值：1024")
+                .defineInRange("max_lights", 1024, 1, 16384);
         GUN_LIGHT_DISABLED_GUNS = BUILDER
                 .comment("禁用动态光照的枪械列表（黑名单），优先级高于 data 与全局配置。",
                         "Example: [\"tacz:ak47\"]")
@@ -483,7 +498,9 @@ public class Config {
         }
 
         BUILDER.pop();
+        SPECS.put("gun_light", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("gun_spell");
         GUN_SPELL_ENABLED = BUILDER
                 .comment("是否允许通过奥术铁砧为枪械注入 Iron's Spells 'n Spellbooks 的法术。",
@@ -503,42 +520,14 @@ public class Config {
                 .comment("枪械注入法术的自身冷却时间倍率(不影响最小触发冷却), 也受枪械 data 的 imbuement.cooldown_multiplier 覆盖。默认值：0.5")
                 .defineInRange("cooldown_multiplier", 0.5, 0.0, 100.0);
         BUILDER.pop();
+        SPECS.put("gun_spell", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("misc");
 
         PREVENT_SHOOTING_UNDERWATER = BUILDER
                 .comment("是否阻止水下开火。默认值：true")
                 .define("prevent_shooting_underwater", true);
-
-        BUILDER.push("blocking");
-        BLOCKING_ENABLE = BUILDER
-                .comment("是否启用方块阻挡开火。默认值：false")
-                .define("enable", false);
-        BLOCKING_DISTANCE_MAX = BUILDER
-                .comment("前方多少格内有方块或实体时开始启用阻挡。默认值：0.5")
-                .defineInRange("distance_max", 0.5, 0.01, 10.0);
-        BLOCKING_DISTANCE_MIN = BUILDER
-                .comment("与前方方块的距离小于等于此数值时，旋转角度/后退为最大值。默认值：0.25")
-                .defineInRange("distance_min", 0.25, 0.0, 10.0);
-        BLOCKING_ANGLE = BUILDER
-                .comment("旋转角度最大值。默认值：60")
-                .defineInRange("angle", 60.0, -360.0, 360.0);
-        BLOCKING_BACK_OFF = BUILDER
-                .comment("后退格数最大值。默认值：0.25")
-                .defineInRange("back_off", 0.25, 0.0, 10.0);
-        BLOCKING_DEFLECTION = BUILDER
-                .comment("子弹发射位置偏移倍率。默认值：1.0")
-                .defineInRange("deflection", 1.0, 0.0, 100.0);
-        BLOCKING_DISABLE_FIRE = BUILDER
-                .comment("到障碍距离小于此值时禁止开火。默认值：0")
-                .defineInRange("disable_fire", 0.0, 0.0, 10.0);
-        BLOCKING_FACING = BUILDER
-                .comment("非双持时的偏转方向。默认值：180")
-                .defineInRange("facing", 180.0, -360.0, 360.0);
-        BLOCKING_FACING_DUAL_WIELD = BUILDER
-                .comment("双持时的偏转方向。默认值：90")
-                .defineInRange("facing_dual_wield", 90.0, -360.0, 360.0);
-        BUILDER.pop();
 
         BUILDER.push("stepless_zoom");
         STEPLESS_ZOOM_ENABLED = BUILDER
@@ -601,7 +590,9 @@ public class Config {
         BUILDER.pop();
 
         BUILDER.pop();
+        SPECS.put("misc", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("refit");
 
         HIDE_UNAVAILABLE_DEFAULT_SLOTS = BUILDER
@@ -651,7 +642,41 @@ public class Config {
                 .defineInRange("point_default_consume", 0, 0, 100);
 
         BUILDER.pop();
+        SPECS.put("refit", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER.push("blocking");
+        BLOCKING_ENABLE = BUILDER
+                .comment("是否启用方块阻挡开火。默认值：false")
+                .define("enable", false);
+        BLOCKING_DISTANCE_MAX = BUILDER
+                .comment("前方多少格内有方块或实体时开始启用阻挡。默认值：0.6")
+                .defineInRange("distance_max", 0.6, 0.0, 10.0);
+        BLOCKING_DISTANCE_MIN = BUILDER
+                .comment("与前方方块的距离小于等于此数值时，旋转角度/后退为最大值。默认值：0.3")
+                .defineInRange("distance_min", 0.3, 0.0, 10.0);
+        BLOCKING_ANGLE = BUILDER
+                .comment("旋转角度最大值。默认值：75.0")
+                .defineInRange("angle", 75.0, -360.0, 360.0);
+        BLOCKING_BACK_OFF = BUILDER
+                .comment("后退格数最大值。默认值：0.125")
+                .defineInRange("back_off", 0.125, 0.0, 10.0);
+        BLOCKING_DEFLECTION = BUILDER
+                .comment("子弹发射位置偏移倍率。默认值：1.75")
+                .defineInRange("deflection", 1.75, 0.0, 100.0);
+        BLOCKING_DISABLE_FIRE = BUILDER
+                .comment("到障碍距离小于此值时禁止开火。默认值：0.35")
+                .defineInRange("disable_fire", 0.35, 0.0, 10.0);
+        BLOCKING_FACING = BUILDER
+                .comment("非双持时的偏转方向。默认值：180")
+                .defineInRange("facing", 180.0, -360.0, 360.0);
+        BLOCKING_FACING_DUAL_WIELD = BUILDER
+                .comment("双持时的偏转方向。默认值：90")
+                .defineInRange("facing_dual_wield", 90.0, -360.0, 360.0);
+        BUILDER.pop();
+        SPECS.put("blocking", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("compat");
         DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
@@ -677,7 +702,9 @@ public class Config {
                         "需要TaCZ Tweaks模组。")
                 .define("prevent_sprint_reengage_when_tilt", true);
         BUILDER.pop();
+        SPECS.put("compat", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("gun_enchantment");
         GUN_ENCHANTMENT_ENABLED = BUILDER
                 .comment("是否启用枪械附魔。默认值：true")
@@ -1166,7 +1193,10 @@ public class Config {
                 .comment("耐心：经验等级乘数。默认值：2")
                 .defineInRange("patience_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
+        BUILDER.pop();
+        SPECS.put("gun_enchantment", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("aiming_stamina");
         AIMING_STAMINA_ENABLED = BUILDER
                 .comment("是否启用上肢耐力系统。默认值：true")
@@ -1234,7 +1264,9 @@ public class Config {
                 .comment("上肢耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
         BUILDER.pop();
+        SPECS.put("aiming_stamina", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("stamina");
         STAMINA_ENABLED = BUILDER
                 .comment("是否启用耐力系统。默认值：false")
@@ -1279,7 +1311,9 @@ public class Config {
                 .comment("耐力条显示模式。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
         BUILDER.pop();
+        SPECS.put("stamina", BUILDER.build());
 
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("dual_wield");
         DUAL_WIELD_ALLOW_OTHER_GUN_TYPES = BUILDER
                 .comment("是否允许所有枪械双持。默认值：false")
@@ -1322,6 +1356,7 @@ public class Config {
                 .comment("一把枪的近战冷却进行到该比例后, 另一只手的枪就可以近战。默认值：0.7")
                 .defineInRange("meleeSwitchPercent", 0.7, 0.0, 1.0);
         BUILDER.pop();
+        SPECS.put("dual_wield", BUILDER.build());
     }
 
     /** 某种枪械类型的全局光照值(data 中未配置 light 的该类型枪械使用; time 为 0 表示该类不发光)。 */
@@ -1383,5 +1418,10 @@ public class Config {
         }
     }
 
-    public static final ForgeConfigSpec SPEC = BUILDER.build();
+    /** Save all per-section config files. */
+    public static void saveAll() {
+        for (ForgeConfigSpec spec : SPECS.values()) {
+            spec.save();
+        }
+    }
 }

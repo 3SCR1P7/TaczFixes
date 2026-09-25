@@ -17,7 +17,7 @@ public class ConfigScreen {
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(Component.translatable("config.taczfixes.title"))
-                .setSavingRunnable(() -> Config.SPEC.save());
+                .setSavingRunnable(Config::saveAll);
         ConfigEntryBuilder entry = builder.entryBuilder();
 
         buildGunLevel(builder.getOrCreateCategory(cat("gun_level")), entry);
@@ -29,6 +29,7 @@ public class ConfigScreen {
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
         buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
         buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
+        buildBlocking(builder.getOrCreateCategory(cat("blocking")), entry);
         buildRefit(builder.getOrCreateCategory(cat("refit")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
         buildEnchantment(builder.getOrCreateCategory(cat("enchantment")), entry);
@@ -243,18 +244,6 @@ public class ConfigScreen {
         bool_(underwater, entry, "misc.prevent_shooting_underwater", Config.PREVENT_SHOOTING_UNDERWATER);
         cat.addEntry(entry.startSubCategory(cat("underwater"), underwater).build());
 
-        List<AbstractConfigListEntry> blocking = new ArrayList<>();
-        bool_(blocking, entry, "misc.blocking_enable", Config.BLOCKING_ENABLE);
-        dbl_(blocking, entry, "misc.blocking_distance_max", Config.BLOCKING_DISTANCE_MAX);
-        dbl_(blocking, entry, "misc.blocking_distance_min", Config.BLOCKING_DISTANCE_MIN);
-        dbl_(blocking, entry, "misc.blocking_angle", Config.BLOCKING_ANGLE);
-        dbl_(blocking, entry, "misc.blocking_back_off", Config.BLOCKING_BACK_OFF);
-        dbl_(blocking, entry, "misc.blocking_deflection", Config.BLOCKING_DEFLECTION);
-        dbl_(blocking, entry, "misc.blocking_disable_fire", Config.BLOCKING_DISABLE_FIRE);
-        dbl_(blocking, entry, "misc.blocking_facing", Config.BLOCKING_FACING);
-        dbl_(blocking, entry, "misc.blocking_facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);
-        cat.addEntry(entry.startSubCategory(cat("blocking"), blocking).build());
-
         List<AbstractConfigListEntry> burst = new ArrayList<>();
         lst_(burst, entry, "misc.burst_block_attachments", Config.BURST_BLOCK_ATTACHMENTS);
         cat.addEntry(entry.startSubCategory(cat("burst"), burst).build());
@@ -281,6 +270,18 @@ public class ConfigScreen {
         bool_(debug, entry, "misc.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(debug, entry, "misc.disable_third_person", Config.DISABLE_THIRD_PERSON);
         cat.addEntry(entry.startSubCategory(cat("debug"), debug).build());
+    }
+
+    private static void buildBlocking(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "blocking.enable", Config.BLOCKING_ENABLE);
+        dbl_(cat, entry, "blocking.distance_max", Config.BLOCKING_DISTANCE_MAX);
+        dbl_(cat, entry, "blocking.distance_min", Config.BLOCKING_DISTANCE_MIN);
+        dbl_(cat, entry, "blocking.angle", Config.BLOCKING_ANGLE);
+        dbl_(cat, entry, "blocking.back_off", Config.BLOCKING_BACK_OFF);
+        dbl_(cat, entry, "blocking.deflection", Config.BLOCKING_DEFLECTION);
+        dbl_(cat, entry, "blocking.disable_fire", Config.BLOCKING_DISABLE_FIRE);
+        dbl_(cat, entry, "blocking.facing", Config.BLOCKING_FACING);
+        dbl_(cat, entry, "blocking.facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);
     }
 
     private static void buildRefit(ConfigCategory cat, ConfigEntryBuilder entry) {

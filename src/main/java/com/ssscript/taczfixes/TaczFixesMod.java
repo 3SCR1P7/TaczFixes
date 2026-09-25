@@ -135,7 +135,10 @@ public class TaczFixesMod {
             ENCHANTMENTS.register("patience", PatienceEnchantment::new);
 
     public TaczFixesMod() {
-        ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, Config.SPEC);
+        for (java.util.Map.Entry<String, net.minecraftforge.common.ForgeConfigSpec> entry : Config.SPECS.entrySet()) {
+            ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, entry.getValue(),
+                    "taczfixes/" + entry.getKey() + ".toml");
+        }
         
         MinecraftForge.EVENT_BUS.register(new LimbDamageHandler());
         MinecraftForge.EVENT_BUS.register(new SpreadRampHandler());

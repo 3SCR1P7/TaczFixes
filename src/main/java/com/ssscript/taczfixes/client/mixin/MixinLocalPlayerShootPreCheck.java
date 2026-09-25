@@ -24,30 +24,6 @@ public class MixinLocalPlayerShootPreCheck {
     private LocalPlayer player;
 
     @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
-    private void taczfixes$blockUnderwater(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
-                                           ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
-                                           boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
-        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, mainHandItem)) {
-            if (playDrySound) {
-                SoundPlayManager.playDryFireSound(player, display);
-            }
-            cir.setReturnValue(ShootResult.NO_AMMO);
-        }
-    }
-
-    @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
-    private void taczfixes$blockTooClose(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
-                                         ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
-                                         boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
-        if (com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(player, mainHandItem)) {
-            if (playDrySound) {
-                SoundPlayManager.playDryFireSound(player, display);
-            }
-            cir.setReturnValue(ShootResult.NO_AMMO);
-        }
-    }
-
-    @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
     private void taczfixes$blockLowAimingStamina(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
                                                  ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
                                                  boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
@@ -59,10 +35,49 @@ public class MixinLocalPlayerShootPreCheck {
         }
     }
 
-    @Inject(method = "preCheck", at = @At("HEAD"), cancellable = true, remap = false, require = 0)
+    /** 连发配件限制: 先于其它 dry_fire 判定, 被其拦截时不播放 dry_fire。 */
+    @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
+    private void onPreCheckTail(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        if (cir.getReturnValue() != null) return;
+        if (iGun.getFireMode(mainHandItem) != FireMode.BURST) return;
+        if (!BurstBlockHelper.hasRestrictedAttachment(iGun, mainHandItem)) return;
+        cir.setReturnValue(ShootResult.NO_AMMO);
+    }
+
+    /** 仅当没有其它拦截原因(换弹/拉栓/冷却等)时才播放 dry_fire。 */
+    @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
+    private void taczfixes$blockUnderwater(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                           ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                           boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        if (cir.getReturnValue() != null) return;
+        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, mainHandItem)) {
+            if (playDrySound) {
+                SoundPlayManager.playDryFireSound(player, display);
+            }
+            cir.setReturnValue(ShootResult.NO_AMMO);
+        }
+    }
+
+    @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
+    private void taczfixes$blockTooClose(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                         ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                         boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        if (cir.getReturnValue() != null) return;
+        if (com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(player, mainHandItem)) {
+            if (playDrySound) {
+                SoundPlayManager.playDryFireSound(player, display);
+            }
+            cir.setReturnValue(ShootResult.NO_AMMO);
+        }
+    }
+
+    @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
     private void taczfixes$blockLowCharge(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
                                           ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
                                           boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        if (cir.getReturnValue() != null) return;
         com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig chargeCfg =
                 com.ssscript.taczfixes.common.util.ChargeStorage.config(mainHandItem);
         if (chargeCfg == null || !Boolean.TRUE.equals(chargeCfg.blocking_fire)
@@ -78,18 +93,5 @@ public class MixinLocalPlayerShootPreCheck {
             }
             cir.setReturnValue(ShootResult.NO_AMMO);
         }
-    }
-
-    @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
-    private void onPreCheckTail(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
-                                ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
-                                boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
-        if (cir.getReturnValue() != null) return;
-        if (iGun.getFireMode(mainHandItem) != FireMode.BURST) return;
-        if (!BurstBlockHelper.hasRestrictedAttachment(iGun, mainHandItem)) return;
-        if (playDrySound) {
-            SoundPlayManager.playDryFireSound(player, display);
-        }
-        cir.setReturnValue(ShootResult.NO_AMMO);
     }
 }

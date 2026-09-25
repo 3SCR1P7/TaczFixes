@@ -47,7 +47,12 @@ public abstract class MixinDualFirstPersonRendererParticles {
         if (model == null) {
             return;
         }
+        boolean pushed = com.ssscript.taczfixes.client.util.BlockingModelTransform.apply(
+                poseStack, model, stack, player, true);
         MuzzleParticleManager.spawnAndBind(FirstPersonRenderHandler.getParticleSystem(), poseStack, model, InteractionHand.OFF_HAND, null);
+        if (pushed) {
+            poseStack.popPose();
+        }
     }
 
     @Inject(method = {"renderOffhand"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;II)V", shift = At.Shift.AFTER, remap = false)}, remap = false)
@@ -59,6 +64,7 @@ public abstract class MixinDualFirstPersonRendererParticles {
         if (basePose == null) {
             return;
         }
+        // 相对变换在 spawnAndBind 时已包含 blocking; 这里不能再叠加, 否则枪火会偏移
         poseStack.pushPose();
         try {
             poseStack.last().pose().set(basePose);

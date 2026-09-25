@@ -119,6 +119,112 @@ public abstract class MixinGunItemRendererWrapper {
         }
     }
 
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean taczfixes$blockingMuzzlePushed;
+
+    /** blocking 时枪口位置缓存也要跟着模型一起旋转/后退, 否则新枪口火光粒子位置不对。 */
+    @Inject(method = {"cacheMuzzlePosition"}, at = {@At("HEAD")}, remap = false)
+    private static void taczfixes$pushBlockingMuzzle(PoseStack poseStack, BedrockGunModel model, CallbackInfo callback) {
+        taczfixes$blockingMuzzlePushed = false;
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || model == null) {
+            return;
+        }
+        ItemStack main = player.getMainHandItem();
+        ItemStack offhand = player.getOffhandItem();
+        ItemStack target = null;
+        boolean forceDual = false;
+        if (taczfixes$modelMatches(main, model)) {
+            target = main;
+        } else if (taczfixes$modelMatches(offhand, model)) {
+            target = offhand;
+            forceDual = true;
+        }
+        if (target == null) {
+            return;
+        }
+        if (com.ssscript.taczfixes.client.util.BlockingModelTransform.apply(poseStack, model, target, player, forceDual)) {
+            taczfixes$blockingMuzzlePushed = true;
+        }
+    }
+
+    @Inject(method = {"cacheMuzzlePosition"}, at = {@At("RETURN")}, remap = false)
+    private static void taczfixes$popBlockingMuzzle(PoseStack poseStack, BedrockGunModel model, CallbackInfo callback) {
+        if (taczfixes$blockingMuzzlePushed) {
+            poseStack.popPose();
+            taczfixes$blockingMuzzlePushed = false;
+        }
+    }
+
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean taczfixes$modelMatches(ItemStack stack, BedrockGunModel model) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        return com.tacz.guns.api.TimelessAPI.getGunDisplay(stack)
+                .map(display -> display.getGunModel() == model)
+                .orElse(false);
+    }
+
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean taczfixes$blockingParticlePushed;
+
+    /** blocking 时枪口粒子生成位置也要跟着模型旋转/后退。 */
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/particle/MuzzleParticleManager;spawnAndBind(Lcom/github/mcmodderanchor/simplebedrockmodel/v1/particle/firstperson/FirstPersonParticleSystem;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/tacz/guns/client/model/BedrockGunModel;Lnet/minecraft/world/InteractionHand;Ljava/util/List;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)
+    private void taczfixes$pushBlockingParticle(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+        taczfixes$blockingParticlePushed = false;
+        if (player == null || stack == null || poseStack == null || display == null) {
+            return;
+        }
+        boolean forceDual = context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+        if (com.ssscript.taczfixes.client.util.BlockingModelTransform.apply(
+                poseStack, display.getGunModel(), stack, player, forceDual)) {
+            taczfixes$blockingParticlePushed = true;
+        }
+    }
+
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/particle/MuzzleParticleManager;spawnAndBind(Lcom/github/mcmodderanchor/simplebedrockmodel/v1/particle/firstperson/FirstPersonParticleSystem;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/tacz/guns/client/model/BedrockGunModel;Lnet/minecraft/world/InteractionHand;Ljava/util/List;)V", shift = At.Shift.AFTER, remap = false)}, require = 0, remap = false)
+    private void taczfixes$popBlockingParticle(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+        if (taczfixes$blockingParticlePushed) {
+            poseStack.popPose();
+            taczfixes$blockingParticlePushed = false;
+        }
+    }
+
+    @org.spongepowered.asm.mixin.Unique
+    private static boolean taczfixes$blockingEmitterBasePushed;
+
+    /** blocking 时粒子发射器基准姿态也要跟随模型变换, 否则粒子位置不变。 */
+    @Inject(method = {"updateParticleEmitterTransforms"}, at = {@At("HEAD")}, remap = false)
+    private void taczfixes$pushBlockingEmitterBase(com.github.mcmodderanchor.simplebedrockmodel.v1.particle.firstperson.FirstPersonParticleSystem system, PoseStack poseStack, net.minecraft.world.InteractionHand hand, CallbackInfo callback) {
+        taczfixes$blockingEmitterBasePushed = false;
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || poseStack == null || hand == null) {
+            return;
+        }
+        boolean offhand = hand == net.minecraft.world.InteractionHand.OFF_HAND;
+        ItemStack stack = offhand ? player.getOffhandItem() : player.getMainHandItem();
+        if (stack == null || stack.isEmpty()) {
+            return;
+        }
+        BedrockGunModel model = com.tacz.guns.api.TimelessAPI.getGunDisplay(stack)
+                .map(display -> display.getGunModel()).orElse(null);
+        if (model == null) {
+            return;
+        }
+        if (com.ssscript.taczfixes.client.util.BlockingModelTransform.apply(poseStack, model, stack, player, offhand)) {
+            taczfixes$blockingEmitterBasePushed = true;
+        }
+    }
+
+    @Inject(method = {"updateParticleEmitterTransforms"}, at = {@At("RETURN")}, remap = false)
+    private void taczfixes$popBlockingEmitterBase(com.github.mcmodderanchor.simplebedrockmodel.v1.particle.firstperson.FirstPersonParticleSystem system, PoseStack poseStack, net.minecraft.world.InteractionHand hand, CallbackInfo callback) {
+        if (taczfixes$blockingEmitterBasePushed) {
+            poseStack.popPose();
+            taczfixes$blockingEmitterBasePushed = false;
+        }
+    }
+
     /** 双持换弹: 丢枪动画结束到掏枪动画开始之间只跳过主手枪械模型渲染, 其余流程照常。 */
     @WrapOperation(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", remap = false)}, require = 0, remap = false)
     private void dualWield$hideMainGunWhileReloading(BedrockGunModel model, PoseStack poseStack, ItemStack stack, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, MultiBufferSource.BufferSource bufferSource, Operation<Void> original) {
