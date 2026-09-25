@@ -20,9 +20,10 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
- * 瞄具视图切换时的世界层(镜外) FOV 过渡:
+ * 瞄具视图切换时的世界层(镜外) FOV 过渡, 仅在镜内放大状态发生变化时生效:
  * - sight→scope(切到有镜内放大的视图): 保持切换前显示值 200ms, 再缓动到游戏自身数值(沿用原逻辑);
- * - scope→sight(切到无镜内放大的视图): 切换瞬间算出目标 FOV, 直接从切换前显示值缓动到该目标。
+ * - scope→sight(切到无镜内放大的视图): 切换瞬间算出目标 FOV, 直接从切换前显示值缓动到该目标;
+ * - scope→scope / sight→sight: 不干预世界层 FOV, 交给原生/Arcana 逻辑。
  */
 public class ScopeFovTransitionHandler {
 
@@ -36,6 +37,7 @@ public class ScopeFovTransitionHandler {
     private static boolean worldFovCallPending;
     private static double rawBaseFov = -1.0;
     private static String lastKey = "";
+    private static boolean lastMagnified;
     private static Phase phase = Phase.NONE;
     private static long phaseStart;
     private static double transitionFrom;
@@ -85,15 +87,23 @@ public class ScopeFovTransitionHandler {
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         boolean aiming = operator != null && operator.isAim();
         if (key == null || !aiming) {
-            reset(key);
+            reset(key, player);
             return;
         }
         double live = event.getFOV();
         long now = System.currentTimeMillis();
         if (!key.equals(lastKey)) {
+            boolean magnified = magnificationActive(player);
             lastKey = key;
+            // scope→scope / sight→sight: 镜内放大状态未变化, 不触发本模组的镜外 FOV 平滑
+            if (magnified == lastMagnified) {
+                phase = Phase.NONE;
+                lastOutput = live;
+                return;
+            }
+            lastMagnified = magnified;
             transitionFrom = lastOutput > 0.0 ? lastOutput : live;
-            if (magnificationActive(player)) {
+            if (magnified) {
                 phase = Phase.HOLD;
                 phaseStart = now;
                 easeTo = -1.0;
@@ -222,10 +232,11 @@ public class ScopeFovTransitionHandler {
     }
 
     /** 未开镜时静默同步当前视图, 避免开镜首帧被误判为切换。 */
-    private static void reset(String key) {
+    private static void reset(String key, LocalPlayer player) {
         if (key != null) {
             lastKey = key;
         }
+        lastMagnified = key != null && magnificationActive(player);
         phase = Phase.NONE;
         lastOutput = -1.0;
         easeTo = -1.0;

@@ -50,9 +50,10 @@ public class ClientMessageUnloadCustomSlot {
         if (def == null) return;
 
         ItemStack removed = CustomSlotStorage.unload(gunStack, message.slotId);
-        if (removed.isEmpty()) return;
         CustomSlotManager.cascadeUnloadDependents(player, gunStack);
-        if (!LiberateCompat.isLiberated(player)) {
+        if (!removed.isEmpty() && !LiberateCompat.isLiberated(player)
+                && !com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player)
+                && !com.tacz.guns.util.VirtualOemAttachment.isMarked(removed)) {
             if (!player.getInventory().add(removed)) {
                 player.drop(removed, false);
             }

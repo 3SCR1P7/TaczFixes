@@ -32,9 +32,9 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
     public static final ForgeConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
-    public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_VIEW_BUTTON;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
+    public static final ForgeConfigSpec.DoubleValue REFIT_SLOT_SIZE;
     public static final ForgeConfigSpec.BooleanValue SPREAD_RAMP_ENABLED;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_FLAT_INCREMENT;
@@ -45,6 +45,17 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
     public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
     public static final ForgeConfigSpec.BooleanValue PREVENT_SHOOTING_UNDERWATER;
+    public static final ForgeConfigSpec.BooleanValue HIDE_UNAVAILABLE_DEFAULT_SLOTS;
+    public static final ForgeConfigSpec.EnumValue<VirtualAttachmentsMode> VIRTUAL_ATTACHMENTS;
+    public static final ForgeConfigSpec.BooleanValue BLOCKING_ENABLE;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MAX;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MIN;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_ANGLE;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_BACK_OFF;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_DEFLECTION;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISABLE_FIRE;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_DUAL_WIELD;
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
     /** 枪械类型（tacz 枪械 data 的 type 字段）名称, 与 GunTabType 一致。 */
@@ -496,9 +507,38 @@ public class Config {
         BUILDER.push("misc");
 
         PREVENT_SHOOTING_UNDERWATER = BUILDER
-                .comment("是否阻止水下开火: 玩家眼部浸入水中时无法开火, 只会发出 dry_fire 音效。",
-                        "枪械 data 的 taczfixes.allow_shooting_underwater 可逐枪覆盖: true 强制允许, false 强制禁止, 不填则跟随此配置。默认值：true")
+                .comment("是否阻止水下开火。默认值：true")
                 .define("prevent_shooting_underwater", true);
+
+        BUILDER.push("blocking");
+        BLOCKING_ENABLE = BUILDER
+                .comment("是否启用方块阻挡开火。默认值：false")
+                .define("enable", false);
+        BLOCKING_DISTANCE_MAX = BUILDER
+                .comment("前方多少格内有方块或实体时开始启用阻挡。默认值：0.5")
+                .defineInRange("distance_max", 0.5, 0.01, 10.0);
+        BLOCKING_DISTANCE_MIN = BUILDER
+                .comment("与前方方块的距离小于等于此数值时，旋转角度/后退为最大值。默认值：0.25")
+                .defineInRange("distance_min", 0.25, 0.0, 10.0);
+        BLOCKING_ANGLE = BUILDER
+                .comment("旋转角度最大值。默认值：60")
+                .defineInRange("angle", 60.0, -360.0, 360.0);
+        BLOCKING_BACK_OFF = BUILDER
+                .comment("后退格数最大值。默认值：0.25")
+                .defineInRange("back_off", 0.25, 0.0, 10.0);
+        BLOCKING_DEFLECTION = BUILDER
+                .comment("子弹发射位置偏移倍率。默认值：1.0")
+                .defineInRange("deflection", 1.0, 0.0, 100.0);
+        BLOCKING_DISABLE_FIRE = BUILDER
+                .comment("到障碍距离小于此值时禁止开火。默认值：0")
+                .defineInRange("disable_fire", 0.0, 0.0, 10.0);
+        BLOCKING_FACING = BUILDER
+                .comment("非双持时的偏转方向。默认值：180")
+                .defineInRange("facing", 180.0, -360.0, 360.0);
+        BLOCKING_FACING_DUAL_WIELD = BUILDER
+                .comment("双持时的偏转方向。默认值：90")
+                .defineInRange("facing_dual_wield", 90.0, -360.0, 360.0);
+        BUILDER.pop();
 
         BUILDER.push("stepless_zoom");
         STEPLESS_ZOOM_ENABLED = BUILDER
@@ -510,36 +550,6 @@ public class Config {
         STEPLESS_ZOOM_ALT_MULTIPLIER = BUILDER
                 .comment("按住 Alt 滚动滚轮时，倍率调整速度的倍率。默认值：0.25")
                 .defineInRange("zoom_alt_multiplier", 0.25, 0.1, 1.0);
-        BUILDER.pop();
-
-        BUILDER.push("refit_toast");
-        REFIT_TOAST_DURATION_MS = BUILDER
-                .comment("改装界面提示文字的显示时长（毫秒）。默认值：1000")
-                .defineInRange("duration_ms", 1000, 100, 10000);
-        REFIT_TOAST_FADE_MS = BUILDER
-                .comment("改装界面提示文字开始淡出的时长（毫秒）。默认值：500")
-                .defineInRange("fade_ms", 500, 0, 5000);
-        BUILDER.pop();
-
-        BUILDER.push("refit_view_zoom");
-        REFIT_VIEW_ZOOM_MIN = BUILDER
-                .comment("改装视角模式下，滚轮缩放的最小倍率。默认值：0.5")
-                .defineInRange("min_zoom", 0.5, 0.05, 1.0);
-        REFIT_VIEW_ZOOM_MAX = BUILDER
-                .comment("改装视角模式下，滚轮缩放的最大倍率。默认值：4")
-                .defineInRange("max_zoom", 4.0, 1.0, 100.0);
-        BUILDER.pop();
-
-        BUILDER.push("refit_button");
-        REFIT_BUTTON_OPACITY = BUILDER
-                .comment("改装界面按钮（查看当前改装/保存当前方案/加载改装方案）背景的不透明度。0=全透明，1=不透明。默认值：0.45")
-                .defineInRange("opacity", 0.45, 0.0, 1.0);
-        BUILDER.pop();
-
-        BUILDER.push("refit_point");
-        REFIT_POINT_DEFAULT_CONSUME = BUILDER
-                .comment("配件改装点数的全局默认消耗。data中未填写refit_point_consume字段的配件使用此值。默认值：0")
-                .defineInRange("default_consume", 0, 0, 100);
         BUILDER.pop();
 
         BUILDER.push("burst_fire");
@@ -592,6 +602,56 @@ public class Config {
 
         BUILDER.pop();
 
+        BUILDER.push("refit");
+
+        HIDE_UNAVAILABLE_DEFAULT_SLOTS = BUILDER
+                .comment("是否隐藏不可用的默认配件槽。默认值：false")
+                .define("hide_unavailable_default_slots", false);
+
+        VIRTUAL_ATTACHMENTS = BUILDER
+                .comment("虚拟配件模式: true=所有玩家, creative=仅创造模式玩家, false=关闭。默认值：false",
+                        "开启后配件拆下不返还背包、安装不消耗, 改装界面候选栏显示所有可用配件, 应用改装方案同样不消耗、不返还。")
+                .defineEnum("virtual_attachments", VirtualAttachmentsMode.FALSE);
+
+        REFITSCREEN_SHOW_PRESET_BUTTONS = BUILDER
+                .comment("是否显示\"保存改装方案\"和\"加载改装方案\"按钮。默认值：true")
+                .define("show_preset_buttons", true);
+
+        REFITSCREEN_SHOW_SEARCH_BOX = BUILDER
+                .comment("是否显示改装界面的搜索框。默认值：true")
+                .define("show_search_box", true);
+
+        REFIT_SLOT_SIZE = BUILDER
+                .comment("配件槽尺寸: 1.0 为当前值, 0.5 为边长一半, 2.0 为边长两倍；",
+                        "槽位/改装点数提示/候选配件/候选适配器位置会随尺寸移动, 槽位图标同步缩放。默认值：1.0")
+                .defineInRange("slot_size", 1.0, 0.5, 2.0);
+
+        REFIT_TOAST_DURATION_MS = BUILDER
+                .comment("改装界面提示文字的显示时长（毫秒）。默认值：1000")
+                .defineInRange("toast_duration_ms", 1000, 100, 10000);
+
+        REFIT_TOAST_FADE_MS = BUILDER
+                .comment("改装界面提示文字开始淡出的时长（毫秒）。默认值：500")
+                .defineInRange("toast_fade_ms", 500, 0, 5000);
+
+        REFIT_VIEW_ZOOM_MIN = BUILDER
+                .comment("改装视角模式下，滚轮缩放的最小倍率。默认值：0.5")
+                .defineInRange("view_zoom_min", 0.5, 0.05, 1.0);
+
+        REFIT_VIEW_ZOOM_MAX = BUILDER
+                .comment("改装视角模式下，滚轮缩放的最大倍率。默认值：4")
+                .defineInRange("view_zoom_max", 4.0, 1.0, 100.0);
+
+        REFIT_BUTTON_OPACITY = BUILDER
+                .comment("改装界面按钮（查看当前改装/保存当前方案/加载改装方案）背景的不透明度。0=全透明，1=不透明。默认值：0.45")
+                .defineInRange("button_opacity", 0.45, 0.0, 1.0);
+
+        REFIT_POINT_DEFAULT_CONSUME = BUILDER
+                .comment("配件改装点数的全局默认消耗。data中未填写refit_point_consume字段的配件使用此值。默认值：0")
+                .defineInRange("point_default_consume", 0, 0, 100);
+
+        BUILDER.pop();
+
         BUILDER.push("compat");
         DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
@@ -616,18 +676,6 @@ public class Config {
                 .comment("持枪时是否阻止冲刺恢复（防止冲刺触发系列滑块颤抖）。默认值：true",
                         "需要TaCZ Tweaks模组。")
                 .define("prevent_sprint_reengage_when_tilt", true);
-        BUILDER.pop();
-
-        BUILDER.push("refitscreen");
-        REFITSCREEN_SHOW_VIEW_BUTTON = BUILDER
-                .comment("是否显示\"查看当前改装\"按钮（改装视角模式入口）。默认值：true")
-                .define("show_view_button", true);
-        REFITSCREEN_SHOW_PRESET_BUTTONS = BUILDER
-                .comment("是否显示\"保存改装方案\"和\"加载改装方案\"按钮。默认值：true")
-                .define("show_preset_buttons", true);
-        REFITSCREEN_SHOW_SEARCH_BOX = BUILDER
-                .comment("是否显示改装界面的搜索框。默认值：true")
-                .define("show_search_box", true);
         BUILDER.pop();
 
         BUILDER.push("gun_enchantment");

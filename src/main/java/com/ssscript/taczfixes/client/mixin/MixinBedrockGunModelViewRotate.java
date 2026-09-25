@@ -7,6 +7,7 @@ import com.google.gson.JsonObject;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.util.RefitViewMode;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
@@ -40,6 +41,11 @@ public abstract class MixinBedrockGunModelViewRotate {
     private boolean taczfixes$viewTransformPushed;
 
     @Unique
+    private boolean taczfixes$blockingMainPushed;
+    @Unique
+    private boolean taczfixes$blockingOffhandPushed;
+
+    @Unique
     private static final Map<ResourceLocation, float[]> taczfixes$pivotCache = new HashMap<>();
 
     @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
@@ -47,27 +53,96 @@ public abstract class MixinBedrockGunModelViewRotate {
     private void taczfixes$viewRotateHead(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
                                           RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha,
                                           net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+        taczfixes$applyViewTransform(pose, stack);
+    }
+
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+            at = @At("TAIL"), remap = false)
+    private void taczfixes$viewRotateTail(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
+                                          RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha,
+                                          net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+        taczfixes$popViewTransform(pose);
+    }
+
+    // 退出改装界面时走第一人称渲染重载(7 参, 带 BufferSource), 需要在这里也应用变换, 才能看到缓动重置
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+            at = @At("HEAD"), remap = false)
+    private void taczfixes$viewRotateHeadFp(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
+                                            RenderType renderType, int light, int overlay,
+                                            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                            CallbackInfo ci) {
         taczfixes$viewTransformPushed = false;
-        boolean active = RefitViewMode.isActive();
-        if (!active && !RefitViewMode.isTransitioning()) return;
+        taczfixes$blockingMainPushed = false;
+        if (displayContext != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND) return;
+        taczfixes$applyViewTransform(pose, stack);
+        if (!taczfixes$viewTransformPushed && !(Minecraft.getInstance().screen instanceof GunRefitScreen)) {
+            net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+            if (player != null && com.ssscript.taczfixes.client.util.BlockingModelTransform.apply(
+                    pose, (BedrockGunModel) (Object) this, stack, player, false)) {
+                taczfixes$blockingMainPushed = true;
+            }
+        }
+    }
+
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;II)V",
+            at = @At("HEAD"), remap = false)
+    private void taczfixes$blockingHeadOffhand(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
+                                               RenderType renderType, int light, int overlay, CallbackInfo ci) {
+        taczfixes$blockingOffhandPushed = false;
+        if (displayContext != ItemDisplayContext.FIRST_PERSON_LEFT_HAND) return;
+        net.minecraft.client.player.LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return;
+        if (com.ssscript.taczfixes.client.util.BlockingModelTransform.apply(
+                pose, (BedrockGunModel) (Object) this, stack, player, true)) {
+            taczfixes$blockingOffhandPushed = true;
+        }
+    }
+
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;II)V",
+            at = @At("TAIL"), remap = false)
+    private void taczfixes$blockingTailOffhand(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
+                                               RenderType renderType, int light, int overlay, CallbackInfo ci) {
+        if (taczfixes$blockingOffhandPushed) {
+            pose.popPose();
+            taczfixes$blockingOffhandPushed = false;
+        }
+    }
+
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+            at = @At("TAIL"), remap = false)
+    private void taczfixes$viewRotateTailFp(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
+                                            RenderType renderType, int light, int overlay,
+                                            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                            CallbackInfo ci) {
+        taczfixes$popViewTransform(pose);
+        if (taczfixes$blockingMainPushed) {
+            pose.popPose();
+            taczfixes$blockingMainPushed = false;
+        }
+    }
+
+    @Unique
+    private void taczfixes$applyViewTransform(PoseStack pose, ItemStack stack) {
+        taczfixes$viewTransformPushed = false;
         Screen screen = Minecraft.getInstance().screen;
-        if (!(screen instanceof GunRefitScreen)) {
-            if (active) return;
-        }
+        boolean inRefit = screen instanceof GunRefitScreen;
+        // 退出改装界面时收枪动画期间仍应用变换, 使重置能缓动完成
+        if (!inRefit && RefitTransform.getOpeningProgress() <= 0f) return;
         RefitViewMode.updateTransition();
-        if (RefitViewMode.getYawDeg() == 0f && RefitViewMode.getRollDeg() == 0f
-                && RefitViewMode.getDistance() == 1f
-                && RefitViewMode.getPanX() == 0f && RefitViewMode.getPanY() == 0f) {
-            return;
-        }
+        if (RefitViewMode.isIdentity()) return;
         float[] center = taczfixes$modelCenter((BedrockGunModel) (Object) this, stack);
         if (center == null) return;
         pose.pushPose();
+        // 左右摆动: 显示空间绕屏幕竖直轴(不受横滚影响); 横滚: 模型本地绕枪身轴; 无俯仰。
+        float yawRad = (float) Math.toRadians(RefitViewMode.getYawDeg());
+        float rollRad = (float) Math.toRadians(RefitViewMode.getRollDeg());
+        Quaternionf baseRot = new Quaternionf().setFromUnnormalized(pose.last().pose()).normalize();
+        Quaternionf localRot = new Quaternionf(baseRot).conjugate()
+                .mul(new Quaternionf().rotationY(yawRad))
+                .mul(baseRot)
+                .mul(new Quaternionf().rotationZ(rollRad));
         pose.translate(center[0], center[1], center[2]);
-        pose.mulPose(new Quaternionf().rotationXYZ(
-                0.0f,
-                (float) Math.toRadians(RefitViewMode.getYawDeg()),
-                (float) Math.toRadians(RefitViewMode.getRollDeg())));
+        pose.mulPose(localRot);
         float distance = RefitViewMode.getDistance();
         if (distance != 1f) {
             pose.scale(distance, distance, distance);
@@ -76,19 +151,20 @@ public abstract class MixinBedrockGunModelViewRotate {
         float panX = RefitViewMode.getPanX();
         float panY = RefitViewMode.getPanY();
         if (panX != 0f || panY != 0f) {
+            // 保持原版平移方向(沿模型旋转后的本地轴), 仅让灵敏度随缩放变大而降低
+            float zoomScale = distance == 0f ? 1f : 1f / (distance * distance);
+            float px = panX * zoomScale;
+            float py = panY * zoomScale;
             Matrix4f mat = pose.last().pose();
-            pose.translate(mat.m00() * panX - mat.m01() * panY,
-                    mat.m10() * panX - mat.m11() * panY,
-                    mat.m20() * panX - mat.m21() * panY);
+            pose.translate(mat.m00() * px - mat.m01() * py,
+                    mat.m10() * px - mat.m11() * py,
+                    mat.m20() * px - mat.m21() * py);
         }
         taczfixes$viewTransformPushed = true;
     }
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
-            at = @At("TAIL"), remap = false)
-    private void taczfixes$viewRotateTail(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
-                                          RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha,
-                                          net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+    @Unique
+    private void taczfixes$popViewTransform(PoseStack pose) {
         if (taczfixes$viewTransformPushed) {
             pose.popPose();
         }

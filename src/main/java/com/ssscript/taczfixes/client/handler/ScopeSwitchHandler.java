@@ -14,7 +14,7 @@ import org.lwjgl.glfw.GLFW;
 public class ScopeSwitchHandler {
     public static final KeyMapping SWITCH_SCOPE_KEY = new KeyMapping(
             "key.taczfixes.switch_scope",
-            GLFW.GLFW_KEY_X,
+            GLFW.GLFW_KEY_B,
             "key.categories.taczfixes");
 
     private static boolean wasDown = false;

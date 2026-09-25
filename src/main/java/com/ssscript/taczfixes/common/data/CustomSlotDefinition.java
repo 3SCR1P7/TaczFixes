@@ -15,11 +15,17 @@ public class CustomSlotDefinition {
     public List<String> allow_attachments;
     public Map<String, JsonElement> dependence;
     public Map<String, JsonElement> conflict;
+    @SerializedName("builtin_attachments")
+    public CustomBuiltinAttachment builtin_attachments;
     public float angle;
     public float offset;
 
     public List<String> getAllowAttachments() {
         return allow_attachments == null ? Collections.emptyList() : allow_attachments;
+    }
+
+    public List<String> getBuiltinAttachmentIds() {
+        return builtin_attachments == null ? Collections.emptyList() : builtin_attachments.getAttachments();
     }
 
     public Map<String, JsonElement> getDependence() {

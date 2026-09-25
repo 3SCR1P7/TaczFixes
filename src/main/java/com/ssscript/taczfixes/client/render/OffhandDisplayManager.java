@@ -627,6 +627,24 @@ public final class OffhandDisplayManager {
         }
     }
 
+    /** F 交换主副手: 取消收枪过渡, 立刻让两把枪播放掏枪动画。 */
+    public static void swapHandsImmediately(LocalPlayer player, ItemStack nextMainStack, ItemStack nextOffhandStack) {
+        clear();
+        if (player != null && nextMainStack != null && !nextMainStack.isEmpty()) {
+            GunItemRendererWrapper renderer = getGunRenderer(nextMainStack);
+            if (renderer != null) {
+                try {
+                    renderer.tryInit(nextMainStack, player, 0.0f);
+                } catch (RuntimeException exception) {
+                    TaczFixesMod.LOGGER.error("Failed to restart main-hand draw animation on hand swap", exception);
+                }
+            }
+        }
+        if (nextOffhandStack != null && !nextOffhandStack.isEmpty()) {
+            getOrCreate(nextOffhandStack);
+        }
+    }
+
     public static void clear() {
         LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
         DualReloadAnimationManager.clear();

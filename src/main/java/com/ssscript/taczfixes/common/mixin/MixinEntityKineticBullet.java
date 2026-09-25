@@ -88,6 +88,42 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
         this.startPos = physicalMuzzle;
     }
 
+    @Inject(method = {"<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;ZLcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;)V"}, at = {@At("TAIL")})
+    private void blocking$rotateShotDirection(EntityType<? extends Projectile> type, Level level, LivingEntity shooter,
+                                              ItemStack gunItem, ResourceLocation ammoId, ResourceLocation gunId,
+                                              ResourceLocation gunDisplayId, boolean tracer, GunData gunData,
+                                              BulletData bulletData, CallbackInfo callback) {
+        if (level.isClientSide() || !(shooter instanceof net.minecraft.world.entity.player.Player player)) {
+            return;
+        }
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.BlockingConfig cfg =
+                com.ssscript.taczfixes.common.util.GunBlocking.resolve(gunItem);
+        if (!com.ssscript.taczfixes.common.util.GunBlocking.isEnabled(gunItem)) {
+            return;
+        }
+        double maxDistance = com.ssscript.taczfixes.common.util.GunBlocking.distanceMax(cfg);
+        double minDistance = com.ssscript.taczfixes.common.util.GunBlocking.distanceMin(cfg);
+        double factor = com.ssscript.taczfixes.common.util.GunBlocking.factor(player, maxDistance, minDistance);
+        if (factor <= 0.0d) {
+            return;
+        }
+        EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
+        double obstacleDistance = com.ssscript.taczfixes.common.util.GunBlocking.nearestDistance(player, maxDistance);
+        boolean dual = com.ssscript.taczfixes.common.util.DualWieldEligibility.isDualWielding(player);
+        double facingDeg = dual
+                ? com.ssscript.taczfixes.common.util.GunBlocking.facingDual(cfg)
+                : com.ssscript.taczfixes.common.util.GunBlocking.facing(cfg);
+        Vec3 offset = com.ssscript.taczfixes.common.util.GunBlocking.shotOffset(
+                player.getLookAngle(), obstacleDistance,
+                com.ssscript.taczfixes.common.util.GunBlocking.angleDeg(cfg) * factor,
+                com.ssscript.taczfixes.common.util.GunBlocking.deflection(cfg), facingDeg);
+        if (offset.lengthSqr() < 1.0E-8d) {
+            return;
+        }
+        Vec3 position = bullet.position().add(offset);
+        bullet.setPos(position.x, position.y, position.z);
+    }
+
     @Redirect(method = {"modifyProperty(Ljava/lang/String;Ljava/lang/Class;Ljava/lang/Object;)Ljava/lang/Object;"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;getMainHandItem()Lnet/minecraft/world/item/ItemStack;", remap = true))
     private ItemStack dualWield$resolveDamageGun(LivingEntity shooter) {
         return this.dualWield$sourceData == null ? shooter.getMainHandItem() : shooter.getOffhandItem();
@@ -106,6 +142,22 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
     @Inject(method = {"readSpawnData"}, at = {@At("TAIL")})
     private void dualWield$readHandSource(FriendlyByteBuf buffer, CallbackInfo callback) {
         this.dualWield$offhandSource = buffer.readBoolean();
+    }
+
+    @Inject(method = {"m_8119_"}, at = {@At("HEAD")})
+    private void dualWield$pushOffhandSkillContext(CallbackInfo callback) {
+        EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
+        if (this.dualWield$sourceData != null && !bullet.level().isClientSide()) {
+            OffhandShooterManager.pushActiveData(this.dualWield$sourceData);
+        }
+    }
+
+    @Inject(method = {"m_8119_"}, at = {@At("TAIL")})
+    private void dualWield$popOffhandSkillContext(CallbackInfo callback) {
+        EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
+        if (this.dualWield$sourceData != null && !bullet.level().isClientSide()) {
+            OffhandShooterManager.popActiveData();
+        }
     }
 
     @Override

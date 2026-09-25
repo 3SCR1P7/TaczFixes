@@ -33,6 +33,8 @@ public class GunTaczFixesData {
     public LightConfig light;
     /** 法术注入配置(Iron's Spellbooks); 字段存在时覆盖配置文件。 */
     public ImbuementConfig imbuement;
+    /** 前方阻挡配置; 有该字段时启用。 */
+    public BlockingConfig blocking;
 
     /** 枪械 data 中 taczfixes.imbuement: 逐枪覆盖法术注入配置, 优先级高于 config。 */
     public static class ImbuementConfig {
@@ -100,6 +102,28 @@ public class GunTaczFixesData {
     public static class StaminaConfig {
         public Double consumption_multiplier;
         public Double recovery_multiplier;
+    }
+
+    /** 前方阻挡配置: 前方 distance_max 格内有方块/实体时, 模型按距离线性旋转并后退。 */
+    public static class BlockingConfig {
+        /** 是否启用; 不填则跟随全局配置。默认 false。 */
+        public Boolean enable;
+        /** 玩家前方多少格内有方块或实体时开始启用阻挡。 */
+        public Double distance_max;
+        /** 到障碍距离达到此值(及更近)时达到完整角度/后退; 从 distance_max 到 distance_min 线性插值。 */
+        public Double distance_min;
+        /** 到障碍距离为 distance_min 时的旋转角度(度)。 */
+        public Double angle;
+        /** 到障碍距离为 distance_min 时的后退格数。 */
+        public Double back_off;
+        /** 子弹发射位置偏移倍率: 偏移 = 距离 * deflection * tan(角度)。 */
+        public Double deflection;
+        /** 到障碍距离小于此值时无法开火(只播放 dry_fire)。 */
+        public Double disable_fire;
+        /** 非双持时的偏转方向(度): 0=右, 90=上, 180=左, -90=下。默认 180。 */
+        public Double facing;
+        /** 双持时的偏转方向(度): 0=右, 90=上, 180=左, -90=下。默认 90。 */
+        public Double facing_dual_wield;
     }
 
     public static class InaccuracyConfig {

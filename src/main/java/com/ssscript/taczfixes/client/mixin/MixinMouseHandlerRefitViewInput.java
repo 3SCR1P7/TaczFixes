@@ -1,21 +1,26 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
+import com.ssscript.taczfixes.client.util.PosAlterGuiState;
 import com.ssscript.taczfixes.client.util.RefitViewMode;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.sounds.SoundEvents;
 import org.lwjgl.glfw.GLFW;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * 改装界面内直接拖动枪械模型: 左键旋转、右键平移、滚轮缩放。
+ * 点击/滚轮落在控件(配件槽、按钮、搜索框等)上时放行给界面处理; 挂饰选择面板同理。
+ */
 @Mixin(MouseHandler.class)
 public abstract class MixinMouseHandlerRefitViewInput {
 
@@ -28,24 +33,20 @@ public abstract class MixinMouseHandlerRefitViewInput {
     private static java.lang.reflect.Method taczfixes$anchorActive;
 
     @Inject(method = "m_91530_", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$viewModePress(long windowPointer, int button, int action, int mods, CallbackInfo ci) {
-        if (!RefitViewMode.isActive()) return;
-        if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
+    private void taczfixes$refitModelPress(long windowPointer, int button, int action, int mods, CallbackInfo ci) {
+        Screen screen = Minecraft.getInstance().screen;
+        if (!(screen instanceof GunRefitScreen refitScreen)) return;
+        if (ci.isCancelled()) return;
+        double mx = taczfixes$refitToGuiX(Minecraft.getInstance().mouseHandler.xpos());
+        double my = taczfixes$refitToGuiY(Minecraft.getInstance().mouseHandler.ypos());
         if (button == 0) {
             if (action == GLFW.GLFW_PRESS) {
-                double mx = RefitViewMode.getCursorX();
-                double my = RefitViewMode.getCursorY();
-                if (RefitViewMode.hitButton(mx, my)) {
-                    Minecraft.getInstance().getSoundManager().play(
-                            SimpleSoundInstance.forUI(SoundEvents.UI_BUTTON_CLICK, 1.0F));
-                    RefitViewMode.setActive(false);
-                    unfocusEditBox();
-                    ci.cancel();
-                } else if (taczfixes$passToScreen(mx, my)) {
-                } else {
-                    RefitViewMode.beginDrag(mx, my);
-                    ci.cancel();
+                if (PosAlterGuiState.isHoveringSlider(mx, my) || taczfixes$passToScreen(mx, my)
+                        || taczfixes$overWidget(refitScreen, mx, my)) {
+                    return;
                 }
+                RefitViewMode.beginDrag(mx, my);
+                ci.cancel();
             } else if (action == GLFW.GLFW_RELEASE) {
                 if (RefitViewMode.isDragging()) {
                     RefitViewMode.endDrag();
@@ -54,31 +55,79 @@ public abstract class MixinMouseHandlerRefitViewInput {
             }
         } else if (button == 1) {
             if (action == GLFW.GLFW_PRESS) {
-                double mx = RefitViewMode.getCursorX();
-                double my = RefitViewMode.getCursorY();
-                if (taczfixes$passToScreen(mx, my)) {
-                } else {
-                    if (!RefitViewMode.hitButton(mx, my)) {
-                        RefitViewMode.beginPan(mx, my);
-                    }
-                    ci.cancel();
+                if (taczfixes$passToScreen(mx, my) || taczfixes$overWidget(refitScreen, mx, my)) {
+                    return;
                 }
+                RefitViewMode.beginPan(mx, my);
+                ci.cancel();
             } else if (action == GLFW.GLFW_RELEASE) {
                 if (RefitViewMode.isPanning()) {
                     RefitViewMode.endPan();
+                    ci.cancel();
                 }
+            }
+        } else if (button == 2) {
+            if (action == GLFW.GLFW_PRESS) {
+                taczfixes$resetViewModel(refitScreen);
+                ci.cancel();
+            } else if (action == GLFW.GLFW_RELEASE) {
                 ci.cancel();
             }
         }
     }
 
+    /** 中键: 重置缩放/旋转/平移(缓动), 并取消当前配件槽选择。 */
+    private static void taczfixes$resetViewModel(GunRefitScreen screen) {
+        RefitViewMode.beginReset();
+        boolean custom = CustomSlotGuiState.get() != null;
+        if (custom) {
+            CustomSlotGuiState.beginRefitViewTransition();
+            CustomSlotGuiState.reset();
+        }
+        if (RefitTransform.getCurrentTransformType() != AttachmentType.NONE) {
+            RefitTransform.changeRefitScreenView(AttachmentType.NONE);
+        }
+        if (custom) {
+            screen.resize(Minecraft.getInstance(), screen.width, screen.height);
+        }
+    }
+
     @Inject(method = "m_91526_", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$viewModeScroll(long windowPointer, double xOffset, double yOffset, CallbackInfo ci) {
-        if (!RefitViewMode.isActive()) return;
-        if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
+    private void taczfixes$refitModelScroll(long windowPointer, double xOffset, double yOffset, CallbackInfo ci) {
+        Screen screen = Minecraft.getInstance().screen;
+        if (!(screen instanceof GunRefitScreen refitScreen)) return;
         if (taczfixes$pickerExpanded()) return;
+        double mx = taczfixes$refitToGuiX(Minecraft.getInstance().mouseHandler.xpos());
+        double my = taczfixes$refitToGuiY(Minecraft.getInstance().mouseHandler.ypos());
+        if (PosAlterGuiState.isHoveringSlider(mx, my) || taczfixes$overWidget(refitScreen, mx, my)) {
+            return;
+        }
         RefitViewMode.addScroll(yOffset);
         ci.cancel();
+    }
+
+    @Inject(method = "m_91561_", at = @At("HEAD"), cancellable = true, remap = false)
+    private void taczfixes$refitModelMove(long windowPointer, double xpos, double ypos, CallbackInfo ci) {
+        if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
+        double gx = taczfixes$refitToGuiX(xpos);
+        double gy = taczfixes$refitToGuiY(ypos);
+        RefitViewMode.updateCursor(gx, gy);
+        if (RefitViewMode.isDragging() || RefitViewMode.isPanning()) {
+            RefitViewMode.dragTo(gx, gy);
+            RefitViewMode.dragToPan(gx, gy);
+            ci.cancel();
+        }
+    }
+
+    private static boolean taczfixes$overWidget(Screen screen, double mx, double my) {
+        for (GuiEventListener child : screen.children()) {
+            if (child instanceof AbstractWidget widget && widget.visible
+                    && mx >= widget.getX() && mx <= widget.getX() + widget.getWidth()
+                    && my >= widget.getY() && my <= widget.getY() + widget.getHeight()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static boolean taczfixes$passToScreen(double mx, double my) {
@@ -149,20 +198,6 @@ public abstract class MixinMouseHandlerRefitViewInput {
         }
     }
 
-@Inject(method = "m_91561_", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$viewModeMove(long windowPointer, double xpos, double ypos, CallbackInfo ci) {
-        if (!RefitViewMode.isActive()) return;
-        if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
-        double gx = taczfixes$refitToGuiX(xpos);
-        double gy = taczfixes$refitToGuiY(ypos);
-        RefitViewMode.updateCursor(gx, gy);
-        if (RefitViewMode.isDragging() || RefitViewMode.isPanning()) {
-            RefitViewMode.dragTo(gx, gy);
-            RefitViewMode.dragToPan(gx, gy);
-            ci.cancel();
-        }
-    }
-
     private static double taczfixes$refitToGuiX(double rawX) {
         Minecraft minecraft = Minecraft.getInstance();
         return rawX * minecraft.getWindow().getGuiScaledWidth() / minecraft.getWindow().getScreenWidth();
@@ -171,15 +206,5 @@ public abstract class MixinMouseHandlerRefitViewInput {
     private static double taczfixes$refitToGuiY(double rawY) {
         Minecraft minecraft = Minecraft.getInstance();
         return rawY * minecraft.getWindow().getGuiScaledHeight() / minecraft.getWindow().getScreenHeight();
-    }
-
-    private static void unfocusEditBox() {
-        Screen screen = Minecraft.getInstance().screen;
-        if (screen == null) return;
-        for (GuiEventListener listener : screen.children()) {
-            if (listener instanceof EditBox box) {
-                box.setFocused(false);
-            }
-        }
     }
 }

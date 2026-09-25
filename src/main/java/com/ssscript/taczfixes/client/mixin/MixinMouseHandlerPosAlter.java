@@ -1,7 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.client.util.PosAlterGuiState;
-import com.ssscript.taczfixes.client.util.RefitViewMode;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.MouseHandler;
@@ -16,7 +15,6 @@ public abstract class MixinMouseHandlerPosAlter {
 
     @Inject(method = "m_91561_", at = @At("HEAD"), remap = false)
     private void taczfixes$posAlterMove(long windowPointer, double xpos, double ypos, CallbackInfo ci) {
-        if (RefitViewMode.isActive()) return;
         if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
         double gx = taczfixes$posToGuiX(xpos);
         double gy = taczfixes$posToGuiY(ypos);
@@ -27,7 +25,6 @@ public abstract class MixinMouseHandlerPosAlter {
     @Inject(method = "m_91530_", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$posAlterPress(long windowPointer, int button, int action, int mods, CallbackInfo ci) {
         if (button != 0) return;
-        if (RefitViewMode.isActive()) return;
         if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
         double gx = PosAlterGuiState.getCursorX();
         double gy = PosAlterGuiState.getCursorY();

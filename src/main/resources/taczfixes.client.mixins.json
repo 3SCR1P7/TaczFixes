@@ -48,6 +48,7 @@
         "MixinRefitTransformResetState",
         "MixinSimpleChannelRefitRedirect",
         "MixinGunAttachmentSlotSelection",
+        "MixinInventoryAttachmentSlotScale",
         "MixinGunRefitScreenPresetButtons",
         "MixinGunRefitScreenSlotPressFix",
         "MixinGunRefitScreenViewMode",

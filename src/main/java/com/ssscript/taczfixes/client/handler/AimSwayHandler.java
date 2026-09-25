@@ -37,17 +37,22 @@ public class AimSwayHandler {
         return isScopeActive(player);
     }
 
-    /** 当前安装并激活的瞄具是否为 scope 类型(而非 sight; 组合瞄具按当前视图判定)。 */
+    /** 当前安装并激活的瞄具是否为 scope 类型(而非 sight; 组合瞄具按当前视图判定); 无配件时回退到枪械内置瞄具。 */
     public static boolean isScopeActive(LocalPlayer player) {
         ItemStack gun = player.getMainHandItem();
         IGun iGun = IGun.getIGunOrNull(gun);
         if (iGun == null) return false;
         ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
-        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
         CompoundTag tag = ScopeSwitchState.attachmentTag(iGun, gun, AttachmentType.SCOPE);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
+            id = iGun.getBuiltInAttachmentId(gun, AttachmentType.SCOPE);
+            tag = null;
+        }
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
+        CompoundTag scopeTag = tag;
         return TimelessAPI.getClientAttachmentIndex(id).map(index -> {
             if (ScopeViewHelper.isCombinedSight(index)) {
-                return ScopeViewHelper.isScopeView(index, tag);
+                return ScopeViewHelper.isScopeView(index, scopeTag);
             }
             return index.isScope();
         }).orElse(false);

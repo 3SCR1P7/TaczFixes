@@ -7,7 +7,9 @@ import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
+import com.tacz.guns.util.VirtualOemAttachment;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -64,15 +66,23 @@ public class ClientMessageLoadRefitPreset {
 
         ResourceLocation gunId = gun.getGunId(gunStack);
         boolean liberated = LiberateCompat.isLiberated(player);
+        boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
         Inventory inventory = player.getInventory();
 
         for (AttachmentType type : AttachmentType.values()) {
             if (type == AttachmentType.NONE) continue;
             ItemStack removed = gun.getAttachment(gunStack, type);
             if (removed.isEmpty()) continue;
+            IAttachment removedAttachment = IAttachment.getIAttachmentOrNull(removed);
+            ResourceLocation removedId = removedAttachment == null ? null : removedAttachment.getAttachmentId(removed);
             gun.unloadAttachment(gunStack, type);
             if (type == AttachmentType.EXTENDED_MAG) {
                 gun.dropAllAmmo(player, gunStack);
+            }
+            // 原厂内置件(虚拟 OEM 或 builtin_attachments 列表内) 与虚拟配件模式: 卸下不返还, 直接消失
+            if (virtual || VirtualOemAttachment.isMarked(removed)
+                    || (removedId != null && VirtualOemAttachment.isAllowedVirtualOem(gunId, removedId, type))) {
+                continue;
             }
             if (!liberated && !inventory.add(removed)) {
                 player.drop(removed, false);
@@ -81,6 +91,7 @@ public class ClientMessageLoadRefitPreset {
         for (Map.Entry<String, CustomSlotDefinition> entry : CustomSlotManager.getSlots(gunId).entrySet()) {
             ItemStack removed = CustomSlotStorage.unload(gunStack, entry.getKey());
             if (removed.isEmpty()) continue;
+            if (virtual || VirtualOemAttachment.isMarked(removed)) continue;
             if (!liberated && !inventory.add(removed)) {
                 player.drop(removed, false);
             }
@@ -111,6 +122,36 @@ public class ClientMessageLoadRefitPreset {
 
     private static void installStandard(ServerPlayer player, IGun gun, ItemStack gunStack,
                                         AttachmentType type, ResourceLocation attachmentId, boolean liberated) {
+        // 虚拟配件模式: 不消耗背包, 直接生成虚拟件装上
+        if (com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player)) {
+            ItemStack virtual = AttachmentItemBuilder.create().setId(attachmentId).build();
+            IAttachment attachment = IAttachment.getIAttachmentOrNull(virtual);
+            if (attachment == null || attachment.getType(virtual) != type) return;
+            if (!gun.allowAttachment(gunStack, virtual)) return;
+            VirtualOemAttachment.mark(virtual);
+            com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.markGenerated(virtual);
+            ResourceLocation previousId = gun.getAttachmentId(gunStack, type);
+            gun.installAttachment(gunStack, virtual);
+            com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.triggerChangeAttachment(player,
+                    com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(previousId) ? null : previousId.toString(),
+                    attachmentId.toString());
+            return;
+        }
+        // 原厂内置候选(builtin_attachments.attachments): 不消耗背包, 直接生成虚拟 OEM 件装上
+        if (VirtualOemAttachment.isAllowedVirtualOem(gun.getGunId(gunStack), attachmentId, type)) {
+            ItemStack builtin = AttachmentItemBuilder.create().setId(attachmentId).build();
+            IAttachment builtinAttachment = IAttachment.getIAttachmentOrNull(builtin);
+            if (builtinAttachment == null || builtinAttachment.getType(builtin) != type) return;
+            if (!gun.allowAttachment(gunStack, builtin)) return;
+            VirtualOemAttachment.mark(builtin);
+            com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.markGenerated(builtin);
+            ResourceLocation previousId = gun.getAttachmentId(gunStack, type);
+            gun.installAttachment(gunStack, builtin);
+            com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.triggerChangeAttachment(player,
+                    com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(previousId) ? null : previousId.toString(),
+                    attachmentId.toString());
+            return;
+        }
         Inventory source = liberated ? LiberateCompat.getVirtualInventory(player.getInventory()) : player.getInventory();
         ItemStack item = findAndTake(player, source, attachmentId, gun, gunStack, null, liberated);
         if (item.isEmpty()) return;
@@ -121,6 +162,23 @@ public class ClientMessageLoadRefitPreset {
                                       String slotKey, CustomSlotDefinition def, ResourceLocation attachmentId,
                                       boolean liberated) {
         if (!CustomSlotManager.isDependenceMet(gunId, gunStack, def)) return;
+        // 自定义槽的原厂候选件: 不消耗背包, 直接装上虚拟原厂件
+        if (CustomSlotManager.isBuiltinCandidate(def, attachmentId)) {
+            CustomSlotStorage.installBuiltin(gunStack, slotKey, attachmentId);
+            return;
+        }
+        // 虚拟配件模式: 不消耗背包, 直接生成虚拟件装上
+        if (com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player)) {
+            ItemStack virtual = AttachmentItemBuilder.create().setId(attachmentId).build();
+            IAttachment attachment = IAttachment.getIAttachmentOrNull(virtual);
+            if (attachment == null) return;
+            if (!liberated && !CustomSlotManager.matchesSlot(def, gunId, attachmentId, attachment.getType(virtual))) {
+                return;
+            }
+            VirtualOemAttachment.mark(virtual);
+            CustomSlotStorage.install(gunStack, slotKey, virtual);
+            return;
+        }
         Inventory source = liberated ? LiberateCompat.getVirtualInventory(player.getInventory()) : player.getInventory();
         ItemStack item = findAndTake(player, source, attachmentId, gun, gunStack, def, liberated);
         if (item.isEmpty()) return;

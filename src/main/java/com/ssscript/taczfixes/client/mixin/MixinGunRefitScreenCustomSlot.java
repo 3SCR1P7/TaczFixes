@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.data.AttachmentSlotsConfig;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.client.util.CustomSlotButton;
@@ -49,14 +48,16 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
         ResourceLocation gunId = igun.getGunId(gunStack);
-        AttachmentSlotsConfig cfg = CustomSlotManager.getConfig(gunId);
-        if (cfg == null) return;
         Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
+        boolean hiddenDefault = CustomSlotManager.isHiddenUnavailableDefault(gunId);
+        if (slots.isEmpty() && !hiddenDefault && !com.ssscript.taczfixes.client.util.RefitSlotLayout.scaled()) {
+            // 无自定义槽、全局未开启隐藏默认槽且槽位尺寸为默认时保持 tacz 原生布局
+            return;
+        }
         if (CustomSlotGuiState.get() != null && !slots.containsKey(CustomSlotGuiState.get())) {
             CustomSlotGuiState.reset();
         }
         boolean hiddenUnavailable = CustomSlotManager.isHiddenUnavailable(gunId);
-        boolean hiddenDefault = CustomSlotManager.isHiddenUnavailableDefault(gunId);
 
         java.util.List<AttachmentType> order = new java.util.ArrayList<>();
         for (AttachmentType t : AttachmentType.values()) {
@@ -105,11 +106,12 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
             }
         }
 
-        int startX = this.width - 30;
+        int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
         int y = 10;
         int col = 0;
         int selectedX = 0;
         int selectedY = 0;
+        int selectedDefaultX = Integer.MIN_VALUE;
         boolean hasSelected = false;
         for (AttachmentType t : order) {
             GunAttachmentSlot defSlot = defaultSlots.get(t);
@@ -120,12 +122,17 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
                     this.renderables.remove(defSlot);
                     this.children().remove(defSlot);
                 } else {
-                    int x = startX - 18 * col;
+                    int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.slotX(this.width, col);
                     defSlot.setX(x);
+                    defSlot.setY(y);
+                    defSlot.setWidth(slotSize);
+                    defSlot.setHeight(slotSize);
                     if (RefitTransform.getCurrentTransformType() == t) {
+                        selectedDefaultX = x;
                         for (Renderable r : new java.util.ArrayList<>(this.renderables)) {
                             if (r instanceof RefitUnloadButton unload && !ownUnloadButtons.contains(unload)) {
-                                unload.setX(x + 5);
+                                unload.setX(x + com.ssscript.taczfixes.client.util.RefitSlotLayout.scaled(5));
+                                unload.setY(y + slotSize + 2);
                             }
                         }
                     }
@@ -133,7 +140,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
                 }
             }
             for (CustomSlotEntry se : grouped.get(t)) {
-                int x = startX - 18 * col;
+                int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.slotX(this.width, col);
                 CustomSlotButton button = createCustomSlotButton(x, y, se, gunStack);
                 if (button != null) {
                     if (se.id.equals(CustomSlotGuiState.get())) {
@@ -147,7 +154,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
             }
         }
         for (CustomSlotEntry se : customList) {
-            int x = startX - 18 * col;
+            int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.slotX(this.width, col);
             CustomSlotButton button = createCustomSlotButton(x, y, se, gunStack);
             if (button != null) {
                 if (se.id.equals(CustomSlotGuiState.get())) {
@@ -159,10 +166,42 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
             }
             col++;
         }
+        // 配件槽变大/变小时, 候选(variant/adapter)按钮列整体下移/上移, 避免与槽位重合
+        if (com.ssscript.taczfixes.client.util.RefitSlotLayout.scaled()) {
+            AttachmentType selectedType = RefitTransform.getCurrentTransformType();
+            if (selectedType != AttachmentType.NONE) {
+                int typeIndex = 0;
+                for (AttachmentType t : order) {
+                    if (t == selectedType) break;
+                    typeIndex++;
+                }
+                int candidateBaseX = this.width - 30 - 18 * typeIndex - 60;
+                int delta = slotSize - com.tacz.guns.client.gui.GunRefitScreen.SLOT_SIZE;
+                for (Renderable r : new java.util.ArrayList<>(this.renderables)) {
+                    if (r instanceof com.tacz.guns.client.gui.components.FlatColorButton button
+                            && button.getX() == candidateBaseX) {
+                        if (selectedDefaultX != Integer.MIN_VALUE) {
+                            button.setX(selectedDefaultX + slotSize - 78);
+                        }
+                        button.setY(button.getY() + delta);
+                    }
+                }
+            }
+        }
         String selected = CustomSlotGuiState.get();
+        // 候选/适配器按钮块位置已按槽位尺寸调整, 同步候选栏起始高度, 避免重合或距离过远
+        int candidateBottom = 50;
+        for (Renderable r : this.renderables) {
+            if (r instanceof com.tacz.guns.client.gui.components.FlatColorButton button && button.visible) {
+                candidateBottom = Math.max(candidateBottom, button.getY() + button.getHeight() + 4);
+            }
+        }
+        this.inventoryAttachmentStartY = candidateBottom;
         if (hasSelected && selected != null && !CustomSlotStorage.get(gunStack, selected).isEmpty()) {
             String unloadSlot = selected;
-            RefitUnloadButton unload = new RefitUnloadButton(selectedX + 5, selectedY + 20,
+            RefitUnloadButton unload = new RefitUnloadButton(
+                    selectedX + com.ssscript.taczfixes.client.util.RefitSlotLayout.scaled(5),
+                    selectedY + slotSize + 2,
                     btn -> com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL
                             .sendToServer(new com.ssscript.taczfixes.common.network.ClientMessageUnloadCustomSlot(unloadSlot)));
             ownUnloadButtons.add(unload);
@@ -224,6 +263,9 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
             CustomSlotGuiState.set(slotId);
             this.init();
         });
+        int size = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
+        button.setWidth(size);
+        button.setHeight(size);
         if (entry.unavailable) {
             button.active = false;
         }
@@ -259,4 +301,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
     }
 
     private final java.util.Set<RefitUnloadButton> ownUnloadButtons = new java.util.HashSet<>();
+
+    @org.spongepowered.asm.mixin.Shadow(remap = false)
+    private int inventoryAttachmentStartY;
 }

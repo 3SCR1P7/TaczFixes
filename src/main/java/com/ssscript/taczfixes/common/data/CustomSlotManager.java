@@ -5,7 +5,9 @@ import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.resource.CommonAssetsManager;
+import com.tacz.guns.util.VirtualOemAttachment;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
@@ -47,10 +49,13 @@ public class CustomSlotManager {
         return cfg == null || cfg.hidden_unavailable == null || cfg.hidden_unavailable;
     }
 
-    /** hidden_unavailable_default: true 时 tacz 默认槽在类型未开放时直接隐藏。默认 false。 */
+    /** hidden_unavailable_default: true 时 tacz 默认槽在类型未开放时直接隐藏。枪械 data 未显式配置时跟随配置文件。 */
     public static boolean isHiddenUnavailableDefault(ResourceLocation gunId) {
         AttachmentSlotsConfig cfg = getConfig(gunId);
-        return cfg != null && Boolean.TRUE.equals(cfg.hidden_unavailable_default);
+        if (cfg != null && cfg.hidden_unavailable_default != null) {
+            return cfg.hidden_unavailable_default;
+        }
+        return com.ssscript.taczfixes.common.config.Config.HIDE_UNAVAILABLE_DEFAULT_SLOTS.get();
     }
 
     public static CustomSlotDefinition getSlot(ResourceLocation gunId, String slotId) {
@@ -79,6 +84,34 @@ public class CustomSlotManager {
             if (matchesIdOrTag(attachmentId, allow)) return true;
         }
         return false;
+    }
+
+    /** attachmentId 是否在该自定义槽的 builtin_attachments.attachments 原厂候选列表内。 */
+    public static boolean isBuiltinCandidate(CustomSlotDefinition def, ResourceLocation attachmentId) {
+        if (def == null || attachmentId == null) return false;
+        for (String entry : def.getBuiltinAttachmentIds()) {
+            ResourceLocation id = ResourceLocation.tryParse(entry);
+            if (attachmentId.equals(id)) return true;
+        }
+        return false;
+    }
+
+    /** 该槽默认预装的原厂件 id(default_attached), 未配置返回 null。 */
+    public static ResourceLocation getBuiltinDefault(CustomSlotDefinition def) {
+        if (def == null || def.builtin_attachments == null) return null;
+        String id = def.builtin_attachments.default_attached;
+        return id == null || id.isEmpty() ? null : ResourceLocation.tryParse(id);
+    }
+
+    /** 构建原厂件(虚拟 OEM): 与 tacz 的虚拟原厂件一致, 带标记, 卸下不会返还。 */
+    public static ItemStack buildBuiltinItem(ResourceLocation attachmentId) {
+        if (attachmentId == null) return ItemStack.EMPTY;
+        ItemStack item = AttachmentItemBuilder.create().setId(attachmentId).build();
+        if (!item.isEmpty()) {
+            VirtualOemAttachment.mark(item);
+            com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.markGenerated(item);
+        }
+        return item;
     }
 
     public static boolean matchesIdOrTag(ResourceLocation attachmentId, String entry) {
@@ -193,8 +226,9 @@ public class CustomSlotManager {
             guard++;
         } while (changed && guard < 64);
         boolean liberated = com.ssscript.taczfixes.common.util.LiberateCompat.isLiberated(player);
+        boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
         for (Map.Entry<String, ItemStack> e : unloaded.entrySet()) {
-            if (liberated) continue;
+            if (liberated || virtual || VirtualOemAttachment.isMarked(e.getValue())) continue;
             if (!player.getInventory().add(e.getValue())) {
                 player.drop(e.getValue(), false);
             }
@@ -221,8 +255,9 @@ public class CustomSlotManager {
             }
         }
         boolean liberated = com.ssscript.taczfixes.common.util.LiberateCompat.isLiberated(player);
+        boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
         for (Map.Entry<String, ItemStack> e : unloaded.entrySet()) {
-            if (liberated) continue;
+            if (liberated || virtual || VirtualOemAttachment.isMarked(e.getValue())) continue;
             if (!player.getInventory().add(e.getValue())) {
                 player.drop(e.getValue(), false);
             }

@@ -63,6 +63,19 @@ public class CustomSlotButton extends Button implements com.tacz.guns.client.gui
 
     @Override
     public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        int originalWidth = getWidth();
+        int originalHeight = getHeight();
+        float scale = originalWidth / (float) GunRefitScreen.SLOT_SIZE;
+        boolean scaled = scale != 1f;
+        if (scaled) {
+            setWidth(GunRefitScreen.SLOT_SIZE);
+            setHeight(GunRefitScreen.SLOT_SIZE);
+            var pose = graphics.pose();
+            pose.pushPose();
+            pose.translate(getX(), getY(), 0);
+            pose.scale(scale, scale, 1f);
+            pose.translate(-getX(), -getY(), 0);
+        }
         this.selected = slotId.equals(CustomSlotGuiState.get());
         int x = getX();
         int y = getY();
@@ -71,9 +84,9 @@ public class CustomSlotButton extends Button implements com.tacz.guns.client.gui
             Font font = Minecraft.getInstance().font;
             Component name = getSlotName();
             int nameX = x + (this.width - font.width(name)) / 2;
-            int nameY = y + 20;
+            int nameY = y + this.height + 2;
             if (this.selected && !CustomSlotStorage.get(gunStack, slotId).isEmpty()) {
-                nameY = y + 30;
+                nameY = y + this.height + 12;
             }
             graphics.drawString(font, name, nameX, nameY, 0xFFFFFF);
         }
@@ -94,7 +107,7 @@ public class CustomSlotButton extends Button implements com.tacz.guns.client.gui
         } else if (definition.isCustom()) {
             if (item.isEmpty() && this.iconTexture != null) {
                 graphics.blit(this.iconTexture.texture(),
-                        x + 2, y + 2, 14, 14,
+                        x + 2, y + 2, this.width - 4, this.height - 4,
                         0f, 0f,
                         this.iconTexture.width(), this.iconTexture.height(),
                         this.iconTexture.width(), this.iconTexture.height());
@@ -102,7 +115,7 @@ public class CustomSlotButton extends Button implements com.tacz.guns.client.gui
         } else {
             if (item.isEmpty() && this.iconTexture != null) {
                 graphics.blit(this.iconTexture.texture(),
-                        x + 2, y + 2, 14, 14,
+                        x + 2, y + 2, this.width - 4, this.height - 4,
                         0f, 0f,
                         this.iconTexture.width(), this.iconTexture.height(),
                         this.iconTexture.width(), this.iconTexture.height());
@@ -129,6 +142,11 @@ public class CustomSlotButton extends Button implements com.tacz.guns.client.gui
         }
         RenderSystem.enableDepthTest();
         RenderSystem.disableBlend();
+        if (scaled) {
+            graphics.pose().popPose();
+            setWidth(originalWidth);
+            setHeight(originalHeight);
+        }
     }
 
     private Component getSlotName() {

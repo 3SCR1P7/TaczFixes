@@ -58,6 +58,9 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         super(Component.literal(""));
     }
 
+    @org.spongepowered.asm.mixin.Shadow(remap = false)
+    private int inventoryAttachmentStartY;
+
     // ==================== 改装方案弹窗 ====================
 
     private static final int OVERLAY_NONE = 0;
@@ -106,7 +109,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
                     b -> openPresetSave(gunStack, gunId)).bounds(saveX, y, saveW, 18));
         }
         if (com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_SEARCH_BOX.get()) {
-            taczfixes$ensureSearchBox();
+            taczfixes$syncSearchBox();
         } else {
             taczfixes$removeSearchBox();
         }
@@ -383,6 +386,8 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
     @Unique
     private EditBox taczfixes$searchBox;
     @Unique
+    private boolean taczfixes$searchBoxShown;
+    @Unique
     private String taczfixes$lastSearchText = "";
     @Unique
     private String taczfixes$appliedSearch = "";
@@ -395,6 +400,20 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
     @Unique
     private final List<Renderable> taczfixes$searchWidgets = new ArrayList<>();
 
+    /** 仅在选中了配件槽(标准槽)后显示搜索框。 */
+    @Unique
+    private void taczfixes$syncSearchBox() {
+        boolean show = RefitTransform.getCurrentTransformType() != AttachmentType.NONE;
+        if (show) {
+            // 清空搜索内容时 updateSearch 会调用 init() 重建控件, 需要检测搜索框是否已被移除并重新挂载
+            if (taczfixes$searchBox == null || !this.children().contains(taczfixes$searchBox)) {
+                taczfixes$ensureSearchBox();
+            }
+        } else if (taczfixes$searchBoxShown || taczfixes$searchBox != null) {
+            taczfixes$removeSearchBox();
+        }
+    }
+
     @Unique
     private void taczfixes$ensureSearchBox() {
         if (taczfixes$searchBox == null) {
@@ -403,11 +422,13 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         } else {
             taczfixes$searchBox.setY(this.height - 28);
         }
+        taczfixes$searchBoxShown = true;
         this.addRenderableWidget(taczfixes$searchBox);
     }
 
     @Unique
     private void taczfixes$removeSearchBox() {
+        taczfixes$searchBoxShown = false;
         if (taczfixes$searchBox != null) {
             this.removeWidget(taczfixes$searchBox);
             taczfixes$searchBox = null;
@@ -501,8 +522,9 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
                 matched.add(i);
             }
         }
-        int x = this.width - 30;
-        int y = 50;
+        int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
+        int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
+        int y = this.inventoryAttachmentStartY;
         int totalPages = Math.max(1, (matched.size() + 7) / 8);
         if (taczfixes$searchPage > totalPages - 1) taczfixes$searchPage = totalPages - 1;
         if (taczfixes$searchPage < 0) taczfixes$searchPage = 0;
@@ -512,27 +534,32 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
             int index = matched.get(k);
             InventoryAttachmentSlot slot = new InventoryAttachmentSlot(x, y, index, sourceInv,
                     b -> taczfixes$installAttachment(sourceInv, b));
+            slot.setWidth(slotSize);
+            slot.setHeight(slotSize);
             this.addRenderableWidget(slot);
             taczfixes$searchWidgets.add(slot);
-            y += 18;
+            y += slotSize;
         }
         taczfixes$searchActive = true;
         if (totalPages > 1) {
             if (taczfixes$searchPage > 0) {
-                RefitTurnPageButton prev = new RefitTurnPageButton(x, 40, true,
+                RefitTurnPageButton prev = new RefitTurnPageButton(x, this.inventoryAttachmentStartY - 10, true,
                         b -> {
                             taczfixes$searchPage--;
                             taczfixes$rebuildSearchList();
                         });
+                prev.setWidth(slotSize);
                 this.addRenderableWidget(prev);
                 taczfixes$searchWidgets.add(prev);
             }
             if (taczfixes$searchPage < totalPages - 1) {
-                RefitTurnPageButton next = new RefitTurnPageButton(x, 196, false,
+                RefitTurnPageButton next = new RefitTurnPageButton(x,
+                        this.inventoryAttachmentStartY + slotSize * 8 + 2, false,
                         b -> {
                             taczfixes$searchPage++;
                             taczfixes$rebuildSearchList();
                         });
+                next.setWidth(slotSize);
                 this.addRenderableWidget(next);
                 taczfixes$searchWidgets.add(next);
             }
@@ -570,6 +597,9 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
 
     @Inject(method = "m_88315_", at = @At("HEAD"), remap = false)
     private void taczfixes$preRenderSearch(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
+        if (com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_SEARCH_BOX.get()) {
+            taczfixes$syncSearchBox();
+        }
         if (taczfixes$searchBox != null) {
             taczfixes$updateSearch();
         }

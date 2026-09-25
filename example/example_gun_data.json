@@ -263,9 +263,9 @@
     // 自定义配件槽位
     "attachment_slots": {
       // 是否隐藏未被启用的自定义配件槽位，默认true。
-      "hidden_unavailable": "true",
+      "hidden_unavailable": true,
       // 是否隐藏未被启用的默认配件槽位，默认false。
-      "hidden_unavailable_default": "true",
+      "hidden_unavailable_default": true,
       // 槽位id，对应模型文件中的*_pos，*_default，*_adapter。
       // 不能为tacz已有的id。
       "laser2": {

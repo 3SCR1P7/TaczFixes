@@ -29,7 +29,7 @@ public class ConfigScreen {
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
         buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
         buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
-        buildRefitScreen(builder.getOrCreateCategory(cat("refitscreen")), entry);
+        buildRefit(builder.getOrCreateCategory(cat("refit")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
         buildEnchantment(builder.getOrCreateCategory(cat("enchantment")), entry);
         buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
@@ -102,10 +102,12 @@ public class ConfigScreen {
                 .build());
     }
 
-    private static void buildRefitScreen(ConfigCategory cat, ConfigEntryBuilder entry) {
-        bool_(cat, entry, "refitscreen.show_view_button", Config.REFITSCREEN_SHOW_VIEW_BUTTON);
-        bool_(cat, entry, "refitscreen.show_preset_buttons", Config.REFITSCREEN_SHOW_PRESET_BUTTONS);
-        bool_(cat, entry, "refitscreen.show_search_box", Config.REFITSCREEN_SHOW_SEARCH_BOX);
+    private static <T extends Enum<T>> void enum_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry,
+                                                  String slug, ForgeConfigSpec.EnumValue<T> v) {
+        entries.add(entry.startEnumSelector(entry(slug), v.get().getDeclaringClass(), v.get())
+                .setDefaultValue(v.getDefault())
+                .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .build());
     }
 
     private static Component cat(String slug) {
@@ -241,23 +243,17 @@ public class ConfigScreen {
         bool_(underwater, entry, "misc.prevent_shooting_underwater", Config.PREVENT_SHOOTING_UNDERWATER);
         cat.addEntry(entry.startSubCategory(cat("underwater"), underwater).build());
 
-        List<AbstractConfigListEntry> toast = new ArrayList<>();
-        int_(toast, entry, "misc.refit_toast_duration_ms", Config.REFIT_TOAST_DURATION_MS);
-        int_(toast, entry, "misc.refit_toast_fade_ms", Config.REFIT_TOAST_FADE_MS);
-        cat.addEntry(entry.startSubCategory(cat("refit_toast"), toast).build());
-
-        List<AbstractConfigListEntry> viewZoom = new ArrayList<>();
-        dbl_(viewZoom, entry, "misc.refit_view_zoom_min", Config.REFIT_VIEW_ZOOM_MIN);
-        dbl_(viewZoom, entry, "misc.refit_view_zoom_max", Config.REFIT_VIEW_ZOOM_MAX);
-        cat.addEntry(entry.startSubCategory(cat("refit_view_zoom"), viewZoom).build());
-
-        List<AbstractConfigListEntry> refitButton = new ArrayList<>();
-        dbl_(refitButton, entry, "misc.refit_button_opacity", Config.REFIT_BUTTON_OPACITY);
-        cat.addEntry(entry.startSubCategory(cat("refit_button"), refitButton).build());
-
-        List<AbstractConfigListEntry> refitPoint = new ArrayList<>();
-        int_(refitPoint, entry, "misc.refit_point_default_consume", Config.REFIT_POINT_DEFAULT_CONSUME);
-        cat.addEntry(entry.startSubCategory(cat("refit_point"), refitPoint).build());
+        List<AbstractConfigListEntry> blocking = new ArrayList<>();
+        bool_(blocking, entry, "misc.blocking_enable", Config.BLOCKING_ENABLE);
+        dbl_(blocking, entry, "misc.blocking_distance_max", Config.BLOCKING_DISTANCE_MAX);
+        dbl_(blocking, entry, "misc.blocking_distance_min", Config.BLOCKING_DISTANCE_MIN);
+        dbl_(blocking, entry, "misc.blocking_angle", Config.BLOCKING_ANGLE);
+        dbl_(blocking, entry, "misc.blocking_back_off", Config.BLOCKING_BACK_OFF);
+        dbl_(blocking, entry, "misc.blocking_deflection", Config.BLOCKING_DEFLECTION);
+        dbl_(blocking, entry, "misc.blocking_disable_fire", Config.BLOCKING_DISABLE_FIRE);
+        dbl_(blocking, entry, "misc.blocking_facing", Config.BLOCKING_FACING);
+        dbl_(blocking, entry, "misc.blocking_facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);
+        cat.addEntry(entry.startSubCategory(cat("blocking"), blocking).build());
 
         List<AbstractConfigListEntry> burst = new ArrayList<>();
         lst_(burst, entry, "misc.burst_block_attachments", Config.BURST_BLOCK_ATTACHMENTS);
@@ -285,6 +281,20 @@ public class ConfigScreen {
         bool_(debug, entry, "misc.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(debug, entry, "misc.disable_third_person", Config.DISABLE_THIRD_PERSON);
         cat.addEntry(entry.startSubCategory(cat("debug"), debug).build());
+    }
+
+    private static void buildRefit(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "refit.hide_unavailable_default_slots", Config.HIDE_UNAVAILABLE_DEFAULT_SLOTS);
+        enum_(cat, entry, "refit.virtual_attachments", Config.VIRTUAL_ATTACHMENTS);
+        bool_(cat, entry, "refit.show_preset_buttons", Config.REFITSCREEN_SHOW_PRESET_BUTTONS);
+        bool_(cat, entry, "refit.show_search_box", Config.REFITSCREEN_SHOW_SEARCH_BOX);
+        dbl_(cat, entry, "refit.slot_size", Config.REFIT_SLOT_SIZE);
+        int_(cat, entry, "refit.toast_duration_ms", Config.REFIT_TOAST_DURATION_MS);
+        int_(cat, entry, "refit.toast_fade_ms", Config.REFIT_TOAST_FADE_MS);
+        dbl_(cat, entry, "refit.view_zoom_min", Config.REFIT_VIEW_ZOOM_MIN);
+        dbl_(cat, entry, "refit.view_zoom_max", Config.REFIT_VIEW_ZOOM_MAX);
+        dbl_(cat, entry, "refit.button_opacity", Config.REFIT_BUTTON_OPACITY);
+        int_(cat, entry, "refit.point_default_consume", Config.REFIT_POINT_DEFAULT_CONSUME);
     }
 
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {

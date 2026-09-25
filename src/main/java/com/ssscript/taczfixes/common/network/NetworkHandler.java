@@ -148,5 +148,25 @@ public class NetworkHandler {
                 ClientMessageOffhandMelee::decode,
                 ClientMessageOffhandMelee::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(26, ClientMessageOffhandShootState.class,
+                ClientMessageOffhandShootState::encode,
+                ClientMessageOffhandShootState::decode,
+                ClientMessageOffhandShootState::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(27, ClientMessageOffhandAction.class,
+                ClientMessageOffhandAction::encode,
+                ClientMessageOffhandAction::decode,
+                ClientMessageOffhandAction::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(28, ClientMessageInstallCustomSlotBuiltin.class,
+                ClientMessageInstallCustomSlotBuiltin::encode,
+                ClientMessageInstallCustomSlotBuiltin::decode,
+                ClientMessageInstallCustomSlotBuiltin::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(29, ClientMessageInstallVirtualAttachment.class,
+                ClientMessageInstallVirtualAttachment::encode,
+                ClientMessageInstallVirtualAttachment::decode,
+                ClientMessageInstallVirtualAttachment::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }

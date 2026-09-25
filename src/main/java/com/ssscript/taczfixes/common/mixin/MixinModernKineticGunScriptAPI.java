@@ -226,6 +226,15 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
+    /** blocking.disable_fire: 距前方障碍过近时取消整个 shootOnce。 */
+    @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void taczfixes$blockTooClose(boolean needConsumeAmmo, CallbackInfo ci) {
+        if (this.shooter instanceof net.minecraft.world.entity.player.Player player
+                && com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(player, this.itemStack)) {
+            ci.cancel();
+        }
+    }
+
     /** 开火前预检查电量; 电量不足且 blocking_fire 时取消整个连发并播放 dry_fire(实际消耗在每发子弹开火时)。 */
     @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$checkCharge(boolean needConsumeAmmo, CallbackInfo ci) {

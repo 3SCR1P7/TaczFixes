@@ -118,6 +118,18 @@ public final class DualWieldClient {
         controllerAimDown = isDown;
     }
 
+    private static boolean lastSyncedOffhandShootState = false;
+
+    /** 同步副手开火键状态到服务端 (Arcana 技能桥接的 ON_CLICK / ON_AUTO_SHOOT)。 */
+    private static void syncOffhandShootState(boolean down) {
+        if (down == lastSyncedOffhandShootState) {
+            return;
+        }
+        lastSyncedOffhandShootState = down;
+        com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.sendToServer(
+                new com.ssscript.taczfixes.common.network.ClientMessageOffhandShootState(down));
+    }
+
     @SubscribeEvent
     public static void onClientTick(TickEvent.ClientTickEvent event) {
         if (event.phase != TickEvent.Phase.END) {
@@ -143,6 +155,7 @@ public final class DualWieldClient {
             lastRightShootSuccess = false;
             controllerShootDown = false;
             controllerAimDown = false;
+            syncOffhandShootState(false);
             return;
         }
         if (!dual) {
@@ -181,6 +194,7 @@ public final class DualWieldClient {
             waitRightReleaseAfterScreen = false;
             waitShootReleaseAfterFocusChange = false;
             waitAimReleaseAfterFocusChange = false;
+            syncOffhandShootState(false);
             return;
         }
         boolean dualStarted = !dualWasActive;
@@ -203,7 +217,12 @@ public final class DualWieldClient {
             waitLeftReleaseAfterScreen = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
             waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
             resetFocusAimImmediately(player);
-            OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack, true);
+            if (taczfixes$isHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack)) {
+                // F 交换主副手: 不做收枪过渡, 立刻播放两把枪的掏枪动画
+                OffhandDisplayManager.swapHandsImmediately(player, currentMainStack, currentOffhandStack);
+            } else {
+                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack, true);
+            }
         }
         if (OffhandDisplayManager.isPuttingAway()) {
             OffhandDisplayManager.updatePutAwayTarget(currentMainStack, currentOffhandStack, true);
@@ -218,6 +237,7 @@ public final class DualWieldClient {
                 controllerShootDown = false;
                 controllerAimDown = false;
                 resetFocusAimImmediately(player);
+                syncOffhandShootState(false);
                 return;
             }
         }
@@ -242,6 +262,7 @@ public final class DualWieldClient {
             controllerAimDown = false;
             lastDualMainStack = player.getMainHandItem().copy();
             lastDualOffhandStack = player.getOffhandItem().copy();
+            syncOffhandShootState(false);
             return;
         }
         boolean physicalShootDown = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
@@ -309,6 +330,7 @@ public final class DualWieldClient {
             lastRightShootSuccess = false;
             lastDualMainStack = player.getMainHandItem().copy();
             lastDualOffhandStack = player.getOffhandItem().copy();
+            syncOffhandShootState(false);
             return;
         }
         LocalPlayerSprint.stopSprint = focusTarget || desiredAim || leftDown || rightDown || leftState.isReloading() || leftState.isBolting();
@@ -345,6 +367,7 @@ public final class DualWieldClient {
         if (!rightDown) {
             lastRightShootSuccess = false;
         }
+        syncOffhandShootState(leftDown);
         lastLeftDown = leftDown;
         lastRightDown = rightDown;
         lastDualMainStack = player.getMainHandItem().copy();
@@ -599,6 +622,14 @@ public final class DualWieldClient {
         return firstGun != null && secondGun != null && first.getItem() == second.getItem() && firstGun.getGunId(first).equals(secondGun.getGunId(second));
     }
 
+    /** 是否为主副手互换(上一帧的主/副手正好是这一帧的副/主手)。 */
+    private static boolean taczfixes$isHandSwap(ItemStack previousMain, ItemStack previousOffhand,
+                                                ItemStack currentMain, ItemStack currentOffhand) {
+        return sameLogicalStack(previousMain, currentOffhand)
+                && sameLogicalStack(previousOffhand, currentMain)
+                && !sameLogicalStack(previousMain, previousOffhand);
+    }
+
     private static boolean canContinuouslyShoot(ItemStack stack) {
         IGun gun = IGun.getIGunOrNull(stack);
         if (gun == null) {
@@ -653,6 +684,10 @@ public final class DualWieldClient {
         int ammo = gun.getCurrentAmmoCount(stack) + (inBarrel ? 1 : 0);
         boolean noAmmo = gun.useInventoryAmmo(stack) ? (inventoryAmmo || inBarrel) ? false : true : ammo < 1;
         if (noAmmo || (gunData.hasHeatData() && gun.isOverheatLocked(stack))) {
+            SoundPlayManager.playDryFireSound(player, display);
+            return false;
+        }
+        if (com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(player, stack)) {
             SoundPlayManager.playDryFireSound(player, display);
             return false;
         }
@@ -1169,6 +1204,10 @@ public final class DualWieldClient {
 
     /** 副手是否可以近战: 主手近战冷却(未到切换比例)、副手自身近战冷却中或副手正在切枪/换弹/拉栓/开火/连发视觉中不可用。 */
     private static boolean isOffhandMeleeReady(LocalPlayer player) {
+        // 单手瞄准(主手)期间副手降下到低位, 不允许副手近战
+        if (DualFocusAimState.isPoseVisible()) {
+            return false;
+        }
         if (mainHandMeleeBlocksOffhand(player) || isOffhandMeleeCoolingDown()) {
             return false;
         }

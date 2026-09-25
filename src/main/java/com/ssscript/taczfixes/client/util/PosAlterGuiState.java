@@ -56,7 +56,6 @@ public final class PosAlterGuiState {
 
     public static void tickAndRender(Screen screen, GuiGraphics graphics, int mouseX, int mouseY,
                                      float partialTick) {
-        if (RefitViewMode.isActive()) return;
         String key = currentSlotKey();
         String id = currentGunId();
         int x = computeSliderX(screen);
@@ -82,13 +81,18 @@ public final class PosAlterGuiState {
     }
 
     public static boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (RefitViewMode.isActive()) return false;
         if (slider == null) return false;
         if (slider.mouseClicked(mouseX, mouseY, button)) {
             dragging = true;
             return true;
         }
         return false;
+    }
+
+    public static boolean isHoveringSlider(double mouseX, double mouseY) {
+        return slider != null
+                && mouseX >= slider.getX() && mouseX <= slider.getX() + slider.getWidth()
+                && mouseY >= slider.getY() && mouseY <= slider.getY() + slider.getHeight();
     }
 
     public static boolean mouseDragged(double mouseX, double mouseY) {
