@@ -10,7 +10,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualRenderContext.class */
 public final class DualRenderContext {
     private static final ThreadLocal<HandPhase> PHASE = ThreadLocal.withInitial(() -> {
         return HandPhase.NONE;
@@ -18,7 +17,6 @@ public final class DualRenderContext {
     private static final ThreadLocal<OffhandModelBase> OFFHAND_MODEL_BASE = new ThreadLocal<>();
     private static final ThreadLocal<OffhandModelBase> MAIN_MODEL_BASE = new ThreadLocal<>();
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualRenderContext$HandPhase.class */
     public enum HandPhase {
         NONE,
         MAIN,
@@ -89,7 +87,6 @@ public final class DualRenderContext {
         MAIN_MODEL_BASE.remove();
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualRenderContext$OffhandModelBase.class */
     private static final class OffhandModelBase {
         private final BedrockAnimatedModel model;
         private final Matrix4f pose;

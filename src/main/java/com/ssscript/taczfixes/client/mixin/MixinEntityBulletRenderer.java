@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import net.minecraft.world.entity.Entity;
 
 @Mixin(value = {EntityBulletRenderer.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinEntityBulletRenderer.class */
 public abstract class MixinEntityBulletRenderer {
     @Inject(method = {"renderTracerAmmo(Lcom/tacz/guns/entity/EntityKineticBullet;[FFLcom/mojang/blaze3d/vertex/PoseStack;I)V"}, at = {@At("HEAD")})
     private void dualWield$selectMuzzleForBullet(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, int packedLight, CallbackInfo callback) {

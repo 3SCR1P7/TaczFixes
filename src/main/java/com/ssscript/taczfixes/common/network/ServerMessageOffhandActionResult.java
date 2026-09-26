@@ -8,7 +8,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/network/packet/ServerMessageOffhandActionResult.class */
 public final class ServerMessageOffhandActionResult {
     public static final int ACTION_SHOOT = 0;
     public static final int ACTION_RELOAD = 1;

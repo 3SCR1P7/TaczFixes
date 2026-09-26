@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = {BedrockGunModel.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinBedrockGunModelInspect.class */
 public abstract class MixinBedrockGunModelInspect {
     @Inject(method = {"render"}, at = {@At("HEAD")})
     private void dualWield$applyInspectMagazineFollower(PoseStack poseStack, ItemStack gunItem, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, CallbackInfo callback) {

@@ -14,7 +14,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualMovementAnimationLibrary.class */
 public final class DualMovementAnimationLibrary {
     private static final String ASSET_PREFIX = "dual_";
     private static volatile Map<String, ObjectAnimation> cachedPrototypes;

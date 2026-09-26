@@ -14,7 +14,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/DualWieldEligibility.class */
 public final class DualWieldEligibility {
     private static final String EMBEDDED_DUAL_SMG_ID = "eos:eos_m_57cw_t2x2";
     private static volatile Rules clientRules;
@@ -149,7 +148,6 @@ public final class DualWieldEligibility {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/DualWieldEligibility$Rules.class */
     public record Rules(boolean allowOtherGunTypes, List<String> allowedTypes, List<String> allowedGuns, List<String> deniedGuns, double dualWieldRecoilMultiplier, double leftGunXOffset, double rightGunXOffset, double dualWieldInaccuracyMultiplier, double focusAimRecoilMultiplier, double focusAimInaccuracyMultiplier) {
 
         public boolean allowOtherGunTypes() {

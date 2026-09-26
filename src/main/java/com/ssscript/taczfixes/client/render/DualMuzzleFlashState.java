@@ -7,7 +7,6 @@ import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualMuzzleFlashState.class */
 public final class DualMuzzleFlashState {
     private static DualRenderContext.HandPhase latestHand = DualRenderContext.HandPhase.NONE;
     private static long latestTimestamp = -1;
@@ -30,6 +29,16 @@ public final class DualMuzzleFlashState {
 
     public static boolean shouldSuppress(DualRenderContext.HandPhase renderingHand) {
         return renderingHand != latestHand || latestTimestamp < 0 || System.currentTimeMillis() - latestTimestamp > 75;
+    }
+
+    /** 最近开火的手(可能已过期); 用于第三人称按手限制火焰生成。 */
+    public static DualRenderContext.HandPhase latestHand() {
+        return latestHand;
+    }
+
+    /** 最近一次开火记录距现在是否在指定毫秒内。 */
+    public static boolean isRecent(long windowMillis) {
+        return latestTimestamp >= 0 && System.currentTimeMillis() - latestTimestamp <= windowMillis;
     }
 
     public static void captureMuzzle(DualRenderContext.HandPhase hand, Vector3f offset) {

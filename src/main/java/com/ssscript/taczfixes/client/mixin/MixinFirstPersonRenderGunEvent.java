@@ -41,7 +41,8 @@ public class MixinFirstPersonRenderGunEvent {
             return;
         }
         ItemStack firedStack = event.getGunItemStack();
-        if (firedStack != null && firedStack == player.getOffhandItem()) {
+        // 网络同步的 ItemStack 是新对象, 用逻辑比较判断是否为副手开火
+        if (firedStack != null && com.ssscript.taczfixes.common.util.DualWieldStackId.matches(firedStack, player.getOffhandItem())) {
             callback.cancel();
         }
     }

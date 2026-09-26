@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = {PlayerModel.class}, priority = 800)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinDualPlayerModel.class */
 public abstract class MixinDualPlayerModel<T extends LivingEntity> extends HumanoidModel<T> {
 
     @Shadow

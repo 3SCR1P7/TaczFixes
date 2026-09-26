@@ -262,7 +262,6 @@ public final class DualReloadAnimationManager {
         return Math.min((long) (seconds * 1000.0f), MAX_VISUAL_DURATION_MS);
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadAnimationManager$ReloadVisual.class */
     private static final class ReloadVisual {
         private final InteractionHand hand;
         private final GunDisplayInstance display;

@@ -15,7 +15,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandArmPoseResolver.class */
 public final class OffhandArmPoseResolver {
     private static final float ARM_RENDER_Z_ROTATION = 3.1415927f;
     private static final double STANDARD_LEFT_ARM_PROXY_OFFSET_X = -0.75d;
@@ -455,7 +454,6 @@ public final class OffhandArmPoseResolver {
         return Float.isFinite(matrix.m00()) && Float.isFinite(matrix.m01()) && Float.isFinite(matrix.m02()) && Float.isFinite(matrix.m03()) && Float.isFinite(matrix.m10()) && Float.isFinite(matrix.m11()) && Float.isFinite(matrix.m12()) && Float.isFinite(matrix.m13()) && Float.isFinite(matrix.m20()) && Float.isFinite(matrix.m21()) && Float.isFinite(matrix.m22()) && Float.isFinite(matrix.m23()) && Float.isFinite(matrix.m30()) && Float.isFinite(matrix.m31()) && Float.isFinite(matrix.m32()) && Float.isFinite(matrix.m33());
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandArmPoseResolver$SupportRetargetSnapshot.class */
     private static final class SupportRetargetSnapshot {
         private final BedrockPart carrier;
         private final BedrockPart holdingEndpoint;

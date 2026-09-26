@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = {"com.github.tartaricacid.touhoulittlemaid.client.renderer.entity.geckolayer.GeckoLayerMaidHeld"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinTouhouMaidHeldGun.class */
 public abstract class MixinTouhouMaidHeldGun {
     @Redirect(method = {"render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/Mob;FFFFFF)V"}, at = @At(value = "INVOKE", target = "Ljava/util/List;isEmpty()Z", ordinal = ServerMessageOffhandActionResult.ACTION_RELOAD), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private boolean taczDualWield$allowMissingPrimaryLeftLocator(List<?> bones, PoseStack poseStack, MultiBufferSource buffer, int packedLight, Mob maid, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {

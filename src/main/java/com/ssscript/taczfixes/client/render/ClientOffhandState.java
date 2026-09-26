@@ -32,7 +32,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/ClientOffhandState.class */
 public final class ClientOffhandState {
     private static final long RELOAD_REQUEST_TIMEOUT_MS = 5000;
     private static final long BOLT_REQUEST_TIMEOUT_MS = 5000;
@@ -814,7 +813,6 @@ public final class ClientOffhandState {
         resetCharge();
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/ClientOffhandState$PendingShootRequestKey.class */
     private record PendingShootRequestKey(UUID stackId, long shootTimestamp) {
 
         private PendingShootRequestKey(UUID stackId, long shootTimestamp) {

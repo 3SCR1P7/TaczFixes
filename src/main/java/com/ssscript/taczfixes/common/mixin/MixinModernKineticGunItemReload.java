@@ -19,7 +19,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = {ModernKineticGunItem.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/mixin/MixinModernKineticGunItemReload.class */
 public abstract class MixinModernKineticGunItemReload {
 
     @Unique

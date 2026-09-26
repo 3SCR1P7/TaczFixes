@@ -30,7 +30,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualFirstPersonRenderer.class */
 public final class DualFirstPersonRenderer {
     private DualFirstPersonRenderer() {
     }

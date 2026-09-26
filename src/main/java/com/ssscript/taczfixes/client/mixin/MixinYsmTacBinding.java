@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Pseudo
 @Mixin(targets = {"com.elfmcys.yesstevemodel.O0OoOo00OoOOoOo0oo0O00oo"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinYsmTacBinding.class */
 public abstract class MixinYsmTacBinding {
     @Redirect(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/elfmcys/yesstevemodel/oo0oOO0000o0Ooooo0OoOo0O;)Ljava/lang/String;"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/resource/index/CommonGunIndex;getType()Ljava/lang/String;", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private static String taczDualWield$publishRpgType(CommonGunIndex gunIndex, @Coerce Object molangContext) {

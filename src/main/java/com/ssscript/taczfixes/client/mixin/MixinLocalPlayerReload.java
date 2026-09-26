@@ -20,7 +20,6 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = {LocalPlayerReload.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinLocalPlayerReload.class */
 public abstract class MixinLocalPlayerReload {
     @Inject(method = {"doReload"}, at = {@At("HEAD")})
     private void dualWield$markAcceptedMainReload(IGun gun, GunDisplayInstance display, GunData gunData, ItemStack mainHandItem, CallbackInfo callbackInfo) {

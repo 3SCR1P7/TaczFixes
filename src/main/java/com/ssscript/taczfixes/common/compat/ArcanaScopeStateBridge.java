@@ -7,7 +7,6 @@ import java.lang.reflect.Method;
 import java.util.LinkedHashSet;
 import java.util.Set;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/ArcanaScopeStateBridge.class */
 public final class ArcanaScopeStateBridge {
     private static final String ARCANA_SCOPE_STATE_CLASS = "group.taczexpands.dist.DWmIaTdo";
     private static final String ARCANA_SCOPE_STATE_INSTANCE_FIELD = "aksH9vla";
@@ -89,7 +88,6 @@ public final class ArcanaScopeStateBridge {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/ArcanaScopeStateBridge$Access.class */
     private static final class Access {
         private final Object instance;
         private final Method getter;
@@ -102,7 +100,6 @@ public final class ArcanaScopeStateBridge {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/ArcanaScopeStateBridge$Snapshot.class */
     public static final class Snapshot {
         private static final Snapshot NO_OP = new Snapshot(null, null, false);
         private final Access access;

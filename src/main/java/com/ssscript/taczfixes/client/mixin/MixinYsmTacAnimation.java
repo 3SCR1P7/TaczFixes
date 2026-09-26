@@ -15,7 +15,6 @@ import com.tacz.guns.api.entity.IGunOperator;
 
 @Pseudo
 @Mixin(targets = {"com.elfmcys.yesstevemodel.ooOoOo0o0OO0ooOO00Oo0ooO"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinYsmTacAnimation.class */
 public abstract class MixinYsmTacAnimation {
     private static final String RPG_TYPE = "rpg";
     private static final String[] TAC_GUN_ANIMATION_PREFIXES = {"tac:climbing:fire:", "tac:hold:fire:", "tac:aim:fire:", "tac:climbing:", "tac:reload:", "tac:climb:", "tac:hold:", "tac:aim:", "tac:run:"};

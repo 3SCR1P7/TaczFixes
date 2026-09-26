@@ -25,7 +25,6 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmDualWieldCompat.class */
 public final class YsmDualWieldCompat {
     private static final String[] ENTITY_GETTERS = {"getEntity", "OO00OOOOo0Ooo0oo0o0Oo0OO"};
     private static final String[] MODEL_GETTERS = {"getCurrentModel", "OOOoOO000000o0o0oOooo0o0"};
@@ -36,35 +35,30 @@ public final class YsmDualWieldCompat {
     private static final AtomicBoolean REFLECTION_WARNING_LOGGED = new AtomicBoolean();
     private static final Map<Object, Map<String, Object>> MODEL_BONE_CACHE = Collections.synchronizedMap(new WeakHashMap());
     private static final ClassValue<AnimatableAccess> ANIMATABLE_ACCESS = new ClassValue<AnimatableAccess>() { // from class: com.ssscript.taczfixes.common.compat.YsmDualWieldCompat.1
-                /* JADX WARN: Can't rename method to resolve collision */
         @Override // java.lang.ClassValue
         protected AnimatableAccess computeValue(Class<?> type) {
             return new AnimatableAccess(YsmDualWieldCompat.findPublicNoArg(type, YsmDualWieldCompat.ENTITY_GETTERS), YsmDualWieldCompat.findPublicNoArg(type, YsmDualWieldCompat.MODEL_GETTERS));
         }
     };
     private static final ClassValue<Method> MODEL_BONES_ACCESS = new ClassValue<Method>() { // from class: com.ssscript.taczfixes.common.compat.YsmDualWieldCompat.2
-                /* JADX WARN: Can't rename method to resolve collision */
         @Override // java.lang.ClassValue
         protected Method computeValue(Class<?> type) {
             return YsmDualWieldCompat.findPublicNoArg(type, YsmDualWieldCompat.BONES_GETTERS);
         }
     };
     private static final ClassValue<Method> EVENT_ANIMATABLE_ACCESS = new ClassValue<Method>() { // from class: com.ssscript.taczfixes.common.compat.YsmDualWieldCompat.4
-                /* JADX WARN: Can't rename method to resolve collision */
         @Override // java.lang.ClassValue
         protected Method computeValue(Class<?> type) {
             return YsmDualWieldCompat.findPublicNoArg(type, YsmDualWieldCompat.EVENT_ANIMATABLE_GETTERS);
         }
     };
     private static final ClassValue<Method> CONTEXT_ENTITY_ACCESS = new ClassValue<Method>() { // from class: com.ssscript.taczfixes.common.compat.YsmDualWieldCompat.5
-                /* JADX WARN: Can't rename method to resolve collision */
         @Override // java.lang.ClassValue
         protected Method computeValue(Class<?> type) {
             return YsmDualWieldCompat.findPublicNoArg(type, YsmDualWieldCompat.CONTEXT_ENTITY_GETTERS);
         }
     };
     private static final ClassValue<BoneAccess> BONE_ACCESS = new ClassValue<BoneAccess>() { // from class: com.ssscript.taczfixes.common.compat.YsmDualWieldCompat.6
-                /* JADX WARN: Can't rename method to resolve collision */
         @Override // java.lang.ClassValue
         protected BoneAccess computeValue(Class<?> type) {
             return new BoneAccess(YsmDualWieldCompat.findPublicNoArg(type, "getName", "oOOo0Ooo0oOoo0O0OOOOo0oo"), YsmDualWieldCompat.findPublicNoArg(type, "getRotationX", "Oo0Oo0o00O00Oo0OOoOOoooo"), YsmDualWieldCompat.findPublicFloatArg(type, "setRotationX", "Oo0Oo0o00O00Oo0OOoOOoooo"), YsmDualWieldCompat.findPublicNoArg(type, "getRotationY", "o0OOooo0o0OO00OoOOOo0o0O"), YsmDualWieldCompat.findPublicFloatArg(type, "setRotationY", "o0OOooo0o0OO00OoOOOo0o0O"), YsmDualWieldCompat.findPublicNoArg(type, "getRotationZ", "O00OOOooOoooOoo0o0o0oO0O"), YsmDualWieldCompat.findPublicFloatArg(type, "setRotationZ", "O00OOOooOoooOoo0o0o0oO0O"), YsmDualWieldCompat.findPublicNoArg(type, "getPositionX", "oOOOo0OOO0ooooo0O00OO0o0"), YsmDualWieldCompat.findPublicFloatArg(type, "setPositionX", "oOOOo0OOO0ooooo0O00OO0o0"), YsmDualWieldCompat.findPublicNoArg(type, "getPositionY", "OOOOo0O0oO0OOo0O0O0Oo0O0"), YsmDualWieldCompat.findPublicFloatArg(type, "setPositionY", "OOOOo0O0oO0OOo0O0O0Oo0O0"), YsmDualWieldCompat.findPublicNoArg(type, "getPositionZ", "Ooooo0oooO0oooOOOoO0000O"), YsmDualWieldCompat.findPublicFloatArg(type, "setPositionZ", "Ooooo0oooO0oooOOOoO0000O"), YsmDualWieldCompat.findPublicNoArg(type, "getScaleX", "oo0OoO00oOoo000O0000o0oo"), YsmDualWieldCompat.findPublicFloatArg(type, "setScaleX", "oo0OoO00oOoo000O0000o0oo"), YsmDualWieldCompat.findPublicNoArg(type, "getScaleY", "oooooooOOoOOoO00OooOo00O"), YsmDualWieldCompat.findPublicFloatArg(type, "setScaleY", "oooooooOOoOOoO00OooOo00O"), YsmDualWieldCompat.findPublicNoArg(type, "getScaleZ", "Oo00o0OooOOo0ooOoo0oO0o0"), YsmDualWieldCompat.findPublicFloatArg(type, "setScaleZ", "Oo00o0OooOOo0ooOoo0oO0o0"), YsmDualWieldCompat.findPublicNoArg(type, "isHidden", "OOOo0OOOoOO0O00Oo00ooOOO"), YsmDualWieldCompat.findPublicNoArg(type, "childBonesAreHiddenToo", "oOo0o0000OOOO0OooooO00oo"), YsmDualWieldCompat.findPublic(type, new Class[]{Boolean.TYPE, Boolean.TYPE}, "setHidden", "Oo0Oo0o00O00Oo0OOoOOoooo"), YsmDualWieldCompat.findPublicNoArg(type, "getInitialRotation", "OO0ooO00OoO00o0OO0OOooO0"));
@@ -319,7 +313,6 @@ public final class YsmDualWieldCompat {
         throw new IllegalStateException("Unsupported YSM 2.6.5 member on " + type.getName());
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmDualWieldCompat$AnimatableAccess.class */
     private record AnimatableAccess(Method entityGetter, Method modelGetter) {
 
         private AnimatableAccess(Method entityGetter, Method modelGetter) {
@@ -328,7 +321,6 @@ public final class YsmDualWieldCompat {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmDualWieldCompat$BoneAccess.class */
     private record BoneAccess(Method name, Method rotationXGetter, Method rotationXSetter, Method rotationYGetter, Method rotationYSetter, Method rotationZGetter, Method rotationZSetter, Method positionXGetter, Method positionXSetter, Method positionYGetter, Method positionYSetter, Method positionZGetter, Method positionZSetter, Method scaleXGetter, Method scaleXSetter, Method scaleYGetter, Method scaleYSetter, Method scaleZGetter, Method scaleZSetter, Method hiddenGetter, Method childrenHiddenGetter, Method hiddenSetter, Method initialRotationGetter) {
 
         private BoneAccess(Method name, Method rotationXGetter, Method rotationXSetter, Method rotationYGetter, Method rotationYSetter, Method rotationZGetter, Method rotationZSetter, Method positionXGetter, Method positionXSetter, Method positionYGetter, Method positionYSetter, Method positionZGetter, Method positionZSetter, Method scaleXGetter, Method scaleXSetter, Method scaleYGetter, Method scaleYSetter, Method scaleZGetter, Method scaleZSetter, Method hiddenGetter, Method childrenHiddenGetter, Method hiddenSetter, Method initialRotationGetter) {
@@ -450,7 +442,6 @@ public final class YsmDualWieldCompat {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmDualWieldCompat$RestTransform.class */
     private record RestTransform(float positionX, float positionY, float positionZ, float rotationX, float rotationY, float rotationZ) {
         private static final RestTransform ZERO = new RestTransform(0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f);
 

@@ -55,11 +55,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
+import com.tacz.guns.compat.playeranimator.AnimationName;
+import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
+import com.tacz.guns.compat.playeranimator.animation.AnimationManager;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.client.event.RenderHandEvent;
@@ -71,7 +76,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraft.world.item.Item;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualWieldClient.class */
 public final class DualWieldClient {
     private static boolean lastLeftDown;
     private static boolean lastRightDown;
@@ -93,6 +97,9 @@ public final class DualWieldClient {
     private static boolean dualWasActive;
     private static volatile boolean offhandShotPending;
     private static volatile long offhandShotToken;
+    /** 第三人称枪口火焰归属的手: 由本地预测开火记录(不受 OtherHand 的 clear 影响)。 */
+    private static volatile DualRenderContext.HandPhase thirdPersonFlashHand = DualRenderContext.HandPhase.NONE;
+    private static volatile long thirdPersonFlashTimestamp = -1L;
     private static final int MAX_SHOT_VISUAL_RESERVATIONS = 256;
     private static ItemStack lastDualMainStack = ItemStack.EMPTY;
     private static ItemStack lastDualOffhandStack = ItemStack.EMPTY;
@@ -356,6 +363,14 @@ public final class DualWieldClient {
                 DualReloadAnimationManager.clearHand(InteractionHand.MAIN_HAND);
                 lastRightShootSuccess = true;
                 DualMuzzleFlashState.record(DualRenderContext.HandPhase.MAIN);
+                markThirdPersonFlashHand(DualRenderContext.HandPhase.MAIN);
+                GunDisplayInstance mainDisplay = (GunDisplayInstance) TimelessAPI.getGunDisplay(rightGun).orElse(null);
+                if (mainDisplay != null) {
+                    LuaAnimationStateMachine<GunAnimationStateContext> mainMachine = mainDisplay.getAnimationStateMachine();
+                    if (mainMachine != null && mainMachine.isInitialized()) {
+                        mainMachine.trigger("shoot");
+                    }
+                }
             }
         }
         if ((!leftDown && lastLeftDown) || (!rightDown && lastRightDown)) {
@@ -424,6 +439,8 @@ public final class DualWieldClient {
         if (minecraft.options.getCameraType().isFirstPerson()) {
             return;
         }
+        // 第三人称下主手换弹的收枪/掏枪覆盖动画会把枪械模型拉出画面(表现为飞到玩家身后), 这里直接不应用
+        DualReloadAnimationManager.clearHand(InteractionHand.MAIN_HAND);
         if (!leftGun.isEmpty()) {
             OffhandDisplayManager.updateThirdPersonAnimation(leftGun, 1.0f);
         }
@@ -595,9 +612,62 @@ public final class DualWieldClient {
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void onLocalGunFire(GunFireEvent event) {
-        LivingEntity livingEntity;
-        if (event.getLogicalSide() == LogicalSide.CLIENT && (livingEntity = Minecraft.getInstance().player) != null && event.getShooter() == livingEntity && event.getGunItemStack() == livingEntity.getMainHandItem()) {
+        if (event.getLogicalSide() != LogicalSide.CLIENT) {
+            return;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || event.getShooter() != player) {
+            return;
+        }
+        // 网络同步回来的 GunFireEvent 里的 ItemStack 是新对象, 不能用 == 比较, 否则主手开火记录不到
+        ItemStack firedStack = event.getGunItemStack();
+        if (sameLogicalStack(firedStack, player.getMainHandItem())) {
             DualMuzzleFlashState.record(DualRenderContext.HandPhase.MAIN);
+            markThirdPersonFlashHand(DualRenderContext.HandPhase.MAIN);
+        } else if (sameLogicalStack(firedStack, player.getOffhandItem())) {
+            DualMuzzleFlashState.record(DualRenderContext.HandPhase.OFFHAND);
+            markThirdPersonFlashHand(DualRenderContext.HandPhase.OFFHAND);
+        }
+    }
+
+    static void markThirdPersonFlashHand(DualRenderContext.HandPhase hand) {
+        thirdPersonFlashHand = hand;
+        thirdPersonFlashTimestamp = System.currentTimeMillis();
+    }
+
+    public static DualRenderContext.HandPhase getThirdPersonFlashHand() {
+        return thirdPersonFlashHand;
+    }
+
+    public static boolean isThirdPersonFlashHandFresh(long windowMillis) {
+        return thirdPersonFlashTimestamp >= 0 && System.currentTimeMillis() - thirdPersonFlashTimestamp <= windowMillis;
+    }
+
+    /**
+     * 双持副手开火/换弹时补播 TaCZ 的第三人称玩家动画。
+     * TaCZ 只对主手的 GunShootEvent/GunReloadEvent 播放第三人称手臂动画, 副手缺这一段,
+     * 导致第三人称下副手看起来只有第一人称的枪械动画。
+     */
+    private static void playOffhandThirdPersonPlayerAnimation(LocalPlayer player, ItemStack stack, String upperAnimation, String lieAnimation) {
+        if (player == null || stack == null || stack.isEmpty()) {
+            return;
+        }
+        if (Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+            return;
+        }
+        if (!PlayerAnimatorCompat.isInstalled()) {
+            return;
+        }
+        GunDisplayInstance display = OffhandDisplayManager.getOrCreate(stack);
+        if (display == null || !AnimationManager.hasPlayerAnimator3rd(display)) {
+            return;
+        }
+        boolean lie = !player.isSwimming() && player.getPose() == Pose.SWIMMING;
+        String animation = lie ? lieAnimation : upperAnimation;
+        try {
+            AnimationManager.playOnceAnimation(player, display, PlayerAnimatorCompat.ONCE_UPPER_ANIMATION, animation);
+        } catch (RuntimeException exception) {
+            TaczFixesMod.LOGGER.error("Failed to play offhand third-person animation {}", animation, exception);
         }
     }
 
@@ -732,7 +802,6 @@ public final class DualWieldClient {
         }, Math.max(delayMillis, 0L), TimeUnit.MILLISECONDS);
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void dispatchScheduledOffhandShot(long token, LocalPlayer sourcePlayer, UUID sourceStackId, ResourceLocation sourceGunId, ItemStack recoilStack, GunData recoilGunData, ClientOffhandState state, LocalPlayerDataHolder mainData, float chargeProgress, int availableAmmo, boolean manualAction) {
         synchronized (OFFHAND_SHOT_LOCK) {
             if (offhandShotPending && token == offhandShotToken) {
@@ -782,7 +851,6 @@ public final class DualWieldClient {
         }
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void applyDispatchedOffhandShot(LocalPlayer sourcePlayer, UUID sourceStackId, ResourceLocation sourceGunId, ItemStack recoilStack, GunData recoilGunData, int availableAmmo, ShotVisualReservation reservation) {
         try {
             boolean liveShotSource = isLiveOffhandShotSource(sourcePlayer, sourceStackId, sourceGunId);
@@ -952,6 +1020,15 @@ public final class DualWieldClient {
     private static void playOffhandShotVisual(LocalPlayer player, ItemStack stack, GunDisplayInstance display, GunData gunData) {
         OffhandDisplayManager.triggerNative("shoot");
         DualMuzzleFlashState.record(DualRenderContext.HandPhase.OFFHAND);
+        markThirdPersonFlashHand(DualRenderContext.HandPhase.OFFHAND);
+        // 副手开火是服务端权威的, TaCZ 的 ServerMessageGunFire 只发给追踪该实体的其他玩家(TRACKING_ENTITY 不含自己),
+        // 本地玩家的副手拿不到 GunFireEvent, ThirdPersonMuzzleParticleManager 永远没有这副手的开火记录, 第三人称自然没有火光。
+        // 这里在副手开火瞬间自己补一条记录。
+        com.tacz.guns.client.particle.ThirdPersonMuzzleParticleManager.onShoot(player, stack);
+        boolean aiming = IGunOperator.fromLivingEntity(player).getSynAimingProgress() > 0.0f;
+        playOffhandThirdPersonPlayerAnimation(player, stack,
+                aiming ? AnimationName.AIM_FIRE_UPPER : AnimationName.NORMAL_FIRE_UPPER,
+                aiming ? AnimationName.LIE_AIM_FIRE : AnimationName.LIE_NORMAL_FIRE);
         MuzzleFlashRender.onShoot();
         playShootSound(player, stack, display, gunData);
         taczfixes$addOffhandFireLight(player, stack);
@@ -1006,7 +1083,6 @@ public final class DualWieldClient {
         }
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static void enqueueScheduledBurstShot(LocalPlayer sourcePlayer, UUID sourceStackId, ResourceLocation sourceGunId, ItemStack recoilStack, GunData recoilGunData, ShotVisualReservation reservation) {
         try {
             Minecraft.getInstance().execute(() -> {
@@ -1101,6 +1177,7 @@ public final class DualWieldClient {
                 } else {
                     DualReloadAnimationManager.beginOffhandReload(player, stack, data, feedTime);
                 }
+                playOffhandThirdPersonPlayerAnimation(player, stack, AnimationName.RELOAD_UPPER, AnimationName.LIE_RELOAD);
                 if (display != null) {
                     DualReloadSoundFilter.playOffhandLegacyReload(player, stack, display, empty);
                 }
@@ -1387,7 +1464,6 @@ public final class DualWieldClient {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualWieldClient$ShotRequestKey.class */
     private record ShotRequestKey(UUID stackId, long shootTimestamp) {
 
         private ShotRequestKey(UUID stackId, long shootTimestamp) {
@@ -1404,7 +1480,6 @@ public final class DualWieldClient {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualWieldClient$ShotVisualReservation.class */
     private static final class ShotVisualReservation {
         private final ShotRequestKey key;
         private final AtomicBoolean canceled = new AtomicBoolean();

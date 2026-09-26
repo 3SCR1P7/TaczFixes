@@ -10,7 +10,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.fml.DistExecutor;
 import net.minecraftforge.network.NetworkEvent;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/network/packet/ServerMessageDualWieldEligibility.class */
 public final class ServerMessageDualWieldEligibility {
     private static final int MAX_LIST_SIZE = 4096;
     private static final int MAX_VALUE_LENGTH = 512;

@@ -12,7 +12,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = {AimKey.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinAimKey.class */
 public abstract class MixinAimKey {
     @Inject(method = {"onAimPress"}, at = {@At("HEAD")}, cancellable = true)
     private static void dualWield$useRightClickForMainGun(InputEvent.MouseButton.Post event, CallbackInfo callback) {

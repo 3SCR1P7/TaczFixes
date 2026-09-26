@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = {"com.elfmcys.yesstevemodel.OOO0O0O0oo0ooooo00oOOOO0"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinYsmBackGun.class */
 public abstract class MixinYsmBackGun {
     @Inject(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lnet/minecraft/world/item/ItemStack;Lcom/elfmcys/yesstevemodel/OOOO0O0O000O000000oOOO0o;Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;IF)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private static void taczDualWield$hideYsmBackGun(ItemStack stack, @Coerce Object model, LivingEntity entity, PoseStack poseStack, int packedLight, float partialTick, CallbackInfo callbackInfo) {

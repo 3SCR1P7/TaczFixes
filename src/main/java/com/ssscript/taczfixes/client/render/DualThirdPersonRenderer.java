@@ -23,7 +23,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualThirdPersonRenderer.class */
 public final class DualThirdPersonRenderer {
     private DualThirdPersonRenderer() {
     }
@@ -46,37 +45,14 @@ public final class DualThirdPersonRenderer {
             return false;
         }
         DualRenderContext.HandPhase previousPhase = DualRenderContext.getPhase();
-        boolean recoilPosePushed = false;
         if (offhand) {
             handPhase = DualRenderContext.HandPhase.OFFHAND;
         } else {
             handPhase = DualRenderContext.HandPhase.MAIN;
         }
         DualRenderContext.setPhase(handPhase);
-        if (offhand) {
-            try {
-                if (isLocalPlayerRender(entity)) {
-                    poseStack.pushPose();
-                    recoilPosePushed = true;
-                    OffhandCameraController.applyModelRecoil(poseStack, stack, true);
-                }
-            } catch (Throwable th) {
-                if (recoilPosePushed) {
-                    poseStack.popPose();
-                }
-                if (previousPhase == DualRenderContext.HandPhase.NONE) {
-                    DualRenderContext.clear();
-                } else {
-                    DualRenderContext.setPhase(previousPhase);
-                }
-                throw th;
-            }
-        }
         applyMinigunPitchCorrection(entity, stack, offhand, poseStack);
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, poseStack, buffer, entity.level(), entity.getId());
-        if (recoilPosePushed) {
-            poseStack.popPose();
-        }
         if (previousPhase == DualRenderContext.HandPhase.NONE) {
             DualRenderContext.clear();
         } else {

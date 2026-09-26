@@ -9,7 +9,6 @@ import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandMovementAnimation.class */
 public final class OffhandMovementAnimation {
     private OffhandMovementAnimation() {
     }

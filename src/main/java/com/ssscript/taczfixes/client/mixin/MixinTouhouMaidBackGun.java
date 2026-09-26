@@ -16,7 +16,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = {"com.github.tartaricacid.touhoulittlemaid.compat.gun.tacz.TacCompat"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinTouhouMaidBackGun.class */
 public abstract class MixinTouhouMaidBackGun {
     @Inject(method = {"renderBackGun(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/item/ItemStack;Lcom/github/tartaricacid/touhoulittlemaid/api/entity/IMaid;)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private static void taczDualWield$hideBedrockBackGun(PoseStack poseStack, MultiBufferSource buffer, int packedLight, ItemStack stack, IMaid maid, CallbackInfo callbackInfo) {

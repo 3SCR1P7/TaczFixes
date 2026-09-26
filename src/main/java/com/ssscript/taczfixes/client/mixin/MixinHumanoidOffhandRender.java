@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = {HumanoidOffhandRender.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinHumanoidOffhandRender.class */
 public abstract class MixinHumanoidOffhandRender {
     @Inject(method = {"renderGun(Lnet/minecraft/world/entity/LivingEntity;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"}, at = {@At("HEAD")}, cancellable = true)
     private static void dualWield$suppressStoredGuns(LivingEntity entity, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo callback) {

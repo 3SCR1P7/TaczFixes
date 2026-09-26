@@ -28,7 +28,6 @@ import net.minecraftforge.fml.common.Mod;
 import net.minecraft.world.item.Item;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadCoordinator.class */
 public final class DualReloadCoordinator {
     private static long acceptedMainReloadSequence;
 
@@ -240,7 +239,6 @@ public final class DualReloadCoordinator {
         return new ReloadCandidate(hand, loadedAmmo, loadedAmmo <= 0, fillRatio, canRequest);
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadCoordinator$ReloadCandidate.class */
     private record ReloadCandidate(InteractionHand hand, int loadedAmmo, boolean empty, double fillRatio, boolean canRequest) {
 
         private ReloadCandidate(InteractionHand hand, int loadedAmmo, boolean empty, double fillRatio, boolean canRequest) {

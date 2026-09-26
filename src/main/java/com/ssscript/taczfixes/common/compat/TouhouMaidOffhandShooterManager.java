@@ -45,7 +45,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.Entity;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/TouhouMaidOffhandShooterManager.class */
 public final class TouhouMaidOffhandShooterManager {
     private static final long RELOAD_FAILURE_BACKOFF_TICKS = 100;
     private static final ResourceLocation MAID_ENTITY_ID = new ResourceLocation("touhou_little_maid", "maid");
@@ -112,7 +111,6 @@ public final class TouhouMaidOffhandShooterManager {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/TouhouMaidOffhandShooterManager$MaidOffhandShooter.class */
     private static final class MaidOffhandShooter {
         private final Mob entity;
         private final LivingEntityDrawGun draw;

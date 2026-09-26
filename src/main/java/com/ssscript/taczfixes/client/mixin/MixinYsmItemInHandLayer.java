@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = {"com.elfmcys.yesstevemodel.o000Oo0OO0O00Oo0OOoOoooO"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinYsmItemInHandLayer.class */
 public abstract class MixinYsmItemInHandLayer {
 
     @Inject(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILcom/elfmcys/yesstevemodel/oo0OooOO0oOoOoOoo00oO000;FFFFFF)V"}, at = {@At("HEAD")}, require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)

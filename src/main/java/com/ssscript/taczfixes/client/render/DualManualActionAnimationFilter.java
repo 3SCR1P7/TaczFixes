@@ -14,7 +14,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualManualActionAnimationFilter.class */
 public final class DualManualActionAnimationFilter {
     private DualManualActionAnimationFilter() {
     }
@@ -97,7 +96,6 @@ public final class DualManualActionAnimationFilter {
         return result.toString();
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualManualActionAnimationFilter$ArmMotion.class */
     private record ArmMotion(boolean holdingArmDynamic, boolean supportArmDynamic) {
 
         public boolean holdingArmDynamic() {

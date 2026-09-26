@@ -65,7 +65,6 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 
 @Mod.EventBusSubscriber
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/OffhandShooterManager.class */
 public final class OffhandShooterManager {
     public static final long NO_MANUAL_ASYNC_TASK_GENERATION = Long.MIN_VALUE;
     private static final long MANUAL_ACTION_RETRY_TIMEOUT_MS = 5000;
@@ -568,7 +567,6 @@ public final class OffhandShooterManager {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/OffhandShooterManager$ShootOutcome.class */
     private record ShootOutcome(ShootResult result, boolean bulletAttemptedDuringSynchronousShoot, boolean bulletSpawnedDuringSynchronousShoot) {
 
         private ShootOutcome(ShootResult result, boolean bulletAttemptedDuringSynchronousShoot, boolean bulletSpawnedDuringSynchronousShoot) {
@@ -590,7 +588,6 @@ public final class OffhandShooterManager {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/OffhandShooterManager$OffhandShooter.class */
     private static final class OffhandShooter {
         private final ServerPlayer player;
         private final LivingEntityDrawGun draw;

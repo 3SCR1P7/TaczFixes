@@ -108,6 +108,7 @@
         "MixinMeleeKey",
         "MixinObjectAnimationAccessor",
         "MixinSoundPlayManager",
+        "MixinThirdPersonMuzzleParticleManager",
         "MixinTickAnimationEvent",
         "MixinReloadKey",
         "MixinAimKey",

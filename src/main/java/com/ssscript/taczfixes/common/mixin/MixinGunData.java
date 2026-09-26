@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = {GunData.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/mixin/MixinGunData.class */
 public abstract class MixinGunData {
     @Redirect(method = {"getShootInterval"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;getCacheProperty()Lcom/tacz/guns/resource/modifier/AttachmentCacheProperty;"))
     private AttachmentCacheProperty dualWield$resolveRpmCache(IGunOperator operator, LivingEntity shooter, FireMode fireMode, ItemStack stack) {

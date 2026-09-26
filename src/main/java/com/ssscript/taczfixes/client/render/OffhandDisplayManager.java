@@ -48,7 +48,6 @@ import java.util.concurrent.CompletableFuture;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandDisplayManager.class */
 public final class OffhandDisplayManager {
     private static final long MAX_PUT_AWAY_TIME_MS = 60000;
     private static GunDisplayInstance display;
@@ -76,7 +75,6 @@ public final class OffhandDisplayManager {
     private static final Set<Integer> MANUAL_ACTION_TRACKS = new HashSet();
     private static ManualActionArmMode manualActionArmMode = ManualActionArmMode.UNDECIDED;
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandDisplayManager$ManualActionArmMode.class */
     private enum ManualActionArmMode {
         UNDECIDED,
         HOLDING,
@@ -162,6 +160,11 @@ public final class OffhandDisplayManager {
     }
 
     public static void updateAnimation(ItemStack stack, float partialTick) {
+        updateAnimation(stack, partialTick, true);
+    }
+
+    /** firstPersonCorrections: 第一人称视角模型专用的检视镜像/外倾修正, 第三人称不应套用。 */
+    private static void updateAnimation(ItemStack stack, float partialTick, boolean firstPersonCorrections) {
         GunDisplayInstance currentDisplay = getOrCreate(stack);
         if (currentDisplay == null || context == null) {
             return;
@@ -182,9 +185,11 @@ public final class OffhandDisplayManager {
             movementAnimation.update(stateMachine, movementBlocked);
         }
         stateMachine.update();
-        DualInspectAnimationFilter.applyOffhandOutwardAngle(model);
-        DualInspectAnimationFilter.applyOffhandRootMirror(model);
-        DualInspectAnimationFilter.applyOffhandCarrierMirror(model);
+        if (firstPersonCorrections) {
+            DualInspectAnimationFilter.applyOffhandOutwardAngle(model);
+            DualInspectAnimationFilter.applyOffhandRootMirror(model);
+            DualInspectAnimationFilter.applyOffhandCarrierMirror(model);
+        }
     }
 
     static void updateThirdPersonAnimation(ItemStack stack, float partialTick) {
@@ -194,8 +199,7 @@ public final class OffhandDisplayManager {
             return;
         }
         model.cleanCameraAnimationTransform();
-        updateAnimation(stack, partialTick);
-        OffhandCameraController.captureThirdPersonShotCamera(Minecraft.getInstance().player, stack, model);
+        updateAnimation(stack, partialTick, false);
         model.cleanCameraAnimationTransform();
     }
 

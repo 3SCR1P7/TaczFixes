@@ -16,7 +16,6 @@ import com.ssscript.taczfixes.common.util.OffhandBulletSource;
 import net.minecraft.world.item.ItemStack;
 
 @Mixin(value = {ModernKineticGunItem.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/mixin/MixinModernKineticGunItemSpread.class */
 public abstract class MixinModernKineticGunItemSpread {
     @Inject(method = {"lambda$doBulletSpread$29(Lcom/tacz/guns/entity/EntityKineticBullet;Lnet/minecraft/world/entity/LivingEntity;FFFF)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_RELOAD)
     private static void dualWield$applyDefaultSpread(EntityKineticBullet bullet, LivingEntity shooter, float pitch, float yaw, float processedSpeed, float inaccuracy, CallbackInfo callback) {
@@ -39,12 +38,7 @@ public abstract class MixinModernKineticGunItemSpread {
         callback.cancel();
     }
 
-    /* JADX WARN: Removed duplicated region for block: B:13:0x0026  */
     @org.spongepowered.asm.mixin.Unique
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
     private static float dualWield$getHipFireMultiplier(EntityKineticBullet bullet, LivingEntity shooter) {
         if (shooter == null || !DualWieldEligibility.isDualWielding(shooter)) {
             return 1.0f;

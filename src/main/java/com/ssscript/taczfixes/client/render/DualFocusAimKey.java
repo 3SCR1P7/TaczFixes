@@ -12,7 +12,6 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualFocusAimKey.class */
 public final class DualFocusAimKey {
     public static final KeyMapping FOCUS_AIM_KEY = new KeyMapping("key.taczfixes.focus_aim", KeyConflictContext.IN_GAME, KeyModifier.NONE, InputConstants.Type.KEYSYM, 88, "key.categories.taczfixes");
 

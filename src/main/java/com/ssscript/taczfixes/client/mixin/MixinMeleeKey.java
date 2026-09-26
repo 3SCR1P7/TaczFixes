@@ -13,7 +13,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = {MeleeKey.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinMeleeKey.class */
 public abstract class MixinMeleeKey {
     @Inject(method = {"onMeleeKeyPress"}, at = {@At("HEAD")}, cancellable = true)
     private static void dualWield$reserveFocusAimKey(InputEvent.Key event, CallbackInfo callback) {

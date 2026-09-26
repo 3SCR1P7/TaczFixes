@@ -30,7 +30,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadSoundFilter.class */
 public final class DualReloadSoundFilter {
     private static final Map<AnimationController, ReloadSession> SESSIONS = Collections.synchronizedMap(new WeakHashMap());
     private static final ThreadLocal<Deque<ReloadCapture>> CAPTURES = new ThreadLocal<>();
@@ -222,7 +221,6 @@ public final class DualReloadSoundFilter {
         return animationName.equals(prefix) || animationName.startsWith(prefix + "_") || animationName.startsWith(prefix + "-") || animationName.startsWith(prefix + ".");
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadSoundFilter$ReloadSession.class */
     private static final class ReloadSession {
         private final double timelineScale;
         private final Map<Integer, ReloadTrack> nativeReloadTracks = new HashMap();
@@ -246,7 +244,6 @@ public final class DualReloadSoundFilter {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadSoundFilter$ReloadTrack.class */
     private static final class ReloadTrack {
         private final Set<String> filteredClipNames = new HashSet();
 
@@ -254,7 +251,6 @@ public final class DualReloadSoundFilter {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualReloadSoundFilter$ReloadCapture.class */
     private static final class ReloadCapture {
         private final AnimationController controller;
         private final ReloadSession session;

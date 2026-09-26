@@ -17,7 +17,6 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.common.MinecraftForge;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/OffhandGunPropertyResolver.class */
 public final class OffhandGunPropertyResolver {
     private static final ThreadLocal<Deque<ShooterDataHolder>> ACTIVE_DATA = new ThreadLocal<>();
 
@@ -70,7 +69,6 @@ public final class OffhandGunPropertyResolver {
         return 60000 / Math.max(1, roundsPerMinute);
     }
 
-    /* JADX INFO: Access modifiers changed from: private */
     public static <T> void applyLuaProperty(LivingEntity shooter, ItemStack stack, IGun gun, ShooterDataHolder dataHolder, AttachmentCacheProperty cache, GunProperty<T> property) {
         Object objModifyProperty = gun.modifyProperty(dataHolder, stack, shooter, "modify_cached_property", property.name(), property.type(), cache.getCache(property));
         if (objModifyProperty != null) {

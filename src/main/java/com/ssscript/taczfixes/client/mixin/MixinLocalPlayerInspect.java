@@ -14,7 +14,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = {LocalPlayerInspect.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinLocalPlayerInspect.class */
 public abstract class MixinLocalPlayerInspect {
     @Redirect(method = {"lambda$inspect$0"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/client/animation/statemachine/LuaAnimationStateMachine;trigger(Ljava/lang/String;)V"))
     private void dualWield$filterMainInspect(LuaAnimationStateMachine<GunAnimationStateContext> stateMachine, String input) {

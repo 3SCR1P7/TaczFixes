@@ -15,7 +15,6 @@ import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmCompatibilityDiagnostics.class */
 public final class YsmCompatibilityDiagnostics {
     private static final int DIAGNOSTIC_DELAY_TICKS = 100;
     private static final AtomicLong HELD_LAYER_ENTRIES = new AtomicLong();

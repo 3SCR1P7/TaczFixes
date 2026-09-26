@@ -39,7 +39,6 @@ import org.joml.Quaternionf;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandCameraController.class */
 public final class OffhandCameraController {
     private static final float MODEL_RECOIL_GAIN = 3.0f;
     private static final float MODEL_PITCH_ROTATION_SCALE = 0.65f;
@@ -60,12 +59,10 @@ public final class OffhandCameraController {
     private static float pendingModelYaw;
     private static UUID recoilSourceStackId;
     private static ResourceLocation recoilSourceGunId;
-    private static boolean thirdPersonShotCameraRotationValid;
     private static final SplineInterpolator SPLINE_INTERPOLATOR = new SplineInterpolator();
     private static final LinearInterpolator LINEAR_INTERPOLATOR = new LinearInterpolator();
     private static final Set<String> WARNED_INVALID_RECOIL_TRACKS = ConcurrentHashMap.newKeySet();
     private static long shootTimestamp = -1;
-    private static Quaternionf thirdPersonShotCameraRotation = new Quaternionf();
 
     private OffhandCameraController() {
     }
@@ -188,30 +185,12 @@ public final class OffhandCameraController {
     public static void applyCameraRecoil(ViewportEvent.ComputeCameraAngles event) {
         LocalPlayer player = Minecraft.getInstance().player;
         applyPendingRecoil(player);
-        if (DualWieldEligibility.isDualWielding(player) && DualWieldClient.isDualMode(player) && ((Boolean) Minecraft.getInstance().options.bobView().get()).booleanValue()) {
-            if (Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
-                applyLevelCameraAnimation(event, player);
-            } else {
-                applyThirdPersonShotCameraAnimation(event, player);
-            }
+        // 与主手一致: 枪械动画里的视角摇晃只属于第一人称, 第三人称不应用
+        if (DualWieldEligibility.isDualWielding(player) && DualWieldClient.isDualMode(player)
+                && ((Boolean) Minecraft.getInstance().options.bobView().get()).booleanValue()
+                && Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
+            applyLevelCameraAnimation(event, player);
         }
-    }
-
-    static void captureThirdPersonShotCamera(LocalPlayer player, ItemStack stack, BedrockGunModel model) {
-        clearThirdPersonShotCamera();
-        if (player == null || stack == null || model == null || shootTimestamp < 0 || !matchesRecoilSource(stack)) {
-            return;
-        }
-        long elapsedMillis = System.currentTimeMillis() - shootTimestamp;
-        if (elapsedMillis < 0 || elapsedMillis > MODEL_IMPULSE_VISIBLE_TIME_MS) {
-            return;
-        }
-        Quaternionf rotation = getMirroredCameraRotation(player, stack, model);
-        if (!isFinite(rotation)) {
-            return;
-        }
-        thirdPersonShotCameraRotation = rotation;
-        thirdPersonShotCameraRotationValid = true;
     }
 
     static void applyModelCameraAnimation(LocalPlayer player, ItemStack stack, BedrockGunModel model, PoseStack poseStack) {
@@ -362,16 +341,6 @@ public final class OffhandCameraController {
         applyRotationToEvent(event, rotation);
     }
 
-    private static void applyThirdPersonShotCameraAnimation(ViewportEvent.ComputeCameraAngles event, LocalPlayer player) {
-        ItemStack stack = getRenderedOffhandStack(player);
-        long elapsedMillis = System.currentTimeMillis() - shootTimestamp;
-        if (!thirdPersonShotCameraRotationValid || elapsedMillis < 0 || elapsedMillis > MODEL_IMPULSE_VISIBLE_TIME_MS || !matchesRecoilSource(stack)) {
-            clearThirdPersonShotCamera();
-        } else {
-            applyRotationToEvent(event, thirdPersonShotCameraRotation);
-        }
-    }
-
     private static void applyRotationToEvent(ViewportEvent.ComputeCameraAngles event, Quaternionf rotation) {
         double yawArgument = 2.0d * ((rotation.w() * rotation.y()) - (rotation.x() * rotation.z()));
         double yaw = Math.asin(Math.max(-1.0d, Math.min(1.0d, yawArgument)));
@@ -441,11 +410,6 @@ public final class OffhandCameraController {
         pendingModelYaw = 0.0f;
         recoilSourceStackId = null;
         recoilSourceGunId = null;
-        clearThirdPersonShotCamera();
-    }
-
-    private static void clearThirdPersonShotCamera() {
-        thirdPersonShotCameraRotationValid = false;
     }
 
     static void reset() {
@@ -455,7 +419,6 @@ public final class OffhandCameraController {
         clearProceduralRecoil();
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandCameraController$ShoulderSurfingBridge.class */
     private static final class ShoulderSurfingBridge {
         private static final String API_CLASS = "com.github.exopandora.shouldersurfing.api.client.ShoulderSurfing";
         private static boolean initialized;

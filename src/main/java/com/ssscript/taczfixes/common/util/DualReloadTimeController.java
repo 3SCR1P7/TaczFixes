@@ -9,7 +9,6 @@ import java.util.WeakHashMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/DualReloadTimeController.class */
 public final class DualReloadTimeController {
     private static final Map<ShooterDataHolder, ReloadSession> SESSIONS = Collections.synchronizedMap(new WeakHashMap());
 
@@ -111,7 +110,6 @@ public final class DualReloadTimeController {
         return (long) result;
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/util/DualReloadTimeController$ReloadSession.class */
     private static final class ReloadSession {
         private final WeakReference<ItemStack> stackReference;
         private final UUID stackId;

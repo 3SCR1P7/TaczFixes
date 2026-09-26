@@ -11,7 +11,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
 
 @Mixin(value = {SoundPlayManager.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinSoundPlayManager.class */
 public abstract class MixinSoundPlayManager {
     @ModifyArg(method = {"playReloadSound"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/sound/SoundPlayManager;playClientSound(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/resources/ResourceLocation;FFI)Lcom/tacz/guns/client/sound/GunSoundInstance;"), index = ServerMessageOffhandActionResult.ACTION_FIRE_SELECT, require = ServerMessageOffhandActionResult.ACTION_BOLT)
     private static float dualWield$slowLegacyReloadSound(float originalPitch) {

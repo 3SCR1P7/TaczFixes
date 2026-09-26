@@ -10,7 +10,6 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = {BedrockGunModel.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinBedrockGunModelScope.class */
 public abstract class MixinBedrockGunModelScope {
     @Redirect(method = {"lambda$render$30"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;isScope()Z"), require = ServerMessageOffhandActionResult.ACTION_BOLT)
     private static boolean dualWield$disableOffhandScopeStencil(ClientAttachmentIndex attachment) {

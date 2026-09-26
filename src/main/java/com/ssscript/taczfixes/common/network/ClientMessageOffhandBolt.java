@@ -7,7 +7,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraftforge.network.NetworkEvent;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/network/packet/ClientMessageOffhandBolt.class */
 public final class ClientMessageOffhandBolt {
     private final UUID stackId;
     private final int requestId;

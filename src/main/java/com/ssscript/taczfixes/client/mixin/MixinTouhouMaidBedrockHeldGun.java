@@ -24,7 +24,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = {"com.github.tartaricacid.touhoulittlemaid.client.renderer.entity.layer.LayerMaidHeldItem"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinTouhouMaidBedrockHeldGun.class */
 public abstract class MixinTouhouMaidBedrockHeldGun extends RenderLayer<Mob, BedrockModel<Mob>> {
     protected MixinTouhouMaidBedrockHeldGun(RenderLayerParent<Mob, BedrockModel<Mob>> renderer) {
         super(renderer);

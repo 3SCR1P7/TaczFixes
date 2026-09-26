@@ -12,7 +12,6 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.joml.Vector3f;
 import org.luaj.vm2.LuaTable;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandGunAnimationContext.class */
 public final class OffhandGunAnimationContext extends GunAnimationStateContext {
     private final ClientOffhandState state;
     private final GunDisplayInstance display;

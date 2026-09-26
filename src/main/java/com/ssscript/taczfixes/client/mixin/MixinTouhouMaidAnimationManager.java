@@ -15,7 +15,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Pseudo
 @Mixin(targets = {"com.github.tartaricacid.touhoulittlemaid.client.animation.HardcodedAnimationManger"}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/compat/MixinTouhouMaidAnimationManager.class */
 public abstract class MixinTouhouMaidAnimationManager {
     @Inject(method = {"playMaidAnimation(Lcom/github/tartaricacid/touhoulittlemaid/api/entity/IMaid;Ljava/util/HashMap;FFFFF)V"}, at = {@At("TAIL")}, require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private static void taczDualWield$mirrorBedrockFinalPose(IMaid maid, HashMap<String, ModelRendererWrapper> models, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callbackInfo) {

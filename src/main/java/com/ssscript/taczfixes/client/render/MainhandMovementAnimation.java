@@ -16,7 +16,6 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/MainhandMovementAnimation.class */
 public final class MainhandMovementAnimation {
     private static final ThreadLocal<AnimationController> BOUNDARY_CONTROLLER = new ThreadLocal<>();
 

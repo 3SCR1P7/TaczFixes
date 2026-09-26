@@ -2,7 +2,6 @@ package com.ssscript.taczfixes.common.compat;
 
 import net.minecraft.world.entity.LivingEntity;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmHeldLayerRenderState.class */
 public final class YsmHeldLayerRenderState {
     private static final ThreadLocal<Frame> CURRENT_FRAME = new ThreadLocal<>();
 
@@ -46,7 +45,6 @@ public final class YsmHeldLayerRenderState {
         return frame;
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/YsmHeldLayerRenderState$Frame.class */
     private static final class Frame {
         private final LivingEntity entity;
         private boolean offhandRendered;

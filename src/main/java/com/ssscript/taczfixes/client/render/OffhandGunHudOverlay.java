@@ -40,7 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.item.Item;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT}, bus = Mod.EventBusSubscriber.Bus.MOD)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandGunHudOverlay.class */
 public final class OffhandGunHudOverlay implements IGuiOverlay {
     private static final int MAX_AMMO_COUNT = 9999;
     private static final int HUD_LEFT = 18;
@@ -197,7 +196,6 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
     }
 
     /* renamed from: com.ssscript.taczfixes.client.render.OffhandGunHudOverlay$1, reason: invalid class name */
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/OffhandGunHudOverlay$1.class */
     static /* synthetic */ class AnonymousClass1 {
         static final /* synthetic */ int[] $SwitchMap$com$tacz$guns$api$item$gun$FireMode = new int[FireMode.values().length];
 

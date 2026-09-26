@@ -18,7 +18,6 @@ import net.minecraftforge.fml.common.Mod;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/ClientOffhandNetworkHandler.class */
 public final class ClientOffhandNetworkHandler {
     private ClientOffhandNetworkHandler() {
     }

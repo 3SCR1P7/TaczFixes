@@ -39,7 +39,6 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualInspectAnimationFilter.class */
 public final class DualInspectAnimationFilter {
     private static final long INSPECT_START_GRACE_MS = 250;
     private static final long INSPECT_CONTINUATION_GRACE_MS = 100;
@@ -913,14 +912,6 @@ public final class DualInspectAnimationFilter {
         return null;
     }
 
-    /* JADX WARN: Code restructure failed: missing block: B:37:0x008c, code lost:
-    
-        continue;
-     */
-    /*
-        Code decompiled incorrectly, please refer to instructions dump.
-        To view partially-correct code enable 'Show inconsistent code' option in preferences
-    */
     private static BedrockPart findHoldingHandEndpoint(Map<String, BedrockPart> nodes, Map<BedrockPart, BedrockPart> parents) {
         String[] candidates = {"righthandpos", "righthandposition", "handrightpos", "handrightposition", "rhandpos", "rhandposition", "mainhandpos", "mainhandposition", "holdinghandpos", "holdinghandposition", "rightarmpos", "rightarmposition"};
         for (String candidate : candidates) {
@@ -1169,7 +1160,6 @@ public final class DualInspectAnimationFilter {
         }
     }
 
-    /* JADX WARN: Type inference failed for: r1v6, types: [float[], float[][]] */
     private static void forceHiddenScale(ObjectAnimation animation, String nodeName) {
         ObjectAnimationChannel hiddenScale = new ObjectAnimationChannel(ObjectAnimationChannel.ChannelType.SCALE);
         hiddenScale.node = nodeName;
@@ -1262,7 +1252,6 @@ public final class DualInspectAnimationFilter {
         return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualInspectAnimationFilter$FilterPlan.class */
     private static final class FilterPlan {
         private final BedrockPart commonCarrier;
         private final BedrockPart gunAnchor;
@@ -1279,7 +1268,6 @@ public final class DualInspectAnimationFilter {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualInspectAnimationFilter$GeometryCandidate.class */
     private static final class GeometryCandidate {
         private BedrockPart part;
         private int geometry;
@@ -1292,7 +1280,6 @@ public final class DualInspectAnimationFilter {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualInspectAnimationFilter$RuntimePlan.class */
     private static final class RuntimePlan {
         private final BedrockPart gunCarrier;
         private final Map<BedrockPart, BedrockPart> parents;
@@ -1305,7 +1292,6 @@ public final class DualInspectAnimationFilter {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualInspectAnimationFilter$RigidFollower.class */
     private static final class RigidFollower {
         private final BedrockPart target;
         private final BedrockPart parent;
@@ -1320,7 +1306,6 @@ public final class DualInspectAnimationFilter {
         }
     }
 
-    /* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/render/DualInspectAnimationFilter$InspectSession.class */
     private static final class InspectSession {
         private final AnimationController controller;
         private final Set<Integer> tracks = new HashSet();

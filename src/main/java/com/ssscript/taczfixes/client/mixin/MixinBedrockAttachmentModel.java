@@ -9,7 +9,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = {BedrockAttachmentModel.class}, remap = false)
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/client/mixin/MixinBedrockAttachmentModel.class */
 public abstract class MixinBedrockAttachmentModel {
     @Redirect(method = {"render(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/ItemDisplayContext;firstPerson()Z", remap = true), require = ServerMessageOffhandActionResult.ACTION_RELOAD)
     private boolean dualWield$renderPhysicalOffhandOptic(ItemDisplayContext transformType) {

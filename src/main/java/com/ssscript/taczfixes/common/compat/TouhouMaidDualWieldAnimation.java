@@ -14,7 +14,6 @@ import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 
-/* loaded from: jar-in-6019096625046612463.jar:com/ssscript/taczfixes/common/compat/TouhouMaidDualWieldAnimation.class */
 public final class TouhouMaidDualWieldAnimation implements ICustomAnimation<Mob> {
     private static final String LEFT_ARM = "armLeft";
     private static final String RIGHT_ARM = "armRight";
