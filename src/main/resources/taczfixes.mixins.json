@@ -47,6 +47,7 @@
         "MixinTrackingDisableOnPenetration",
         "MixinBulletTrackingFlag",
         "MixinTaczPeekHeadshotLimit",
+        "MixinEntityUtilCrawlHitbox",
         "MixinGunItemEnchantable",
         "MixinEnchantmentGunWhitelist",
         "MixinGunItemInfinity",

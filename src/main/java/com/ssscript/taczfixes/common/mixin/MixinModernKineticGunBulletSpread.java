@@ -14,10 +14,41 @@ import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(targets = "com.tacz.guns.item.ModernKineticGunItem", remap = false)
 public class MixinModernKineticGunBulletSpread {
+    @ModifyVariable(method = "doBulletSpread", at = @At("HEAD"), argsOnly = true, index = 8)
+    private float taczfixes$blockingPitch(float pitch, ShooterDataHolder dataHolder, ItemStack gunItem,
+                                          LivingEntity shooter, Projectile projectile, int bulletCnt,
+                                          float processedSpeed, float inaccuracy, float originalPitch,
+                                          float yaw) {
+        if (shooter instanceof net.minecraft.world.entity.player.Player player) {
+            float[] rotated = com.ssscript.taczfixes.common.util.GunBlocking.rotateShotAngles(
+                    pitch, yaw, player, gunItem);
+            if (rotated != null) {
+                return rotated[0];
+            }
+        }
+        return pitch;
+    }
+
+    @ModifyVariable(method = "doBulletSpread", at = @At("HEAD"), argsOnly = true, index = 9)
+    private float taczfixes$blockingYaw(float yaw, ShooterDataHolder dataHolder, ItemStack gunItem,
+                                        LivingEntity shooter, Projectile projectile, int bulletCnt,
+                                        float processedSpeed, float inaccuracy, float pitch) {
+        if (shooter instanceof net.minecraft.world.entity.player.Player player) {
+            float[] rotated = com.ssscript.taczfixes.common.util.GunBlocking.rotateShotAngles(
+                    pitch, yaw, player, gunItem);
+            if (rotated != null) {
+                return rotated[1];
+            }
+        }
+        return yaw;
+    }
+
     @ModifyVariable(method = "doBulletSpread", at = @At("HEAD"), argsOnly = true, index = 7)
     private float taczfixes$modifyInaccuracy(float inaccuracy, ShooterDataHolder dataHolder, ItemStack gunItem,
                                              LivingEntity shooter, Projectile projectile, int bulletCnt,

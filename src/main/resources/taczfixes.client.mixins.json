@@ -70,6 +70,7 @@
         "MixinParCoolStamina",
         "MixinParCoolStaminaOther",
         "MixinParCoolStaminaHunger",
+        "MixinParCoolCrawlAnimation",
         "MixinClientAttachmentItemTooltip",
         "MixinShootKey",
         "MixinGunHudOverlay",

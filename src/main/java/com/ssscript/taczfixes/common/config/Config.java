@@ -14,6 +14,9 @@ public class Config {
     public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_STANDING;
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_SNEAKING;
+    public static final ForgeConfigSpec.DoubleValue CRAWL_HEADSHOT_LENGTH;
+    public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue CRAWL_HITBOX_ENABLED;
     public static final ForgeConfigSpec.DoubleValue LIMB_FACTOR_DEFAULT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BURST_BLOCK_ATTACHMENTS;
     public static final ForgeConfigSpec.BooleanValue LIVING_ENTITY_LIMB_ENABLED;
@@ -104,6 +107,12 @@ public class Config {
     public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
     public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
+    public static final ForgeConfigSpec.BooleanValue DYNAMIC_CROSSHAIR_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FACTOR;
+    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FIRE_EXPANSION;
+    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_RECOVER_SECONDS;
+    public static final ForgeConfigSpec.BooleanValue BLOCKED_CROSSHAIR_ENABLED;
+    public static final ForgeConfigSpec.IntValue BLOCKED_CROSSHAIR_SIZE;
     public static final ForgeConfigSpec.BooleanValue GUN_SPELL_ENABLED;
     public static final ForgeConfigSpec.IntValue GUN_SPELL_COUNT;
     public static final ForgeConfigSpec.DoubleValue GUN_SPELL_COOLDOWN;
@@ -309,6 +318,13 @@ public class Config {
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("limb_damage_multiplier");
 
+        LIMB_DAMAGE_ENABLED = BUILDER
+                .comment("是否启用四肢伤害。默认值：true")
+                .define("enabled", true);
+        CRAWL_HITBOX_ENABLED = BUILDER
+                .comment("是否启用更好的爬行受击碰撞箱。默认值：true")
+                .define("crawl_hitbox_enabled", true);
+
         BUILDER.push("player");
         LIMB_THRESHOLD_STANDING = BUILDER
                 .comment("玩家在站立时，碰撞箱低于此高度的部分将视为四肢。默认值：0.8")
@@ -316,6 +332,9 @@ public class Config {
         LIMB_THRESHOLD_SNEAKING = BUILDER
                 .comment("玩家在潜行时，碰撞箱低于此高度的部分将视为四肢。默认值：0.6")
                 .defineInRange("limb_threshold_sneaking", 0.6, 0.0, 1.0);
+        CRAWL_HEADSHOT_LENGTH = BUILDER
+                .comment("爬行受击碰撞箱前端判定为头部(爆头)的长度，单位为格。默认值：0.5")
+                .defineInRange("crawl_headshot_length", 0.5, 0.0, 1.8);
         BUILDER.pop();
 
         BUILDER.push("gun_types");
@@ -593,6 +612,29 @@ public class Config {
         SPECS.put("misc", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER.push("dynamic_crosshair");
+        DYNAMIC_CROSSHAIR_ENABLED = BUILDER
+                .comment("是否启用动态准星。默认值：true")
+                .define("enabled", true);
+        DYNAMIC_CROSSHAIR_FACTOR = BUILDER
+                .comment("动态准星扩散强度倍率。默认值：1.0")
+                .defineInRange("factor", 1.0, 0.0, 5.0);
+        DYNAMIC_CROSSHAIR_FIRE_EXPANSION = BUILDER
+                .comment("开火瞬间准星扩散倍率。默认值：1.8")
+                .defineInRange("fire_expansion", 1.8, 1.0, 3.0);
+        DYNAMIC_CROSSHAIR_RECOVER_SECONDS = BUILDER
+                .comment("开火扩散的回正时间。默认值：0.2")
+                .defineInRange("recover_seconds", 0.2, 0.02, 2.0);
+        BLOCKED_CROSSHAIR_ENABLED = BUILDER
+                .comment("是否启用禁止符号(水下/方块阻挡时替代准星)。默认值：true")
+                .define("blocked_crosshair_enabled", true);
+        BLOCKED_CROSSHAIR_SIZE = BUILDER
+                .comment("禁止符号的显示大小。默认值：10")
+                .defineInRange("blocked_crosshair_size", 10, 4, 32);
+        BUILDER.pop();
+        SPECS.put("dynamic_crosshair", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("refit");
 
         HIDE_UNAVAILABLE_DEFAULT_SLOTS = BUILDER
@@ -662,8 +704,8 @@ public class Config {
                 .comment("后退格数最大值。默认值：0.125")
                 .defineInRange("back_off", 0.125, 0.0, 10.0);
         BLOCKING_DEFLECTION = BUILDER
-                .comment("子弹发射位置偏移倍率。默认值：1.75")
-                .defineInRange("deflection", 1.75, 0.0, 100.0);
+                .comment("子弹发射位置偏移倍率。默认值：1.5")
+                .defineInRange("deflection", 1.5, 0.0, 100.0);
         BLOCKING_DISABLE_FIRE = BUILDER
                 .comment("到障碍距离小于此值时禁止开火。默认值：0.35")
                 .defineInRange("disable_fire", 0.35, 0.0, 10.0);

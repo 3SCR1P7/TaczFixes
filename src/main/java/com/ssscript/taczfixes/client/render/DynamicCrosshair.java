@@ -1,0 +1,218 @@
+package com.ssscript.taczfixes.client.render;
+
+import com.mojang.blaze3d.platform.GlStateManager;
+import com.mojang.blaze3d.platform.Window;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
+import com.ssscript.taczfixes.common.data.GunTaczFixesData;
+import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.tacz.guns.api.GunProperties;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.client.renderer.crosshair.CrosshairType;
+import com.tacz.guns.client.resource.index.ClientGunIndex;
+import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
+import com.tacz.guns.config.client.RenderConfig;
+import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.util.Mth;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.GameType;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+
+import java.util.Map;
+
+/**
+ * 动态准星: 根据当前枪械散布平滑地向外扩散/收缩。
+ * 十字/线型贴图按中心区域分块平移四臂; 其它样式(圆/方/点/三叉)整体平滑缩放。
+ */
+@OnlyIn(Dist.CLIENT)
+public final class DynamicCrosshair {
+    private static final float BASE_OFFSET_PIXELS = 8.0f;
+    private static final float MAX_OFFSET_PIXELS = 18.0f;
+    private static final float MAX_RATIO = 3.0f;
+    private static final float SMOOTH_TAU_SECONDS = 0.07f;
+    private static final float MIN_RECOVER_SECONDS = 0.02f;
+    private static final float JUMP_TAU_SECONDS = 0.15f;
+
+    private static float displayedRatio;
+    private static float fireImpulse;
+    private static float jumpFactor = 1.0f;
+    private static long lastFrameNanos = System.nanoTime();
+
+    private DynamicCrosshair() {
+    }
+
+    /** 开火瞬间把准星扩散到配置倍率, 之后缓动回位(主手/副手开火都会调用)。 */
+    public static void onShot(LocalPlayer player, ItemStack stack) {
+        float expansion = Config.DYNAMIC_CROSSHAIR_FIRE_EXPANSION.get().floatValue();
+        if (expansion > 1.0f) {
+            fireImpulse = Math.max(fireImpulse, expansion - 1.0f);
+        }
+    }
+
+    /** 绘制动态准星, 返回 true 表示已接管渲染。 */
+    public static boolean render(GuiGraphics graphics, Window window) {
+        if (!Config.DYNAMIC_CROSSHAIR_ENABLED.get()) {
+            return false;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.player == null || minecraft.options.hideGui || minecraft.gameMode == null
+                || minecraft.gameMode.getPlayerMode() == GameType.SPECTATOR) {
+            return false;
+        }
+        if (!minecraft.options.getCameraType().isFirstPerson() && !ShoulderSurfingCompat.showCrosshair()) {
+            return false;
+        }
+        CrosshairType type = RenderConfig.CROSSHAIR_TYPE.get();
+        // 点状与空准星不参与动态扩散; 其它样式都按区域拉开各部分距离
+        if (type == CrosshairType.DOT_1 || type == CrosshairType.EMPTY) {
+            return false;
+        }
+        float offset = updateOffset();
+        ResourceLocation texture = CrosshairType.getTextureLocation(type);
+        float x = window.getGuiScaledWidth() / 2.0f - 8.0f;
+        float y = window.getGuiScaledHeight() / 2.0f - 8.0f;
+        PoseStack pose = graphics.pose();
+        RenderSystem.enableBlend();
+        RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.9f);
+        drawExpandingParts(graphics, pose, texture, x, y, offset);
+        return true;
+    }
+
+    private static float updateOffset() {
+        long now = System.nanoTime();
+        float dt = Mth.clamp((now - lastFrameNanos) / 1.0e9f, 0.0f, 0.1f);
+        lastFrameNanos = now;
+        float recover = Math.max(Config.DYNAMIC_CROSSHAIR_RECOVER_SECONDS.get().floatValue(), MIN_RECOVER_SECONDS);
+        fireImpulse *= (float) Math.exp(-dt * 3.0f / recover);
+        LocalPlayer player = Minecraft.getInstance().player;
+        updateJumpFactor(player, dt);
+        float targetRatio = 0.0f;
+        if (player != null) {
+            targetRatio = spreadRatio(player, player.getMainHandItem());
+        }
+        float alpha = 1.0f - (float) Math.exp(-dt / SMOOTH_TAU_SECONDS);
+        displayedRatio += (targetRatio - displayedRatio) * alpha;
+        float factor = Config.DYNAMIC_CROSSHAIR_FACTOR.get().floatValue();
+        float base = Math.min(displayedRatio * factor * BASE_OFFSET_PIXELS, MAX_OFFSET_PIXELS);
+        // 开火扩散 = 当前散布宽度 + (倍率-1) * 基准值, 而不是把当前大小乘以倍率
+        float impulse = fireImpulse * factor * BASE_OFFSET_PIXELS;
+        return base + impulse;
+    }
+
+    /** 滞空散布倍率平滑过渡, 避免落地/起跳和 onGround 抖动造成准星抽搐。 */
+    private static void updateJumpFactor(LocalPlayer player, float dt) {
+        float target = 1.0f;
+        if (player != null && !player.onGround()) {
+            ItemStack stack = player.getMainHandItem();
+            IGun gun = IGun.getIGunOrNull(stack);
+            if (gun != null) {
+                ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gun.getGunId(stack));
+                GunTaczFixesData.JumpInaccuracyConfig jump = TaczFixesDataManager.getJumpInaccuracyConfig(dataId);
+                jump = AttachmentTaczFixesManager.adjustJumpInaccuracy(stack, jump);
+                if (jump != null && jump.multiplier != null && jump.speed != null
+                        && jump.multiplier > 0.0 && jump.multiplier != 1.0) {
+                    target = jump.multiplier.floatValue();
+                }
+            }
+        }
+        float alpha = 1.0f - (float) Math.exp(-dt / JUMP_TAU_SECONDS);
+        jumpFactor += (target - jumpFactor) * alpha;
+    }
+
+    /**
+     * 当前散布相对该枪站立散布的倍率(站立=1, 移动>1, 潜行/趴下<1, 滞空再乘滞空倍率)。
+     * 相比固定区间归一化, 这样滞空倍率、配件等造成的整体散布变化也会反映为准星扩散。
+     */
+    private static float spreadRatio(LocalPlayer player, ItemStack stack) {
+        if (player == null || stack == null || stack.isEmpty()) {
+            return 0.0f;
+        }
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return 0.0f;
+        }
+        InaccuracyType type = InaccuracyType.getInaccuracyType(player);
+        Map<InaccuracyType, Float> table = null;
+        IGunOperator operator = IGunOperator.fromLivingEntity(player);
+        AttachmentCacheProperty cache = operator == null ? null : operator.getCacheProperty();
+        if (cache != null) {
+            try {
+                table = cache.getCache(GunProperties.INACCURACY);
+            } catch (RuntimeException ignored) {
+                table = null;
+            }
+        }
+        if (table == null) {
+            ClientGunIndex index = (ClientGunIndex) TimelessAPI.getClientGunIndex(gun.getGunId(stack)).orElse(null);
+            GunData data = index == null ? null : index.getGunData();
+            if (data != null) {
+                table = data.getInaccuracy();
+            }
+        }
+        if (table == null || table.isEmpty()) {
+            return 1.0f;
+        }
+        // 滞空时统一按移动散布处理: 跳跃顶点速度会短暂低于判定阈值,
+        // 否则会在 MOVE/STAND 间反复切换导致准星抽搐。
+        if (type == InaccuracyType.STAND && !player.onGround() && table.get(InaccuracyType.MOVE) != null) {
+            type = InaccuracyType.MOVE;
+        }
+        Float current = table.get(type);
+        Float aim = table.get(InaccuracyType.AIM);
+        float base = current == null ? 0.0f : current.floatValue();
+        if (aim != null) {
+            float aimingProgress = IClientPlayerGunOperator.fromLocalPlayer(player)
+                    .getClientAimingProgress(Minecraft.getInstance().getFrameTime());
+            if (aimingProgress > 0.0f) {
+                base = Mth.lerp(aimingProgress, base, aim.floatValue());
+            }
+        }
+        base *= jumpFactor;
+        Float standValue = table.get(InaccuracyType.STAND);
+        float reference = standValue == null ? base : standValue.floatValue();
+        if (reference <= 1.0e-3f) {
+            reference = Math.max(base, 0.05f);
+        }
+        return Mth.clamp(base / reference, 0.0f, MAX_RATIO);
+    }
+
+    /**
+     * 将贴图按中心 4x4 区域切成九块: 上/下/左/右四块沿各自轴向平移, 四角块沿对角线平移,
+     * 中心块(通常是中心点)保持不动。这样十字会拉开四臂, 圆形只外扩圆环, 方形四角外移。
+     */
+    private static void drawExpandingParts(GuiGraphics graphics, PoseStack pose, ResourceLocation texture,
+                                           float x, float y, float offset) {
+        drawPart(graphics, pose, texture, x, y, -offset, -offset, 0, 0, 48, 48);
+        drawPart(graphics, pose, texture, x, y, 0.0f, -offset, 48, 0, 32, 48);
+        drawPart(graphics, pose, texture, x, y, offset, -offset, 80, 0, 48, 48);
+        drawPart(graphics, pose, texture, x, y, -offset, 0.0f, 0, 48, 48, 32);
+        drawPart(graphics, pose, texture, x, y, 0.0f, 0.0f, 48, 48, 32, 32);
+        drawPart(graphics, pose, texture, x, y, offset, 0.0f, 80, 48, 48, 32);
+        drawPart(graphics, pose, texture, x, y, -offset, offset, 0, 80, 48, 48);
+        drawPart(graphics, pose, texture, x, y, 0.0f, offset, 48, 80, 32, 48);
+        drawPart(graphics, pose, texture, x, y, offset, offset, 80, 80, 48, 48);
+    }
+
+    /** 绘制贴图中的一个区域(源区域为纹理像素), 并按 dx/dy 平移。 */
+    private static void drawPart(GuiGraphics graphics, PoseStack pose, ResourceLocation texture,
+                                 float x, float y, float dx, float dy, int u, int v, int uWidth, int vHeight) {
+        pose.pushPose();
+        pose.translate(dx, dy, 0.0f);
+        graphics.blit(texture, (int) x + u / 8, (int) y + v / 8, uWidth / 8, vHeight / 8,
+                (float) u, (float) v, uWidth, vHeight, 128, 128);
+        pose.popPose();
+    }
+}

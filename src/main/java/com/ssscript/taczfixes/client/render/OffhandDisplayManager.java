@@ -15,6 +15,7 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.client.sound.SoundPlayManager;
 import com.tacz.guns.client.resource.pojo.display.gun.GunDisplay;
 import com.tacz.guns.resource.manager.ScriptManager;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
@@ -61,6 +62,7 @@ public final class OffhandDisplayManager {
     private static BedrockGunModel putAwayMainModel;
     private static boolean resumeDualAfterPutAway;
     private static boolean restartMainAfterPutAway;
+    private static boolean keepOffhandDisplay;
     private static boolean capturingManualActionTrack;
     private static boolean manualActionCapturePending;
     private static boolean manualActionHoldingArmMotionSeen;
@@ -136,6 +138,9 @@ public final class OffhandDisplayManager {
             OffhandMovementAnimation newMovementAnimation = OffhandMovementAnimation.install(stateMachine.getAnimationController());
             stateMachine.initialize();
             stateMachine.trigger("draw");
+            if (Minecraft.getInstance().player != null) {
+                SoundPlayManager.playDrawSound(Minecraft.getInstance().player, newDisplay);
+            }
             TimelessAPI.getClientGunIndex(gunId).map(index -> {
                 return index.getGunData();
             }).ifPresent(gunData -> {
@@ -252,7 +257,9 @@ public final class OffhandDisplayManager {
             return true;
         }
         ItemStack safePreviousOffhand = copyOrEmpty(previousOffhandStack);
-        if (!sameLogicalStack(activeStack, safePreviousOffhand)) {
+        boolean offhandUnchanged = resumeDual && sameLogicalStack(safePreviousOffhand, nextOffhandStack);
+        boolean offhandSwitchedAhead = !sameLogicalStack(activeStack, safePreviousOffhand) && sameLogicalStack(activeStack, nextOffhandStack);
+        if (!offhandSwitchedAhead && !sameLogicalStack(activeStack, safePreviousOffhand)) {
             getOrCreate(safePreviousOffhand);
         }
         if (display == null) {
@@ -261,7 +268,7 @@ public final class OffhandDisplayManager {
             animationStateMachine = display.getAnimationStateMachine();
         }
         LuaAnimationStateMachine<GunAnimationStateContext> stateMachine = animationStateMachine;
-        long offhandPutAwayTime = startOffhandPutAway(stateMachine, safePreviousOffhand);
+        long offhandPutAwayTime = offhandUnchanged || offhandSwitchedAhead ? 0L : startOffhandPutAway(stateMachine, safePreviousOffhand);
         putAwayMainStack = copyOrEmpty(previousMainStack);
         putAwayMainStackId = DualWieldStackId.get(putAwayMainStack);
         if (putAwayMainStack.isEmpty()) {
@@ -275,9 +282,11 @@ public final class OffhandDisplayManager {
         putAwayNextMainStack = copyOrEmpty(nextMainStack);
         putAwayNextOffhandStack = copyOrEmpty(nextOffhandStack);
         resumeDualAfterPutAway = resumeDual;
-        restartMainAfterPutAway = requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack);
+        keepOffhandDisplay = offhandUnchanged || offhandSwitchedAhead;
+        boolean mainUnchanged = resumeDual && sameLogicalStack(putAwayMainStack, putAwayNextMainStack);
+        restartMainAfterPutAway = !mainUnchanged && requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack);
         GunItemRendererWrapper mainRenderer = getGunRenderer(putAwayMainStack);
-        long mainPutAwayTime = getMainPutAwayTime(mainRenderer, putAwayMainStack);
+        long mainPutAwayTime = mainUnchanged ? 0L : getMainPutAwayTime(mainRenderer, putAwayMainStack);
         if (restartMainAfterPutAway && player != null && mainRenderer != null) {
             try {
                 IClientPlayerGunOperator.fromLocalPlayer(player).draw(putAwayMainStack);
@@ -288,7 +297,7 @@ public final class OffhandDisplayManager {
                 mainPutAwayTime = 0;
             }
         }
-        long putAwayTime = Math.max(offhandPutAwayTime, mainPutAwayTime);
+        long putAwayTime = keepOffhandDisplay && !restartMainAfterPutAway ? 0L : Math.max(offhandPutAwayTime, mainPutAwayTime);
         DualMuzzleFlashState.clearMuzzlePositions();
         if (putAwayTime <= 0) {
             finishPutAway(player);
@@ -349,6 +358,9 @@ public final class OffhandDisplayManager {
             stateMachine.trigger("put_away");
             stateMachine.exit();
             stateMachine.setExitingTime(putAwayTime + 50);
+            if (Minecraft.getInstance().player != null) {
+                SoundPlayManager.playPutAwaySound(Minecraft.getInstance().player, display);
+            }
             return putAwayTime;
         } catch (RuntimeException exception) {
             TaczFixesMod.LOGGER.error("Failed to start independent offhand put-away animation for {}", activeGunId, exception);
@@ -383,7 +395,10 @@ public final class OffhandDisplayManager {
         boolean resumeDual = resumeDualAfterPutAway;
         boolean restartMain = restartMainAfterPutAway;
         boolean reuseOffhandDisplay = resumeDual && sameLogicalStack(activeStack, nextOffhandStack) && display != null && context != null;
-        if (reuseOffhandDisplay && restartActiveOffhandDisplay(nextOffhandStack)) {
+        if (keepOffhandDisplay && reuseOffhandDisplay) {
+            // 副手未变化或渲染已提前切换到新枪: 保持当前显示与动画, 不重播收枪/掏枪动画
+            clearPutAwayMetadata();
+        } else if (reuseOffhandDisplay && restartActiveOffhandDisplay(nextOffhandStack)) {
             clearPutAwayMetadata();
         } else {
             clear();
@@ -418,6 +433,9 @@ public final class OffhandDisplayManager {
             stateMachine.setContext(context);
             stateMachine.initialize();
             stateMachine.trigger("draw");
+            if (Minecraft.getInstance().player != null) {
+                SoundPlayManager.playDrawSound(Minecraft.getInstance().player, display);
+            }
             TimelessAPI.getClientGunIndex(activeGunId).map(index -> {
                 return index.getGunData();
             }).ifPresent(gunData -> {
@@ -686,6 +704,7 @@ public final class OffhandDisplayManager {
         putAwayNextOffhandStack = ItemStack.EMPTY;
         resumeDualAfterPutAway = false;
         restartMainAfterPutAway = false;
+        keepOffhandDisplay = false;
     }
 
     private static ResourceLocation resolveDisplayId(ResourceLocation gunId, ResourceLocation requestedDisplayId) {

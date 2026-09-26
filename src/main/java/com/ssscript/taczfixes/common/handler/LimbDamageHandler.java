@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.common.handler;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.util.CrawlHitboxHelper;
 import com.ssscript.taczfixes.common.util.LimbDamageHelper;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
@@ -24,8 +25,19 @@ public class LimbDamageHandler {
     @SubscribeEvent
     public void onGunHurt(EntityHurtByGunEvent.Pre event) {
         if (event.getLogicalSide().isClient()) return;
+        if (!Config.LIMB_DAMAGE_ENABLED.get()) return;
         if (!(event.getHurtEntity() instanceof LivingEntity entity)) return;
         if (event.isHeadShot()) return;
+
+        // 爬行玩家使用独立受击箱: 仅尾端(腿部)区域造成四肢伤害, 其余为普通命中
+        if (CrawlHitboxHelper.isCrawling(entity)) {
+            CrawlHitboxHelper.Zone zone = LimbDamageHelper.getCrawlZone(event.getBullet().getId(), entity.getId());
+            if (zone == CrawlHitboxHelper.Zone.LIMB) {
+                float limbFactor = getLimbFactorForGun(event);
+                event.setBaseAmount(event.getBaseAmount() * limbFactor);
+            }
+            return;
+        }
 
         Vec3 hitPos = LimbDamageHelper.getHitPosition(event.getBullet().getId());
         if (hitPos == null) return;

@@ -117,7 +117,8 @@ public final class OffhandShooterManager {
         long shootCoolDown;
         OffhandShooter shooter = getValidated(player);
         boolean stackMatched = shooter != null && shooter.matchesBoundStack(expectedStackId);
-        if (stackMatched) {
+        boolean underwaterBlocked = stackMatched && com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, player.getOffhandItem());
+        if (stackMatched && !underwaterBlocked) {
             shootOutcome = shooter.shoot(timestamp, chargeProgress);
         } else {
             shootOutcome = new ShootOutcome(ShootResult.UNKNOWN_FAIL, false, false);

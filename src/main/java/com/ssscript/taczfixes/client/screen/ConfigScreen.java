@@ -29,6 +29,7 @@ public class ConfigScreen {
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
         buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
         buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
+        buildDynamicCrosshair(builder.getOrCreateCategory(cat("dynamic_crosshair")), entry);
         buildBlocking(builder.getOrCreateCategory(cat("blocking")), entry);
         buildRefit(builder.getOrCreateCategory(cat("refit")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
@@ -129,9 +130,12 @@ public class ConfigScreen {
     }
 
     private static void buildLimbDamage(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "limb_damage.enabled", Config.LIMB_DAMAGE_ENABLED);
+        bool_(cat, entry, "limb_damage.crawl_hitbox_enabled", Config.CRAWL_HITBOX_ENABLED);
         List<AbstractConfigListEntry> player = new ArrayList<>();
         dbl_(player, entry, "limb_damage.threshold_standing", Config.LIMB_THRESHOLD_STANDING);
         dbl_(player, entry, "limb_damage.threshold_sneaking", Config.LIMB_THRESHOLD_SNEAKING);
+        dbl_(player, entry, "limb_damage.crawl_headshot_length", Config.CRAWL_HEADSHOT_LENGTH);
         cat.addEntry(entry.startSubCategory(cat("player"), player).build());
 
         List<AbstractConfigListEntry> gunTypes = new ArrayList<>();
@@ -270,6 +274,15 @@ public class ConfigScreen {
         bool_(debug, entry, "misc.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(debug, entry, "misc.disable_third_person", Config.DISABLE_THIRD_PERSON);
         cat.addEntry(entry.startSubCategory(cat("debug"), debug).build());
+    }
+
+    private static void buildDynamicCrosshair(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "dynamic_crosshair.enabled", Config.DYNAMIC_CROSSHAIR_ENABLED);
+        dbl_(cat, entry, "dynamic_crosshair.factor", Config.DYNAMIC_CROSSHAIR_FACTOR);
+        dbl_(cat, entry, "dynamic_crosshair.fire_expansion", Config.DYNAMIC_CROSSHAIR_FIRE_EXPANSION);
+        dbl_(cat, entry, "dynamic_crosshair.recover_seconds", Config.DYNAMIC_CROSSHAIR_RECOVER_SECONDS);
+        bool_(cat, entry, "dynamic_crosshair.blocked_crosshair_enabled", Config.BLOCKED_CROSSHAIR_ENABLED);
+        int_(cat, entry, "dynamic_crosshair.blocked_crosshair_size", Config.BLOCKED_CROSSHAIR_SIZE);
     }
 
     private static void buildBlocking(ConfigCategory cat, ConfigEntryBuilder entry) {

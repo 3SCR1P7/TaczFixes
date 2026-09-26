@@ -729,6 +729,9 @@ public final class ClientOffhandState {
     }
 
     private boolean canFeedShot(LocalPlayer player, ItemStack stack, IGun gun, GunData gunData) {
+        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, stack)) {
+            return false;
+        }
         boolean z;
         Bolt bolt = gunData.getBolt();
         boolean inBarrel = gun.hasBulletInBarrel(stack) && bolt != Bolt.OPEN_BOLT;

@@ -691,6 +691,10 @@ public final class DualWieldClient {
             SoundPlayManager.playDryFireSound(player, display);
             return false;
         }
+        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, stack)) {
+            SoundPlayManager.playDryFireSound(player, display);
+            return false;
+        }
         com.ssscript.taczfixes.common.data.GunTaczFixesData.ChargeConfig chargeCfg =
                 com.ssscript.taczfixes.common.util.ChargeStorage.config(stack);
         if (chargeCfg != null && Boolean.TRUE.equals(chargeCfg.blocking_fire)
@@ -707,6 +711,7 @@ public final class DualWieldClient {
         DualReloadAnimationManager.clearHand(InteractionHand.OFF_HAND);
         scheduleOffhandInitialShot(player, stack, sourceStackId, gunData, coolDown, chargeProgress, ammo, bolt == Bolt.MANUAL_ACTION);
         state.consumeChargeAfterShot(stack, gunData);
+        DynamicCrosshair.onShot(player, stack);
         return true;
     }
 

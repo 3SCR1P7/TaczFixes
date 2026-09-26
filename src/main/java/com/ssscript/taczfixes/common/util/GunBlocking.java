@@ -144,6 +144,36 @@ public final class GunBlocking {
         return Math.max(0.0d, Math.min(1.0d, ratio));
     }
 
+    /** 按 blocking 旋转射击角度(pitch/yaw), 返回 {pitch, yaw}; 未启用返回 null。 */
+    @Nullable
+    public static float[] rotateShotAngles(float pitch, float yaw, @Nullable Player player, ItemStack gunStack) {
+        if (player == null || gunStack == null || gunStack.isEmpty() || !isEnabled(gunStack)) {
+            return null;
+        }
+        GunTaczFixesData.BlockingConfig cfg = resolve(gunStack);
+        double factor = factor(player, distanceMax(cfg), distanceMin(cfg));
+        if (factor <= 0.0d) {
+            return null;
+        }
+        Vec3 direction = Vec3.directionFromRotation(pitch, yaw);
+        if (direction.lengthSqr() < 1.0E-8d) {
+            return null;
+        }
+        boolean dual = DualWieldEligibility.isDualWielding(player);
+        // 子弹角度偏转为模型角度的两倍
+        double angleRad = Math.toRadians(angleDeg(cfg) * factor * 2.0d);
+        double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg));
+        Vec3 axis = right(player.getLookAngle()).scale(Math.sin(facingRad))
+                .subtract(new Vec3(0.0d, 1.0d, 0.0d).scale(Math.cos(facingRad)));
+        if (axis.lengthSqr() < 1.0E-8d) {
+            return null;
+        }
+        Vec3 rotated = rotateAroundAxis(direction, axis.normalize(), angleRad).normalize();
+        float newYaw = (float) (Math.atan2(-rotated.x, rotated.z) * 180.0d / Math.PI);
+        float newPitch = (float) (-Math.asin(Math.max(-1.0d, Math.min(1.0d, rotated.y))) * 180.0d / Math.PI);
+        return new float[]{newPitch, newYaw};
+    }
+
     /** 子弹发射位置偏移: 沿 facing 方向(0=右,90=上,180=左,-90=下), 大小为 距离 * deflection * tan(角度)。 */
     public static Vec3 shotOffset(Vec3 look, double obstacleDistance, double angleDeg, double deflection,
                                   double facingDeg) {

@@ -234,6 +234,8 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.PauseClockHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ArcanaOffhandKeyHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.CrawlHitboxDebugHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler());
         });
     }
 }
