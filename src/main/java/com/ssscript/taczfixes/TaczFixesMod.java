@@ -209,6 +209,9 @@ public class TaczFixesMod {
 
     private void onRegisterClientReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new com.ssscript.taczfixes.client.data.ClientDisplayDataReloadListener());
+        event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
+                java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
+                        .thenRunAsync(com.ssscript.taczfixes.client.render.CrosshairPartLayout::clear, gameExecutor));
     }
 
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {

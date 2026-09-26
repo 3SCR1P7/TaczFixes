@@ -190,29 +190,38 @@ public final class DynamicCrosshair {
     }
 
     /**
-     * 将贴图按中心 4x4 区域切成九块: 上/下/左/右四块沿各自轴向平移, 四角块沿对角线平移,
-     * 中心块(通常是中心点)保持不动。这样十字会拉开四臂, 圆形只外扩圆环, 方形四角外移。
+     * 按连通区域绘制: 每个连通的白色部分作为整体处理——普通部分沿远离中心的方向
+     * 整体平移(十字四臂、方形四角、线条等), 包裹中心的环形部分整体外扩, 中心点不动。
      */
     private static void drawExpandingParts(GuiGraphics graphics, PoseStack pose, ResourceLocation texture,
                                            float x, float y, float offset) {
-        drawPart(graphics, pose, texture, x, y, -offset, -offset, 0, 0, 48, 48);
-        drawPart(graphics, pose, texture, x, y, 0.0f, -offset, 48, 0, 32, 48);
-        drawPart(graphics, pose, texture, x, y, offset, -offset, 80, 0, 48, 48);
-        drawPart(graphics, pose, texture, x, y, -offset, 0.0f, 0, 48, 48, 32);
-        drawPart(graphics, pose, texture, x, y, 0.0f, 0.0f, 48, 48, 32, 32);
-        drawPart(graphics, pose, texture, x, y, offset, 0.0f, 80, 48, 48, 32);
-        drawPart(graphics, pose, texture, x, y, -offset, offset, 0, 80, 48, 48);
-        drawPart(graphics, pose, texture, x, y, 0.0f, offset, 48, 80, 32, 48);
-        drawPart(graphics, pose, texture, x, y, offset, offset, 80, 80, 48, 48);
-    }
-
-    /** 绘制贴图中的一个区域(源区域为纹理像素), 并按 dx/dy 平移。 */
-    private static void drawPart(GuiGraphics graphics, PoseStack pose, ResourceLocation texture,
-                                 float x, float y, float dx, float dy, int u, int v, int uWidth, int vHeight) {
-        pose.pushPose();
-        pose.translate(dx, dy, 0.0f);
-        graphics.blit(texture, (int) x + u / 8, (int) y + v / 8, uWidth / 8, vHeight / 8,
-                (float) u, (float) v, uWidth, vHeight, 128, 128);
-        pose.popPose();
+        CrosshairPartLayout layout = CrosshairPartLayout.get(texture);
+        if (layout.width() <= 0 || layout.parts().isEmpty()) {
+            graphics.blit(texture, (int) x, (int) y, 0, 0, 16, 16, 16, 16);
+            return;
+        }
+        float scaleX = 16.0f / layout.width();
+        float scaleY = 16.0f / layout.height();
+        for (CrosshairPartLayout.Part part : layout.parts()) {
+            float dx = 0.0f;
+            float dy = 0.0f;
+            float zoom = 1.0f;
+            if (part.ringLike()) {
+                zoom = 1.0f + Math.min(offset, 8.0f) / 8.0f;
+            } else if (!part.centered()) {
+                dx = part.dirX() * offset;
+                dy = part.dirY() * offset;
+            }
+            pose.pushPose();
+            pose.translate(x + 8.0f, y + 8.0f, 0.0f);
+            pose.scale(scaleX * zoom, scaleY * zoom, 1.0f);
+            pose.translate(-layout.width() / 2.0f + dx / scaleX, -layout.height() / 2.0f + dy / scaleY, 0.0f);
+            for (CrosshairPartLayout.Strip strip : part.strips()) {
+                graphics.blit(texture, strip.x(), strip.y(), strip.width(), strip.height(),
+                        strip.x(), strip.y(), strip.width(), strip.height(),
+                        layout.width(), layout.height());
+            }
+            pose.popPose();
+        }
     }
 }
