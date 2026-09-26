@@ -235,6 +235,23 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
+    /** burst 连发中途入水/被方块阻挡: 终止本轮连发的后续子弹(不再消耗弹药/生成子弹/播第三人称枪声)。 */
+    @Inject(method = "lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
+            at = @At("HEAD"), cancellable = true, remap = false)
+    private void taczfixes$blockBurstPerBullet(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
+                                               GunData gunData, BulletData bulletData, IGunOperator operator,
+                                               float damageMultiplier, float bulletSpeed, float inaccuracy,
+                                               int soundDistance, boolean silenced, CallbackInfoReturnable<Boolean> cir) {
+        if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(this.shooter, this.itemStack)) {
+            cir.setReturnValue(false);
+            return;
+        }
+        if (this.shooter instanceof net.minecraft.world.entity.player.Player player
+                && com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(player, this.itemStack)) {
+            cir.setReturnValue(false);
+        }
+    }
+
     /** 开火前预检查电量; 电量不足且 blocking_fire 时取消整个连发并播放 dry_fire(实际消耗在每发子弹开火时)。 */
     @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$checkCharge(boolean needConsumeAmmo, CallbackInfo ci) {

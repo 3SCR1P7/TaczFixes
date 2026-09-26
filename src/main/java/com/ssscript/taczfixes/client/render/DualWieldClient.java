@@ -622,6 +622,13 @@ public final class DualWieldClient {
         // 网络同步回来的 GunFireEvent 里的 ItemStack 是新对象, 不能用 == 比较, 否则主手开火记录不到
         ItemStack firedStack = event.getGunItemStack();
         if (sameLogicalStack(firedStack, player.getMainHandItem())) {
+            // burst 连发中途入水/被方块阻挡时, 服务器那几发已被 shootOnce 拦截; 客户端预测不会重新检查,
+            // 这里取消事件以跳过本发的火光/音效/动画(事件被取消后 TaCZ 的 onGunFire 与音效动画都不会执行)
+            if (com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(player, firedStack)
+                    || com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(player, firedStack)) {
+                event.setCanceled(true);
+                return;
+            }
             DualMuzzleFlashState.record(DualRenderContext.HandPhase.MAIN);
             markThirdPersonFlashHand(DualRenderContext.HandPhase.MAIN);
         } else if (sameLogicalStack(firedStack, player.getOffhandItem())) {
@@ -1104,7 +1111,17 @@ public final class DualWieldClient {
         if (reservation.isCanceled() || !isLiveOffhandShotSource(sourcePlayer, sourceStackId, sourceGunId) || recoilStack == null || recoilStack.isEmpty() || recoilGunData == null) {
             return;
         }
+        // burst 连发中途入水/被方块阻挡: 服务器那几发已被 shootOnce 拦截, 这里同步取消客户端剩余连发的火光/音效/动画
+        LocalPlayer currentPlayer = Minecraft.getInstance().player;
+        ItemStack liveOffhand = currentPlayer == null ? ItemStack.EMPTY : currentPlayer.getOffhandItem();
+        if (currentPlayer == null
+                || com.ssscript.taczfixes.common.util.UnderwaterShooting.isBlocked(currentPlayer, liveOffhand)
+                || com.ssscript.taczfixes.common.util.GunBlocking.isFireDisabled(currentPlayer, liveOffhand)) {
+            cancelShotVisualReservation(reservation);
+            return;
+        }
         OffhandCameraController.recordShot(sourcePlayer, recoilStack, recoilGunData);
+        DynamicCrosshair.onShot(sourcePlayer, recoilStack);
         if (!reservation.isCanceled()) {
             playScheduledBurstVisual(sourcePlayer, sourceStackId, sourceGunId, reservation);
         }
