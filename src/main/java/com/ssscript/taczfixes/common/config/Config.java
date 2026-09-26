@@ -57,9 +57,11 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MIN;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_ANGLE;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_BACK_OFF;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_OFFSET_YAW;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DEFLECTION;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DISABLE_FIRE;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_PISTOL;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_DUAL_WIELD;
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
@@ -703,6 +705,9 @@ public class Config {
         BLOCKING_BACK_OFF = BUILDER
                 .comment("后退格数最大值。默认值：0.125")
                 .defineInRange("back_off", 0.125, 0.0, 10.0);
+        BLOCKING_OFFSET_YAW = BUILDER
+                .comment("阻挡时模型水平移动格数(负数向左, 正数向右)。默认值：0")
+                .defineInRange("offset_yaw", 0.0, -10.0, 10.0);
         BLOCKING_DEFLECTION = BUILDER
                 .comment("子弹发射位置偏移倍率。默认值：1.5")
                 .defineInRange("deflection", 1.5, 0.0, 100.0);
@@ -710,8 +715,11 @@ public class Config {
                 .comment("到障碍距离小于此值时禁止开火。默认值：0.35")
                 .defineInRange("disable_fire", 0.35, 0.0, 10.0);
         BLOCKING_FACING = BUILDER
-                .comment("非双持时的偏转方向。默认值：180")
+                .comment("非双持时非手枪的偏转方向。默认值：180")
                 .defineInRange("facing", 180.0, -360.0, 360.0);
+        BLOCKING_FACING_PISTOL = BUILDER
+                .comment("非双持时手枪的偏转方向。默认值：90")
+                .defineInRange("facing_pistol", 90.0, -360.0, 360.0);
         BLOCKING_FACING_DUAL_WIELD = BUILDER
                 .comment("双持时的偏转方向。默认值：90")
                 .defineInRange("facing_dual_wield", 90.0, -360.0, 360.0);

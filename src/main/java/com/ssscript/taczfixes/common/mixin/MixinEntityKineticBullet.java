@@ -112,7 +112,7 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
         boolean dual = com.ssscript.taczfixes.common.util.DualWieldEligibility.isDualWielding(player);
         double facingDeg = dual
                 ? com.ssscript.taczfixes.common.util.GunBlocking.facingDual(cfg)
-                : com.ssscript.taczfixes.common.util.GunBlocking.facing(cfg);
+                : com.ssscript.taczfixes.common.util.GunBlocking.facing(cfg, gunItem);
         Vec3 offset = com.ssscript.taczfixes.common.util.GunBlocking.shotOffset(
                 player.getLookAngle(), obstacleDistance,
                 com.ssscript.taczfixes.common.util.GunBlocking.angleDeg(cfg) * factor,

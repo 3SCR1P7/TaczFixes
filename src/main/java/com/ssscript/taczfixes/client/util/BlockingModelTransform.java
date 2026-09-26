@@ -47,14 +47,16 @@ public final class BlockingModelTransform {
         double angle = Math.toRadians(GunBlocking.angleDeg(cfg) * factor);
         double back = GunBlocking.backOff(cfg) * factor;
         boolean dual = forceDual || DualWieldEligibility.isDualWielding(player);
+        // 水平偏移仅在非双持时生效; 负数向左, 正数向右(视线空间 +X)
+        double side = dual ? 0.0d : GunBlocking.offsetYaw(cfg, gunStack) * factor;
         // 视线空间(相机在原点, X右/Y上/-Z前): 偏转方向 facing(0=右,90=上,180=左,-90=下), 绕 前方×方向 轴旋转
-        double facingRad = Math.toRadians(dual ? GunBlocking.facingDual(cfg) : GunBlocking.facing(cfg));
+        double facingRad = Math.toRadians(dual ? GunBlocking.facingDual(cfg) : GunBlocking.facing(cfg, gunStack));
         Vector3f axis = new Vector3f((float) Math.sin(facingRad), (float) -Math.cos(facingRad), 0.0f);
         if (axis.lengthSquared() < 1.0E-8f) {
             return false;
         }
         Quaternionf rotation = new Quaternionf().rotationAxis((float) angle, axis.normalize());
-        Vector3f backVector = new Vector3f(0.0f, 0.0f, (float) back);
+        Vector3f backVector = new Vector3f((float) side, 0.0f, (float) back);
         // 精确屏幕空间变换: 最终等价于在屏幕空间绕模型枢轴旋转并沿视线后退, 与姿态缩放/手部变换无关
         Matrix4f base = new Matrix4f(pose.last().pose());
         Vector3f pivot = base.transformPosition(center[0], center[1], center[2], new Vector3f());

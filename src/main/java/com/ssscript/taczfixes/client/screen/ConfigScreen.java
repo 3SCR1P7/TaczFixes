@@ -291,9 +291,11 @@ public class ConfigScreen {
         dbl_(cat, entry, "blocking.distance_min", Config.BLOCKING_DISTANCE_MIN);
         dbl_(cat, entry, "blocking.angle", Config.BLOCKING_ANGLE);
         dbl_(cat, entry, "blocking.back_off", Config.BLOCKING_BACK_OFF);
+        dbl_(cat, entry, "blocking.offset_yaw", Config.BLOCKING_OFFSET_YAW);
         dbl_(cat, entry, "blocking.deflection", Config.BLOCKING_DEFLECTION);
         dbl_(cat, entry, "blocking.disable_fire", Config.BLOCKING_DISABLE_FIRE);
         dbl_(cat, entry, "blocking.facing", Config.BLOCKING_FACING);
+        dbl_(cat, entry, "blocking.facing_pistol", Config.BLOCKING_FACING_PISTOL);
         dbl_(cat, entry, "blocking.facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);
     }
 

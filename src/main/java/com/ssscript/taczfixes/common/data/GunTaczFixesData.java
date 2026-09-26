@@ -116,6 +116,8 @@ public class GunTaczFixesData {
         public Double angle;
         /** 到障碍距离为 distance_min 时的后退格数。 */
         public Double back_off;
+        /** 模型水平移动格数(负数向左, 正数向右)。未配置时手枪用全局手枪配置, 其它用全局配置。 */
+        public Double offset_yaw;
         /** 子弹发射位置偏移倍率: 偏移 = 距离 * deflection * tan(角度)。 */
         public Double deflection;
         /** 到障碍距离小于此值时无法开火(只播放 dry_fire)。 */

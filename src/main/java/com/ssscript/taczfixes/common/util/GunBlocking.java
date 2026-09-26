@@ -67,6 +67,27 @@ public final class GunBlocking {
                 ? com.ssscript.taczfixes.common.config.Config.BLOCKING_BACK_OFF.get() : cfg.back_off;
     }
 
+    /**
+     * 阻挡时模型水平移动格数(负数向左, 正数向右)。
+     * 枪械 data 配置优先, 未配置时使用全局配置。
+     */
+    public static double offsetYaw(@Nullable GunTaczFixesData.BlockingConfig cfg, ItemStack gunStack) {
+        if (cfg != null && cfg.offset_yaw != null) {
+            return cfg.offset_yaw;
+        }
+        return com.ssscript.taczfixes.common.config.Config.BLOCKING_OFFSET_YAW.get();
+    }
+
+    private static boolean isPistol(ItemStack gunStack) {
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) {
+            return false;
+        }
+        return com.tacz.guns.api.TimelessAPI.getCommonGunIndex(gun.getGunId(gunStack))
+                .map(index -> "pistol".equalsIgnoreCase(index.getType()))
+                .orElse(false);
+    }
+
     public static double deflection(@Nullable GunTaczFixesData.BlockingConfig cfg) {
         double value = cfg == null || cfg.deflection == null
                 ? com.ssscript.taczfixes.common.config.Config.BLOCKING_DEFLECTION.get() : cfg.deflection;
@@ -79,9 +100,14 @@ public final class GunBlocking {
         return Math.max(0.0d, value);
     }
 
-    public static double facing(@Nullable GunTaczFixesData.BlockingConfig cfg) {
-        return cfg == null || cfg.facing == null
-                ? com.ssscript.taczfixes.common.config.Config.BLOCKING_FACING.get() : cfg.facing;
+    /** 非双持时的偏转方向: 枪械 data 优先; 未配置时手枪使用全局手枪配置, 其它使用全局配置。 */
+    public static double facing(@Nullable GunTaczFixesData.BlockingConfig cfg, ItemStack gunStack) {
+        if (cfg != null && cfg.facing != null) {
+            return cfg.facing;
+        }
+        return isPistol(gunStack)
+                ? com.ssscript.taczfixes.common.config.Config.BLOCKING_FACING_PISTOL.get()
+                : com.ssscript.taczfixes.common.config.Config.BLOCKING_FACING.get();
     }
 
     public static double facingDual(@Nullable GunTaczFixesData.BlockingConfig cfg) {
@@ -162,7 +188,7 @@ public final class GunBlocking {
         boolean dual = DualWieldEligibility.isDualWielding(player);
         // 子弹角度偏转为模型角度的两倍
         double angleRad = Math.toRadians(angleDeg(cfg) * factor * 2.0d);
-        double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg));
+        double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg, gunStack));
         Vec3 axis = right(player.getLookAngle()).scale(Math.sin(facingRad))
                 .subtract(new Vec3(0.0d, 1.0d, 0.0d).scale(Math.cos(facingRad)));
         if (axis.lengthSqr() < 1.0E-8d) {
