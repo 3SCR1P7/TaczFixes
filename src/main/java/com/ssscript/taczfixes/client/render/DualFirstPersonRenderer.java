@@ -52,6 +52,7 @@ public final class DualFirstPersonRenderer {
                 try {
                     OffhandCameraController.applyPendingRecoil(player);
                     OffhandDisplayManager.updateAnimation(stack, partialTick);
+                    OffhandCameraController.captureFirstPersonShotCamera(player, stack, model);
                     DualRenderContext.setPhase(DualRenderContext.HandPhase.OFFHAND);
                     poseStack.pushPose();
                     posePushed = true;
@@ -95,6 +96,7 @@ public final class DualFirstPersonRenderer {
                             CharmsOffhandRenderCompat.endFrame();
                         }
                     }
+                    OffhandCameraController.captureFirstPersonShotCamera(player, stack, model);
                     if (model.getMuzzleFlashPosPath() == null || model.getMuzzleFlashPosPath().isEmpty()) {
                         DualMuzzleFlashState.invalidateMuzzle(DualRenderContext.HandPhase.OFFHAND);
                         com.ssscript.taczfixes.client.util.CustomScopeViewShift.pop(poseStack);
