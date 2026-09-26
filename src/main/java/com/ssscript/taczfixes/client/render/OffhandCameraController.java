@@ -62,9 +62,11 @@ public final class OffhandCameraController {
     private static final SplineInterpolator SPLINE_INTERPOLATOR = new SplineInterpolator();
     private static final LinearInterpolator LINEAR_INTERPOLATOR = new LinearInterpolator();
     private static final Set<String> WARNED_INVALID_RECOIL_TRACKS = ConcurrentHashMap.newKeySet();
+    private static final long CAMERA_TRACK_ACTIVE_WINDOW_MS = 100;
     private static long shootTimestamp = -1;
     private static Quaternionf firstPersonShotCameraRotation = new Quaternionf();
     private static boolean firstPersonShotCameraRotationValid;
+    private static long firstPersonShotCameraCaptureTimestamp = -1L;
 
     private OffhandCameraController() {
     }
@@ -191,20 +193,19 @@ public final class OffhandCameraController {
         if (DualWieldEligibility.isDualWielding(player) && DualWieldClient.isDualMode(player)
                 && ((Boolean) Minecraft.getInstance().options.bobView().get()).booleanValue()
                 && Minecraft.getInstance().options.getCameraType().isFirstPerson()) {
-            if (shootTimestamp < 0 || System.currentTimeMillis() - shootTimestamp > MODEL_IMPULSE_VISIBLE_TIME_MS) {
-                firstPersonShotCameraRotationValid = false;
-            }
-            if (firstPersonShotCameraRotationValid) {
+            long captureAge = firstPersonShotCameraRotationValid
+                    ? System.currentTimeMillis() - firstPersonShotCameraCaptureTimestamp
+                    : Long.MAX_VALUE;
+            if (captureAge <= CAMERA_TRACK_ACTIVE_WINDOW_MS) {
                 applyRotationToEvent(event, firstPersonShotCameraRotation);
             }
         }
     }
 
-    /** 第一人称副手模型渲染时捕获枪械动画的相机轨道(camera), 供视角摇晃回放。 */
+    /** 第一人称副手模型渲染时捕获枪械动画的相机轨道(camera), 供视角摇晃回放(开火/近战等)。 */
     static void captureFirstPersonShotCamera(LocalPlayer player, ItemStack stack, BedrockGunModel model) {
         if (player == null || stack == null || model == null || !DualWieldClient.isDualMode(player)
-                || !((Boolean) Minecraft.getInstance().options.bobView().get()).booleanValue()
-                || !matchesRecoilSource(stack)) {
+                || !((Boolean) Minecraft.getInstance().options.bobView().get()).booleanValue()) {
             return;
         }
         Quaternionf rotation = getMirroredCameraRotation(player, stack, model);
@@ -216,6 +217,7 @@ public final class OffhandCameraController {
         }
         firstPersonShotCameraRotation = rotation;
         firstPersonShotCameraRotationValid = true;
+        firstPersonShotCameraCaptureTimestamp = System.currentTimeMillis();
     }
 
     static void applyModelCameraAnimation(LocalPlayer player, ItemStack stack, BedrockGunModel model, PoseStack poseStack) {
@@ -435,7 +437,6 @@ public final class OffhandCameraController {
         pendingModelYaw = 0.0f;
         recoilSourceStackId = null;
         recoilSourceGunId = null;
-        firstPersonShotCameraRotationValid = false;
     }
 
     static void reset() {

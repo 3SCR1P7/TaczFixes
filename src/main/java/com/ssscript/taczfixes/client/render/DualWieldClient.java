@@ -1354,6 +1354,13 @@ public final class DualWieldClient {
                 OffhandDisplayManager.triggerNative("bayonet_push");
             }
         }
+        // TaCZ 的第三人称近战动画只由主手的 GunMeleeEvent 驱动, 副手补播一次
+        String meleeAnimation = switch (player.getRandom().nextInt(3)) {
+            case 0 -> AnimationName.MELEE_UPPER;
+            case 1 -> AnimationName.MELEE_2_UPPER;
+            default -> AnimationName.MELEE_3_UPPER;
+        };
+        playOffhandThirdPersonPlayerAnimation(player, stack, meleeAnimation, meleeAnimation);
         return true;
     }
 
