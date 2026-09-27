@@ -13,6 +13,7 @@
         "PbrStateAccessor",
         "PbrTextureAccessor",
         "MixinBedrockModelPbr",
+        "MixinAttachmentPartPbr",
         "MixinARCompatPbr",
         "MixinHeldGunCustomScopeAr",
         "MixinBedrockPartPbr",
