@@ -112,7 +112,9 @@ void main() {
             * ao * ReflectionStrength;
     reflection = reflection / (1.0 + reflection);
     vec3 color = base.rgb * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;
-    color *= mix(1.0, 0.55, metallic * min(ReflectionStrength, 1.0));
+    // Keep vanilla's lit albedo as the baseline. This renderer has no captured
+    // environment to replace the diffuse energy removed by a full metal BRDF.
+    // Darkening all metal here made it black indoors or away from the highlight.
     color += reflection * (1.0 - color);
     color = mix(overlayColor.rgb, color, overlayColor.a);
     color = mix(color, base.rgb * ColorModulator.rgb, clamp(emission * EmissionStrength, 0.0, 1.0));

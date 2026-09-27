@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
+import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.client.util.LensDepthWriter;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.StandbySlotBuffer;
@@ -49,8 +50,6 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
             "(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
     private static final String TACZFIXES_SUPER_RENDER_TARGET =
             "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
-    private static final String TACZFIXES_ACCEL_SUPER_TARGET =
-            "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
 
     @Inject(method = "render" + TACZFIXES_RENDER_DESC, at = @At(value = "INVOKE",
             target = TACZFIXES_SUPER_RENDER_TARGET, remap = false), remap = false)
@@ -59,16 +58,39 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
                                               int light, int overlay, float red, float green, float blue, float alpha,
                                               net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
                                               CallbackInfo ci) {
-        renderStandby(pose, displayContext, light, overlay);
+        renderStandbyIfConfigured(pose, displayContext, light, overlay);
     }
 
-    @Inject(method = "renderAccelerated" + TACZFIXES_ACCEL_DESC, at = @At(value = "INVOKE",
-            target = TACZFIXES_ACCEL_SUPER_TARGET, remap = false), remap = false)
+    @Inject(method = "renderAccelerated" + TACZFIXES_ACCEL_DESC, at = @At("HEAD"), remap = false)
     private void taczfixes$renderStandbySlotsAccelerated(PoseStack pose, ItemStack itemStack,
                                                          ItemDisplayContext displayContext, RenderType renderType,
                                                          int light, int overlay,
                                                          net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
                                                          CallbackInfo ci) {
+        // Submit custom attachments before TaCZ pushes the gun-body callbacks.
+        // Otherwise their layers inherit the body's after callback, which clears
+        // stencil before the remaining scope layers consume it.
+        ItemStack gun = this.currentGunItem;
+        if (gun == null || gun.isEmpty()) return;
+        IGun igun = IGun.getIGunOrNull(gun);
+        if (igun == null || CustomSlotManager.getSlots(igun.getGunId(gun)).isEmpty()) return;
+        renderActiveSlot(pose, displayContext, light, overlay);
+        for (Object[] slot : StandbySlotBuffer.takePending()) {
+            renderStandbySlot((ItemStack) slot[0], gun, (BedrockPart) slot[1],
+                    (String) slot[2], pose, displayContext, light, overlay);
+        }
+        // Native AR scope callbacks establish stencil when the GPU actually draws.
+        // Do not run the immediate stencil repair or duplicate the standard scope.
+    }
+
+    @Unique
+    private void renderStandbyIfConfigured(PoseStack pose, ItemDisplayContext displayContext,
+                                           int light, int overlay) {
+        // Ordinary guns need no custom-slot stencil repair or extra ocular pass.
+        ItemStack gun = this.currentGunItem;
+        if (gun == null || gun.isEmpty()) return;
+        IGun igun = IGun.getIGunOrNull(gun);
+        if (igun == null || CustomSlotManager.getSlots(igun.getGunId(gun)).isEmpty()) return;
         renderStandby(pose, displayContext, light, overlay);
     }
 

@@ -182,6 +182,22 @@ public class PbrShaderSmokeTest {
             if(!Float.isFinite(normal))throw new AssertionError("non-finite normal shading");
             if(glGetError()!=GL_NO_ERROR)throw new AssertionError("OpenGL error");
             System.out.println("PASS normal mapping and material pass");
+            // With no reflected light, enabling reflections must preserve the
+            // vanilla-lit albedo, including metal and dim indoor lightmaps.
+            seti(p,"HasNormal",0);
+            set(p,"SkyAmbient",0);
+            glUniform3f(glGetUniformLocation(p,"CelestialColor"),0,0,0);
+            texture(0,0.5f,0.5f,0.5f,1);
+            for(float lighting : new float[]{1f,0.25f}) {
+                texture(2,lighting,lighting,lighting,1);
+                set(p,"ReflectionStrength",0);
+                float baseline=pixel(p,1,1);
+                set(p,"ReflectionStrength",1);
+                float metal=pixel(p,1,1);
+                if(baseline<0.01f||Math.abs(metal-baseline)>0.01f)
+                    throw new AssertionError("Metal darkened the lit albedo: "+baseline+" -> "+metal);
+            }
+            System.out.println("PASS metal preserves base lighting outdoors and indoors without reflected light");
             celestialTest(p,uv2);
             postTest(blur,composite);
             if(glGetError()!=GL_NO_ERROR)throw new AssertionError("OpenGL post error");
