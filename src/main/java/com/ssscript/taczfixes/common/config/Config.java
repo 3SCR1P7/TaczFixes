@@ -9,6 +9,12 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
+    public static final ForgeConfigSpec.BooleanValue PBR_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM;
+    public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION;
+    public static final ForgeConfigSpec.DoubleValue PBR_EMISSION;
+    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
     private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     /** 每个顶层段落一个配置文件, 值为该段落的 spec。 */
     public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
@@ -1407,6 +1413,29 @@ public class Config {
                 .defineInRange("meleeSwitchPercent", 0.7, 0.0, 1.0);
         BUILDER.pop();
         SPECS.put("dual_wield", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER.push("pbr");
+        PBR_ENABLED = BUILDER
+                .comment("是否启用无光影包 PBR 反光和自发光效果，仅影响客户端画面。默认值：true")
+                .define("enabled", true);
+        PBR_REFLECTION = BUILDER
+                .comment("枪械材质反光强度。默认值：1.0")
+                .defineInRange("reflection_strength", 1.0, 0.0, 4.0);
+        PBR_EMISSION = BUILDER
+                .comment("枪械自发光强度。默认值：1.0")
+                .defineInRange("emission_strength", 1.0, 0.0, 4.0);
+        PBR_BLOOM = BUILDER
+                .comment("是否启用枪械自发光区域的泛光效果。默认值：true")
+                .define("bloom", true);
+        PBR_BLOOM_STRENGTH = BUILDER
+                .comment("枪械泛光强度。默认值：1.0")
+                .defineInRange("bloom_strength", 1.0, 0.0, 4.0);
+        PBR_BLOOM_RADIUS = BUILDER
+                .comment("泛光半径（屏幕像素），越大开销越高。默认值：8.0")
+                .defineInRange("bloom_radius", 8.0, 1.0, 32.0);
+        BUILDER.pop();
+        SPECS.put("pbr", BUILDER.build());
     }
 
     /** 某种枪械类型的全局光照值(data 中未配置 light 的该类型枪械使用; time 为 0 表示该类不发光)。 */

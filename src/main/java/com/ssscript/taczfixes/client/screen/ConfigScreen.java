@@ -19,6 +19,7 @@ public class ConfigScreen {
                 .setTitle(Component.translatable("config.taczfixes.title"))
                 .setSavingRunnable(Config::saveAll);
         ConfigEntryBuilder entry = builder.entryBuilder();
+        buildPbr(builder.getOrCreateCategory(cat("pbr")), entry);
 
         buildGunLevel(builder.getOrCreateCategory(cat("gun_level")), entry);
         buildLimbDamage(builder.getOrCreateCategory(cat("limb_damage")), entry);
@@ -39,6 +40,15 @@ public class ConfigScreen {
         buildDualWield(builder.getOrCreateCategory(cat("dual_wield")), entry);
 
         return builder.build();
+    }
+
+    private static void buildPbr(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "pbr.enabled", Config.PBR_ENABLED);
+        dbl_(cat, entry, "pbr.reflection_strength", Config.PBR_REFLECTION);
+        dbl_(cat, entry, "pbr.emission_strength", Config.PBR_EMISSION);
+        bool_(cat, entry, "pbr.bloom", Config.PBR_BLOOM);
+        dbl_(cat, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);
+        dbl_(cat, entry, "pbr.bloom_radius", Config.PBR_BLOOM_RADIUS);
     }
 
     private static void buildDualWield(ConfigCategory cat, ConfigEntryBuilder entry) {

@@ -1,0 +1,30 @@
+{
+  "vertex": "taczfixes:pbr_screen",
+  "samplers": [
+    {
+      "name": "Sampler0"
+    }
+  ],
+  "uniforms": [
+    {
+      "type": "float",
+      "count": 1,
+      "name": "Strength",
+      "values": [
+        0.6
+      ]
+    }
+  ],
+  "blend": {
+    "dstalpha": "one",
+    "srcalpha": "zero",
+    "func": "add",
+    "srcrgb": "one",
+    "dstrgb": "one"
+  },
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "fragment": "taczfixes:pbr_composite"
+}

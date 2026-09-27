@@ -8,6 +8,14 @@
     "mixins":  [
     ],
     "client":  [
+        "PbrBlendModeAccessor",
+        "PbrCompositeAccessor",
+        "PbrStateAccessor",
+        "PbrTextureAccessor",
+        "MixinBedrockModelPbr",
+        "MixinARCompatPbr",
+        "MixinBedrockPartPbr",
+        "MixinGameRendererPbr",
         "MixinLocalPlayerShootPreCheck",
         "MixinLocalPlayerShootChargeBurst",
         "MixinLocalPlayerCrawl",

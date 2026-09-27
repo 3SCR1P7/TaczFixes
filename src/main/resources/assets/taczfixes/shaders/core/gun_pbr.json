@@ -1,0 +1,212 @@
+{
+  "blend": {
+    "func": "add",
+    "srcrgb": "srcalpha",
+    "dstrgb": "1-srcalpha"
+  },
+  "vertex": "taczfixes:gun_pbr",
+  "fragment": "taczfixes:gun_pbr",
+  "attributes": [
+    "Position",
+    "Color",
+    "UV0",
+    "UV1",
+    "UV2",
+    "Normal"
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    },
+    {
+      "name": "Sampler2"
+    },
+    {
+      "name": "Sampler3"
+    },
+    {
+      "name": "Sampler4"
+    },
+    {
+      "name": "Sampler5"
+    }
+  ],
+  "uniforms": [
+    { "name": "CelestialVisibility", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "LocalSkyExposure", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "CelestialDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
+    { "name": "CelestialColor", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "SkyAmbient", "type": "float", "count": 1, "values": [0.0] },
+    {
+      "name": "ModelViewMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "ProjMat",
+      "type": "matrix4x4",
+      "count": 16,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "IViewRotMat",
+      "type": "matrix3x3",
+      "count": 9,
+      "values": [
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        1.0
+      ]
+    },
+    {
+      "name": "ColorModulator",
+      "type": "float",
+      "count": 4,
+      "values": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+      ]
+    },
+    {
+      "name": "Light0_Direction",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "Light1_Direction",
+      "type": "float",
+      "count": 3,
+      "values": [
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "FogStart",
+      "type": "float",
+      "count": 1,
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "name": "FogEnd",
+      "type": "float",
+      "count": 1,
+      "values": [
+        1.0
+      ]
+    },
+    {
+      "name": "FogColor",
+      "type": "float",
+      "count": 4,
+      "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "name": "FogShape",
+      "type": "int",
+      "count": 1,
+      "values": [
+        0
+      ]
+    },
+    {
+      "type": "int",
+      "count": 1,
+      "name": "HasSpecular",
+      "values": [
+        0
+      ]
+    },
+    {
+      "type": "int",
+      "count": 1,
+      "name": "HasNormal",
+      "values": [
+        0
+      ]
+    },
+    {
+      "type": "int",
+      "count": 1,
+      "name": "EmissionPass",
+      "values": [
+        0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "ReflectionStrength",
+      "values": [
+        1.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "EmissionStrength",
+      "values": [
+        1.0
+      ]
+    }
+  ]
+}

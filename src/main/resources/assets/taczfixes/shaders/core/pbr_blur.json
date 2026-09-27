@@ -1,0 +1,38 @@
+{
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "fragment": "taczfixes:pbr_blur",
+  "vertex": "taczfixes:pbr_screen",
+  "uniforms": [
+    {
+      "type": "float",
+      "count": 2,
+      "name": "Direction",
+      "values": [
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "type": "int",
+      "count": 1,
+      "name": "CheckDepth",
+      "values": [
+        0
+      ]
+    }
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    },
+    {
+      "name": "Sampler2"
+    }
+  ]
+}
