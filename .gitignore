@@ -4,8 +4,6 @@
 build/
 out/
 backup/
-tools/
-docs/
 
 # Forge / 运行目录
 run/
