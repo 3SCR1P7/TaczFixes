@@ -197,7 +197,7 @@
     "config.taczfixes.entry.refit.view_zoom_max":  "滚轮缩放最大倍率",
     "config.taczfixes.entry.refit.button_opacity":  "按钮背景不透明度",
     "config.taczfixes.entry.refit.point_default_consume":  "配件改装点数的全局默认消耗",
-    "config.taczfixes.category.gun_light":  "枪械动态光照",
+    "config.taczfixes.category.gun_light":  "动态光照",
     "config.taczfixes.entry.gun_light.max_lights":  "同时存在的光源数量上限",
     "config.taczfixes.entry.gun_light.blacklist":  "禁用动态光照的枪械列表",
     "config.taczfixes.category.gun_light_fire":  "开火",

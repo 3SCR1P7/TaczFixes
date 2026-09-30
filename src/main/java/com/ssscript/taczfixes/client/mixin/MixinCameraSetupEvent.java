@@ -82,7 +82,7 @@ public class MixinCameraSetupEvent {
                     && (mode == FireMode.AUTO || mode == FireMode.BURST)
                     && gun.getRPM(gunItem) >= Config.RECOIL_FIRE_RATE_MIN_RPM.get()
                     && !Config.RECOIL_FIRE_RATE_DISABLED_GUNS.get().contains(gunId.toString())) {
-                long elapsed = System.currentTimeMillis() - shootTimeStamp;
+                long elapsed = com.tacz.guns.util.time.GunTime.nowMillis() - shootTimeStamp;
                 if (elapsed >= 0 && elapsed < Config.RECOIL_FIRE_RATE_WINDOW.get()) {
                     taczfixes$recoilMultiplierPitch = Config.RECOIL_FIRE_RATE_FACTOR.get().floatValue();
                     taczfixes$recoilMultiplierYaw = Config.RECOIL_FIRE_RATE_FACTOR.get().floatValue();

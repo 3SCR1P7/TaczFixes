@@ -70,7 +70,7 @@ public final class DualRenderContext {
         if (PHASE.get() != HandPhase.OFFHAND || base == null || base.model != model) {
             return armPose;
         }
-        return OffhandArmPoseResolver.resolve(model, base.pose, armPose, offhandHandPos().mirror());
+        return OffhandArmPoseResolver.resolve(model, base.pose, armPose);
     }
 
     public static Matrix4f resolveOffhandSupportArmPose(BedrockAnimatedModel model, Matrix4f supportArmPose) {

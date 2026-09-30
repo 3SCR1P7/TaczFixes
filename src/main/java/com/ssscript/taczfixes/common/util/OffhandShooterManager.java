@@ -24,6 +24,7 @@ import com.tacz.guns.resource.modifier.custom.ExtraMovementModifier;
 import com.tacz.guns.resource.modifier.custom.WeightModifier;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.MoveSpeed;
+import com.tacz.guns.util.time.GunTime;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
@@ -687,7 +688,7 @@ public final class OffhandShooterManager {
                 ServerPlayer serverPlayer = this.player;
                 Objects.requireNonNull(serverPlayer);
                 shooterDataHolder.currentGunItem = serverPlayer::getOffhandItem;
-                long now = System.currentTimeMillis();
+                long now = GunTime.nowMillis();
                 this.data.drawTimestamp = now;
                 this.data.lastShootTimestamp = -1L;
                 this.data.heatTimestamp = now;
@@ -963,7 +964,7 @@ public final class OffhandShooterManager {
             if (remaining <= 0L) {
                 return false;
             }
-            long elapsed = Math.max(0L, System.currentTimeMillis() - this.data.meleeTimestamp);
+            long elapsed = Math.max(0L, GunTime.nowMillis() - this.data.meleeTimestamp);
             return OffhandShooterManager.meleeStillBlocking(remaining, remaining + elapsed);
         }
 

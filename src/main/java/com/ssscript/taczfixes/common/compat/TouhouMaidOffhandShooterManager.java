@@ -15,6 +15,7 @@ import com.tacz.guns.entity.shooter.LivingEntityReload;
 import com.tacz.guns.entity.shooter.LivingEntityShoot;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.resource.index.CommonGunIndex;
+import com.tacz.guns.util.time.GunTime;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.DualReloadTimeController;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
@@ -195,7 +196,7 @@ public final class TouhouMaidOffhandShooterManager {
                 Mob mob = this.entity;
                 Objects.requireNonNull(mob);
                 shooterDataHolder.currentGunItem = mob::getOffhandItem;
-                long now = System.currentTimeMillis();
+                long now = GunTime.nowMillis();
                 this.data.drawTimestamp = now;
                 this.data.lastShootTimestamp = -1L;
                 this.data.heatTimestamp = now;
@@ -265,7 +266,7 @@ public final class TouhouMaidOffhandShooterManager {
             double targetZ = target.getZ() - this.entity.getZ();
             float yaw = (float) (-Math.toDegrees(Math.atan2(targetX, targetZ)));
             float pitch = (float) (-Math.toDegrees(Math.atan2(targetY, Math.sqrt((targetX * targetX) + (targetZ * targetZ)))));
-            long timestamp = System.currentTimeMillis() - this.data.baseTimestamp;
+            long timestamp = GunTime.nowMillis() - this.data.baseTimestamp;
             OffhandShooterManager.pushActiveData(this.data);
             try {
                 ShootResult result = this.shoot.shoot(() -> {

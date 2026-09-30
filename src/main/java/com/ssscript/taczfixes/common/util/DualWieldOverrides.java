@@ -45,8 +45,8 @@ public final class DualWieldOverrides {
     public record HandPos(ArmAnchor anchor, boolean mirror, ArmOffset offset) {
     }
 
-    public static final HandPos DEFAULT_ON_LEFT = new HandPos(ArmAnchor.UNSET, true, ArmOffset.ZERO);
-    public static final HandPos DEFAULT_ON_RIGHT = new HandPos(ArmAnchor.UNSET, true, ArmOffset.ZERO);
+    public static final HandPos DEFAULT_ON_LEFT = new HandPos(ArmAnchor.UNSET, false, ArmOffset.ZERO);
+    public static final HandPos DEFAULT_ON_RIGHT = new HandPos(ArmAnchor.UNSET, false, ArmOffset.ZERO);
 
     public record Value(Boolean enable, Double recoilMultiplier, Double inaccuracyMultiplier, Double focusAimRecoilMultiplier, Double focusAimInaccuracyMultiplier, Double leftOffset, Double rightOffset, HandPos onLeft, HandPos onRight) {
     }

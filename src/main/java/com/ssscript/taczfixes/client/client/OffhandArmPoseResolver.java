@@ -19,7 +19,6 @@ public final class OffhandArmPoseResolver {
     private static final float ARM_RENDER_Z_ROTATION = 3.1415927f;
     private static final double STANDARD_LEFT_ARM_PROXY_OFFSET_X = -0.75d;
     private static final double SLIM_LEFT_ARM_PROXY_OFFSET_X = -0.6875d;
-    private static final Matrix4f REFLECTION_X = new Matrix4f().scale(-1.0f, 1.0f, 1.0f);
     private static final Map<BedrockAnimatedModel, BedrockPart> CARRIER_CACHE = Collections.synchronizedMap(new IdentityHashMap());
     private static final Map<BedrockAnimatedModel, SupportRetargetSnapshot> SUPPORT_RETARGET_CACHE = Collections.synchronizedMap(new IdentityHashMap());
     private static final Map<BedrockAnimatedModel, Boolean> BOLT_BONE_CACHE = Collections.synchronizedMap(new IdentityHashMap());
@@ -27,7 +26,7 @@ public final class OffhandArmPoseResolver {
     private OffhandArmPoseResolver() {
     }
 
-    public static Matrix4f resolve(BedrockAnimatedModel model, Matrix4f modelBase, Matrix4f rightArmPose, boolean mirror) {
+    public static Matrix4f resolve(BedrockAnimatedModel model, Matrix4f modelBase, Matrix4f rightArmPose) {
         if (model == null || modelBase == null || rightArmPose == null) {
             return rightArmPose;
         }
@@ -48,8 +47,7 @@ public final class OffhandArmPoseResolver {
         if (OffhandDisplayManager.shouldUseInwardHoldingArmForManualAction(model)) {
             return rightArmPose;
         }
-        Matrix4f appliedRelative = mirror ? new Matrix4f(REFLECTION_X).mul(relativePose).mul(REFLECTION_X) : relativePose;
-        Matrix4f result = new Matrix4f(carrierPose).mul(appliedRelative);
+        Matrix4f result = new Matrix4f(carrierPose).mul(relativePose);
         return isFinite(result) ? result : rightArmPose;
     }
 

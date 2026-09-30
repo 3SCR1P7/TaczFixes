@@ -62,7 +62,7 @@ public class MixinLocalPlayerDataHolderStateLock {
         }
         IGunOperator operator = IGunOperator.fromLivingEntity(this.player);
         long maxLockTime = factor <= 0.0d ? 0L : (long) (250.0d * factor);
-        long lockTime = System.currentTimeMillis() - this.lockTimestamp;
+        long lockTime = com.tacz.guns.util.time.GunTime.nowMillis() - this.lockTimestamp;
         if (lockTime < maxLockTime && this.lockedCondition != null && !this.lockedCondition.test(operator)) {
             ci.cancel();
             return;

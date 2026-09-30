@@ -47,6 +47,6 @@ public abstract class MixinLeftHandRender {
         if (!render || !this.bedrockGunModel.getRenderHand()) {
             return;
         }
-        FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, HumanoidArm.LEFT, handPos.mirror(), handPos.offset());
+        FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, HumanoidArm.LEFT, handPos.offset());
     }
 }

@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.client.DualFocusAimState;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
@@ -24,11 +25,15 @@ public class MixinFirstPersonRenderGunEvent {
     }
 
     /** 自定义槽瞄具开镜偏移: 整枪定位完成后压入, 由 GunItemRendererWrapper.cacheMuzzlePosition 弹出,
-     *  使枪口粒子绑定/模型渲染/枪口位置缓存都包含同一偏移。 */
+     *  使枪口粒子绑定/模型渲染/枪口位置缓存都包含同一偏移。
+     *  同时: dual_wield 的 mirror 字段改为镜像整个第一人称枪械模型(仅双持主手渲染阶段)。 */
     @Inject(method = "applyFirstPersonGunTransform", at = @At("RETURN"), remap = false)
     private static void taczfixes$pushCustomScopeViewShift(LocalPlayer player, ItemStack stack, PoseStack poseStack,
                                                            BedrockGunModel model, float partialTick, CallbackInfo ci) {
         if (model == null) return;
+        if (DualRenderContext.getPhase() == DualRenderContext.HandPhase.MAIN && DualRenderContext.mainHandPos().mirror()) {
+            poseStack.scale(-1.0f, 1.0f, 1.0f);
+        }
         CustomScopeViewShift.apply(poseStack, model, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
     }
 

@@ -93,7 +93,7 @@ public final class ClientOffhandState {
 
     public synchronized long recordShot() {
         this.lastShootTimestamp = this.shootTimestamp;
-        this.shootTimestamp = System.currentTimeMillis();
+        this.shootTimestamp = GunTime.nowMillis();
         return this.shootTimestamp;
     }
 
@@ -216,7 +216,7 @@ public final class ClientOffhandState {
 
     public long getShootCoolDown(LocalPlayer player, ItemStack stack) {
         long interval = getShootInterval(player, stack);
-        return Math.max(interval - (System.currentTimeMillis() - this.shootTimestamp), 0L);
+        return Math.max(interval - (GunTime.nowMillis() - this.shootTimestamp), 0L);
     }
 
     public void beginReload(boolean isEmpty, float durationSeconds) {
@@ -688,7 +688,7 @@ public final class ClientOffhandState {
             return isChargingInput;
         }
         boolean canChargeDuringCooldown = chargeData.isChargeDuringCooldown() || getShootCoolDown(player, stack) < 50;
-        boolean canCharge = canChargeDuringCooldown && !isDrawing() && !isReloading() && !isBolting() && !isManualShotAwaitingChamberSync() && System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp >= 50 && canFeedShot(player, stack, gun, gunData);
+        boolean canCharge = canChargeDuringCooldown && !isDrawing() && !isReloading() && !isBolting() && !isManualShotAwaitingChamberSync() && GunTime.nowMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp >= 50 && canFeedShot(player, stack, gun, gunData);
         float previousProgress = this.chargeProgress;
         ChargeType type = chargeData.getChargeType();
         if (type == ChargeType.AUTO) {

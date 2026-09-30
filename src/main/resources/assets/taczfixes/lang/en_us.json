@@ -199,7 +199,7 @@
     "config.taczfixes.entry.refit.view_zoom_max":  "Maximum Scroll Zoom",
     "config.taczfixes.entry.refit.button_opacity":  "Button Background Opacity",
     "config.taczfixes.entry.refit.point_default_consume":  "Default Refit Point Cost for Attachments",
-    "config.taczfixes.category.gun_light":  "Gun Dynamic Light",
+    "config.taczfixes.category.gun_light":  "Dynamic Light",
     "config.taczfixes.entry.gun_light.max_lights":  "Max Simultaneous Light Sources",
     "config.taczfixes.entry.gun_light.blacklist":  "Guns with Dynamic Light Disabled",
     "config.taczfixes.category.gun_light_fire":  "Fire",

@@ -713,8 +713,8 @@ public class Config {
                 .comment("后退格数最大值。默认值：0.125")
                 .defineInRange("back_off", 0.125, 0.0, 10.0);
         BLOCKING_OFFSET_YAW = BUILDER
-                .comment("阻挡时模型水平移动格数(负数向左, 正数向右)。默认值：0")
-                .defineInRange("offset_yaw", 0.0, -10.0, 10.0);
+                .comment("阻挡时模型水平移动格数(负数向左, 正数向右)。默认值：-0.25")
+                .defineInRange("offset_yaw", -0.25, -10.0, 10.0);
         BLOCKING_DEFLECTION = BUILDER
                 .comment("子弹发射位置偏移倍率。默认值：1.5")
                 .defineInRange("deflection", 1.5, 0.0, 100.0);

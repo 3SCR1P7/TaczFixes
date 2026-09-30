@@ -12,31 +12,19 @@ import net.minecraft.world.entity.HumanoidArm;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import org.joml.Vector4f;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
-/* 在枪械模型的当前节点位姿上渲染第一人称手臂, 支持模型空间 Z 镜像。 */
+/* 在枪械模型的当前节点位姿上渲染第一人称手臂。整枪镜像由模型基准矩阵承担(见 DualFirstPersonRenderer / MixinFirstPersonRenderGunEvent), 手臂随镜像模型一起变换。 */
 public final class FirstPersonArmRenderHelper {
-    private static final Matrix4f TACZFIXES$REFLECTION_X = new Matrix4f().scale(-1.0f, 1.0f, 1.0f);
 
     private FirstPersonArmRenderHelper() {
     }
 
-    public static void render(BedrockAnimatedModel model, PoseStack poseStack, MultiBufferSource bufferSource, int light, HumanoidArm arm, boolean mirror, DualWieldOverrides.ArmOffset offset) {
+    public static void render(BedrockAnimatedModel model, PoseStack poseStack, MultiBufferSource bufferSource, int light, HumanoidArm arm, DualWieldOverrides.ArmOffset offset) {
         poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
         Matrix4f pose = new Matrix4f(poseStack.last().pose());
-        if (mirror) {
-            Matrix4f base = DualRenderContext.currentModelBase(model);
-            if (base != null) {
-                Matrix4f baseInverse = new Matrix4f(base).invert();
-                Matrix4f reflection = new Matrix4f(base).mul(TACZFIXES$REFLECTION_X).mul(baseInverse);
-                Vector4f origin = new Vector4f(pose.getTranslation(new Vector3f()), 1.0f);
-                reflection.transform(origin);
-                pose.setTranslation(origin.x(), origin.y(), origin.z());
-            }
-        }
         if (offset != null && !offset.isZero()) {
             Vector3f worldOffset = new Vector3f((float) offset.x(), (float) offset.y(), (float) offset.z());
             Matrix4f base = DualRenderContext.currentModelBase(model);

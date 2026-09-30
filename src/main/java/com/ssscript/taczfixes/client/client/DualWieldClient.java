@@ -919,7 +919,7 @@ public final class DualWieldClient {
     }
 
     private static boolean isGlobalShootInputBlocked(LocalPlayer player) {
-        return System.currentTimeMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp < 50;
+        return com.tacz.guns.util.time.GunTime.nowMillis() - LocalPlayerDataHolder.clientClickButtonTimestamp < 50;
     }
 
     private static boolean isOffhandShotVisualBlocked(ClientOffhandState state) {

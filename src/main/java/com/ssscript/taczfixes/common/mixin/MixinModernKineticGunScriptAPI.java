@@ -460,7 +460,8 @@ public abstract class MixinModernKineticGunScriptAPI {
             itemStack = this.dataHolder.currentGunItem.get();
         }
         ItemStack liveOffhand = itemStack;
-        return liveOffhand == this.itemStack && !liveOffhand.isEmpty();
+        boolean match = liveOffhand == this.itemStack && !liveOffhand.isEmpty();
+        return match;
     }
 
     @Inject(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At("RETURN")}, require = 0)
@@ -482,8 +483,10 @@ public abstract class MixinModernKineticGunScriptAPI {
     @WrapOperation(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z", remap = true)}, require = 0)
     private boolean dualWield$recordAcceptedBullet(Level level, Entity entity, Operation<Boolean> original) {
         boolean added = original.call(new Object[]{level, entity}).booleanValue();
-        if (added && OffhandShooterManager.isOffhandData(this.dataHolder)) {
-            OffhandShooterManager.recordBulletSpawn(this.dataHolder, this.itemStack);
+        if (OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            if (added) {
+                OffhandShooterManager.recordBulletSpawn(this.dataHolder, this.itemStack);
+            }
         }
         return added;
     }

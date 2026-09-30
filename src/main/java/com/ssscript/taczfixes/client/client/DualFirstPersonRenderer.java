@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.client;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import com.tacz.guns.api.item.IGun;
@@ -28,6 +29,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
+import org.lwjgl.opengl.GL11;
 
 @OnlyIn(Dist.CLIENT)
 public final class DualFirstPersonRenderer {
@@ -76,7 +78,11 @@ public final class DualFirstPersonRenderer {
                     }
                     poseStack.translate(0.0d, 1.5d, 0.0d);
                     poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
+                    boolean mirroredModel = DualRenderContext.offhandHandPos().mirror();
                     AnimateGeoItemRenderer.applyFirstPersonPositioningTransform(poseStack, model, stack);
+                    if (mirroredModel) {
+                        poseStack.scale(-1.0f, 1.0f, 1.0f);
+                    }
                     DualFocusAimState.applyFirstPersonOffhandLowReady(poseStack, partialTick);
                     DualRenderContext.captureOffhandModelBase(model, poseStack.last().pose());
                     MuzzleFlashRender.isSelf = true;
@@ -86,12 +92,19 @@ public final class DualFirstPersonRenderer {
                     }
                     RenderType renderType = display.enablesTransparency() ? RenderType.entityTranslucent(display.getModelTexture()) : RenderType.entityCutout(display.getModelTexture());
                     boolean charmsFrame = CharmsOffhandRenderCompat.beginFrame(stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, bufferSource, light, OverlayTexture.NO_OVERLAY, partialTick);
+                    boolean mirroredCullWasEnabled = mirroredModel && GL11.glIsEnabled(GL11.GL_CULL_FACE);
                     try {
+                        if (mirroredModel) {
+                            RenderSystem.disableCull();
+                        }
                         model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
                         if (charmsFrame) {
                             CharmsOffhandRenderCompat.renderCaptured(poseStack);
                         }
                     } finally {
+                        if (mirroredCullWasEnabled) {
+                            RenderSystem.enableCull();
+                        }
                         if (charmsFrame) {
                             CharmsOffhandRenderCompat.endFrame();
                         }

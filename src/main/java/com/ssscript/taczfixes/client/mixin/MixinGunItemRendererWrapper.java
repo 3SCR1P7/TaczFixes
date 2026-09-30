@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -27,6 +28,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.tuple.Pair;
+import org.lwjgl.opengl.GL11;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -241,6 +243,27 @@ public abstract class MixinGunItemRendererWrapper {
             return;
         }
         DualRenderContext.captureMainModelBase(display.getGunModel(), poseStack.last().pose());
+    }
+
+    @Unique
+    private static boolean taczfixes$mirrorCullWasEnabled;
+
+    /** 主手镜像时关闭背面剔除(负缩放翻转三角形绕序), 渲染后恢复。 */
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)
+    private void taczfixes$disableCullForMirroredMain(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
+        taczfixes$mirrorCullWasEnabled = false;
+        if (DualRenderContext.getPhase() == DualRenderContext.HandPhase.MAIN && DualRenderContext.mainHandPos().mirror()) {
+            taczfixes$mirrorCullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+            RenderSystem.disableCull();
+        }
+    }
+
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V", shift = At.Shift.AFTER, remap = false)}, require = 0, remap = false)
+    private void taczfixes$restoreCullForMirroredMain(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
+        if (taczfixes$mirrorCullWasEnabled) {
+            RenderSystem.enableCull();
+        }
+        taczfixes$mirrorCullWasEnabled = false;
     }
 
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At("HEAD")})

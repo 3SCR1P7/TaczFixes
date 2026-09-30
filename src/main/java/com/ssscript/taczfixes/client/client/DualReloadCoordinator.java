@@ -177,7 +177,7 @@ public final class DualReloadCoordinator {
         }
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         LocalPlayerDataHolder data = operator.getDataHolder();
-        if (isMainReloading(player) || data.clientStateLock || System.currentTimeMillis() - data.clientShootTimestamp < 100) {
+        if (isMainReloading(player) || data.clientStateLock || com.tacz.guns.util.time.GunTime.nowMillis() - data.clientShootTimestamp < 100) {
             return false;
         }
         long sequenceBeforeRequest = acceptedMainReloadSequence;
