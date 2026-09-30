@@ -2,7 +2,6 @@ package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
-import com.ssscript.taczfixes.common.util.PausableClock;
 import com.ssscript.taczfixes.common.util.ReloadExtraTracker;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
@@ -37,11 +36,7 @@ public class MixinLivingEntityReloadExtraAmmo {
     @Unique
     private ReloadState.StateType taczfixes$oldState;
 
-    /** 换弹起始时间戳改用可暂停时钟, 游戏暂停时不再消耗换弹时间。 */
-    @Redirect(method = "lambda$reload$0", at = @At(value = "INVOKE", target = "Ljava/lang/System;currentTimeMillis()J"), remap = false)
-    private long taczfixes$pausableNow() {
-        return PausableClock.millis();
-    }
+    // TaCZ 0929 uses its own GunTime clock; keep all timestamps in that time domain.
 
     /** 换弹开始: 记录换弹前弹药量。 */
     @Inject(method = "reload", at = @At("TAIL"), remap = false)

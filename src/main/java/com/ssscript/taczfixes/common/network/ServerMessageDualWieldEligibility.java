@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
-import com.ssscript.taczfixes.client.render.ClientOffhandNetworkHandler;
+import com.ssscript.taczfixes.client.client.ClientOffhandNetworkHandler;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import java.util.ArrayList;
 import java.util.List;

@@ -16,6 +16,8 @@
         "MixinAttachmentPartPbr",
         "MixinARCompatPbr",
         "MixinHeldGunCustomScopeAr",
+        "MixinBedrockPartParentAccessor",
+        "MixinBedrockPartAddChild",
         "MixinBedrockPartPbr",
         "MixinGameRendererPbr",
         "MixinLocalPlayerShootPreCheck",
@@ -144,8 +146,11 @@
         "MixinIronsCastAnimation",
         "MixinIronsUseInput",
         "MixinGameRendererWorldFovMark",
-        "MixinAnimationStateMachinePause",
-        "MixinAnimateGeoItemRendererPause"
+        "MixinColoredLightProgram",
+        "MixinColoredLightLevelRenderer",
+        "MixinColoredLightGameRenderer",
+        "MixinEmbeddiumShaderLoader",
+        "MixinEmbeddiumShaderChunkRenderer"
     ],
     "injectors":  {
         "defaultRequire":  1

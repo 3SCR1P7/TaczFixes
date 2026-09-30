@@ -5,7 +5,7 @@ import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.animated.ILocation
 import com.github.tartaricacid.touhoulittlemaid.geckolib3.util.RenderUtils;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.ssscript.taczfixes.client.render.DualThirdPersonRenderer;
+import com.ssscript.taczfixes.client.client.DualThirdPersonRenderer;
 import com.ssscript.taczfixes.common.compat.TouhouMaidDualWieldAnimation;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import java.util.List;

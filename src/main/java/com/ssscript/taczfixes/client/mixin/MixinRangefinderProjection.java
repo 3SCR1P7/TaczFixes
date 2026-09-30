@@ -27,7 +27,7 @@ public class MixinRangefinderProjection {
             at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczfixes$restrictFrameParticle(
             org.joml.Matrix3f normal, Matrix4f pose,
-            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+            net.minecraft.client.renderer.MultiBufferSource bufferSource,
             com.mojang.blaze3d.vertex.PoseStack poseStack,
             com.mojang.blaze3d.vertex.VertexConsumer vertexConsumer,
             net.minecraft.world.item.ItemDisplayContext transformType, int light, int overlay,

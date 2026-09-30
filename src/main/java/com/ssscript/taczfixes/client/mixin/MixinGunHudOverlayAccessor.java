@@ -13,12 +13,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 @Mixin(GunHudOverlay.class)
 public interface MixinGunHudOverlayAccessor {
 
-    @Invoker("handleCacheCount")
-    static void taczfixes$handleCacheCount(LocalPlayer player, ItemStack stack, GunData gunData, IGun gun,
-                                           boolean useInventoryAmmo) {
-        throw new AssertionError();
-    }
-
     @Accessor("cacheMaxAmmoCount")
     static int taczfixes$getCacheMaxAmmoCount() {
         throw new AssertionError();

@@ -58,8 +58,6 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         super(Component.literal(""));
     }
 
-    @org.spongepowered.asm.mixin.Shadow(remap = false)
-    private int inventoryAttachmentStartY;
 
     // ==================== 改装方案弹窗 ====================
 
@@ -524,7 +522,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         }
         int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
         int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
-        int y = this.inventoryAttachmentStartY;
+        int y = ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();
         int totalPages = Math.max(1, (matched.size() + 7) / 8);
         if (taczfixes$searchPage > totalPages - 1) taczfixes$searchPage = totalPages - 1;
         if (taczfixes$searchPage < 0) taczfixes$searchPage = 0;
@@ -543,7 +541,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         taczfixes$searchActive = true;
         if (totalPages > 1) {
             if (taczfixes$searchPage > 0) {
-                RefitTurnPageButton prev = new RefitTurnPageButton(x, this.inventoryAttachmentStartY - 10, true,
+                RefitTurnPageButton prev = new RefitTurnPageButton(x, ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY() - 10, true,
                         b -> {
                             taczfixes$searchPage--;
                             taczfixes$rebuildSearchList();
@@ -554,7 +552,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
             }
             if (taczfixes$searchPage < totalPages - 1) {
                 RefitTurnPageButton next = new RefitTurnPageButton(x,
-                        this.inventoryAttachmentStartY + slotSize * 8 + 2, false,
+                        ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY() + slotSize * 8 + 2, false,
                         b -> {
                             taczfixes$searchPage++;
                             taczfixes$rebuildSearchList();

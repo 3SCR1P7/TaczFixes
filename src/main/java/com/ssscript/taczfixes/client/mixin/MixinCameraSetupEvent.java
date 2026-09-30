@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.DualRecoilMultiplier;
+import com.ssscript.taczfixes.client.client.DualRecoilMultiplier;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;

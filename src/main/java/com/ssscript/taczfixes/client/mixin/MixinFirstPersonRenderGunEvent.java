@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.render.DualFocusAimState;
-import com.ssscript.taczfixes.client.render.DualWieldClient;
+import com.ssscript.taczfixes.client.client.DualFocusAimState;
+import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.event.common.GunFireEvent;

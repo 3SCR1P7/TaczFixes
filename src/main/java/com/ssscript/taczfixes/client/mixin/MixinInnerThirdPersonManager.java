@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.DualWieldAnimatorContext;
+import com.ssscript.taczfixes.client.client.DualWieldAnimatorContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.tacz.guns.client.animation.third.InnerThirdPersonManager;
 import net.minecraft.client.model.geom.ModelPart;

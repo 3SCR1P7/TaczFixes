@@ -25,7 +25,7 @@ public abstract class MixinAttachmentRenderGroupOffset {
     private static void taczfixes$applyAttachmentOffset(ItemStack attachmentStack, ItemStack gunStack,
                                                         AttachmentType type, ResourceLocation id, PoseStack poseStack,
                                                         ItemDisplayContext displayContext, int light, int overlay,
-                                                        MultiBufferSource.BufferSource bufferSource,
+                                                        MultiBufferSource bufferSource,
                                                         ClientAttachmentIndex attachmentIndex, CallbackInfo ci) {
         if (type == null || gunStack == null || gunStack.isEmpty()) return;
         String slotKey = type.name().toLowerCase(Locale.ROOT);

@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
-import com.ssscript.taczfixes.client.render.DualRenderContext;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

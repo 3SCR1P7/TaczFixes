@@ -6,7 +6,7 @@ import com.github.tartaricacid.touhoulittlemaid.geckolib3.core.snapshot.BoneSnap
 import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.animated.AnimatedGeoBone;
 import com.github.tartaricacid.touhoulittlemaid.geckolib3.geo.animated.AnimatedGeoModel;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.render.DualFocusAimState;
+import com.ssscript.taczfixes.client.client.DualFocusAimState;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import java.util.HashMap;
 import java.util.Map;

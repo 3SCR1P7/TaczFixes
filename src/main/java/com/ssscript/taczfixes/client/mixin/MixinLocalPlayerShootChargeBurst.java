@@ -52,10 +52,10 @@ public class MixinLocalPlayerShootChargeBurst {
         return affordable;
     }
 
-    @Inject(method = "lambda$doShoot$2(Ljava/util/concurrent/atomic/AtomicInteger;Lcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/api/item/IGun;Lnet/minecraft/world/item/ItemStack;IFLcom/tacz/guns/client/resource/GunDisplayInstance;)V",
-            at = @At(value = "INVOKE", target = "Ljava/util/concurrent/atomic/AtomicInteger;getAndIncrement()I", shift = At.Shift.BEFORE),
+    @Inject(method = "lambda$doShoot$3(JLjava/lang/Runnable;Ljava/util/concurrent/atomic/AtomicInteger;Lcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/api/item/IGun;Lnet/minecraft/world/item/ItemStack;IFLcom/tacz/guns/client/resource/GunDisplayInstance;)V",
+            at = @At(value = "INVOKE", target = "Ljava/util/concurrent/atomic/AtomicInteger;incrementAndGet()I", shift = At.Shift.BEFORE),
             remap = false)
-    private void taczfixes$dryFireAfterLastBurstRound(AtomicInteger counter, GunData gunData, IGun gun, ItemStack stack,
+    private void taczfixes$dryFireAfterLastBurstRound(long epoch, Runnable cancelBurst, AtomicInteger counter, GunData gunData, IGun gun, ItemStack stack,
                                                       int count, float chargeProgress, GunDisplayInstance display,
                                                       CallbackInfo ci) {
         if (!taczfixes$burstDryFirePending || counter.get() + 1 < count) {

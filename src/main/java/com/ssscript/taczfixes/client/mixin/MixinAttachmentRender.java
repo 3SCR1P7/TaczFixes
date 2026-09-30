@@ -7,7 +7,7 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
-import com.ssscript.taczfixes.client.render.DualRenderContext;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.compat.ArcanaScopeStateBridge;
 import java.lang.reflect.InvocationTargetException;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -26,7 +26,7 @@ public abstract class MixinAttachmentRender {
             "lambda$renderAttachment$0(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
             + "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lnet/minecraft/resources/ResourceLocation;"
             + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;II"
-            + "Lnet/minecraft/client/renderer/MultiBufferSource$BufferSource;"
+            + "Lnet/minecraft/client/renderer/MultiBufferSource;"
             + "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;)V";
 
     @Redirect(method = {RENDER_ATTACHMENT_LAMBDA}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;getLodModel()Lorg/apache/commons/lang3/tuple/Pair;", remap = false), remap = false)
@@ -34,22 +34,22 @@ public abstract class MixinAttachmentRender {
             ClientAttachmentIndex invokedIndex,
             ItemStack attachmentStack, ItemStack gunStack, AttachmentType type, ResourceLocation location,
             PoseStack poseStack, ItemDisplayContext transformType, int light, int overlay,
-            MultiBufferSource.BufferSource bufferSource, ClientAttachmentIndex lambdaIndex) {
+            MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) {
         if (transformType == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || transformType == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
             return null;
         }
         return invokedIndex.getLodModel();
     }
 
-    @WrapOperation(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockAttachmentModel;render(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", remap = false)}, remap = false)
+    @WrapOperation(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockAttachmentModel;render(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFLnet/minecraft/client/renderer/MultiBufferSource;)V", remap = false)}, remap = false)
     private static void dualWield$renderOffhandOpticAsPhysicalModel(
             BedrockAttachmentModel model, ItemStack attachmentStack, ItemStack gunStack, PoseStack poseStack,
             ItemDisplayContext transformType, RenderType renderType, int light, int overlay, float partialTicks,
-            MultiBufferSource.BufferSource callBufferSource,
+            MultiBufferSource callBufferSource,
             Operation<Void> original,
             ItemStack lambdaAttachmentStack, ItemStack lambdaGunStack, AttachmentType type, ResourceLocation location,
             PoseStack lambdaPoseStack, ItemDisplayContext lambdaTransformType, int lambdaLight, int lambdaOverlay,
-            MultiBufferSource.BufferSource bufferSource, ClientAttachmentIndex lambdaIndex) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+            MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         if (!dualWield$isOffhandFirstPerson(transformType) || (!model.isScope() && !model.isSight())) {
             original.call(new Object[]{model, attachmentStack, gunStack, poseStack, transformType, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
             return;

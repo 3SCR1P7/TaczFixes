@@ -2,7 +2,6 @@ package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
-import com.ssscript.taczfixes.common.util.PausableClock;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -18,11 +17,7 @@ public class MixinGunScriptAPIGetReloadTime {
     @Shadow(remap = false)
     private LivingEntity shooter;
 
-    /** 换弹已流逝时间改用可暂停时钟, 游戏暂停时不再消耗换弹时间。 */
-    @Redirect(method = "getReloadTime", at = @At(value = "INVOKE", target = "Ljava/lang/System;currentTimeMillis()J"), remap = false)
-    private long taczfixes$pausableNow() {
-        return PausableClock.millis();
-    }
+    // TaCZ 0929 uses its own GunTime clock; keep all timestamps in that time domain.
 
     @Inject(method = "getReloadTime", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczfixes$scaleReloadTime(CallbackInfoReturnable<Long> cir) {

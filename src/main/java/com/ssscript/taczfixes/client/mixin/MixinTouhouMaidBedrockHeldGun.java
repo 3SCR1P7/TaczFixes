@@ -4,7 +4,7 @@ import com.github.tartaricacid.touhoulittlemaid.client.model.bedrock.BedrockMode
 import com.github.tartaricacid.touhoulittlemaid.compat.gun.common.GunClientUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.ssscript.taczfixes.client.render.DualThirdPersonRenderer;
+import com.ssscript.taczfixes.client.client.DualThirdPersonRenderer;
 import com.ssscript.taczfixes.common.compat.TouhouMaidDualWieldAnimation;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import net.minecraft.client.renderer.MultiBufferSource;

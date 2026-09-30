@@ -2,8 +2,8 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.input.MeleeKey;
 import com.tacz.guns.util.InputExtraCheck;
-import com.ssscript.taczfixes.client.render.DualFocusAimKey;
-import com.ssscript.taczfixes.client.render.DualWieldClient;
+import com.ssscript.taczfixes.client.client.DualFocusAimKey;
+import com.ssscript.taczfixes.client.client.DualWieldClient;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraftforge.client.event.InputEvent;

@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.common.compat;
 
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.render.DualFocusAimState;
-import com.ssscript.taczfixes.client.render.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.client.DualFocusAimState;
+import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import java.lang.invoke.MethodHandles;
 import java.lang.invoke.MethodType;

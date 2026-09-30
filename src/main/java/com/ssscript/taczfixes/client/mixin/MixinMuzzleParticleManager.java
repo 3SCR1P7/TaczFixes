@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.particle.MuzzleParticleManager;
-import com.ssscript.taczfixes.client.render.DualMuzzleParticleContext;
+import com.ssscript.taczfixes.client.client.DualMuzzleParticleContext;
 import java.util.EnumMap;
 import java.util.function.Function;
 import net.minecraft.world.InteractionHand;

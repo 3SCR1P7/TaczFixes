@@ -42,9 +42,9 @@ public abstract class MixinBedrockGunModelCustomSlot {
     @Shadow(remap = false) private ItemStack currentGunItem;
     @Shadow(remap = false) private Set<String> adapterToRender;
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At(value = "INVOKE", target = "Lcom/tacz/guns/compat/ar/ARCompat;shouldAccelerate()Z", remap = false), remap = false)
-    private void taczfixes$customSlotRender(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha, net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+    private void taczfixes$customSlotRender(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha, net.minecraft.client.renderer.MultiBufferSource bufferSource, CallbackInfo ci) {
         handleCustomSlots(poseStack, displayContext, light, overlay, bufferSource);
         // 标准槽瞄准(无自定义槽 active)场景: 放行标准槽火控附件在第一人称渲染时绘制预测框;
         // render 末尾由 renderEnd 恢复为 false
@@ -55,9 +55,9 @@ public abstract class MixinBedrockGunModelCustomSlot {
         }
     }
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("RETURN"), remap = false)
-    private void taczfixes$renderEnd(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha, net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+    private void taczfixes$renderEnd(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha, net.minecraft.client.renderer.MultiBufferSource bufferSource, CallbackInfo ci) {
         com.ssscript.taczfixes.client.util.RangefinderDrawBudget.setAimingScene(false);
     }
 
@@ -74,7 +74,7 @@ public abstract class MixinBedrockGunModelCustomSlot {
         return progress > 0.5f;
     }
 
-    private void handleCustomSlots(PoseStack poseStack, ItemDisplayContext displayContext, int light, int overlay, net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource) {
+    private void handleCustomSlots(PoseStack poseStack, ItemDisplayContext displayContext, int light, int overlay, net.minecraft.client.renderer.MultiBufferSource bufferSource) {
         ItemStack gun = this.currentGunItem;
         if (gun == null || gun.isEmpty()) return;
         IGun igun = IGun.getIGunOrNull(gun);

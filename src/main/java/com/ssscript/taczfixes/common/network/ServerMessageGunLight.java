@@ -10,6 +10,7 @@ import java.util.function.Supplier;
 /** 服务端 -> 客户端: 由子弹命中/销毁触发的枪械动态光照(爆炸光或回程 bullet 线段光), 参数由服务端直接下发。 */
 public class ServerMessageGunLight {
 
+    private final int color;
     private final boolean explosion;
     private final int time;
     private final int levelMax;
@@ -21,9 +22,10 @@ public class ServerMessageGunLight {
     private final double toY;
     private final double toZ;
 
-    public ServerMessageGunLight(boolean explosion, int time, int levelMax, int levelMin,
+    public ServerMessageGunLight(boolean explosion, int time, int levelMax, int levelMin, int color,
                                  double fromX, double fromY, double fromZ,
                                  double toX, double toY, double toZ) {
+        this.color = color;
         this.explosion = explosion;
         this.time = time;
         this.levelMax = levelMax;
@@ -41,6 +43,7 @@ public class ServerMessageGunLight {
         buf.writeVarInt(msg.time);
         buf.writeVarInt(msg.levelMax);
         buf.writeVarInt(msg.levelMin);
+        buf.writeInt(msg.color);
         buf.writeDouble(msg.fromX);
         buf.writeDouble(msg.fromY);
         buf.writeDouble(msg.fromZ);
@@ -50,7 +53,7 @@ public class ServerMessageGunLight {
     }
 
     public static ServerMessageGunLight decode(FriendlyByteBuf buf) {
-        return new ServerMessageGunLight(buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(),
+        return new ServerMessageGunLight(buf.readBoolean(), buf.readVarInt(), buf.readVarInt(), buf.readVarInt(), buf.readInt(),
                 buf.readDouble(), buf.readDouble(), buf.readDouble(),
                 buf.readDouble(), buf.readDouble(), buf.readDouble());
     }
@@ -58,8 +61,8 @@ public class ServerMessageGunLight {
     public static void handle(ServerMessageGunLight msg, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> com.ssscript.taczfixes.client.render.ClientGunLightManager.onLightPacket(
-                        msg.explosion, msg.time, msg.levelMax, msg.levelMin,
+                () -> () -> com.ssscript.taczfixes.client.render.light.ClientGunLightManager.onLightPacket(
+                        msg.explosion, msg.time, msg.levelMax, msg.levelMin, msg.color,
                         new net.minecraft.world.phys.Vec3(msg.fromX, msg.fromY, msg.fromZ),
                         new net.minecraft.world.phys.Vec3(msg.toX, msg.toY, msg.toZ))));
         context.setPacketHandled(true);

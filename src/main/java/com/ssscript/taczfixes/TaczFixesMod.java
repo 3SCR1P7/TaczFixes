@@ -181,6 +181,7 @@ public class TaczFixesMod {
         modBus.addListener(this::onEntityAttributeModification);
         modBus.addListener(this::onCommonSetup);
         if (net.minecraftforge.fml.loading.FMLLoader.getDist().isClient()) {
+            com.ssscript.taczfixes.client.render.light.LightManager.injectShaders();
             modBus.addListener(this::onClientSetup);
             modBus.addListener(this::onRegisterKeyMappings);
             modBus.addListener(this::onRegisterClientReloadListeners);
@@ -211,7 +212,7 @@ public class TaczFixesMod {
         event.registerReloadListener(new com.ssscript.taczfixes.client.data.ClientDisplayDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
-                        .thenRunAsync(com.ssscript.taczfixes.client.render.CrosshairPartLayout::clear, gameExecutor));
+                        .thenRunAsync(com.ssscript.taczfixes.client.render.crosshair.CrosshairPartLayout::clear, gameExecutor));
     }
 
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {
@@ -235,7 +236,6 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeStencilHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.StaminaClientHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler());
-            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.PauseClockHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ArcanaOffhandKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.CrawlHitboxDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler());

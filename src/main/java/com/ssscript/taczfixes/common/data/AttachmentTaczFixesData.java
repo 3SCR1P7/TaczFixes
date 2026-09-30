@@ -28,9 +28,16 @@ public class AttachmentTaczFixesData {
 
     /** 对枪械动态光照的增量调整: time(毫秒)/level_max/level_min 均为加值, 可为负。 */
     public static class LightAdjust {
-        public GunTaczFixesData.LightEntry fire;
-        public GunTaczFixesData.LightEntry explosion;
-        public GunTaczFixesData.LightEntry bullet;
+        public LightAdjustEntry fire;
+        public LightAdjustEntry explosion;
+        public LightAdjustEntry bullet;
+    }
+
+    /** 配件只调整时间和亮度，不支持调整枪械的 color。 */
+    public static class LightAdjustEntry {
+        public Integer time;
+        public Integer level_max;
+        public Integer level_min;
     }
 
     public static class InaccuracyAdjust {

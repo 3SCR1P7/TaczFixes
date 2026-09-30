@@ -65,7 +65,7 @@ public final class CustomHudRenderer {
         boolean overheatLocked = gunData.hasHeatData() && gun.isOverheatLocked(stack);
         boolean barrel = gun.hasBulletInBarrel(stack) && gunData.getBolt() != Bolt.OPEN_BOLT;
         // 复用 tacz 原生弹药计算(弹容缓存/背包弹量), 仅位置/尺寸/颜色/格式化代码由自定义 HUD 控制
-        MixinGunHudOverlayAccessor.taczfixes$handleCacheCount(player, stack, gunData, gun, useInventoryAmmo);
+        GunHudCacheCompat.update(player, stack, gunData, gun, useInventoryAmmo);
         int maxAmmo = Math.max(1, MixinGunHudOverlayAccessor.taczfixes$getCacheMaxAmmoCount());
         int inventoryAmmo = MixinGunHudOverlayAccessor.taczfixes$getCacheInventoryAmmoCount();
         int currentAmmo = Math.min((useInventoryAmmo ? inventoryAmmo : gun.getCurrentAmmoCount(stack))

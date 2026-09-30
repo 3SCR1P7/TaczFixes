@@ -511,6 +511,8 @@ public class AttachmentTaczFixesManager {
         entry.time = time;
         entry.level_max = levelMax;
         entry.level_min = levelMin;
+        // 颜色只能来自枪械；配件产生的新光照仍使用原版光照。
+        entry.color = base == null ? null : base.color;
         return entry;
     }
 

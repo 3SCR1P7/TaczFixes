@@ -30,10 +30,15 @@ import java.util.Locale;
 import java.util.Map;
 
 @Mixin(com.tacz.guns.client.gui.GunRefitScreen.class)
-public abstract class MixinGunRefitScreenCustomSlot extends Screen {
+public abstract class MixinGunRefitScreenCustomSlot extends Screen implements com.ssscript.taczfixes.client.util.RefitInventoryLayout {
 
     protected MixinGunRefitScreenCustomSlot(LocalPlayer player) {
         super(Component.literal(""));
+    }
+
+    @Inject(method = "addAttachmentTypeButtons", at = @At("HEAD"), remap = false)
+    private void taczfixes$resetInventoryLayout(CallbackInfo ci) {
+        this.taczfixes$setInventoryAttachmentStartY(50);
     }
 
     /** 自定义槽位/默认槽位可见性入口: 重排所有槽位列, 并插入自定义槽按钮。
@@ -196,7 +201,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
                 candidateBottom = Math.max(candidateBottom, button.getY() + button.getHeight() + 4);
             }
         }
-        this.inventoryAttachmentStartY = candidateBottom;
+        this.taczfixes$setInventoryAttachmentStartY(candidateBottom);
         if (hasSelected && selected != null && !CustomSlotStorage.get(gunStack, selected).isEmpty()) {
             String unloadSlot = selected;
             RefitUnloadButton unload = new RefitUnloadButton(
@@ -302,6 +307,15 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen {
 
     private final java.util.Set<RefitUnloadButton> ownUnloadButtons = new java.util.HashSet<>();
 
-    @org.spongepowered.asm.mixin.Shadow(remap = false)
-    private int inventoryAttachmentStartY;
+    @Unique private int taczfixes$inventoryAttachmentStartY = 50;
+
+    @Override
+    public int taczfixes$getInventoryAttachmentStartY() {
+        return taczfixes$inventoryAttachmentStartY;
+    }
+
+    @Override
+    public void taczfixes$setInventoryAttachmentStartY(int y) {
+        taczfixes$inventoryAttachmentStartY = y;
+    }
 }

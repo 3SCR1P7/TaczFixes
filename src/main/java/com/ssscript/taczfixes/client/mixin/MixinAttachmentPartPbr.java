@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 /** Scope bodies, rings and reticles bypass BedrockModel.render. */
 @Mixin(BedrockAttachmentModel.class)
 public abstract class MixinAttachmentPartPbr {
-    @ModifyVariable(method = "renderTempPart(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILjava/util/List;FLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @ModifyVariable(method = "renderTempPart(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILjava/util/List;FLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("HEAD"), argsOnly = true, remap = false)
     private RenderType taczfixes$pbrAttachmentPart(RenderType original) {
         if (!PbrRenderer.enabled()) return original;

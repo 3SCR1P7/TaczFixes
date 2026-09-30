@@ -10,9 +10,9 @@ import java.util.Optional;
 public class NetworkHandler {
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             new ResourceLocation("taczfixes", "main"),
-            () -> "1",
-            "1"::equals,
-            "1"::equals);
+            () -> "2",
+            "2"::equals,
+            "2"::equals);
 
     private NetworkHandler() {
     }

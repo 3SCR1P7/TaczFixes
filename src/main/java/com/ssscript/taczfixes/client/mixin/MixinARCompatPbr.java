@@ -18,7 +18,7 @@ public abstract class MixinARCompatPbr {
         // PbrType.end draw and capture emission with the correct stencil state.
         // Other mods' AR paths and the global pipeline stacks remain untouched.
         if (ARCompat.LOADED && (PbrRenderer.enabled()
-                || com.ssscript.taczfixes.client.render.CustomScopeArPolicy.requiresConventionalRendering())) {
+                || com.ssscript.taczfixes.client.client.CustomScopeArPolicy.requiresConventionalRendering())) {
             cir.setReturnValue(false);
         }
     }

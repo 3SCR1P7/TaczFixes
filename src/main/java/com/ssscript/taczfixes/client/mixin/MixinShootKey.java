@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.DualWieldClient;
+import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
 import com.tacz.guns.client.input.ShootKey;
 import net.minecraft.client.Minecraft;

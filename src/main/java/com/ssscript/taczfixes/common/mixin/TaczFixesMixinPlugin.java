@@ -14,6 +14,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean TOUHOU_LITTLE_MAID_PRESENT;
     private static final boolean YES_STEVE_MODEL_PRESENT;
     private static final boolean IRONS_SPELLBOOKS_PRESENT;
+    private static final boolean EMBEDDIUM_PRESENT;
 
     static {
         GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
@@ -22,6 +23,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         TOUHOU_LITTLE_MAID_PRESENT = hasResource("com/github/tartaricacid/touhoulittlemaid/TouhouLittleMaid.class");
         YES_STEVE_MODEL_PRESENT = hasResource("com/elfmcys/yesstevemodel/YesSteveModel.class");
         IRONS_SPELLBOOKS_PRESENT = hasResource("io/redspace/ironsspellbooks/api/util/Utils.class");
+        EMBEDDIUM_PRESENT = hasResource("me/jellysquid/mods/sodium/client/gl/shader/ShaderLoader.class");
     }
 
     private static boolean hasResource(String path) {
@@ -51,6 +53,9 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinIrons")) {
             return IRONS_SPELLBOOKS_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinEmbeddium")) {
+            return EMBEDDIUM_PRESENT;
         }
         return true;
     }

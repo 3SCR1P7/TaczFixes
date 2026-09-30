@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -35,7 +36,8 @@ public class GunDataOverrideStorage {
     }
 
     private static Path storageFile(ResourceLocation dataId) {
-        return storageDir().resolve(dataId.getNamespace() + "_" +
+        // '~' 不在命名空间/路径的合法字符内, 作为命名空间分隔符与路径斜杠, 避免名称含 '_' 时解析歧义
+        return storageDir().resolve(dataId.getNamespace() + "~" +
                 dataId.getPath().replace('/', '~') + ".json");
     }
 
@@ -88,32 +90,60 @@ public class GunDataOverrideStorage {
         }
     }
 
-    /** 将覆盖文件写入 tacz 包(zip/目录)。文件名形如 ns_pathtofile.json。 */
+    /** 将覆盖文件写入 tacz 包(zip/目录)。文件名形如 ns~pathtofile.json (~为路径斜杠); 兼容旧 ns_pathtofile.json。 */
     private static boolean applyToPacks(String fileName, String fullText) {
-        boolean any = false;
         String stem = fileName.endsWith(".json") ? fileName.substring(0, fileName.length() - 5) : fileName;
-        int under = stem.indexOf('_');
-        if (under <= 0) return false;
-        String ns = stem.substring(0, under);
-        String path = stem.substring(under + 1).replace('~', '/') + ".json";
+        List<String[]> candidates = candidateIds(stem);
         Path taczDir = FMLPaths.GAMEDIR.get().resolve("tacz");
-        if (!Files.isDirectory(taczDir)) return false;
+        if (candidates.isEmpty() || !Files.isDirectory(taczDir)) return false;
+        List<Path> packs = new ArrayList<>();
         try (Stream<Path> entries = Files.list(taczDir)) {
             for (Path entry : (Iterable<Path>) entries::iterator) {
-                boolean handled = false;
-                if (Files.isDirectory(entry)) {
-                    handled = replaceInDirPack(entry, ns, path, fullText);
-                } else if (entry.getFileName().toString().toLowerCase().endsWith(".zip")) {
-                    handled = replaceInZipPack(entry, ns, path, fullText);
-                }
-                if (handled) {
-                    any = true;
+                if (Files.isDirectory(entry) || entry.getFileName().toString().toLowerCase(Locale.ROOT).endsWith(".zip")) {
+                    packs.add(entry);
                 }
             }
         } catch (Exception ex) {
             LOGGER.warn("taczfixes: failed to iterate tacz packs", ex);
+            return false;
         }
-        return any;
+        // 逐候选(dataId 解释)探测所有枪包, 取第一个真实存在的解释应用
+        for (String[] candidate : candidates) {
+            boolean any = false;
+            for (Path pack : packs) {
+                boolean handled = Files.isDirectory(pack)
+                        ? replaceInDirPack(pack, candidate[0], candidate[1], fullText)
+                        : replaceInZipPack(pack, candidate[0], candidate[1], fullText);
+                if (handled) {
+                    any = true;
+                }
+            }
+            if (any) {
+                return true;
+            }
+        }
+        LOGGER.warn("taczfixes: gun data override {} did not match any pack", fileName);
+        return false;
+    }
+
+    /** 从文件名主干解析候选 dataId: 新格式 ns~path 优先; 旧格式 ns_path 下划线位置存在歧义, 逐位置探测。 */
+    private static List<String[]> candidateIds(String stem) {
+        List<String[]> candidates = new ArrayList<>();
+        int tilde = stem.indexOf('~');
+        if (tilde > 0) {
+            candidates.add(new String[]{stem.substring(0, tilde), stem.substring(tilde + 1).replace('~', '/') + ".json"});
+        }
+        for (int i = 0; i < stem.length(); i++) {
+            if (stem.charAt(i) != '_' || i == 0) continue;
+            String ns = stem.substring(0, i);
+            if (ns.indexOf('~') >= 0) continue;
+            String path = stem.substring(i + 1).replace('~', '/') + ".json";
+            boolean duplicate = candidates.stream().anyMatch(c -> c[0].equals(ns) && c[1].equals(path));
+            if (!duplicate) {
+                candidates.add(new String[]{ns, path});
+            }
+        }
+        return candidates;
     }
 
     private static boolean replaceInDirPack(Path packDir, String ns, String path, String editText) {

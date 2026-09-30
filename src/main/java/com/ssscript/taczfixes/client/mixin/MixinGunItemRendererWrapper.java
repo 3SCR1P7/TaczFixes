@@ -7,12 +7,12 @@ import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.renderer.item.GunItemRendererWrapper;
 import com.tacz.guns.client.resource.GunDisplayInstance;
-import com.ssscript.taczfixes.client.render.DualFocusAimState;
-import com.ssscript.taczfixes.client.render.DualMuzzleFlashState;
-import com.ssscript.taczfixes.client.render.DualReloadAnimationManager;
-import com.ssscript.taczfixes.client.render.DualRenderContext;
-import com.ssscript.taczfixes.client.render.DualWieldClient;
-import com.ssscript.taczfixes.client.render.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.client.DualFocusAimState;
+import com.ssscript.taczfixes.client.client.DualMuzzleFlashState;
+import com.ssscript.taczfixes.client.client.DualReloadAnimationManager;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
@@ -73,8 +73,8 @@ public abstract class MixinGunItemRendererWrapper {
         return invokedDisplay.getLodModel();
     }
 
-    @WrapOperation(method = {"lambda$renderByItem$6"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", remap = false)}, require = ServerMessageOffhandActionResult.ACTION_RELOAD, allow = ServerMessageOffhandActionResult.ACTION_RELOAD, remap = false)
-    private static void dualWield$scopeLocalThirdPersonMainMuzzle(BedrockGunModel model, PoseStack poseStack, ItemStack stack, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, float f1, float f2, float f3, float f4, MultiBufferSource.BufferSource bufferSource, Operation<Void> original) {
+    @WrapOperation(method = {"lambda$renderByItem$6"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V", remap = false)}, require = ServerMessageOffhandActionResult.ACTION_RELOAD, allow = ServerMessageOffhandActionResult.ACTION_RELOAD, remap = false)
+    private static void dualWield$scopeLocalThirdPersonMainMuzzle(BedrockGunModel model, PoseStack poseStack, ItemStack stack, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, float f1, float f2, float f3, float f4, MultiBufferSource bufferSource, Operation<Void> original) {
         DualRenderContext.HandPhase previousPhase = DualRenderContext.getPhase();
         LocalPlayer player = Minecraft.getInstance().player;
         ItemStack localMainStack = player == null ? ItemStack.EMPTY : player.getMainHandItem();
@@ -170,7 +170,7 @@ public abstract class MixinGunItemRendererWrapper {
 
     /** blocking 时枪口粒子生成位置也要跟着模型旋转/后退。 */
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/particle/MuzzleParticleManager;spawnAndBind(Lcom/github/mcmodderanchor/simplebedrockmodel/v1/particle/firstperson/FirstPersonParticleSystem;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/tacz/guns/client/model/BedrockGunModel;Lnet/minecraft/world/InteractionHand;Ljava/util/List;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)
-    private void taczfixes$pushBlockingParticle(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    private void taczfixes$pushBlockingParticle(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         taczfixes$blockingParticlePushed = false;
         if (player == null || stack == null || poseStack == null || display == null) {
             return;
@@ -183,7 +183,7 @@ public abstract class MixinGunItemRendererWrapper {
     }
 
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/particle/MuzzleParticleManager;spawnAndBind(Lcom/github/mcmodderanchor/simplebedrockmodel/v1/particle/firstperson/FirstPersonParticleSystem;Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/tacz/guns/client/model/BedrockGunModel;Lnet/minecraft/world/InteractionHand;Ljava/util/List;)V", shift = At.Shift.AFTER, remap = false)}, require = 0, remap = false)
-    private void taczfixes$popBlockingParticle(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    private void taczfixes$popBlockingParticle(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         if (taczfixes$blockingParticlePushed) {
             poseStack.popPose();
             taczfixes$blockingParticlePushed = false;
@@ -225,8 +225,8 @@ public abstract class MixinGunItemRendererWrapper {
     }
 
     /** 双持换弹: 丢枪动画结束到掏枪动画开始之间只跳过主手枪械模型渲染, 其余流程照常。 */
-    @WrapOperation(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", remap = false)}, require = 0, remap = false)
-    private void dualWield$hideMainGunWhileReloading(BedrockGunModel model, PoseStack poseStack, ItemStack stack, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, MultiBufferSource.BufferSource bufferSource, Operation<Void> original) {
+    @WrapOperation(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V", remap = false)}, require = 0, remap = false)
+    private void dualWield$hideMainGunWhileReloading(BedrockGunModel model, PoseStack poseStack, ItemStack stack, ItemDisplayContext transformType, RenderType renderType, int light, int overlay, MultiBufferSource bufferSource, Operation<Void> original) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player != null && DualWieldClient.isDualMode(player)
                 && DualReloadAnimationManager.areArmsHidden(net.minecraft.world.InteractionHand.MAIN_HAND)) {
@@ -235,8 +235,8 @@ public abstract class MixinGunItemRendererWrapper {
         original.call(model, poseStack, stack, transformType, renderType, light, overlay, bufferSource);
     }
 
-    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)
-    private void dualWield$captureMainModelBase(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V", shift = At.Shift.BEFORE, remap = false)}, require = 0, remap = false)
+    private void dualWield$captureMainModelBase(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         if (DualRenderContext.getPhase() != DualRenderContext.HandPhase.MAIN || display == null) {
             return;
         }
@@ -244,7 +244,7 @@ public abstract class MixinGunItemRendererWrapper {
     }
 
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At("HEAD")})
-    private void dualWield$enterMainRenderInvocation(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    private void dualWield$enterMainRenderInvocation(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         int invocationDepth = DUAL_WIELD_RENDER_INVOCATION_DEPTH.get().intValue();
         if (invocationDepth > 0 || DUAL_WIELD_ACTIVE_MAIN_RENDER_DEPTH.get().intValue() > 0) {
             DUAL_WIELD_RENDER_INVOCATION_DEPTH.remove();
@@ -256,7 +256,7 @@ public abstract class MixinGunItemRendererWrapper {
     }
 
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At(value = "INVOKE", target = "Lcom/mojang/blaze3d/vertex/PoseStack;pushPose()V", shift = At.Shift.AFTER, remap = true)})
-    private void dualWield$beginMainRender(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    private void dualWield$beginMainRender(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         int invocationDepth = DUAL_WIELD_RENDER_INVOCATION_DEPTH.get().intValue();
         if (invocationDepth <= 0 || DUAL_WIELD_ACTIVE_MAIN_RENDER_DEPTH.get().intValue() > 0) {
             return;
@@ -273,7 +273,7 @@ public abstract class MixinGunItemRendererWrapper {
     }
 
     @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At("RETURN")})
-    private void dualWield$leaveMainRenderInvocation(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    private void dualWield$leaveMainRenderInvocation(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         int invocationDepth = DUAL_WIELD_RENDER_INVOCATION_DEPTH.get().intValue();
         if (DUAL_WIELD_ACTIVE_MAIN_RENDER_DEPTH.get().intValue() == invocationDepth) {
             DUAL_WIELD_ACTIVE_MAIN_RENDER_DEPTH.remove();

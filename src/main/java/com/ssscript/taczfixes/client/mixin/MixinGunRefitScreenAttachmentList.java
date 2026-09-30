@@ -42,7 +42,6 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
         super(Component.literal(""));
     }
 
-    @Shadow(remap = false) public int inventoryAttachmentStartY;
 
     @Inject(method = "addInventoryAttachmentButtons", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$customInventoryButtons(CallbackInfo ci) {
@@ -71,8 +70,8 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
         CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, selected);
         if (def == null) return;
         List<ResourceLocation> builtinIds = new ArrayList<>();
-        // show_icon 为 true 时在改装界面显示原厂候选; 虚拟配件模式下始终显示
-        if (def.builtin_attachments != null && (virtual || def.builtin_attachments.isShowIcon())) {
+        // show_icon 为 true 时在改装界面显示原厂候选; 虚拟配件模式下同样遵循该开关
+        if (def.builtin_attachments != null && def.builtin_attachments.isShowIcon()) {
             for (String entry : def.getBuiltinAttachmentIds()) {
                 ResourceLocation id = ResourceLocation.tryParse(entry);
                 if (id != null) builtinIds.add(id);
@@ -91,7 +90,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
         Inventory inventory = LiberateCompat.getVirtualInventory(player.getInventory());
         int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
         int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
-        int y0 = this.inventoryAttachmentStartY;
+        int y0 = ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();
         List<Integer> matched = new ArrayList<>();
         for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack stack = inventory.getItem(i);
@@ -188,7 +187,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
                                                 CustomSlotDefinition def, List<ResourceLocation> ids, String slotKey) {
         int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
         int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
-        int y0 = this.inventoryAttachmentStartY;
+        int y0 = ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();
         int perPage = 8;
         int totalPages = Math.max(1, (ids.size() + perPage - 1) / perPage);
         int page = Math.max(0, Math.min(CustomSlotGuiState.getPage(), totalPages - 1));
@@ -278,7 +277,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
         if (com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player)) return;
         int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
         int size = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
-        int y0 = this.inventoryAttachmentStartY;
+        int y0 = ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();
         List<InventoryAttachmentSlot> slots = new ArrayList<>();
         for (net.minecraft.client.gui.components.Renderable renderable : this.renderables) {
             if (renderable instanceof InventoryAttachmentSlot slot) {

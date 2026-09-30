@@ -7,6 +7,7 @@ import com.ssscript.taczfixes.common.network.ServerMessageGunLight;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.TacHitResult;
 import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -20,6 +21,10 @@ public class MixinEntityKineticBulletHitLight {
 
     @Inject(method = "onHitBlock", at = @At("HEAD"), remap = false)
     private void taczfixes$hitBlockLight(BlockHitResult hitResult, Vec3 from, Vec3 to, CallbackInfo callback) {
+        // TaCZ 每 tick 都会调用 onHitBlock(未命中时 result 为 MISS), 只有真实命中才应触发光照。
+        if (hitResult == null || hitResult.getType() == HitResult.Type.MISS) {
+            return;
+        }
         taczfixes$sendHitLight((EntityKineticBullet) (Object) this, from, to);
     }
 
@@ -49,12 +54,14 @@ public class MixinEntityKineticBulletHitLight {
             NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> point),
                     new ServerMessageGunLight(true, light.explosion.time,
                             orDefault(light.explosion.level_max, 15), orDefault(light.explosion.level_min, 0),
+                            com.ssscript.taczfixes.common.util.GunLightColor.parse(light.explosion.color),
                             to.x, to.y, to.z, to.x, to.y, to.z));
         }
         if (light.bullet != null && light.bullet.time != null && light.bullet.time > 0) {
             NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> point),
                     new ServerMessageGunLight(false, light.bullet.time,
                             orDefault(light.bullet.level_max, 15), orDefault(light.bullet.level_min, 0),
+                            com.ssscript.taczfixes.common.util.GunLightColor.parse(light.bullet.color),
                             start.x, start.y, start.z, to.x, to.y, to.z));
         }
     }

@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
-import com.ssscript.taczfixes.client.render.ClientOffhandNetworkHandler;
+import com.ssscript.taczfixes.client.client.ClientOffhandNetworkHandler;
 import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;

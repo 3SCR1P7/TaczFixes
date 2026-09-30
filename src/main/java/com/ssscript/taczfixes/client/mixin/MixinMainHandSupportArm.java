@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.GunDisplayInstance;
-import com.ssscript.taczfixes.client.render.DualRenderContext;
-import com.ssscript.taczfixes.client.render.DualWieldClient;
-import com.ssscript.taczfixes.client.render.OffhandArmPoseResolver;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.client.OffhandArmPoseResolver;
 import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -23,8 +23,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = {"com.tacz.guns.client.renderer.item.GunItemRendererWrapper"}, remap = false)
 public abstract class MixinMainHandSupportArm {
 
-    @Inject(method = {"lambda$renderFirstPerson$5"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V", shift = At.Shift.BEFORE, remap = false), require = 0, remap = false)
-    private void dualWield$hideMainSupportHand(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, MultiBufferSource bufferSource, int light, GunDisplayInstance display, CallbackInfo callback) {
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V", shift = At.Shift.BEFORE, remap = false), require = 0, remap = false)
+    private void dualWield$hideMainSupportHand(ItemStack stack, LocalPlayer player, float partialTick, PoseStack poseStack, ItemDisplayContext context, int light, MultiBufferSource bufferSource, GunDisplayInstance display, CallbackInfo callback) {
         if (player == null || !DualWieldClient.isDualMode(player) || DualRenderContext.getPhase() != DualRenderContext.HandPhase.MAIN) {
             return;
         }

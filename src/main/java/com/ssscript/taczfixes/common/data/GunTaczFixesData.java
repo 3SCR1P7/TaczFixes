@@ -61,6 +61,8 @@ public class GunTaczFixesData {
         public Integer time;
         public Integer level_max;
         public Integer level_min;
+        /** 枪械指定的光照颜色（#RRGGBB）；未填写时为 null，使用原版光照。 */
+        public String color;
     }
 
     /** 枪械 data 的 charge: 有该字段的枪械可在充电站等位置充能。 */

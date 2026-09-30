@@ -4,9 +4,9 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.tacz.guns.client.model.BedrockAnimatedModel;
 import com.tacz.guns.client.model.functional.LeftHandRender;
-import com.ssscript.taczfixes.client.render.DualReloadAnimationManager;
-import com.ssscript.taczfixes.client.render.DualRenderContext;
-import com.ssscript.taczfixes.client.render.FirstPersonArmRenderHelper;
+import com.ssscript.taczfixes.client.client.DualReloadAnimationManager;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.client.FirstPersonArmRenderHelper;
 import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.InteractionHand;
@@ -26,8 +26,8 @@ public abstract class MixinLeftHandRender {
     @Final
     private BedrockAnimatedModel bedrockGunModel;
 
-    @Inject(method = {"render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V"}, at = {@At("HEAD")}, cancellable = true)
-    private void taczfixes$renderConfiguredLeftArm(PoseStack poseStack, VertexConsumer vertexBuffer, ItemDisplayContext transformType, int light, int overlay, MultiBufferSource.BufferSource bufferSource, CallbackInfo callback) {
+    @Inject(method = {"render(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource;)V"}, at = {@At("HEAD")}, cancellable = true)
+    private void taczfixes$renderConfiguredLeftArm(PoseStack poseStack, VertexConsumer vertexBuffer, ItemDisplayContext transformType, int light, int overlay, MultiBufferSource bufferSource, CallbackInfo callback) {
         DualRenderContext.HandPhase phase = DualRenderContext.getPhase();
         if (!transformType.firstPerson() || (phase != DualRenderContext.HandPhase.MAIN && phase != DualRenderContext.HandPhase.OFFHAND)) {
             return;

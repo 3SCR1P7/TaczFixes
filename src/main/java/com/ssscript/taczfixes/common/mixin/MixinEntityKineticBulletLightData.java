@@ -95,6 +95,7 @@ public class MixinEntityKineticBulletLightData implements LightBulletAccess {
         buf.writeVarInt(entry.time == null ? 0 : entry.time);
         buf.writeVarInt(entry.level_max == null ? 0 : entry.level_max);
         buf.writeVarInt(entry.level_min == null ? 0 : entry.level_min);
+        buf.writeInt(com.ssscript.taczfixes.common.util.GunLightColor.parse(entry.color));
     }
 
     @Unique
@@ -106,6 +107,8 @@ public class MixinEntityKineticBulletLightData implements LightBulletAccess {
         entry.time = buf.readVarInt();
         entry.level_max = buf.readVarInt();
         entry.level_min = buf.readVarInt();
+        int color = buf.readInt();
+        entry.color = color < 0 ? null : String.format("#%06X", color & 0xFFFFFF);
         return entry;
     }
 }

@@ -45,18 +45,18 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
     @Shadow(remap = false) protected List<BedrockPart> scopePosPath;
 
     private static final String TACZFIXES_RENDER_DESC =
-            "(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
+            "(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V";
     private static final String TACZFIXES_ACCEL_DESC =
-            "(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
+            "(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V";
     private static final String TACZFIXES_SUPER_RENDER_TARGET =
-            "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V";
+            "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V";
 
     @Inject(method = "render" + TACZFIXES_RENDER_DESC, at = @At(value = "INVOKE",
             target = TACZFIXES_SUPER_RENDER_TARGET, remap = false), remap = false)
     private void taczfixes$renderStandbySlots(PoseStack pose, ItemStack itemStack,
                                               ItemDisplayContext displayContext, RenderType renderType,
                                               int light, int overlay, float red, float green, float blue, float alpha,
-                                              net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                              net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                               CallbackInfo ci) {
         renderStandbyIfConfigured(pose, displayContext, light, overlay);
     }
@@ -65,7 +65,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
     private void taczfixes$renderStandbySlotsAccelerated(PoseStack pose, ItemStack itemStack,
                                                          ItemDisplayContext displayContext, RenderType renderType,
                                                          int light, int overlay,
-                                                         net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                                         net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                                          CallbackInfo ci) {
         // Submit custom attachments before TaCZ pushes the gun-body callbacks.
         // Otherwise their layers inherit the body's after callback, which clears

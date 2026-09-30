@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.input.ReloadKey;
-import com.ssscript.taczfixes.client.render.DualReloadCoordinator;
+import com.ssscript.taczfixes.client.client.DualReloadCoordinator;
 import net.minecraftforge.client.event.InputEvent;
 import net.minecraftforge.event.TickEvent;
 import org.spongepowered.asm.mixin.Mixin;

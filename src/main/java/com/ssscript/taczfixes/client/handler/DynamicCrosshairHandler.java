@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.handler;
 
-import com.ssscript.taczfixes.client.render.DynamicCrosshair;
+import com.ssscript.taczfixes.client.render.crosshair.DynamicCrosshair;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraftforge.api.distmarker.Dist;

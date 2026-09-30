@@ -1429,11 +1429,11 @@ public class Config {
                 .comment("是否启用枪械自发光区域的泛光效果。默认值：true")
                 .define("bloom", true);
         PBR_BLOOM_STRENGTH = BUILDER
-                .comment("枪械泛光强度。默认值：1.0")
-                .defineInRange("bloom_strength", 1.0, 0.0, 4.0);
+                .comment("枪械泛光强度。默认值：0.8")
+                .defineInRange("bloom_strength", 0.8, 0.0, 2.0);
         PBR_BLOOM_RADIUS = BUILDER
                 .comment("泛光半径（屏幕像素），越大开销越高。默认值：8.0")
-                .defineInRange("bloom_radius", 8.0, 1.0, 32.0);
+                .defineInRange("bloom_radius", 8.0, 1.0, 40.0);
         BUILDER.pop();
         SPECS.put("pbr", BUILDER.build());
     }

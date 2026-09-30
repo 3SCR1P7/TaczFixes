@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.handler;
 
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.render.ClientGunLightManager;
+import com.ssscript.taczfixes.client.render.light.ClientGunLightManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.tacz.guns.api.event.common.GunFireEvent;
@@ -37,7 +37,7 @@ public class GunLightHandler {
             return;
         }
         Vec3 pos = shooter.getEyePosition().add(shooter.getLookAngle().scale(0.5d));
-        ClientGunLightManager.add(BlockPos.containing(pos), light.fire);
+        ClientGunLightManager.add(pos, light.fire);
     }
 
     @SubscribeEvent
@@ -53,7 +53,7 @@ public class GunLightHandler {
         if (light == null || light.explosion == null) {
             return;
         }
-        ClientGunLightManager.add(BlockPos.containing(event.getExplosion().getPosition()), light.explosion);
+        ClientGunLightManager.add(event.getExplosion().getPosition(), light.explosion);
     }
 
     @SubscribeEvent

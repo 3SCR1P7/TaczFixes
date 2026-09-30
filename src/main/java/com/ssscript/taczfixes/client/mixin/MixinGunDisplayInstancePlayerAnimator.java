@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.DualWieldAnimatorContext;
+import com.ssscript.taczfixes.client.client.DualWieldAnimatorContext;
 import java.util.Locale;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Final;

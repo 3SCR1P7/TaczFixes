@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.handler;
 
+import com.ssscript.taczfixes.client.util.ArcanaMagnificationState;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.ScopeViewHelper;
 import com.tacz.guns.api.DefaultAssets;
@@ -20,10 +21,10 @@ import net.minecraftforge.eventbus.api.EventPriority;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
- * 瞄具视图切换时的世界层(镜外) FOV 过渡, 仅在镜内放大状态发生变化时生效:
- * - sight→scope(切到有镜内放大的视图): 保持切换前显示值 200ms, 再缓动到游戏自身数值(沿用原逻辑);
- * - scope→sight(切到无镜内放大的视图): 切换瞬间算出目标 FOV, 直接从切换前显示值缓动到该目标;
- * - scope→scope / sight→sight: 不干预世界层 FOV, 交给原生/Arcana 逻辑。
+ * 瞄具视图切换时的世界层(镜外) FOV 过渡, 仅在 Arcana 镜内放大状态发生变化时生效:
+ * - 切到启用镜内放大的视图: 保持切换前显示值 200ms, 再缓动到游戏自身数值(沿用原逻辑);
+ * - 切到未启用镜内放大的视图: 切换瞬间算出目标 FOV, 直接从切换前显示值缓动到该目标;
+ * - 镜内放大状态未变化(含 scope↔scope / sight↔sight / 未开启镜内放大的瞄具): 不干预世界层 FOV。
  */
 public class ScopeFovTransitionHandler {
 
@@ -79,6 +80,10 @@ public class ScopeFovTransitionHandler {
         if (!(event.getCamera().getEntity() instanceof LocalPlayer player)) {
             return;
         }
+        // Arcana 的镜内放大捕获渲染会再做一次世界层 FOV 调用, 不能被本模组平滑接管。
+        if (ArcanaMagnificationState.capturePass()) {
+            return;
+        }
         handleWorldFov(event, player);
     }
 
@@ -87,15 +92,15 @@ public class ScopeFovTransitionHandler {
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         boolean aiming = operator != null && operator.isAim();
         if (key == null || !aiming) {
-            reset(key, player);
+            reset(key);
             return;
         }
         double live = event.getFOV();
         long now = System.currentTimeMillis();
         if (!key.equals(lastKey)) {
-            boolean magnified = magnificationActive(player);
+            boolean magnified = ArcanaMagnificationState.active();
             lastKey = key;
-            // scope→scope / sight→sight: 镜内放大状态未变化, 不触发本模组的镜外 FOV 平滑
+            // 镜内放大状态未变化: 不触发本模组的镜外 FOV 平滑
             if (magnified == lastMagnified) {
                 phase = Phase.NONE;
                 lastOutput = live;
@@ -184,18 +189,6 @@ public class ScopeFovTransitionHandler {
         lastOutput = live;
     }
 
-    /** 当前视图是否启用镜内放大(scope 视图)。 */
-    private static boolean magnificationActive(LocalPlayer player) {
-        ClientAttachmentIndex index = currentIndex(player);
-        if (index == null) {
-            return false;
-        }
-        CompoundTag tag = currentTag(player);
-        return ScopeViewHelper.isCombinedSight(index)
-                ? ScopeViewHelper.isScopeView(index, tag)
-                : index.isScope();
-    }
-
     /** 当前视图下世界层的目标 FOV: 有镜内放大时为基础 FOV, 否则为基础 FOV 经该视图倍率缩放。 */
     private static double destinationFov(LocalPlayer player, double baseFov) {
         ItemStack gun = player.getMainHandItem();
@@ -203,7 +196,7 @@ public class ScopeFovTransitionHandler {
         if (iGun == null || baseFov <= 0.0) {
             return -1.0;
         }
-        if (magnificationActive(player)) {
+        if (ArcanaMagnificationState.active()) {
             return baseFov;
         }
         float zoom = iGun.getAimingZoom(gun);
@@ -213,30 +206,12 @@ public class ScopeFovTransitionHandler {
         return MathUtil.magnificationToFov(zoom, baseFov);
     }
 
-    private static ClientAttachmentIndex currentIndex(LocalPlayer player) {
-        ItemStack gun = player.getMainHandItem();
-        IGun iGun = IGun.getIGunOrNull(gun);
-        if (iGun == null) {
-            return null;
-        }
-        ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
-        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
-            return null;
-        }
-        return TimelessAPI.getClientAttachmentIndex(id).orElse(null);
-    }
-
-    private static CompoundTag currentTag(LocalPlayer player) {
-        IGun iGun = IGun.getIGunOrNull(player.getMainHandItem());
-        return iGun == null ? null : ScopeSwitchState.attachmentTag(iGun, player.getMainHandItem(), AttachmentType.SCOPE);
-    }
-
     /** 未开镜时静默同步当前视图, 避免开镜首帧被误判为切换。 */
-    private static void reset(String key, LocalPlayer player) {
+    private static void reset(String key) {
         if (key != null) {
             lastKey = key;
         }
-        lastMagnified = key != null && magnificationActive(player);
+        lastMagnified = key != null && ArcanaMagnificationState.active();
         phase = Phase.NONE;
         lastOutput = -1.0;
         easeTo = -1.0;

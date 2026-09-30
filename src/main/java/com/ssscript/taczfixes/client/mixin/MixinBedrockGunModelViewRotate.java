@@ -48,28 +48,28 @@ public abstract class MixinBedrockGunModelViewRotate {
     @Unique
     private static final Map<ResourceLocation, float[]> taczfixes$pivotCache = new HashMap<>();
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("HEAD"), remap = false)
     private void taczfixes$viewRotateHead(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
                                           RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha,
-                                          net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+                                          net.minecraft.client.renderer.MultiBufferSource bufferSource, CallbackInfo ci) {
         taczfixes$applyViewTransform(pose, stack);
     }
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("TAIL"), remap = false)
     private void taczfixes$viewRotateTail(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
                                           RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha,
-                                          net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource, CallbackInfo ci) {
+                                          net.minecraft.client.renderer.MultiBufferSource bufferSource, CallbackInfo ci) {
         taczfixes$popViewTransform(pose);
     }
 
     // 退出改装界面时走第一人称渲染重载(7 参, 带 BufferSource), 需要在这里也应用变换, 才能看到缓动重置
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("HEAD"), remap = false)
     private void taczfixes$viewRotateHeadFp(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
                                             RenderType renderType, int light, int overlay,
-                                            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                            net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                             CallbackInfo ci) {
         taczfixes$viewTransformPushed = false;
         taczfixes$blockingMainPushed = false;
@@ -108,11 +108,11 @@ public abstract class MixinBedrockGunModelViewRotate {
         }
     }
 
-    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource$BufferSource;)V",
+    @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IILnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("TAIL"), remap = false)
     private void taczfixes$viewRotateTailFp(PoseStack pose, ItemStack stack, ItemDisplayContext displayContext,
                                             RenderType renderType, int light, int overlay,
-                                            net.minecraft.client.renderer.MultiBufferSource.BufferSource bufferSource,
+                                            net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                             CallbackInfo ci) {
         taczfixes$popViewTransform(pose);
         if (taczfixes$blockingMainPushed) {

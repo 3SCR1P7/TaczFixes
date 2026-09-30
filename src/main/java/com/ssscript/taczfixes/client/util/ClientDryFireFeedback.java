@@ -20,7 +20,7 @@ public final class ClientDryFireFeedback {
             return;
         }
         TimelessAPI.getGunDisplay(stack).ifPresent(display -> {
-            ResourceLocation sound = display.getSounds(SoundManager.DRY_FIRE_SOUND);
+            var sound = display.getSounds(SoundManager.DRY_FIRE_SOUND);
             if (sound == null) {
                 return;
             }
