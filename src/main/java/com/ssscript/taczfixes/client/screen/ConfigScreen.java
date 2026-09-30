@@ -49,6 +49,7 @@ public class ConfigScreen {
         bool_(cat, entry, "pbr.bloom", Config.PBR_BLOOM);
         dbl_(cat, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);
         dbl_(cat, entry, "pbr.bloom_radius", Config.PBR_BLOOM_RADIUS);
+        bool_(cat, entry, "pbr.bloom_tracer", Config.PBR_BLOOM_TRACER);
     }
 
     private static void buildDualWield(ConfigCategory cat, ConfigEntryBuilder entry) {

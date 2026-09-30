@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
 import com.tacz.guns.client.renderer.entity.EntityBulletRenderer;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.ssscript.taczfixes.client.client.DualMuzzleFlashState;
@@ -20,6 +21,17 @@ import net.minecraft.world.entity.Entity;
 
 @Mixin(value = {EntityBulletRenderer.class}, remap = false)
 public abstract class MixinEntityBulletRenderer {
+
+    @Inject(method = {"renderTracerAmmo(Lcom/tacz/guns/entity/EntityKineticBullet;[FFLcom/mojang/blaze3d/vertex/PoseStack;I)V"}, at = {@At("HEAD")})
+    private void taczfixes$suppressTracerBloom(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, int packedLight, CallbackInfo callback) {
+        PbrRenderer.pushTracerBloomSuppression();
+    }
+
+    @Inject(method = {"renderTracerAmmo(Lcom/tacz/guns/entity/EntityKineticBullet;[FFLcom/mojang/blaze3d/vertex/PoseStack;I)V"}, at = {@At("RETURN")})
+    private void taczfixes$restoreTracerBloom(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, int packedLight, CallbackInfo callback) {
+        PbrRenderer.popTracerBloomSuppression();
+    }
+
     @Inject(method = {"renderTracerAmmo(Lcom/tacz/guns/entity/EntityKineticBullet;[FFLcom/mojang/blaze3d/vertex/PoseStack;I)V"}, at = {@At("HEAD")})
     private void dualWield$selectMuzzleForBullet(EntityKineticBullet bullet, float[] tracerColor, float partialTicks, PoseStack poseStack, int packedLight, CallbackInfo callback) {
         if (bullet.getFirstPersonRenderOffset() == null) {

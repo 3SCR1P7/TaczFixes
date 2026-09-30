@@ -407,6 +407,7 @@
     "config.taczfixes.entry.pbr.bloom": "启用泛光",
     "config.taczfixes.entry.pbr.bloom_strength": "泛光强度",
     "config.taczfixes.entry.pbr.bloom_radius": "泛光半径",
+    "config.taczfixes.entry.pbr.bloom_tracer": "曳光弹泛光",
     "key.taczfixes.focus_aim":  "单手瞄准",
     "key.taczfixes.offhand_fire_select":  "副手开火模式",
     "taczfixes.hud.left":  "副手持枪",

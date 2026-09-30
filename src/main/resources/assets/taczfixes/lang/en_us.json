@@ -406,6 +406,7 @@
     "config.taczfixes.entry.pbr.bloom": "Enable Bloom",
     "config.taczfixes.entry.pbr.bloom_strength": "Bloom Strength",
     "config.taczfixes.entry.pbr.bloom_radius": "Bloom Radius",
+    "config.taczfixes.entry.pbr.bloom_tracer": "Bloom on Tracers",
     "key.taczfixes.focus_aim":  "Focus Aim (Hold)",
     "key.taczfixes.offhand_fire_select":  "Offhand Fire Mode",
     "taczfixes.hud.left":  "LEFT",

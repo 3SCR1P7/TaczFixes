@@ -15,6 +15,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_EMISSION;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
+    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     /** 每个顶层段落一个配置文件, 值为该段落的 spec。 */
     public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
@@ -1434,6 +1435,9 @@ public class Config {
         PBR_BLOOM_RADIUS = BUILDER
                 .comment("泛光半径（屏幕像素），越大开销越高。默认值：8.0")
                 .defineInRange("bloom_radius", 8.0, 1.0, 40.0);
+        PBR_BLOOM_TRACER = BUILDER
+                .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
+                .define("bloom_tracer", false);
         BUILDER.pop();
         SPECS.put("pbr", BUILDER.build());
     }

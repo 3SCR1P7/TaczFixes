@@ -16,7 +16,6 @@ public abstract class MixinBedrockPartPbr {
         // Preserve TaCZ's flag and inherited illumination without changing its consumer type.
         for (BedrockPart part = (BedrockPart) (Object) this; part != null; part = part.getParent()) {
             if (part.illuminated) {
-                com.ssscript.taczfixes.client.render.pbr.PbrDiagnostics.group(part.name);
                 return packedLight | 1;
             }
         }

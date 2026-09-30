@@ -69,8 +69,6 @@ public final class PbrBloom {
         try { composite(); } finally { active = false; dirty = false; }
     }
 
-    public static void checkCapture() { PbrDiagnostics.capture(emission); }
-
     public static void composite() {
         if (!dirty || !canCapture()) { dirty = false; return; }
         var main = Minecraft.getInstance().getMainRenderTarget();
@@ -101,16 +99,13 @@ public final class PbrBloom {
             PbrRenderer.blurShader.safeGetUniform("CheckDepth").set(0);
             PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, radius / main.height);
             draw(horizontal, vertical, PbrRenderer.blurShader);
-            PbrDiagnostics.blurred(vertical);
             PbrRenderer.compositeShader.safeGetUniform("Strength").set(Config.PBR_BLOOM_STRENGTH.get().floatValue());
             // ShaderInstance caches BlendMode. If its additive mode is already cached,
             // apply() will not undo the disableBlend() above, and the quad replaces the world.
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO, GL11.GL_ONE);
             main.bindWrite(true);
-            PbrDiagnostics.beforeComposite(main);
             compositeToMain(vertical, PbrRenderer.compositeShader);
-            PbrDiagnostics.afterComposite(main);
         } finally {
             dirty = false;
             VertexBuffer.unbind();

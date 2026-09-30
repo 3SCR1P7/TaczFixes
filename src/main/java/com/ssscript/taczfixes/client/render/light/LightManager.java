@@ -28,31 +28,31 @@ public enum LightManager {
     ShaderUBO lightUBO;
     ShaderUBO envUBO;
 
-    private static String getShimmerImport() {
-        return "\n#moj_import <shimmer.glsl>\n\n";
+    private static String getShimmerSource() {
+        return "\n" + getLightShader() + "\n\n";
     }
 
     private static String ChunkInjection(String s) {
-        s = s.replace("void main()", getShimmerImport() + "void main()");
+        s = s.replace("void main()", getShimmerSource() + "void main()");
         return new StringBuffer(s).insert(s.lastIndexOf('}'),
                 "vertexColor = color_light_uv(pos, vertexColor,UV2);\n"
         ).toString();
     }
 
     private static String PositionInjection(String s) {
-        s = s.replace("void main()", getShimmerImport() + "void main()");
+        s = s.replace("void main()", getShimmerSource() + "void main()");
         return new StringBuffer(s).insert(s.lastIndexOf('}'),
                 "vertexColor = color_light_uv(Position, vertexColor,UV2);\n"
         ).toString();
     }
 
     private static String EntityInjectionLightMapColor(String s) {
-        s = s.replace("void main()", getShimmerImport() + "void main()");
+        s = s.replace("void main()", getShimmerSource() + "void main()");
         return new StringBuffer(s).insert(s.lastIndexOf('}'), "lightMapColor = color_light(IViewRotMat * Position, lightMapColor);\n").toString();
     }
 
     private static String EntityInjectionVertexColor(String s) {
-        s = s.replace("void main()", getShimmerImport() + "void main()");
+        s = s.replace("void main()", getShimmerSource() + "void main()");
         return new StringBuffer(s).insert(s.lastIndexOf('}'), "vertexColor = color_light(IViewRotMat * Position, vertexColor);\n").toString();
     }
 
@@ -60,7 +60,7 @@ public enum LightManager {
 
     private static String getLightShader() {
         if (lightShader == null) {
-            try (InputStream stream = LightManager.class.getResourceAsStream("/assets/minecraft/shaders/include/shimmer.glsl")) {
+            try (InputStream stream = LightManager.class.getResourceAsStream("/assets/taczfixes/shaders/core/shimmer.glsl")) {
                 if (stream == null) {
                     return "";
                 }

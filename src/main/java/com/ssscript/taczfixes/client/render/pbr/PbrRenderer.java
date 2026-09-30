@@ -41,6 +41,23 @@ public final class PbrRenderer {
 
     private record Material(ResourceLocation specular, ResourceLocation normal) {}
 
+    private static int tracerBloomSuppression;
+
+    /** 曳光弹渲染期间抑制自发光泛光捕获(是否最终生效由 Config.PBR_BLOOM_TRACER 决定)。 */
+    public static void pushTracerBloomSuppression() {
+        tracerBloomSuppression++;
+    }
+
+    public static void popTracerBloomSuppression() {
+        if (tracerBloomSuppression > 0) {
+            tracerBloomSuppression--;
+        }
+    }
+
+    public static boolean isTracerBloomSuppressed() {
+        return tracerBloomSuppression > 0;
+    }
+
     public static void updateCelestialLight(float partialTick) {
         if (shader == null) return;
         var level = Minecraft.getInstance().level;
@@ -158,7 +175,6 @@ public final class PbrRenderer {
             int depthSlot = RenderSystem.getShaderTexture(5);
             try {
                 mesh.bind();
-                PbrDiagnostics.vertices(data);
                 mesh.upload(data);
                 if (!enabled()) {
                     mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), previous);
@@ -174,7 +190,8 @@ public final class PbrRenderer {
                 RenderSystem.setShader(() -> shader);
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
 
-                if (PbrBloom.canCapture() && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
+                if (PbrBloom.canCapture() && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
+                        && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
                         == Minecraft.getInstance().getMainRenderTarget().frameBufferId) {
                     boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
                     try {
@@ -182,7 +199,6 @@ public final class PbrRenderer {
                         PbrBloom.bindCapture();
                         shader.safeGetUniform("EmissionPass").set(1);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
-                        PbrBloom.checkCapture();
                     } finally {
                         shader.safeGetUniform("EmissionPass").set(0);
                         RenderSystem.depthMask(depthMask);
