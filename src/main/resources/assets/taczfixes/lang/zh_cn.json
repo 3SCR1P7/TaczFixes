@@ -171,6 +171,7 @@
     "config.taczfixes.entry.misc.prevent_shooting_underwater":  "阻止水下开火",
     "config.taczfixes.category.blocking":  "开火阻挡",
     "config.taczfixes.entry.blocking.enable":  "启用开火阻挡",
+    "config.taczfixes.entry.blocking.entity_enable":  "启用实体阻挡",
     "config.taczfixes.entry.blocking.distance_max":  "开始阻挡距离",
     "config.taczfixes.entry.blocking.distance_min":  "满值距离",
     "config.taczfixes.entry.blocking.angle":  "旋转角度",

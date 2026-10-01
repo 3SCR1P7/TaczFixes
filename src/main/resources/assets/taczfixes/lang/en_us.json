@@ -173,6 +173,7 @@
     "config.taczfixes.entry.misc.prevent_shooting_underwater":  "Prevent Shooting Underwater",
     "config.taczfixes.category.blocking":  "Blocking",
     "config.taczfixes.entry.blocking.enable":  "Enable Blocking",
+    "config.taczfixes.entry.blocking.entity_enable":  "Enable Entity Blocking",
     "config.taczfixes.entry.blocking.distance_max":  "Blocking Start Distance",
     "config.taczfixes.entry.blocking.distance_min":  "Full Effect Distance",
     "config.taczfixes.entry.blocking.angle":  "Rotation Angle",

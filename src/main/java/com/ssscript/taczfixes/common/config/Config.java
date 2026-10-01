@@ -60,6 +60,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue HIDE_UNAVAILABLE_DEFAULT_SLOTS;
     public static final ForgeConfigSpec.EnumValue<VirtualAttachmentsMode> VIRTUAL_ATTACHMENTS;
     public static final ForgeConfigSpec.BooleanValue BLOCKING_ENABLE;
+    public static final ForgeConfigSpec.BooleanValue BLOCKING_ENTITY_ENABLE;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MAX;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MIN;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_ANGLE;
@@ -700,6 +701,9 @@ public class Config {
         BLOCKING_ENABLE = BUILDER
                 .comment("是否启用方块阻挡开火。默认值：false")
                 .define("enable", false);
+        BLOCKING_ENTITY_ENABLE = BUILDER
+                .comment("是否启用实体阻挡。默认值：false")
+                .define("entity_enable", false);
         BLOCKING_DISTANCE_MAX = BUILDER
                 .comment("前方多少格内有方块或实体时开始启用阻挡。默认值：0.6")
                 .defineInRange("distance_max", 0.6, 0.0, 10.0);

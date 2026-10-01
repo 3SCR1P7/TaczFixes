@@ -298,6 +298,7 @@ public class ConfigScreen {
 
     private static void buildBlocking(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "blocking.enable", Config.BLOCKING_ENABLE);
+        bool_(cat, entry, "blocking.entity_enable", Config.BLOCKING_ENTITY_ENABLE);
         dbl_(cat, entry, "blocking.distance_max", Config.BLOCKING_DISTANCE_MAX);
         dbl_(cat, entry, "blocking.distance_min", Config.BLOCKING_DISTANCE_MIN);
         dbl_(cat, entry, "blocking.angle", Config.BLOCKING_ANGLE);

@@ -160,11 +160,13 @@ public final class GunBlocking {
             nearest = Math.min(nearest, from.distanceTo(blockHit.getLocation()));
         }
         AABB box = new AABB(from, to).inflate(0.3d);
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(player, from, to, box,
-                entity -> entity != player && entity.isPickable() && !entity.isSpectator(),
-                distance * distance);
-        if (entityHit != null) {
-            nearest = Math.min(nearest, from.distanceTo(entityHit.getLocation()));
+        if (com.ssscript.taczfixes.common.config.Config.BLOCKING_ENTITY_ENABLE.get()) {
+            EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(player, from, to, box,
+                    entity -> entity != player && entity.isPickable() && !entity.isSpectator(),
+                    distance * distance);
+            if (entityHit != null) {
+                nearest = Math.min(nearest, from.distanceTo(entityHit.getLocation()));
+            }
         }
         double ratio = nearest / distance;
         return Math.max(0.0d, Math.min(1.0d, ratio));
