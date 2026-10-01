@@ -208,9 +208,8 @@ public final class GunBlocking {
             return null;
         }
         boolean dual = DualWieldEligibility.isDualWielding(player);
-        // 子弹角度偏转为模型角度的1.73倍
-        // 别问，问就是玄学，此时子弹表现恰好正常
-        double angleRad = Math.toRadians(angleDeg(cfg) * factor * 1.73d);
+        double multiplier = 2.0d - Math.max(0.0d, Math.min(angleDeg(cfg), 2.0)) / 3.0d;
+        double angleRad = Math.toRadians(angleDeg(cfg) * factor * multiplier);
         double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg, gunStack));
         Vec3 axis = right(player.getLookAngle()).scale(Math.sin(facingRad))
                 .subtract(new Vec3(0.0d, 1.0d, 0.0d).scale(Math.cos(facingRad)));
