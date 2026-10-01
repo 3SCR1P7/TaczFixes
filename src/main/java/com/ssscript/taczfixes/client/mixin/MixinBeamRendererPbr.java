@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.ssscript.taczfixes.client.render.pbr.BeamEntityVertexConsumer;
 import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
+import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -45,19 +46,19 @@ public class MixinBeamRendererPbr {
         return taczfixes$entityBeamType;
     }
 
-    /** PBR 开启时禁用 AR 加速分支, 统一走可捕获路径。 */
+    /** 镭射泛光开启时禁用 AR 加速分支, 统一走可捕获路径。 */
     @Inject(method = "renderLaserBeamAccelerated", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczfixes$disableAcceleratedBeam(ItemStack stack, PoseStack poseStack, ItemDisplayContext context, List<BedrockPart> beamPath, CallbackInfoReturnable<Boolean> cir) {
-        if (PbrRenderer.enabled()) {
+        if (PbrRenderer.enabled() && Config.PBR_BLOOM_LASER.get()) {
             cir.setReturnValue(false);
         }
     }
 
-    /** 光束改用实体格式渲染类型并交给 PBR 合成, 顶点打上自发光标记。 */
+    /** 镭射泛光开启时, 光束改用实体格式渲染类型并交给 PBR 合成, 顶点打上自发光标记。 */
     @Redirect(method = "renderLaserBeamUnaccelerated", at = @At(value = "INVOKE",
             target = "Lnet/minecraft/client/renderer/MultiBufferSource;getBuffer(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;", remap = true), require = 0, remap = false)
     private static VertexConsumer taczfixes$pbrBeamConsumer(MultiBufferSource source, RenderType type) {
-        if (!PbrRenderer.enabled()) {
+        if (!PbrRenderer.enabled() || !Config.PBR_BLOOM_LASER.get()) {
             return source.getBuffer(type);
         }
         RenderType entityType = taczfixes$entityBeamType();

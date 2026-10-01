@@ -100,6 +100,26 @@ public final class GunBlocking {
         return Math.max(0.0d, value);
     }
 
+    public static double disableAiming(@Nullable GunTaczFixesData.BlockingConfig cfg) {
+        double value = cfg == null || cfg.disable_aiming == null
+                ? com.ssscript.taczfixes.common.config.Config.BLOCKING_DISABLE_AIMING.get() : cfg.disable_aiming;
+        return Math.max(0.0d, value);
+    }
+
+    /** 到最近障碍距离小于 disable_aiming 时禁用开镜。 */
+    public static boolean isAimingDisabled(@Nullable Player player, ItemStack gunStack) {
+        if (player == null || gunStack == null || gunStack.isEmpty() || !isEnabled(gunStack)) {
+            return false;
+        }
+        GunTaczFixesData.BlockingConfig cfg = resolve(gunStack);
+        double threshold = disableAiming(cfg);
+        if (threshold <= 0.0d) {
+            return false;
+        }
+        double max = Math.max(distanceMax(cfg), threshold);
+        return nearestDistance(player, max) < threshold;
+    }
+
     /** 非双持时的偏转方向: 枪械 data 优先; 未配置时手枪使用全局手枪配置, 其它使用全局配置。 */
     public static double facing(@Nullable GunTaczFixesData.BlockingConfig cfg, ItemStack gunStack) {
         if (cfg != null && cfg.facing != null) {
@@ -188,8 +208,9 @@ public final class GunBlocking {
             return null;
         }
         boolean dual = DualWieldEligibility.isDualWielding(player);
-        // 子弹角度偏转为模型角度的1.5倍
-        double angleRad = Math.toRadians(angleDeg(cfg) * factor * 1.5d);
+        // 子弹角度偏转为模型角度的1.73倍
+        // 别问，问就是玄学，此时子弹表现恰好正常
+        double angleRad = Math.toRadians(angleDeg(cfg) * factor * 1.73d);
         double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg, gunStack));
         Vec3 axis = right(player.getLookAngle()).scale(Math.sin(facingRad))
                 .subtract(new Vec3(0.0d, 1.0d, 0.0d).scale(Math.cos(facingRad)));

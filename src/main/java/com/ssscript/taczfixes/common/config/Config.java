@@ -16,6 +16,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
+    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
     private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     /** 每个顶层段落一个配置文件, 值为该段落的 spec。 */
     public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
@@ -68,6 +69,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue BLOCKING_OFFSET_YAW;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DEFLECTION;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DISABLE_FIRE;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISABLE_AIMING;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_PISTOL;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_DUAL_WIELD;
@@ -699,8 +701,8 @@ public class Config {
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("blocking");
         BLOCKING_ENABLE = BUILDER
-                .comment("是否启用方块阻挡开火。默认值：false")
-                .define("enable", false);
+                .comment("是否启用方块阻挡开火。默认值：true")
+                .define("enable", true);
         BLOCKING_ENTITY_ENABLE = BUILDER
                 .comment("是否启用实体阻挡。默认值：false")
                 .define("entity_enable", false);
@@ -725,6 +727,9 @@ public class Config {
         BLOCKING_DISABLE_FIRE = BUILDER
                 .comment("到障碍距离小于此值时禁止开火。默认值：0.35")
                 .defineInRange("disable_fire", 0.35, 0.0, 10.0);
+        BLOCKING_DISABLE_AIMING = BUILDER
+                .comment("当到前方方块的距离小于此值时禁止开镜。默认值：0.5")
+                .defineInRange("disable_aiming", 0.5, 0.0, 10.0);
         BLOCKING_FACING = BUILDER
                 .comment("非双持时非手枪的偏转方向。默认值：180")
                 .defineInRange("facing", 180.0, -360.0, 360.0);
@@ -1442,6 +1447,9 @@ public class Config {
         PBR_BLOOM_TRACER = BUILDER
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
+        PBR_BLOOM_LASER = BUILDER
+                .comment("是否开启镭射泛光。默认值：true")
+                .define("bloom_laser", true);
         BUILDER.pop();
         SPECS.put("pbr", BUILDER.build());
     }

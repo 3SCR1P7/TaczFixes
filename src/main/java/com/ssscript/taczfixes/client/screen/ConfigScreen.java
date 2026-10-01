@@ -50,6 +50,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);
         dbl_(cat, entry, "pbr.bloom_radius", Config.PBR_BLOOM_RADIUS);
         bool_(cat, entry, "pbr.bloom_tracer", Config.PBR_BLOOM_TRACER);
+        bool_(cat, entry, "pbr.bloom_laser", Config.PBR_BLOOM_LASER);
     }
 
     private static void buildDualWield(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -306,6 +307,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "blocking.offset_yaw", Config.BLOCKING_OFFSET_YAW);
         dbl_(cat, entry, "blocking.deflection", Config.BLOCKING_DEFLECTION);
         dbl_(cat, entry, "blocking.disable_fire", Config.BLOCKING_DISABLE_FIRE);
+        dbl_(cat, entry, "blocking.disable_aiming", Config.BLOCKING_DISABLE_AIMING);
         dbl_(cat, entry, "blocking.facing", Config.BLOCKING_FACING);
         dbl_(cat, entry, "blocking.facing_pistol", Config.BLOCKING_FACING_PISTOL);
         dbl_(cat, entry, "blocking.facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);

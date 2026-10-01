@@ -38,6 +38,10 @@ public class MixinLocalPlayerAim {
                     return;
                 }
             }
+            if (com.ssscript.taczfixes.common.util.GunBlocking.isAimingDisabled(player, player.getMainHandItem())) {
+                ci.cancel();
+                return;
+            }
             if (Config.ADS_INTERRUPT_SPRINT.get() && player.isSprinting()) {
                 player.setSprinting(false);
             }
@@ -47,6 +51,16 @@ public class MixinLocalPlayerAim {
         if (!Config.AUTO_AIM_WHEN_PEEKING.get()) return;
         if (PeekState.isPeeking) {
             ci.cancel();
+        }
+    }
+
+    /** 已在开镜时进入阻挡距离, 强制退出开镜。 */
+    @Inject(method = "tickAimingProgress", at = @At("HEAD"), remap = false)
+    private void taczfixes$forceExitBlockedAim(CallbackInfo ci) {
+        com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator operator =
+                com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(player);
+        if (operator.isAim() && com.ssscript.taczfixes.common.util.GunBlocking.isAimingDisabled(player, player.getMainHandItem())) {
+            operator.aim(false);
         }
     }
 }

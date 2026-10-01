@@ -124,6 +124,8 @@ public class GunTaczFixesData {
         public Double deflection;
         /** 到障碍距离小于此值时无法开火(只播放 dry_fire)。 */
         public Double disable_fire;
+        /** 当到前方方块的距离小于此值时禁用开镜。 */
+        public Double disable_aiming;
         /** 非双持时的偏转方向(度): 0=右, 90=上, 180=左, -90=下。默认 180。 */
         public Double facing;
         /** 双持时的偏转方向(度): 0=右, 90=上, 180=左, -90=下。默认 90。 */
