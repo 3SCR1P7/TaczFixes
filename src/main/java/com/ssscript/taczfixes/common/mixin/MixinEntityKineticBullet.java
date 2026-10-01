@@ -40,7 +40,10 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
     private Vec3 startPos;
 
     @Unique
-    private static final double DUAL_WIELD$OFFHAND_LATERAL_OFFSET = 0.22d;
+    private static final double DUAL_WIELD$OFFHAND_LATERAL_OFFSET = 0.11d;
+
+    @Unique
+    private static final double DUAL_WIELD$MAINHAND_LATERAL_OFFSET = 0.11d;
 
     @Unique
     private static final double DUAL_WIELD$MUZZLE_FORWARD_OFFSET = 0.12d;
@@ -67,7 +70,12 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
 
     @Inject(method = {"<init>(Lnet/minecraft/world/entity/EntityType;Lnet/minecraft/world/level/Level;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;Lnet/minecraft/resources/ResourceLocation;ZLcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;)V"}, at = {@At("TAIL")})
     private void dualWield$moveOffhandPhysicalMuzzle(EntityType<? extends Projectile> type, Level level, LivingEntity shooter, ItemStack gunItem, ResourceLocation ammoId, ResourceLocation gunId, ResourceLocation gunDisplayId, boolean tracer, GunData gunData, BulletData bulletData, CallbackInfo callback) {
-        if (!this.dualWield$offhandSource || shooter == null) {
+        if (shooter == null) {
+            return;
+        }
+        boolean offhand = this.dualWield$offhandSource;
+        boolean mainhandDual = !offhand && OffhandShooterManager.findOffhandData(shooter, shooter.getOffhandItem()) != null;
+        if (!offhand && !mainhandDual) {
             return;
         }
         EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
@@ -76,9 +84,19 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
         if (horizontalView.lengthSqr() < 1.0E-8d) {
             return;
         }
-        Vec3 forward = view.normalize().scale(DUAL_WIELD$MUZZLE_FORWARD_OFFSET);
-        Vec3 left = new Vec3(horizontalView.z, 0.0d, -horizontalView.x).normalize().scale(DUAL_WIELD$OFFHAND_LATERAL_OFFSET);
-        Vec3 offset = left.add(forward).add(0.0d, DUAL_WIELD$MUZZLE_VERTICAL_OFFSET, 0.0d);
+        Vec3 left = new Vec3(horizontalView.z, 0.0d, -horizontalView.x).normalize();
+        Vec3 offset;
+        if (offhand) {
+            Vec3 forward = view.normalize().scale(DUAL_WIELD$MUZZLE_FORWARD_OFFSET);
+            offset = left.scale(DUAL_WIELD$OFFHAND_LATERAL_OFFSET).add(forward).add(0.0d, DUAL_WIELD$MUZZLE_VERTICAL_OFFSET, 0.0d);
+        } else {
+            // 单手瞄准时主手居中, 不偏移
+            if (com.tacz.guns.resource.pojo.data.gun.InaccuracyType.getInaccuracyType(shooter)
+                    == com.tacz.guns.resource.pojo.data.gun.InaccuracyType.AIM) {
+                return;
+            }
+            offset = left.scale(-DUAL_WIELD$MAINHAND_LATERAL_OFFSET);
+        }
         Vec3 originalPosition = bullet.position();
         Vec3 physicalMuzzle = originalPosition.add(offset);
         if (level.clip(new ClipContext(originalPosition, physicalMuzzle, ClipContext.Block.COLLIDER, ClipContext.Fluid.NONE, shooter)).getType() != HitResult.Type.MISS) {
