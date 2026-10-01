@@ -344,6 +344,10 @@ public final class OffhandArmPoseResolver {
     }
 
     private static boolean isSharedOrMechanismNode(String normalized) {
+        // 弹匣与手臂骨骼合并的节点(如 mag_and_lefthand): 只隐藏手臂, 不能连弹匣一起隐藏
+        if (normalized.contains("mag") && (normalized.contains("hand") || normalized.contains("arm"))) {
+            return true;
+        }
         return normalized.contains("bolt") || normalized.contains("pump") || normalized.contains("slide") || normalized.contains("lever") || normalized.contains("shell") || normalized.contains("ammo") || normalized.contains("bullet") || normalized.contains("magazine") || normalized.contains("magzine") || normalized.equals("mag") || normalized.contains("muzzle") || normalized.contains("barrel") || normalized.contains("camera") || normalized.contains("constraint") || normalized.contains("weapon") || normalized.contains("gun") || normalized.equals("root");
     }
 

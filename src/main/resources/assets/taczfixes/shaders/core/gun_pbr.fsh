@@ -22,6 +22,7 @@ uniform float CelestialVisibility;
 uniform float LocalSkyExposure;
 in float vertexDistance;
 in vec4 vertexColor;
+in vec4 rawVertexColor;
 in vec4 lightMapColor;
 in vec4 overlayColor;
 in vec2 texCoord0;
@@ -65,7 +66,7 @@ void main() {
     // LabPBR alpha 255 is the non-emissive sentinel, NOT maximum emission.
     float emission = max(float(illuminatedGroup),
             specular.a < 254.5 / 255.0 ? specular.a * (255.0 / 254.0) : 0.0);
-    vec3 glow = base.rgb * ColorModulator.rgb * emission * EmissionStrength;
+    vec3 glow = base.rgb * rawVertexColor.rgb * ColorModulator.rgb * emission * EmissionStrength;
     float fog = 1.0 - smoothstep(FogStart, max(FogEnd, FogStart + 0.001), vertexDistance);
     if (EmissionPass != 0) {
         if (emission <= 0.0) discard;
@@ -117,7 +118,7 @@ void main() {
     // Darkening all metal here made it black indoors or away from the highlight.
     color += reflection * (1.0 - color);
     color = mix(overlayColor.rgb, color, overlayColor.a);
-    color = mix(color, base.rgb * ColorModulator.rgb, clamp(emission * EmissionStrength, 0.0, 1.0));
+    color = mix(color, base.rgb * rawVertexColor.rgb * ColorModulator.rgb, clamp(emission * EmissionStrength, 0.0, 1.0));
     color += glow * 0.25;
     fragColor = linear_fog(vec4(color, alpha), vertexDistance, FogStart, FogEnd, FogColor);
 }
