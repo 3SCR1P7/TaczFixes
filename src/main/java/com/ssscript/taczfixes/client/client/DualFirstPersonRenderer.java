@@ -92,18 +92,23 @@ public final class DualFirstPersonRenderer {
                     }
                     RenderType renderType = display.enablesTransparency() ? RenderType.entityTranslucent(display.getModelTexture()) : RenderType.entityCutout(display.getModelTexture());
                     boolean charmsFrame = CharmsOffhandRenderCompat.beginFrame(stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, bufferSource, light, OverlayTexture.NO_OVERLAY, partialTick);
-                    boolean mirroredCullWasEnabled = mirroredModel && GL11.glIsEnabled(GL11.GL_CULL_FACE);
                     try {
                         if (mirroredModel) {
-                            RenderSystem.disableCull();
+                            MultiBufferSource.BufferSource sink = net.minecraft.client.Minecraft.getInstance().renderBuffers().bufferSource();
+                            sink.endBatch();
+                            RenderSystem.enableCull();
+                            GL11.glFrontFace(GL11.GL_CW);
+                            model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
+                            sink.endBatch();
+                        } else {
+                            model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
                         }
-                        model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
                         if (charmsFrame) {
                             CharmsOffhandRenderCompat.renderCaptured(poseStack);
                         }
                     } finally {
-                        if (mirroredCullWasEnabled) {
-                            RenderSystem.enableCull();
+                        if (mirroredModel) {
+                            GL11.glFrontFace(GL11.GL_CCW);
                         }
                         if (charmsFrame) {
                             CharmsOffhandRenderCompat.endFrame();

@@ -54,6 +54,7 @@
         "MixinBedrockAttachmentModelScopeSuppress",
         "MixinMouseHandlerZoomSensitivity",
         "MixinGunRefitScreenCustomSlot",
+        "MixinRefitTransformPendingReset",
         "MixinGunItemRendererWrapperMuzzleShift",
         "MixinGunRefitScreenSlotAdapter",
         "MixinBedrockGunModelRefitView",

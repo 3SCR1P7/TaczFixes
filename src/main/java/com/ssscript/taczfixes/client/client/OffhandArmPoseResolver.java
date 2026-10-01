@@ -223,6 +223,24 @@ public final class OffhandArmPoseResolver {
         return result;
     }
 
+    public static BedrockPart findNodeByNormalizedName(BedrockAnimatedModel model, String normalizedName) {
+        if (model == null || normalizedName == null || normalizedName.isEmpty()) {
+            return null;
+        }
+        Map<String, ?> bones = model.getIndexBones();
+        if (bones != null) {
+            for (String rawName : bones.keySet()) {
+                if (normalizedName.equals(normalize(rawName))) {
+                    BedrockPart part = model.getNode(rawName);
+                    if (part != null) {
+                        return part;
+                    }
+                }
+            }
+        }
+        return model.getNode(normalizedName);
+    }
+
     private static BedrockPart resolveCarrier(BedrockAnimatedModel model) {
         if (CARRIER_CACHE.containsKey(model)) {
             return CARRIER_CACHE.get(model);

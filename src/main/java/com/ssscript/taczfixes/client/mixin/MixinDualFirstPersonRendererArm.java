@@ -44,7 +44,7 @@ public abstract class MixinDualFirstPersonRendererArm {
             return;
         }
         for (String name : holdingNodes) {
-            BedrockPart part = model.getNode(name);
+            BedrockPart part = OffhandArmPoseResolver.findNodeByNormalizedName(model, name);
             if (part != null) {
                 part.offsetY += 1000.0f;
             }

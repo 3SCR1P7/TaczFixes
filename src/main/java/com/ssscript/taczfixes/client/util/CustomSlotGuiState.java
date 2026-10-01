@@ -8,6 +8,7 @@ public final class CustomSlotGuiState {
     private static int currentPage;
     private static String viewFromSlot;
     private static AttachmentType viewFromType;
+    private static boolean pendingViewReset;
 
     private CustomSlotGuiState() {
     }
@@ -50,5 +51,14 @@ public final class CustomSlotGuiState {
     public static void clearViewTransition() {
         viewFromSlot = null;
         viewFromType = null;
+    }
+
+    /** 取消选中时 refit 视图过渡尚未结束, 需延迟切回 NONE。 */
+    public static boolean hasPendingViewReset() {
+        return pendingViewReset;
+    }
+
+    public static void setPendingViewReset(boolean pending) {
+        pendingViewReset = pending;
     }
 }

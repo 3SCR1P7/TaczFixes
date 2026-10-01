@@ -43,7 +43,7 @@ public abstract class MixinMainHandSupportArm {
             return;
         }
         for (String name : supportNodes) {
-            BedrockPart part = model.getNode(name);
+            BedrockPart part = OffhandArmPoseResolver.findNodeByNormalizedName(model, name);
             if (part != null) {
                 part.offsetY += 1000.0f;
             }

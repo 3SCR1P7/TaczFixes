@@ -171,8 +171,9 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
             }
             col++;
         }
-        // 配件槽变大/变小时, 候选(variant/adapter)按钮列整体下移/上移, 避免与槽位重合
-        if (com.ssscript.taczfixes.client.util.RefitSlotLayout.scaled()) {
+        // 0929: 适配器/variant按钮列改用固定横坐标(width-112 / width-194), 槽位尺寸非默认时整列随 delta 下移/上移
+        int delta = slotSize - com.tacz.guns.client.gui.GunRefitScreen.SLOT_SIZE;
+        if (delta != 0) {
             AttachmentType selectedType = RefitTransform.getCurrentTransformType();
             if (selectedType != AttachmentType.NONE) {
                 int typeIndex = 0;
@@ -180,28 +181,23 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
                     if (t == selectedType) break;
                     typeIndex++;
                 }
-                int candidateBaseX = this.width - 30 - 18 * typeIndex - 60;
-                int delta = slotSize - com.tacz.guns.client.gui.GunRefitScreen.SLOT_SIZE;
+                int adapterColumnX = this.width - 30 - 78 - 4;
+                int variantWithAdapterX = adapterColumnX - 78 - 4;
+                int variantNoAdapterX = this.width - 90 - 18 * typeIndex;
                 for (Renderable r : new java.util.ArrayList<>(this.renderables)) {
-                    if (r instanceof com.tacz.guns.client.gui.components.FlatColorButton button
-                            && button.getX() == candidateBaseX) {
-                        if (selectedDefaultX != Integer.MIN_VALUE) {
-                            button.setX(selectedDefaultX + slotSize - 78);
+                    if (r instanceof com.tacz.guns.client.gui.components.FlatColorButton button) {
+                        int buttonX = button.getX();
+                        if (buttonX == adapterColumnX || buttonX == variantWithAdapterX || buttonX == variantNoAdapterX) {
+                            button.setX(buttonX - delta);
+                            button.setY(button.getY() + delta);
                         }
-                        button.setY(button.getY() + delta);
                     }
                 }
             }
         }
         String selected = CustomSlotGuiState.get();
-        // 候选/适配器按钮块位置已按槽位尺寸调整, 同步候选栏起始高度, 避免重合或距离过远
-        int candidateBottom = 50;
-        for (Renderable r : this.renderables) {
-            if (r instanceof com.tacz.guns.client.gui.components.FlatColorButton button && button.visible) {
-                candidateBottom = Math.max(candidateBottom, button.getY() + button.getHeight() + 4);
-            }
-        }
-        this.taczfixes$setInventoryAttachmentStartY(candidateBottom);
+        // 0929: 右侧候选列表顶部与适配器列顶部对齐(默认 y=50), 随槽位尺寸整体下移/上移
+        this.taczfixes$setInventoryAttachmentStartY(50 + delta);
         if (hasSelected && selected != null && !CustomSlotStorage.get(gunStack, selected).isEmpty()) {
             String unloadSlot = selected;
             RefitUnloadButton unload = new RefitUnloadButton(
@@ -264,8 +260,20 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
         }
         CustomSlotButton button = new CustomSlotButton(x, y, def, slotId, gunStack, entry.unavailable, btn -> {
             if (entry.unavailable) return;
-            RefitTransform.changeRefitScreenView(view);
-            CustomSlotGuiState.set(slotId);
+            if (slotId.equals(CustomSlotGuiState.get())) {
+                CustomSlotGuiState.reset();
+                if (!RefitTransform.changeRefitScreenView(AttachmentType.NONE)) {
+                    // 视图过渡中无法立即切换: 延迟到过渡结束再切回 NONE 并重建, 避免默认槽被选中
+                    CustomSlotGuiState.setPendingViewReset(true);
+                    return;
+                }
+            } else {
+                if (!RefitTransform.changeRefitScreenView(view)) {
+                    return;
+                }
+                CustomSlotGuiState.setPendingViewReset(false);
+                CustomSlotGuiState.set(slotId);
+            }
             this.init();
         });
         int size = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
@@ -284,6 +292,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
         // 否则会退回 tacz 原始路径(null 时定位矩阵为单位阵, 枪械从 0,0,0 缓动回)。
         CustomSlotGuiState.beginRefitViewTransition();
         CustomSlotGuiState.reset();
+        CustomSlotGuiState.setPendingViewReset(false);
     }
 
     @Unique
