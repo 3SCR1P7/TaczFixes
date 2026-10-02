@@ -20,6 +20,7 @@
         "MixinBedrockPartAddChild",
         "MixinBedrockPartPbr",
         "MixinBeamRendererPbr",
+        "MixinArcanaBeamPbr",
         "MixinGameRendererPbr",
         "MixinLocalPlayerShootPreCheck",
         "MixinLocalPlayerShootChargeBurst",
