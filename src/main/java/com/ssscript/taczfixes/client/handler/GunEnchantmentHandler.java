@@ -976,4 +976,18 @@ public class GunEnchantmentHandler {
         }
         com.ssscript.taczfixes.common.util.PatienceHelper.onPlayerTick(event.player);
     }
+
+    @SubscribeEvent
+    public void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+        UUID id = event.getEntity().getUUID();
+        LAST_LIGHTNING.remove(id);
+        CHARGE_PLAYER_SPEED.remove(id);
+    }
+
+    @SubscribeEvent
+    public void onBulletLeaveLevel(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+        if (event.getEntity() instanceof com.tacz.guns.entity.EntityKineticBullet bullet) {
+            BULLET_PENETRATION.remove(bullet.getUUID());
+        }
+    }
 }

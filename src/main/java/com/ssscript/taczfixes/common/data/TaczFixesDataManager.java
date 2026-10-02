@@ -20,7 +20,12 @@ public class TaczFixesDataManager {
     }
 
     public static void putAll(Map<ResourceLocation, GunTaczFixesData> map) {
-        DATA.putAll(map);
+        DATA.clear();
+        for (Map.Entry<ResourceLocation, GunTaczFixesData> entry : map.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                DATA.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     public static GunTaczFixesData get(ResourceLocation dataId) {

@@ -96,4 +96,11 @@ public class GunShieldHelper {
     private static State state(LivingEntity user) {
         return STATES.computeIfAbsent(user.getUUID(), k -> new State());
     }
+
+    /** 玩家退出时清理枪盾状态。 */
+    public static void clear(UUID userId) {
+        if (userId != null) {
+            STATES.remove(userId);
+        }
+    }
 }

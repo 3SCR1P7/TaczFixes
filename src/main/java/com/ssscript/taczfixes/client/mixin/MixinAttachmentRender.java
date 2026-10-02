@@ -5,11 +5,15 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
+import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.compat.ArcanaScopeStateBridge;
 import java.lang.reflect.InvocationTargetException;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -17,6 +21,7 @@ import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
@@ -54,6 +59,7 @@ public abstract class MixinAttachmentRender {
             original.call(new Object[]{model, attachmentStack, gunStack, poseStack, transformType, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
             return;
         }
+        Map<BedrockPart, Boolean> ocularRestore = taczfixes$showOcularParts(model);
         ArcanaScopeStateBridge.Snapshot previousArcanaScope = ArcanaScopeStateBridge.capture();
         try {
             original.call(new Object[]{model, attachmentStack, gunStack, poseStack, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
@@ -61,7 +67,37 @@ public abstract class MixinAttachmentRender {
         } catch (Throwable th) {
             ArcanaScopeStateBridge.restore(previousArcanaScope);
             throw th;
+        } finally {
+            for (Map.Entry<BedrockPart, Boolean> entry : ocularRestore.entrySet()) {
+                entry.getKey().visible = entry.getValue();
+            }
         }
+    }
+
+    /** 副手瞄具以实体模型渲染, 目镜组(ocular_sight/ocular_scope_n)可能已被主手开镜渲染置为不可见, 这里临时恢复。 */
+    @Unique
+    private static Map<BedrockPart, Boolean> taczfixes$showOcularParts(BedrockAttachmentModel model) {
+        Map<BedrockPart, Boolean> restore = new IdentityHashMap<>();
+        try {
+            MixinBedrockAttachmentModelScopeSuppress accessor = (MixinBedrockAttachmentModelScopeSuppress) model;
+            List<List<BedrockPart>> oculars = accessor.taczfixes$ocularNodePaths();
+            if (oculars == null) {
+                return restore;
+            }
+            for (List<BedrockPart> path : oculars) {
+                if (path == null) {
+                    continue;
+                }
+                for (BedrockPart part : path) {
+                    if (!part.visible) {
+                        restore.put(part, Boolean.FALSE);
+                        part.visible = true;
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return restore;
     }
 
     private static boolean dualWield$isOffhandFirstPerson(ItemDisplayContext transformType) {

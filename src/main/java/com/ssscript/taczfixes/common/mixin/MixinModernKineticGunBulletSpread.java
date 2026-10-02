@@ -62,7 +62,7 @@ public class MixinModernKineticGunBulletSpread {
         ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
         InaccuracyType state = InaccuracyType.getInaccuracyType(shooter);
         InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state, gunItem);
-        float factor = SpreadState.modifyInaccuracy(dataId, params, inaccuracy);
+        float factor = SpreadState.modifyInaccuracy(shooter, dataId, params, inaccuracy);
         factor = JumpInaccuracyState.apply(dataId, gunItem, shooter, factor);
         float coilFactor = GunEnchantmentHelper.getCoilInaccuracyFactor(gunItem);
         return coilFactor != 1.0f ? factor * coilFactor : factor;

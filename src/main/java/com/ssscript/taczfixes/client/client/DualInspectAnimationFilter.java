@@ -207,15 +207,6 @@ public final class DualInspectAnimationFilter {
         }
     }
 
-    public static boolean isOffhandCarrierPathPart(BedrockAnimatedModel model, BedrockPart part) {
-        RuntimePlan plan = getRunningPlan(model);
-        BedrockPart root = model == null ? null : model.getRootNode();
-        if (plan == null || root == null || part == null || part == root) {
-            return false;
-        }
-        return pathFromAncestor(root, plan.gunCarrier, plan.parents).contains(part);
-    }
-
     public static void applyOffhandOutwardAngle(BedrockAnimatedModel model) {
         float blend = getInspectBlend(model);
         BedrockPart root = model == null ? null : model.getRootNode();

@@ -53,6 +53,13 @@ public class GunSpellHandler {
     private record PendingCast(ItemStack gun, ResourceLocation gunId, SpellData data, long expireAt) {
     }
 
+    /** 玩家退出时清理待发动法术与触发冷却。 */
+    public static void clear(UUID playerId) {
+        if (playerId == null) return;
+        PENDING.remove(playerId);
+        LAST_TRIGGER.remove(playerId);
+    }
+
     @SubscribeEvent
     public void onGunFire(GunFireEvent event) {
         if (event.getLogicalSide().isClient()) {
@@ -113,6 +120,11 @@ public class GunSpellHandler {
         PENDING.remove(player.getUUID());
         GunTaczFixesData.ImbuementConfig settings = TaczFixesDataManager.resolveImbuement(pending.gun());
         if (!Boolean.TRUE.equals(settings.enable) || onTriggerCooldown(player, pending.gunId(), settings.cooldown)) {
+            return;
+        }
+        // 命中时重新校验法力/冷却/施法状态, 避免开火后资源变化仍被施放
+        double manaMultiplier = settings.mana_consume_multiplier == null ? 1.0 : settings.mana_consume_multiplier;
+        if (!canCast(player, pending.data(), manaMultiplier)) {
             return;
         }
         if (cast(player, pending.gun(), pending.data(), target)) {

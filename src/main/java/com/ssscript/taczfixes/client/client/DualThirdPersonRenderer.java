@@ -14,7 +14,6 @@ import java.util.Locale;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
-import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -59,11 +58,6 @@ public final class DualThirdPersonRenderer {
             DualRenderContext.setPhase(previousPhase);
         }
         return true;
-    }
-
-    private static boolean isLocalPlayerRender(LivingEntity entity) {
-        LocalPlayer localPlayer = Minecraft.getInstance().player;
-        return (localPlayer == null || entity == null || (entity != localPlayer && !entity.getUUID().equals(localPlayer.getUUID()))) ? false : true;
     }
 
     /* minigun 动画的枪械在双持第三人称使用 default 持枪动画时, 按两种动画的手臂俯仰差补偿枪口方向。 */

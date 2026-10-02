@@ -77,5 +77,6 @@ public final class ClientOffhandNetworkHandler {
     public static void onLogout(ClientPlayerNetworkEvent.LoggingOut event) {
         DualWieldEligibility.clearClientRules();
         OffhandDisplayManager.clear();
+        com.ssscript.taczfixes.client.util.ScopeSwitchState.clear();
     }
 }

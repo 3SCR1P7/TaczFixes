@@ -22,7 +22,6 @@ public class GunTaczFixesData {
     public ShieldConfig shield;
     public DamageByDistanceConfig damage_by_distance;
     public Map<String, CustomFireModeConfig> fire_mode;
-    public Map<String, Object> fire_mode_adjust;
     public RicochetConfig bullet_ricochet;
     public DualWieldConfig dual_wield;
     /** 配件位置微调范围: {槽位id: [min, max]}。*/
@@ -250,17 +249,6 @@ public class GunTaczFixesData {
                 }
                 return fallback;
             }
-        }
-
-        public static Map<String, Double> toAdjustMap(Map<String, Object> raw) {
-            if (raw == null) return null;
-            java.util.Map<String, Double> out = new java.util.HashMap<>();
-            raw.forEach((k, v) -> {
-                if (v instanceof Number num) {
-                    out.put(k, num.doubleValue());
-                }
-            });
-            return out;
         }
     }
 }

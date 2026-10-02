@@ -73,7 +73,7 @@ public class RecoilConfigJsonParser {
                     }
                     mod.count_step = arr.get(2).getAsInt();
                 }
-            } else if (countEl.isJsonPrimitive()) {
+            } else if (isNumber(countEl)) {
                 mod.count = countEl.getAsInt();
             } else {
                 return null;
@@ -95,7 +95,7 @@ public class RecoilConfigJsonParser {
 
     public static Double readDouble(JsonObject obj, String key) {
         JsonElement element = obj.get(key);
-        if (element != null && element.isJsonPrimitive()) {
+        if (isNumber(element)) {
             return element.getAsDouble();
         }
         return null;

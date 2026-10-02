@@ -33,6 +33,9 @@ import java.util.Optional;
 public final class CustomScopeViewShift {
 
     private static final float SMOOTH_FACTOR = 0.2f;
+    /** 与 SMOOTH_FACTOR(60fps 每帧 0.2) 等效的时间常数, 用于按帧间隔做平滑, 避免高帧率下收敛过快。 */
+    private static final float SMOOTH_TIME_CONSTANT = 0.075f;
+    private static long smoothLastFrameNanos = 0L;
     private static String prevSlot = "";
     private static int animMode = 1;
     private static Vec3 smoothPivot = Vec3.ZERO;
@@ -42,6 +45,17 @@ public final class CustomScopeViewShift {
     private static boolean pushed = false;
 
     private CustomScopeViewShift() {
+    }
+
+    private static float smoothFactor() {
+        long now = System.nanoTime();
+        float dt = smoothLastFrameNanos == 0L ? 1f / 60f : (now - smoothLastFrameNanos) / 1.0e9f;
+        if (dt <= 0f || dt > 0.1f) {
+            dt = 1f / 60f;
+        }
+        smoothLastFrameNanos = now;
+        float factor = (float) (1.0d - Math.exp(-dt / SMOOTH_TIME_CONSTANT));
+        return Math.max(0.01f, Math.min(factor, 1f));
     }
 
 
@@ -139,16 +153,17 @@ public final class CustomScopeViewShift {
             prevSlot = slotKey;
             animMode = (oldKey.isEmpty() || slotKey.isEmpty()) ? 1 : 2;
         }
+        float smooth = smoothFactor();
         if (animMode == 1) {
             if (active != null) {
                 smoothPivot = pivot;
             }
         } else {
-            smoothPivot = smoothPivot.add(pivot.subtract(smoothPivot).scale(SMOOTH_FACTOR));
+            smoothPivot = smoothPivot.add(pivot.subtract(smoothPivot).scale(smooth));
         }
-        smoothShift = smoothShift.add(targetS.subtract(smoothShift).scale(SMOOTH_FACTOR));
-        smoothAngle += (targetTh - smoothAngle) * SMOOTH_FACTOR;
-        smoothOffset += (targetO - smoothOffset) * SMOOTH_FACTOR;
+        smoothShift = smoothShift.add(targetS.subtract(smoothShift).scale(smooth));
+        smoothAngle += (targetTh - smoothAngle) * smooth;
+        smoothOffset += (targetO - smoothOffset) * smooth;
         double rad = Math.toRadians(smoothAngle);
         double cos = Math.cos(rad);
         double sin = Math.sin(rad);

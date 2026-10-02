@@ -33,7 +33,11 @@ public class AttachmentTaczFixesManager {
 
     public static void putAll(Map<ResourceLocation, AttachmentTaczFixesData> map) {
         DATA.clear();
-        DATA.putAll(map);
+        for (Map.Entry<ResourceLocation, AttachmentTaczFixesData> entry : map.entrySet()) {
+            if (entry.getKey() != null && entry.getValue() != null) {
+                DATA.put(entry.getKey(), entry.getValue());
+            }
+        }
     }
 
     public static void put(ResourceLocation dataId, AttachmentTaczFixesData data) {

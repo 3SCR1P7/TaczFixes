@@ -95,11 +95,6 @@ public class GunEnchantmentHelper {
         return getLevel(getGunStack(gunId, shooter), enchantment);
     }
 
-    public static boolean isWhitelistKey(String key) {
-        List<? extends String> whitelist = Config.GUN_ENCHANT_WHITELIST.get();
-        return whitelist.contains(key);
-    }
-
     private static final ThreadLocal<Boolean> GUN_ENCHANTING = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     public static void setGunEnchanting(boolean flag) {
@@ -203,14 +198,6 @@ public class GunEnchantmentHelper {
         return (float) Math.max(1.0 - reduction, 0.1);
     }
 
-    public static float getQuickChargeAnimationSpeed(@Nullable LivingEntity shooter) {
-        float factor = getQuickChargeTimeFactor(shooter);
-        if (factor <= 0.0f) {
-            return 1.0f;
-        }
-        return 1.0f / factor;
-    }
-
     public static int getOverloadLevel(ItemStack stack) {
         return getLevel(stack, com.ssscript.taczfixes.TaczFixesMod.OVERLOAD_ENCHANTMENT.get());
     }
@@ -229,14 +216,6 @@ public class GunEnchantmentHelper {
             return 1.0f;
         }
         return (float) Math.max(1.0 - Config.ENCH_EFFICIENCY_BOLT_TIME_REDUCTION_PERCENT_PER_LEVEL.get() / 100.0 * level, 0.1);
-    }
-
-    public static float getEfficiencyBoltAnimationSpeed(@Nullable LivingEntity shooter) {
-        float factor = getEfficiencyBoltTimeFactor(getGunStack(shooter));
-        if (factor >= 1.0f) {
-            return 1.0f;
-        }
-        return 1.0f / factor;
     }
 
     public static float getCoilSpeedFactor(ItemStack stack) {

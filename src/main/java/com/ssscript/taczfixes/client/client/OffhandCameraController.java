@@ -358,16 +358,6 @@ public final class OffhandCameraController {
         return clampFinite(peak, -maximum, maximum);
     }
 
-    private static void applyLevelCameraAnimation(ViewportEvent.ComputeCameraAngles event, LocalPlayer player) {
-        ItemStack stack = getRenderedOffhandStack(player);
-        BedrockGunModel model = getOffhandModel(stack);
-        if (model == null) {
-            return;
-        }
-        Quaternionf rotation = getMirroredCameraRotation(player, stack, model);
-        applyRotationToEvent(event, rotation);
-    }
-
     private static void applyRotationToEvent(ViewportEvent.ComputeCameraAngles event, Quaternionf rotation) {
         double yawArgument = 2.0d * ((rotation.w() * rotation.y()) - (rotation.x() * rotation.z()));
         double yaw = Math.asin(Math.max(-1.0d, Math.min(1.0d, yawArgument)));
@@ -393,21 +383,6 @@ public final class OffhandCameraController {
         mirrored.normalize();
         Quaternionf result = MathUtil.multiplyQuaternion(mirrored, multiplier);
         return isFinite(result) ? result : new Quaternionf();
-    }
-
-    private static BedrockGunModel getOffhandModel(ItemStack stack) {
-        GunDisplayInstance display = OffhandDisplayManager.getOrCreate(stack);
-        if (display == null) {
-            return null;
-        }
-        return display.getGunModel();
-    }
-
-    private static ItemStack getRenderedOffhandStack(LocalPlayer player) {
-        if (OffhandDisplayManager.isPuttingAway()) {
-            return OffhandDisplayManager.getPutAwayStack();
-        }
-        return player == null ? ItemStack.EMPTY : player.getOffhandItem();
     }
 
     private static boolean isFinite(Quaternionf quaternion) {

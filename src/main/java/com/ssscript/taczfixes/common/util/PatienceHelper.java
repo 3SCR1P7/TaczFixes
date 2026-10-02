@@ -65,6 +65,14 @@ public class PatienceHelper {
         return amount;
     }
 
+    /** 玩家退出时清理耐心射击状态。 */
+    public static void clear(UUID uuid) {
+        if (uuid == null) return;
+        LAST_FIRE_TICK.remove(uuid);
+        HELD_ITEM.remove(uuid);
+        CLEAR_AT.remove(uuid);
+    }
+
     private static float computeMultiplier(LivingEntity shooter, int level) {
         if (level <= 0) {
             return 1.0F;

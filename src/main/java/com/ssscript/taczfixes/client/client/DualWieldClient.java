@@ -831,13 +831,6 @@ public final class DualWieldClient {
                     NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandShoot(sourceStackId, relativeTimestamp, chargeProgress));
                     sent = true;
                     offhandShotPending = false;
-                    if (1 == 0) {
-                        state.discardShootRequest(sourceStackId, relativeTimestamp);
-                        if (manualAction) {
-                            state.discardManualShotAwaitingChamberSync(sourceStackId, relativeTimestamp);
-                        }
-                        cancelShotVisualReservationLocked(reservation);
-                    }
                     try {
                         Minecraft.getInstance().execute(() -> {
                             applyDispatchedOffhandShot(sourcePlayer, sourceStackId, sourceGunId, recoilStack, recoilGunData, availableAmmo, reservation);

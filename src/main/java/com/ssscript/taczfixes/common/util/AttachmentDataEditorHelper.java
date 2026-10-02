@@ -115,9 +115,4 @@ public final class AttachmentDataEditorHelper {
         return new com.google.gson.GsonBuilder().setPrettyPrinting().create().toJson(root);
     }
 
-    public static boolean saveAttachmentDataFile(ItemStack attachmentItem, String fullText) {
-        ResourceLocation attachmentId = attachmentIdOf(attachmentItem);
-        if (attachmentId == null) return false;
-        return AttachmentDataOverrideStorage.save(resolveDataId(attachmentId), fullText);
-    }
 }

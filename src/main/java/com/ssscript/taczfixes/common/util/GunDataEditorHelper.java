@@ -59,16 +59,6 @@ public class GunDataEditorHelper {
         return true;
     }
 
-    /** 将编辑后的完整 data JSON 文本暂存到 config/taczfixes, 启动/tacz重载时替换进源枪包。 */
-    public static boolean saveGunDataFile(ItemStack gunItem, String fullText) {
-        if (gunItem == null || gunItem.isEmpty() || fullText == null || fullText.isBlank()) return false;
-        IGun gun = IGun.getIGunOrNull(gunItem);
-        if (gun == null) return false;
-        ResourceLocation gunId = gun.getGunId(gunItem);
-        if (gunId == null) return false;
-        return GunDataOverrideStorage.save(TaczFixesDataManager.resolveDataId(gunId), fullText);
-    }
-
     /** 解析编辑文本中的 taczfixes(顶层) 与 gunsmithlib_extension.shield.taczfixes, 立即写入运行时数据表。 */
     public static void applyTaczFixes(ResourceLocation dataId, String fullText) {
         if (dataId == null || fullText == null || fullText.isBlank()) return;
@@ -108,19 +98,6 @@ public class GunDataEditorHelper {
         if (gunId == null) return false;
         GunData gunData = parseGunData(fullText);
         if (gunData == null) return false;
-        CommonGunIndex index = TimelessAPI.getCommonGunIndex(gunId).orElse(null);
-        if (index == null) return false;
-        ((MixinCommonGunIndexAccessor) index).taczfixes$setGunData(gunData);
-        return true;
-    }
-
-    /** 将解析后的 GunData 应用到运行时的枪械索引。成功返回 true。 */
-    public static boolean applyGunData(ItemStack gunItem, GunData gunData) {
-        if (gunItem == null || gunData == null) return false;
-        IGun gun = IGun.getIGunOrNull(gunItem);
-        if (gun == null) return false;
-        ResourceLocation gunId = gun.getGunId(gunItem);
-        if (gunId == null) return false;
         CommonGunIndex index = TimelessAPI.getCommonGunIndex(gunId).orElse(null);
         if (index == null) return false;
         ((MixinCommonGunIndexAccessor) index).taczfixes$setGunData(gunData);

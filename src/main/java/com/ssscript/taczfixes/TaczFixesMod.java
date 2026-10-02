@@ -149,6 +149,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDataOverrideReloadHandler());
         MinecraftForge.EVENT_BUS.register(new TaczFixesDataHandler());
         MinecraftForge.EVENT_BUS.register(new GunLevelHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.PlayerStateCleanupHandler());
         MinecraftForge.EVENT_BUS.register(new GunAnvilHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());

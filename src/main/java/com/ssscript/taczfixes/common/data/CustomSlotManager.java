@@ -164,10 +164,6 @@ public class CustomSlotManager {
         return getEntries(gunStack).get(slotId);
     }
 
-    public static boolean hasSlot(ItemStack gunStack, String slotId) {
-        return getEntries(gunStack).containsKey(slotId);
-    }
-
     /** 槽定义里的 pos_alter 范围 [min, max]; 未配置返回 null。 */
     public static float[] getPosAlterRange(ItemStack gunStack, String slotId) {
         SlotEntry entry = getEntries(gunStack).get(slotId);
@@ -339,15 +335,6 @@ public class CustomSlotManager {
         }
     }
 
-    public static boolean hasItem(ResourceLocation gunId, ItemStack gunStack, String refId) {
-        return !getItemIn(gunId, gunStack, refId).isEmpty();
-    }
-
-    public static Set<ResourceLocation> tagContents(ResourceLocation tagId) {
-        Set<ResourceLocation> ids = ALLOW_TAGS.get(tagId);
-        return ids == null ? Collections.emptySet() : new HashSet<>(ids);
-    }
-
     public static void cascadeUnloadDependents(net.minecraft.server.level.ServerPlayer player, ItemStack gunStack) {
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) return;
@@ -391,7 +378,6 @@ public class CustomSlotManager {
      */
     public static void cascadeUnloadOrphans(net.minecraft.server.level.ServerPlayer player, ItemStack gunStack) {
         if (player == null || gunStack == null || gunStack.isEmpty()) return;
-        java.util.Set<String> known = getEntries(gunStack).keySet();
         java.util.Set<String> stored = new java.util.LinkedHashSet<>();
         net.minecraft.nbt.CompoundTag tag = gunStack.getTag();
         if (tag != null) {
@@ -400,6 +386,7 @@ public class CustomSlotManager {
             collectStoredKeys(tag, CustomSlotStorage.ADAPTER_TAG_KEY, stored);
         }
         if (stored.isEmpty()) return;
+        java.util.Set<String> known = getEntries(gunStack).keySet();
         boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
         for (String slotId : stored) {
             if (known.contains(slotId)) continue;

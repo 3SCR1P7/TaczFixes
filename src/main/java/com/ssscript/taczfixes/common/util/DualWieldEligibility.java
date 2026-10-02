@@ -71,19 +71,9 @@ public final class DualWieldEligibility {
                 Config.DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER.get());
     }
 
-    public static double getClientInaccuracyMultiplier() {
-        Rules rules = clientRules;
-        return rules == null ? 1.5d : rules.dualWieldInaccuracyMultiplier();
-    }
-
     public static double getClientFocusAimRecoilMultiplier() {
         Rules rules = clientRules;
         return rules == null ? 1.5d : rules.focusAimRecoilMultiplier();
-    }
-
-    public static double getClientFocusAimInaccuracyMultiplier() {
-        Rules rules = clientRules;
-        return rules == null ? 1.25d : rules.focusAimInaccuracyMultiplier();
     }
 
     public static double getServerInaccuracyMultiplier() {

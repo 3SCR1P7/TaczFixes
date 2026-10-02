@@ -290,7 +290,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         com.tacz.guns.client.model.BedrockAttachmentModel model = idx.get().getAttachmentModel();
         ResourceLocation texture = idx.get().getModelTexture();
         if (model == null || texture == null) return;
-        java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore = new java.util.ArrayList<>();
+        java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore = new java.util.LinkedHashMap<>();
 
         StandbySlotBuffer.ensureScopeOcularVisible(model, restore);
         MixinBedrockAttachmentModelScopeSuppress acc = (MixinBedrockAttachmentModelScopeSuppress) model;
@@ -336,24 +336,24 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
     }
 
     @Unique
-    private static void taczfixes$activateIfPresent(java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore,
+    private static void taczfixes$activateIfPresent(java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore,
                                                     java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path) {
         if (path == null || path.isEmpty()) return;
         com.tacz.guns.client.model.bedrock.BedrockPart part = path.get(path.size() - 1);
         if (!part.visible) {
+            restore.putIfAbsent(part, part.visible);
             part.visible = true;
-            restore.add(part);
         }
     }
 
     @Unique
-    private static void taczfixes$hideIfPresent(java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> restore,
+    private static void taczfixes$hideIfPresent(java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore,
                                                 java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path) {
         if (path == null || path.isEmpty()) return;
         com.tacz.guns.client.model.bedrock.BedrockPart part = path.get(path.size() - 1);
         if (part.visible) {
+            restore.putIfAbsent(part, part.visible);
             part.visible = false;
-            restore.add(part);
         }
     }
 

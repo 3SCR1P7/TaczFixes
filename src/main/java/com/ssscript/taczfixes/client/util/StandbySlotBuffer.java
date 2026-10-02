@@ -72,68 +72,8 @@ public final class StandbySlotBuffer {
         poseStack.popPose();
     }
 
-    public static void renderRawMesh(ItemStack item, ItemStack gun, BedrockPart node,
-                                     PoseStack poseStack, ItemDisplayContext displayContext,
-                                     int light, int overlay, String slotId) {
-        renderRawMesh(item, gun, node, poseStack, displayContext, light, overlay, slotId,
-                Collections.emptyList());
-    }
-
-    public static void renderRawMesh(ItemStack item, ItemStack gun, BedrockPart node,
-                                     PoseStack poseStack, ItemDisplayContext displayContext,
-                                     int light, int overlay, String slotId,
-                                     List<CustomSlotMount.Step> chain) {
-        poseStack.pushPose();
-        CustomSlotMount.apply(poseStack, chain, gun, displayContext, light, overlay);
-        applyNodePathTransform(node, poseStack);
-        applyPosAlter(node, gun, poseStack, slotId);
-        poseStack.translate(0.0F, -1.5F, 0.0F);
-        applySlotAdapterOffset(item, gun, slotId, poseStack, displayContext, light, overlay);
-        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
-        if (ia == null) {
-            poseStack.popPose();
-            return;
-        }
-        com.tacz.guns.api.item.attachment.AttachmentType type = ia.getType(item);
-        if (type == null || type == com.tacz.guns.api.item.attachment.AttachmentType.NONE) {
-            type = com.tacz.guns.api.item.attachment.AttachmentType.SCOPE;
-        }
-
-        AttachmentRender.renderAttachment(item, gun, type, poseStack,
-                ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, overlay);
-        poseStack.popPose();
-    }
-
-
-    public static void hideOcularSightParts(BedrockAttachmentModel model,
-                                            List<BedrockPart> restore) {
-        try {
-            com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
-                    (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
-            List<List<BedrockPart>> ocular = acc.taczfixes$ocularNodePaths();
-            List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
-            if (ocular == null) return;
-            for (int i = 0; i < ocular.size(); i++) {
-                // sight 鍨?ocular_sight)闅愯棌; scope 鍨?ocular_scope)淇濇寔鍙
-                if (isScopeOcular != null && i < isScopeOcular.size() && isScopeOcular.get(i)) {
-                    continue;
-                }
-                List<BedrockPart> path = ocular.get(i);
-                if (path == null || path.isEmpty()) continue;
-                for (BedrockPart p : path) {
-                    if (p.visible) {
-                        p.visible = false;
-                        restore.add(p);
-                    }
-                }
-            }
-        } catch (Throwable ignored) {
-        }
-    }
-
-
     public static void ensureScopeOcularVisible(BedrockAttachmentModel model,
-                                                List<BedrockPart> restore) {
+                                                java.util.Map<BedrockPart, Boolean> restore) {
         try {
             com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
                     (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
@@ -147,8 +87,8 @@ public final class StandbySlotBuffer {
                 boolean wantVisible = scopeType;
                 for (BedrockPart p : path) {
                     if (p.visible != wantVisible) {
+                        restore.putIfAbsent(p, p.visible);
                         p.visible = wantVisible;
-                        restore.add(p);
                     }
                 }
             }
@@ -156,9 +96,10 @@ public final class StandbySlotBuffer {
         }
     }
 
-    public static void restoreOcularVisibility(List<BedrockPart> restore) {
-        for (BedrockPart part : restore) {
-            part.visible = !part.visible;
+    /** 按记录的原值恢复可见性(同一部件多次改动也只恢复一次)。 */
+    public static void restoreOcularVisibility(java.util.Map<BedrockPart, Boolean> restore) {
+        for (java.util.Map.Entry<BedrockPart, Boolean> entry : restore.entrySet()) {
+            entry.getKey().visible = entry.getValue();
         }
         restore.clear();
     }

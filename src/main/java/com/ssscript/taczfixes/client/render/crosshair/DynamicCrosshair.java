@@ -88,6 +88,8 @@ public final class DynamicCrosshair {
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.9f);
         drawExpandingParts(graphics, pose, texture, x, y, offset);
+        RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+        RenderSystem.disableBlend();
         return true;
     }
 

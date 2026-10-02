@@ -176,7 +176,9 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
                 hudTexture = emptyTexture;
             }
         }
-        graphics.blit(hudTexture, HUD_LEFT, height - 44, 0.0f, 0.0f, 39, 13, 39, 13);
+        if (hudTexture != null) {
+            graphics.blit(hudTexture, HUD_LEFT, height - 44, 0.0f, 0.0f, 39, 13, 39, 13);
+        }
         FireMode fireMode = gun.getFireMode(stack);
         switch (AnonymousClass1.$SwitchMap$com$tacz$guns$api$item$gun$FireMode[fireMode.ordinal()]) {
             case ServerMessageOffhandActionResult.ACTION_RELOAD /* 1 */:

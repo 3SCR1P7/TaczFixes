@@ -19,15 +19,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = EntityKineticBullet.class, remap = false)
 public class MixinEntityKineticBulletDamageByDistance {
     @Shadow
-    @Final
     private Vec3 startPos;
 
     @Shadow
-    @Final
     private float shotDamageMultiplier;
 
     @Shadow
-    @Final
     private float damageModifier;
 
     /** 有 damage_by_distance 配置时整体接管距离伤害, 弃用 TACZ 的 damage_adjust 与"超射程归零"。 */

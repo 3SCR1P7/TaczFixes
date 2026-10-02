@@ -1,11 +1,14 @@
 package com.ssscript.taczfixes.client.render.pbr;
+import com.ssscript.taczfixes.client.mixin.PbrCompositeAccessor;
+import com.ssscript.taczfixes.client.mixin.PbrStateAccessor;
+import com.ssscript.taczfixes.client.mixin.PbrTextureAccessor;
 
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.ssscript.taczfixes.common.config.Config;
 import com.mojang.blaze3d.vertex.*;
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.mixin.*;
+
 import com.tacz.guns.compat.oculus.OculusCompat;
 import com.tacz.guns.compat.optifine.OptifineCompat;
 import net.minecraft.client.Minecraft;
@@ -40,6 +43,7 @@ public final class PbrRenderer {
     private static VertexBuffer mesh;
     private static final Map<ResourceLocation, Optional<Material>> MATERIALS = new HashMap<>();
     private static final Map<RenderType, RenderType> TYPES = new IdentityHashMap<>();
+    private static final int TYPES_MAX = 512;
     private static final Method OPTIFINE_SHADERS = findOptifine();
 
     private record Material(ResourceLocation specular, ResourceLocation normal, boolean emissive) {}
@@ -132,6 +136,10 @@ public final class PbrRenderer {
     public static RenderType resolve(RenderType original) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
+        // 逐帧新建的 RenderType 不能被无限缓存, 超限时整体清空重建
+        if (TYPES.size() >= TYPES_MAX) {
+            TYPES.clear();
+        }
         return TYPES.computeIfAbsent(original, key -> {
             var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
             var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();

@@ -22,6 +22,11 @@ public final class GunPackIconLoader {
     private GunPackIconLoader() {
     }
 
+    /** 资源包重载后清理缓存(含失败缓存), 使图标重新从枪包读取。 */
+    public static void clear() {
+        CACHE.clear();
+    }
+
     public static LoadedIcon load(ResourceLocation icon) {
         if (CACHE.containsKey(icon)) return CACHE.get(icon);
         NativeImage image = readImage(icon);

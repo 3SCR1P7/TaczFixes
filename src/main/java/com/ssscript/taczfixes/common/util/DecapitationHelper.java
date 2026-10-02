@@ -34,18 +34,27 @@ public class DecapitationHelper {
     }
 
     public static void onBulletRemoved(Entity bullet) {
-        if (bullet == null || bullet.level().isClientSide) {
+        if (bullet == null) {
             return;
         }
         UUID bulletId = bullet.getUUID();
-        byte state = BULLET_STATE.getOrDefault(bulletId, (byte) 0);
-        if (state != 1) {
-            Entity owner = bullet instanceof Projectile projectile ? projectile.getOwner() : null;
-            if (owner != null) {
-                SHOOTER_BONUS.remove(owner.getUUID());
+        if (!bullet.level().isClientSide) {
+            byte state = BULLET_STATE.getOrDefault(bulletId, (byte) 0);
+            if (state != 1) {
+                Entity owner = bullet instanceof Projectile projectile ? projectile.getOwner() : null;
+                if (owner != null) {
+                    SHOOTER_BONUS.remove(owner.getUUID());
+                }
             }
         }
         BULLET_STATE.remove(bulletId);
+    }
+
+    /** 玩家退出时清理其爆头加成状态。 */
+    public static void clear(UUID shooterId) {
+        if (shooterId != null) {
+            SHOOTER_BONUS.remove(shooterId);
+        }
     }
 
     public static float getBonus(UUID shooterId) {

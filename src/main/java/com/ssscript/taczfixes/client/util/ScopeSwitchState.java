@@ -35,6 +35,12 @@ public final class ScopeSwitchState {
     private ScopeSwitchState() {
     }
 
+    /** 退出世界/登出时清理, 避免旧枪 id 状态跨世界残留。 */
+    public static void clear() {
+        ACTIVE.clear();
+        aimingProgressValue = 0f;
+    }
+
     public static String getActiveSlot(ItemStack gun) {
         ResourceLocation gunId = gunId(gun);
         if (gunId == null) return null;

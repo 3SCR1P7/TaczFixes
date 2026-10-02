@@ -37,4 +37,11 @@ public final class ReloadExtraTracker {
     public static void markApplied(UUID uuid) {
         APPLIED.add(uuid);
     }
+
+    /** 玩家退出时清理换弹附加装填状态。 */
+    public static void clear(UUID uuid) {
+        if (uuid == null) return;
+        PRE_AMMO.remove(uuid);
+        APPLIED.remove(uuid);
+    }
 }

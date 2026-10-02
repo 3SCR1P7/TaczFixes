@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.network.NetworkHandler;
@@ -23,7 +24,9 @@ public class GunLevelHandler {
         Entity owner = bullet.getOwner();
         if (!(owner instanceof Player player)) return;
 
-        ItemStack gunStack = player.getMainHandItem();
+        // 按子弹记录的枪械 id/射击手选择对应手枪(主手/副手), 避免经验给错枪
+        ItemStack gunStack = GunEnchantmentHelper.getGunStack(bullet.getGunId(), player);
+        if (gunStack.isEmpty()) return;
         IGun iGun = IGun.getIGunOrNull(gunStack);
         if (iGun == null) return;
 
