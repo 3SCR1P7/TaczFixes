@@ -29,6 +29,8 @@
         "MixinArcanaScopeGate",
         "MixinArcanaAttachmentData",
         "MixinArcanaLaserToggle",
+        "MixinArcanaFlashlightWorld",
+        "MixinArcanaFlashlightLamp",
         "MixinPeekHandler",
         "MixinLocalPlayerAim",
         "MixinLocalPlayerSprint",

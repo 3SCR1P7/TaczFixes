@@ -18,8 +18,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 @Mixin(BedrockGunModel.class)
 public abstract class MixinBedrockGunModelRefitView {
@@ -36,8 +38,8 @@ public abstract class MixinBedrockGunModelRefitView {
         ItemStack gunStack = mc.player.getMainHandItem();
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
-        CustomSlotDefinition def = slotId == null ? null : CustomSlotManager.getSlot(gunStack, slotId);
-        if (slotId != null && def == null) return;
+        CustomSlotManager.SlotEntry entry = slotId == null ? null : CustomSlotManager.getEntry(gunStack, slotId);
+        if (slotId != null && entry == null) return;
         if (slotId == null) {
             // 界面内: 视图切换缓动结束即可清理; 退出界面: 需等收枪缓动(opening)结束再清理,
             // 否则收枪过程中路径回退到 tacz 原始(可能为 null), 枪械会从 0,0,0 缓动回。
@@ -53,47 +55,73 @@ public abstract class MixinBedrockGunModelRefitView {
         boolean oldCall = ((++taczfixes$viewCallCount) & 1L) != 0L;
         List<BedrockPart> path = oldCall
                 ? resolveViewFrom((BedrockModel) (Object) this, gunStack)
-                : resolveToPath((BedrockModel) (Object) this, slotId, def, type);
+                : resolveToPath((BedrockModel) (Object) this, gunStack, slotId, entry, type);
         if (path != null) {
             cir.setReturnValue(path);
         }
     }
 
-    private static List<BedrockPart> resolveToPath(BedrockModel self, String slotId,
-                                                   CustomSlotDefinition def, AttachmentType type) {
-        if (slotId != null) return resolveRefitPath(self, slotId, def);
+    private static List<BedrockPart> resolveToPath(BedrockModel self, ItemStack gunStack, String slotId,
+                                                   CustomSlotManager.SlotEntry entry, AttachmentType type) {
+        if (slotId != null) return resolveSlotView(self, gunStack, slotId, entry, pathOf(self, "refit_view"));
         if (type == null || type == AttachmentType.NONE) return pathOf(self, "refit_view");
         List<BedrockPart> path = pathOf(self, "refit_" + type.name().toLowerCase(Locale.US) + "_view");
         return path != null ? path : pathOf(self, "refit_view");
     }
 
     private static List<BedrockPart> resolveViewFrom(BedrockModel self, ItemStack gunStack) {
+        List<BedrockPart> fallback = pathOf(self, "refit_view");
+        AttachmentType fromType = CustomSlotGuiState.getViewFromType();
+        if (fromType != null && fromType != AttachmentType.NONE) {
+            List<BedrockPart> typePath = pathOf(self, "refit_" + fromType.name().toLowerCase(Locale.US) + "_view");
+            if (typePath != null) {
+                fallback = typePath;
+            }
+        }
         String fromSlot = CustomSlotGuiState.getViewFromSlot();
         if (fromSlot != null) {
-            CustomSlotDefinition fromDef = CustomSlotManager.getSlot(gunStack, fromSlot);
-            List<BedrockPart> path = pathOf(self, "refit_" + fromSlot.toLowerCase(Locale.US) + "_view");
+            return resolveSlotView(self, gunStack, fromSlot,
+                    CustomSlotManager.getEntry(gunStack, fromSlot), fallback);
+        }
+        return fallback;
+    }
+
+    /**
+     * 解析槽位的改装视角: 由配件提供的槽位沿"提供者安装位置"逐级上溯,
+     * 最终使用顶层槽位(或提供者所在标准槽类型)的改装视角。
+     */
+    private static List<BedrockPart> resolveSlotView(BedrockModel self, ItemStack gunStack, String slotId,
+                                                     CustomSlotManager.SlotEntry entry, List<BedrockPart> fallback) {
+        String viewSlot = slotId;
+        CustomSlotManager.SlotEntry current = entry;
+        Set<String> visited = new HashSet<>();
+        while (current != null && current.source() != null && !current.source().isEmpty()
+                && viewSlot != null && visited.add(viewSlot)) {
+            if (current.mountSlotId() != null && !current.mountSlotId().isEmpty()) {
+                viewSlot = current.mountSlotId();
+                current = CustomSlotManager.getEntry(gunStack, viewSlot);
+                continue;
+            }
+            if (current.mountType() != null && current.mountType() != AttachmentType.NONE) {
+                List<BedrockPart> typePath = pathOf(self,
+                        "refit_" + current.mountType().name().toLowerCase(Locale.US) + "_view");
+                return typePath != null ? typePath : fallback;
+            }
+            break;
+        }
+        if (viewSlot != null) {
+            List<BedrockPart> path = pathOf(self, "refit_" + viewSlot.toLowerCase(Locale.US) + "_view");
             if (path != null) return path;
-            if (fromDef != null && fromDef.type != null && !fromDef.type.isEmpty()) {
-                path = pathOf(self, "refit_" + fromDef.type.toLowerCase(Locale.US) + "_view");
+            CustomSlotDefinition viewDef = current != null ? current.def() : null;
+            if (viewDef == null) {
+                viewDef = CustomSlotManager.getSlot(gunStack, viewSlot);
+            }
+            if (viewDef != null && viewDef.type != null && !viewDef.type.isEmpty()) {
+                path = pathOf(self, "refit_" + viewDef.type.toLowerCase(Locale.US) + "_view");
                 if (path != null) return path;
             }
         }
-        AttachmentType fromType = CustomSlotGuiState.getViewFromType();
-        if (fromType != null && fromType != AttachmentType.NONE) {
-            List<BedrockPart> path = pathOf(self, "refit_" + fromType.name().toLowerCase(Locale.US) + "_view");
-            if (path != null) return path;
-        }
-        return pathOf(self, "refit_view");
-    }
-
-    private static List<BedrockPart> resolveRefitPath(BedrockModel self, String slotId, CustomSlotDefinition def) {
-        List<BedrockPart> path = pathOf(self, "refit_" + slotId.toLowerCase(Locale.US) + "_view");
-        if (path != null) return path;
-        if (def.type != null && !def.type.isEmpty()) {
-            path = pathOf(self, "refit_" + def.type.toLowerCase(Locale.US) + "_view");
-            if (path != null) return path;
-        }
-        return pathOf(self, "refit_view");
+        return fallback;
     }
 
     private static List<BedrockPart> pathOf(BedrockModel model, String nodeName) {
