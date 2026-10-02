@@ -1,5 +1,24 @@
 {
   "taczfixes": {
+    "attachment_slots": {
+      // 槽位id，对应模型文件中的*_pos，*_adapter。
+      // 在这里，可以随意填写id，只要不和本配件提供的其它配件槽id重复。
+      "laser": {
+        // 槽位类型，可选laser，grip，muzzle，stock，scope，custom。
+        // 如果不为custom，那么使用相应类型的槽位名称和贴图，可以安装相应类型的配件。
+        "type": "laser",
+        "pos_alter": [0.5,-0.5],
+        // 需要这些槽位有指定配件才启用此槽位。
+        "builtin_attachments": {
+          // 可选的原厂配件
+          "attachments": [
+            "tacz:default"
+          ],
+          // 默认具有的原厂配件
+          "default_attached": "tacz:default"
+        }
+      }
+    },
     // 安装消耗的改装点数
     "refit_point_consume": 10,
     "limb_factor": {
