@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.light;
+package com.ssscript.taczfixes.client.render;
 
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;

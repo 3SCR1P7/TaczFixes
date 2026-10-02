@@ -11,7 +11,6 @@ import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.util.Mth;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 
 public final class TouhouMaidDualWieldAnimation implements ICustomAnimation<Mob> {

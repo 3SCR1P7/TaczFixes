@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
-import com.ssscript.taczfixes.client.render.light.LightManager;
+import com.ssscript.taczfixes.client.render.LightManager;
 import me.jellysquid.mods.sodium.client.gl.shader.ShaderLoader;
 import me.jellysquid.mods.sodium.client.gl.shader.ShaderType;
 import net.minecraft.resources.ResourceLocation;

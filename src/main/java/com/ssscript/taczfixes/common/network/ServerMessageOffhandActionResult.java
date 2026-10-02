@@ -12,7 +12,6 @@ public final class ServerMessageOffhandActionResult {
     public static final int ACTION_SHOOT = 0;
     public static final int ACTION_RELOAD = 1;
     public static final int ACTION_BOLT = 2;
-    public static final int ACTION_FIRE_SELECT = 3;
     public static final int ACTION_CANCEL_RELOAD = 4;
     private final int actionType;
     private final UUID requestedStackId;

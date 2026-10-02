@@ -3,7 +3,6 @@ package com.ssscript.taczfixes.client.mixin;
 import com.tacz.guns.client.sound.SoundPlayManager;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.common.util.DualWieldBalance;
-import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;

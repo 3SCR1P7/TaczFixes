@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.pbr;
+package com.ssscript.taczfixes.client.render;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;

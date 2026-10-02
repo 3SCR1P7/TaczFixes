@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.crosshair;
+package com.ssscript.taczfixes.client.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.Minecraft;

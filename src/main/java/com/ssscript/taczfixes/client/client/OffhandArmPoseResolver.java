@@ -16,12 +16,7 @@ import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
 public final class OffhandArmPoseResolver {
-    private static final float ARM_RENDER_Z_ROTATION = 3.1415927f;
-    private static final double STANDARD_LEFT_ARM_PROXY_OFFSET_X = -0.75d;
-    private static final double SLIM_LEFT_ARM_PROXY_OFFSET_X = -0.6875d;
     private static final Map<BedrockAnimatedModel, BedrockPart> CARRIER_CACHE = Collections.synchronizedMap(new IdentityHashMap());
-    private static final Map<BedrockAnimatedModel, SupportRetargetSnapshot> SUPPORT_RETARGET_CACHE = Collections.synchronizedMap(new IdentityHashMap());
-    private static final Map<BedrockAnimatedModel, Boolean> BOLT_BONE_CACHE = Collections.synchronizedMap(new IdentityHashMap());
 
     private OffhandArmPoseResolver() {
     }
@@ -53,98 +48,6 @@ public final class OffhandArmPoseResolver {
 
     public static void clear() {
         CARRIER_CACHE.clear();
-        SUPPORT_RETARGET_CACHE.clear();
-        BOLT_BONE_CACHE.clear();
-    }
-
-    public static void beginManualAction(BedrockAnimatedModel model) {
-        resetManualAction(model);
-    }
-
-    public static void resetManualAction(BedrockAnimatedModel model) {
-        if (model == null) {
-            SUPPORT_RETARGET_CACHE.clear();
-        } else {
-            SUPPORT_RETARGET_CACHE.remove(model);
-        }
-    }
-
-    public static Matrix4f resolveSupportManualAction(BedrockAnimatedModel model, Matrix4f modelBase, Matrix4f supportArmPose) {
-        if (model == null || modelBase == null || supportArmPose == null || !OffhandDisplayManager.shouldUseInwardSupportArmForManualAction(model)) {
-            return supportArmPose;
-        }
-        BedrockPart carrier = resolveCarrier(model);
-        BedrockPart holdingEndpoint = findHoldingEndpoint(model.getRootNode());
-        if (holdingEndpoint == null) {
-            holdingEndpoint = findHoldingControlNode(model.getRootNode());
-        }
-        BedrockPart supportEndpoint = findSupportEndpoint(model.getRootNode());
-        if (supportEndpoint == null) {
-            supportEndpoint = findSupportControlNode(model.getRootNode());
-        }
-        if (carrier == null || holdingEndpoint == null || supportEndpoint == null) {
-            return supportArmPose;
-        }
-        Matrix4f carrierPose = new Matrix4f(modelBase).mul(computeWorldMatrix(carrier));
-        float carrierDeterminant = carrierPose.determinant();
-        if (!isFinite(carrierPose) || !Float.isFinite(carrierDeterminant) || Math.abs(carrierDeterminant) < 1.0E-8f) {
-            return supportArmPose;
-        }
-        Matrix4f supportRelative = new Matrix4f(carrierPose).invert().mul(supportArmPose);
-        if (!isFinite(supportRelative)) {
-            return supportArmPose;
-        }
-        SupportRetargetSnapshot snapshot = SUPPORT_RETARGET_CACHE.get(model);
-        if (snapshot == null || snapshot.carrier != carrier || snapshot.holdingEndpoint != holdingEndpoint || snapshot.supportEndpoint != supportEndpoint) {
-            Matrix4f holdingPose = new Matrix4f(modelBase).mul(computeWorldMatrix(holdingEndpoint)).rotateZ(ARM_RENDER_Z_ROTATION);
-            Matrix4f holdingRelative = new Matrix4f(carrierPose).invert().mul(holdingPose);
-            float supportDeterminant = supportRelative.determinant();
-            if (!isFinite(holdingRelative) || !Float.isFinite(supportDeterminant) || Math.abs(supportDeterminant) < 1.0E-8f) {
-                return supportArmPose;
-            }
-            Matrix4f supportToHolding = new Matrix4f(supportRelative).invert().mul(holdingRelative);
-            if (!isFinite(supportToHolding)) {
-                return supportArmPose;
-            }
-            snapshot = new SupportRetargetSnapshot(carrier, holdingEndpoint, supportEndpoint, supportToHolding);
-            SUPPORT_RETARGET_CACHE.put(model, snapshot);
-        }
-        Matrix4f result = new Matrix4f(carrierPose).mul(supportRelative).mul(snapshot.supportToHolding);
-        return isFinite(result) ? result : supportArmPose;
-    }
-
-    public static boolean hasBoltNamedBone(BedrockAnimatedModel model) {
-        if (model == null) {
-            return false;
-        }
-        Boolean cached = BOLT_BONE_CACHE.get(model);
-        if (cached != null) {
-            return cached.booleanValue();
-        }
-        boolean found = false;
-        Map<String, ?> indexedBones = model.getIndexBones();
-        if (indexedBones != null) {
-            Iterator<String> it = indexedBones.keySet().iterator();
-            while (true) {
-                if (!it.hasNext()) {
-                    break;
-                }
-                String boneName = it.next();
-                if (normalize(boneName).contains("bolt")) {
-                    found = true;
-                    break;
-                }
-            }
-        }
-        if (!found) {
-            found = hasBoltNamedPart(model.getRootNode());
-        }
-        BOLT_BONE_CACHE.put(model, Boolean.valueOf(found));
-        return found;
-    }
-
-    public static double getInwardLeftArmProxyOffsetX(boolean slimModel) {
-        return slimModel ? SLIM_LEFT_ARM_PROXY_OFFSET_X : STANDARD_LEFT_ARM_PROXY_OFFSET_X;
     }
 
     public static Set<String> resolveHoldingArmAnimationNodes(BedrockAnimatedModel model) {
@@ -287,23 +190,6 @@ public final class OffhandArmPoseResolver {
             }
         }
         return null;
-    }
-
-    private static boolean hasBoltNamedPart(BedrockPart part) {
-        if (part == null) {
-            return false;
-        }
-        if (normalize(part.name).contains("bolt")) {
-            return true;
-        }
-        ObjectListIterator it = part.children.iterator();
-        while (it.hasNext()) {
-            BedrockPart child = (BedrockPart) it.next();
-            if (hasBoltNamedPart(child)) {
-                return true;
-            }
-        }
-        return false;
     }
 
     public static BedrockPart findSupportEndpoint(BedrockPart part) {
@@ -474,17 +360,4 @@ public final class OffhandArmPoseResolver {
         return Float.isFinite(matrix.m00()) && Float.isFinite(matrix.m01()) && Float.isFinite(matrix.m02()) && Float.isFinite(matrix.m03()) && Float.isFinite(matrix.m10()) && Float.isFinite(matrix.m11()) && Float.isFinite(matrix.m12()) && Float.isFinite(matrix.m13()) && Float.isFinite(matrix.m20()) && Float.isFinite(matrix.m21()) && Float.isFinite(matrix.m22()) && Float.isFinite(matrix.m23()) && Float.isFinite(matrix.m30()) && Float.isFinite(matrix.m31()) && Float.isFinite(matrix.m32()) && Float.isFinite(matrix.m33());
     }
 
-    private static final class SupportRetargetSnapshot {
-        private final BedrockPart carrier;
-        private final BedrockPart holdingEndpoint;
-        private final BedrockPart supportEndpoint;
-        private final Matrix4f supportToHolding;
-
-        private SupportRetargetSnapshot(BedrockPart carrier, BedrockPart holdingEndpoint, BedrockPart supportEndpoint, Matrix4f supportToHolding) {
-            this.carrier = carrier;
-            this.holdingEndpoint = holdingEndpoint;
-            this.supportEndpoint = supportEndpoint;
-            this.supportToHolding = new Matrix4f(supportToHolding);
-        }
-    }
 }

@@ -1,13 +1,12 @@
 package com.ssscript.taczfixes.client.handler;
 
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.render.light.ClientGunLightManager;
+import com.ssscript.taczfixes.client.render.ClientGunLightManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import com.tacz.guns.entity.EntityKineticBullet;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;

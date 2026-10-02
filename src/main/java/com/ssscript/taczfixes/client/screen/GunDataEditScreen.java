@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.screen;
 
-import com.google.gson.JsonParser;
 import com.ssscript.taczfixes.common.util.GunDataEditorHelper;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.minecraft.ChatFormatting;

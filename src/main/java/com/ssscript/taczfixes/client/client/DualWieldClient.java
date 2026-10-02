@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.client;
 
-import com.ssscript.taczfixes.client.render.crosshair.DynamicCrosshair;
+import com.ssscript.taczfixes.client.client.DynamicCrosshair;
 
-import com.ssscript.taczfixes.client.render.light.ClientGunLightManager;
+import com.ssscript.taczfixes.client.render.ClientGunLightManager;
 
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
@@ -48,9 +48,6 @@ import com.ssscript.taczfixes.common.network.ClientMessageOffhandMelee;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandReload;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandShoot;
 import it.unimi.dsi.fastutil.Pair;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.runtime.ObjectMethods;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -59,11 +56,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
 import com.tacz.guns.compat.playeranimator.AnimationName;

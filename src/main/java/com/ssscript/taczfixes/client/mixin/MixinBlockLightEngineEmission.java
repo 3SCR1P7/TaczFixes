@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.light.ClientGunLightManager;
+import com.ssscript.taczfixes.client.render.ClientGunLightManager;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.BlockLightEngine;
 import org.spongepowered.asm.mixin.Mixin;

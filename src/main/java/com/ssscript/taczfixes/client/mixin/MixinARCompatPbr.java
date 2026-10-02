@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
+import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.tacz.guns.compat.ar.ARCompat;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

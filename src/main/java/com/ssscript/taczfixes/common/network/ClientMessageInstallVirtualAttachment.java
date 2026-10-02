@@ -10,7 +10,6 @@ import com.ssscript.taczfixes.common.util.VirtualAttachments;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
-import com.tacz.guns.api.item.builder.AttachmentItemBuilder;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;

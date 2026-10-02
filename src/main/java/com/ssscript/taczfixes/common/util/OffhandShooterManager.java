@@ -32,9 +32,6 @@ import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
 import com.ssscript.taczfixes.common.network.ServerMessageDualWieldEligibility;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandState;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.runtime.ObjectMethods;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Deque;
@@ -67,7 +64,6 @@ import net.minecraft.world.entity.player.Player;
 
 @Mod.EventBusSubscriber
 public final class OffhandShooterManager {
-    public static final long NO_MANUAL_ASYNC_TASK_GENERATION = Long.MIN_VALUE;
     private static final long MANUAL_ACTION_RETRY_TIMEOUT_MS = 5000;
     private static final long MAX_SERVER_BOLT_DURATION_MS = 10000;
     private static final long FIRE_SELECT_REQUEST_INTERVAL_MS = 150;

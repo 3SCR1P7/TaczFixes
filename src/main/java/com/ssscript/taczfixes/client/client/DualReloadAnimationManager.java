@@ -5,6 +5,8 @@ import com.tacz.guns.api.client.animation.AnimationController;
 import com.tacz.guns.api.client.animation.ObjectAnimation;
 import com.tacz.guns.api.client.animation.ObjectAnimationRunner;
 import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
+import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.model.BedrockAnimatedModel;
@@ -110,7 +112,7 @@ public final class DualReloadAnimationManager {
             return false;
         }
         long elapsed = GunTime.nowMillis() - visual.startTimestamp;
-        return elapsed >= visual.putAwayMillis && elapsed < visual.drawStartTimestamp - visual.startTimestamp;
+        return elapsed >= visual.putAwayMillis && !visual.drawStarted;
     }
 
     public static void markHandReloadCompleted(InteractionHand hand) {
@@ -151,15 +153,22 @@ public final class DualReloadAnimationManager {
             removeOverlay(visual);
             return null;
         }
-        if (!visual.drawStarted && now >= visual.drawStartTimestamp) {
-            visual.drawStarted = true;
-            playDraw(visual);
+        ReloadState.StateType reloadType = getReloadStateType(player, visual.hand);
+        if (reloadType.isReloading()) {
+            visual.reloadActiveSeen = true;
+        }
+        if (!visual.drawStarted) {
+            // 逐发装填脚本的 feed 时长由脚本按发数决定, 不能按时长估算;
+            // 以实际换弹状态为准: 进入收尾阶段、或换弹结束/被打断后才掏枪。
+            boolean feedFinished = reloadType.isReloadFinishing();
+            boolean reloadEnded = visual.reloadActiveSeen && !reloadType.isReloading();
+            boolean timerElapsed = !reloadType.isReloading() && now >= visual.drawStartTimestamp;
+            if (feedFinished || reloadEnded || timerElapsed) {
+                visual.drawStarted = true;
+                playDraw(visual);
+            }
         }
         if (visual.drawStarted && (isOverlayStopped(visual) || now >= visual.drawHardEndTimestamp)) {
-            removeOverlay(visual);
-            return null;
-        }
-        if (!visual.drawStarted && now >= visual.drawHardEndTimestamp) {
             removeOverlay(visual);
             return null;
         }
@@ -168,6 +177,20 @@ public final class DualReloadAnimationManager {
             return null;
         }
         return visual;
+    }
+
+    private static ReloadState.StateType getReloadStateType(LocalPlayer player, InteractionHand hand) {
+        int ordinal;
+        if (hand == InteractionHand.OFF_HAND) {
+            ordinal = OffhandDisplayManager.getClientState().getReloadStateType();
+        } else {
+            ordinal = IGunOperator.fromLivingEntity(player).getSynReloadState().getStateType().ordinal();
+        }
+        ReloadState.StateType[] types = ReloadState.StateType.values();
+        if (ordinal < 0 || ordinal >= types.length) {
+            return ReloadState.StateType.NOT_RELOADING;
+        }
+        return types[ordinal];
     }
 
     private static void playPutAway(ReloadVisual visual) {
@@ -270,6 +293,7 @@ public final class DualReloadAnimationManager {
         private final long startTimestamp;
         private final long putAwayMillis;
         private final long feedMillis;
+        private boolean reloadActiveSeen;
         private boolean drawStarted;
         private int track = -1;
         private long drawStartTimestamp = Long.MAX_VALUE;

@@ -17,32 +17,22 @@ import com.ssscript.taczfixes.common.util.DualWieldBalance;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
 import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
 import com.tacz.guns.util.time.GunTime;
-import java.lang.invoke.MethodHandles;
-import java.lang.invoke.MethodType;
-import java.lang.runtime.ObjectMethods;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class ClientOffhandState {
-    private static final long RELOAD_REQUEST_TIMEOUT_MS = 5000;
-    private static final long BOLT_REQUEST_TIMEOUT_MS = 5000;
     private static final long BOLT_ACTIVE_TIMEOUT_MS = 10000;
     private static final long BOLT_NBT_GRACE_MS = 500;
-    private static final long MANUAL_SHOT_CHAMBER_SYNC_TIMEOUT_MS = 5000;
-    private static final long FIRE_SELECT_REQUEST_TIMEOUT_MS = 5000;
     private static final long SHOOT_REQUEST_TIMEOUT_MS = 30000;
-    private static final long SHOOT_TRANSITION_SERVER_WAIT_MS = 250;
     private static final int MAX_PENDING_SHOOT_REQUESTS = 256;
-    private static final long MIN_MANUAL_ACTION_BOLT_LOCK_MS = 250;
     private boolean shootTransitionLocked;
     private UUID shootTransitionStackId;
     private boolean shootTransitionServerCoolDownObserved;
@@ -283,10 +273,6 @@ public final class ClientOffhandState {
         return 0;
     }
 
-    public synchronized boolean isReloadCancelPending() {
-        return this.reloadCancelPending;
-    }
-
     public synchronized void applyServerState(int requestId, int serverReloadStateType, long reloadElapsedMillis, long reloadCountDownMillis, boolean serverBolting, int serverBoltRequestId, boolean boltRequestAcknowledged, boolean serverManualActionEpisodeActive, boolean serverManualActionBoltReady, boolean shootRequestAcknowledged, long acknowledgedShootTimestamp) {
         long now = System.currentTimeMillis();
         long reloadNow = GunTime.nowMillis();
@@ -500,10 +486,6 @@ public final class ClientOffhandState {
         return this.fireSelectRequestId;
     }
 
-    public synchronized int getFireSelectRequestId() {
-        return this.fireSelectRequestId;
-    }
-
     public synchronized boolean isFireSelectRequestPending() {
         long now = System.currentTimeMillis();
         if (this.fireSelectRequestPending && (this.fireSelectRequestTimestamp < 0 || now < this.fireSelectRequestTimestamp || now - this.fireSelectRequestTimestamp >= 5000)) {
@@ -658,13 +640,6 @@ public final class ClientOffhandState {
             return ReloadState.StateType.NOT_RELOADING.ordinal();
         }
         return this.reloadStateType;
-    }
-
-    public float getReloadProgress() {
-        if (this.reloadStartTimestamp < 0 || this.reloadEndTimestamp <= this.reloadStartTimestamp) {
-            return -1.0f;
-        }
-        return Mth.clamp((GunTime.nowMillis() - this.reloadStartTimestamp) / (this.reloadEndTimestamp - this.reloadStartTimestamp), 0.0f, 1.0f);
     }
 
     public boolean chargeShoot(LocalPlayer player, ItemStack stack, boolean isChargingInput) {

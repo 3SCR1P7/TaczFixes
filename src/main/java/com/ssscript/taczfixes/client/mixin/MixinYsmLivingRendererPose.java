@@ -5,7 +5,6 @@ import com.ssscript.taczfixes.common.compat.YsmCompatibilityDiagnostics;
 import com.ssscript.taczfixes.common.compat.YsmDualWieldCompat;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Pseudo;

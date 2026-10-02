@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.ssscript.taczfixes.client.render.pbr.BeamPbrRouting;
+import com.ssscript.taczfixes.client.render.BeamPbrRouting;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import org.spongepowered.asm.mixin.Mixin;

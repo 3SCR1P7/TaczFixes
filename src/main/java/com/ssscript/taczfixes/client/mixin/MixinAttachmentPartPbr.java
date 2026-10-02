@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
+import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import net.minecraft.client.renderer.RenderType;
 import org.lwjgl.opengl.GL11;

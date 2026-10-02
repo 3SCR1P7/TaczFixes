@@ -9,7 +9,6 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
-import com.tacz.guns.client.model.BedrockAnimatedModel;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import net.minecraft.client.Minecraft;
@@ -199,31 +198,6 @@ public final class CustomScopeViewShift {
                 .map(ClientAttachmentIndex::isScope).orElse(false);
     }
 
-
-    public static Vec3 scopeEyePosition(com.tacz.guns.client.model.BedrockGunModel model, ItemStack gun) {
-        if (model == null || gun == null || gun.isEmpty()) {
-            return null;
-        }
-        ItemStack scope = readStandardScope(gun);
-        if (scope.isEmpty()) {
-            com.tacz.guns.api.item.IGun igun = com.tacz.guns.api.item.IGun.getIGunOrNull(gun);
-            if (igun != null) {
-                scope = igun.getBuiltinAttachment(gun, AttachmentType.SCOPE);
-            }
-        }
-        if (scope.isEmpty()) {
-            List<com.tacz.guns.client.model.bedrock.BedrockPart> ironPath = model.getIronSightPath();
-            if (ironPath == null || ironPath.isEmpty()) {
-                return null;
-            }
-            return slotCenterWorld(ironPath.get(ironPath.size() - 1), ItemStack.EMPTY, gun, null);
-        }
-        List<com.tacz.guns.client.model.bedrock.BedrockPart> scopePath = model.getScopePosPath();
-        if (scopePath == null || scopePath.isEmpty()) {
-            return null;
-        }
-        return slotCenterWorld(scopePath.get(scopePath.size() - 1), scope, gun, getStandardScopeAdapterOffset(gun, scope));
-    }
 
     public static ItemStack readStandardScope(ItemStack gun) {
         CompoundTag tag = gun.getTag();

@@ -19,15 +19,6 @@ import javax.annotation.Nullable;
 
 /** blocking 字段: 前方 distance 格内有方块/实体时, 按距离线性产生旋转与后退。 */
 public final class GunBlocking {
-    private static final double DEFAULT_DISTANCE_MAX = 0.5d;
-    private static final double DEFAULT_DISTANCE_MIN = 0.25d;
-    private static final double DEFAULT_ANGLE = 60.0d;
-    private static final double DEFAULT_BACK_OFF = 0.25d;
-    private static final double DEFAULT_DEFLECTION = 1.0d;
-    private static final double DEFAULT_DISABLE_FIRE = 0.0d;
-    private static final double DEFAULT_FACING = 180.0d;
-    private static final double DEFAULT_FACING_DUAL = 90.0d;
-
     private GunBlocking() {
     }
 

@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.light;
+package com.ssscript.taczfixes.client.render;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 import net.minecraft.client.Minecraft;
@@ -82,10 +82,6 @@ public enum LightManager {
         return s;
     }
 
-    public static void onResourceManagerReload() {
-        lightShader = null;
-    }
-
     public static void injectShaders() {
         ShaderInjection.registerVSHInjection("particle", LightManager::PositionInjection);
         ShaderInjection.registerVSHInjection("rendertype_solid", LightManager::ChunkInjection);
@@ -117,10 +113,6 @@ public enum LightManager {
 
     public int maxFixedLight() {
         return UV_LIGHT.size() + NO_UV_LIGHT.size();
-    }
-
-    public int leftBlockLightCount() {
-        return MAXIMUM_LIGHT_SUPPORT - maxFixedLight();
     }
 
     public FloatBuffer getBuffer() {

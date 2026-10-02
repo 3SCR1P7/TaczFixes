@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.common.handler;
 
-import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.SpreadState;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;

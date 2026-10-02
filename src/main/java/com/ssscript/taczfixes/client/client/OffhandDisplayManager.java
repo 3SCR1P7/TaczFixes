@@ -223,7 +223,6 @@ public final class OffhandDisplayManager {
                 manualActionArmMode = ManualActionArmMode.UNDECIDED;
                 capturingManualActionTrack = true;
                 manualActionCapturePending = true;
-                OffhandArmPoseResolver.beginManualAction(display.getGunModel());
             }
             try {
                 stateMachine.trigger(input);
@@ -515,14 +514,6 @@ public final class OffhandDisplayManager {
         return ItemStack.isSameItemSameTags(stack, putAwayMainStack);
     }
 
-    public static boolean isPuttingAwayModel(BedrockAnimatedModel model) {
-        if (!isPuttingAway() || model == null) {
-            return false;
-        }
-        BedrockGunModel putAwayOffhandModel = display == null ? null : display.getGunModel();
-        return model == putAwayOffhandModel || model == putAwayMainModel;
-    }
-
     public static boolean isActiveModel(BedrockAnimatedModel model) {
         return (model == null || display == null || display.getGunModel() != model) ? false : true;
     }
@@ -562,10 +553,6 @@ public final class OffhandDisplayManager {
 
     public static boolean shouldUseInwardHoldingArmForManualAction(BedrockAnimatedModel model) {
         return isManualActionArmMotionActive(model) && manualActionArmMode != ManualActionArmMode.SUPPORT;
-    }
-
-    public static boolean shouldUseInwardSupportArmForManualAction(BedrockAnimatedModel model) {
-        return isManualActionArmMotionActive(model) && manualActionArmMode == ManualActionArmMode.SUPPORT;
     }
 
     private static void latchManualActionArmMode() {
@@ -621,7 +608,6 @@ public final class OffhandDisplayManager {
     }
 
     private static void resetManualActionCapture() {
-        OffhandArmPoseResolver.resetManualAction(display == null ? null : display.getGunModel());
         MANUAL_ACTION_TRACKS.clear();
         capturingManualActionTrack = false;
         manualActionCapturePending = false;

@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.light;
+package com.ssscript.taczfixes.client.render;
 
 import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL31;
@@ -10,7 +10,6 @@ import java.nio.FloatBuffer;
  */
 public class ShaderUBO {
     public final int id;
-    private boolean inValid;
     private int blockBinding = -1;
 
     public ShaderUBO() {

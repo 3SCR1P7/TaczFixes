@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.light;
+package com.ssscript.taczfixes.client.render;
 
 import org.joml.Vector3f;
 

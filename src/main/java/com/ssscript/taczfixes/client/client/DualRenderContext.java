@@ -65,22 +65,6 @@ public final class DualRenderContext {
         return DualWieldOverrides.handPosLeft(stack, DualWieldOverrides.DEFAULT_ON_LEFT);
     }
 
-    public static Matrix4f resolveOffhandArmPose(BedrockAnimatedModel model, Matrix4f armPose) {
-        OffhandModelBase base = OFFHAND_MODEL_BASE.get();
-        if (PHASE.get() != HandPhase.OFFHAND || base == null || base.model != model) {
-            return armPose;
-        }
-        return OffhandArmPoseResolver.resolve(model, base.pose, armPose);
-    }
-
-    public static Matrix4f resolveOffhandSupportArmPose(BedrockAnimatedModel model, Matrix4f supportArmPose) {
-        OffhandModelBase base = OFFHAND_MODEL_BASE.get();
-        if (PHASE.get() != HandPhase.OFFHAND || base == null || base.model != model) {
-            return supportArmPose;
-        }
-        return OffhandArmPoseResolver.resolveSupportManualAction(model, base.pose, supportArmPose);
-    }
-
     public static void clear() {
         PHASE.remove();
         OFFHAND_MODEL_BASE.remove();

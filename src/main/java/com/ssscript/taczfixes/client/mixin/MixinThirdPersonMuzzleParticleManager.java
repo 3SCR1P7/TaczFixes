@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.client.DualMuzzleFlashState;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.tacz.guns.client.particle.ThirdPersonMuzzleParticleManager;

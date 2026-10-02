@@ -27,11 +27,11 @@ public class MixinRenderCrosshairEventCustomHud {
             ci.cancel();
             return;
         }
-        if (com.ssscript.taczfixes.client.render.crosshair.CrosshairBlockIndicator.render(graphics, window)) {
+        if (com.ssscript.taczfixes.client.client.CrosshairBlockIndicator.render(graphics, window)) {
             ci.cancel();
             return;
         }
-        if (com.ssscript.taczfixes.client.render.crosshair.DynamicCrosshair.render(graphics, window)) {
+        if (com.ssscript.taczfixes.client.client.DynamicCrosshair.render(graphics, window)) {
             ci.cancel();
         }
     }

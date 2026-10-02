@@ -7,7 +7,6 @@ import com.ssscript.taczfixes.common.util.GunBlocking;
 import com.tacz.guns.client.model.BedrockGunModel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
 import org.joml.Vector3f;

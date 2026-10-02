@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.render.light.LightManager;
+import com.ssscript.taczfixes.client.render.LightManager;
 import net.minecraft.client.Camera;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;

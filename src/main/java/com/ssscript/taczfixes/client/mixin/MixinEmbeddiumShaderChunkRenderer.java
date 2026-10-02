@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.render.light.LightManager;
+import com.ssscript.taczfixes.client.render.LightManager;
 import me.jellysquid.mods.sodium.client.gl.shader.GlProgram;
 import me.jellysquid.mods.sodium.client.render.chunk.ShaderChunkRenderer;
 import me.jellysquid.mods.sodium.client.render.chunk.shader.ChunkShaderInterface;

@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.light;
+package com.ssscript.taczfixes.client.render;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 
@@ -21,10 +21,6 @@ public final class ShaderInjection {
 
     public static void registerVSHInjection(String shaderName, Function<String, String> injection) {
         VSH_INJECTIONS.computeIfAbsent(shaderName, s -> new ArrayList<>()).add(injection);
-    }
-
-    public static void registerFSHInjection(String shaderName, Function<String, String> injection) {
-        FSH_INJECTIONS.computeIfAbsent(shaderName, s -> new ArrayList<>()).add(injection);
     }
 
     public static boolean hasInjectFSH(String shaderName) {

@@ -5,7 +5,6 @@ import com.mojang.math.Axis;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.modifier.ParameterizedCachePair;
 import com.tacz.guns.client.model.BedrockGunModel;
-import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.modifier.custom.RecoilModifier;

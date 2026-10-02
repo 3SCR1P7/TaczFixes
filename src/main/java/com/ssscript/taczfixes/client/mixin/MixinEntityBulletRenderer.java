@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
+import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.tacz.guns.client.renderer.entity.EntityBulletRenderer;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.ssscript.taczfixes.client.client.DualMuzzleFlashState;

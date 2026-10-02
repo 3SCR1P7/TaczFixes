@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.render.light.ShaderInjection;
+import com.ssscript.taczfixes.client.render.ShaderInjection;
 import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
 import com.mojang.blaze3d.shaders.Program;

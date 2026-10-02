@@ -4,7 +4,6 @@ import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.MobType;
 import net.minecraft.world.item.ItemStack;

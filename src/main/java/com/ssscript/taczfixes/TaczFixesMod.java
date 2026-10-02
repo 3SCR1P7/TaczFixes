@@ -183,7 +183,7 @@ public class TaczFixesMod {
         modBus.addListener(this::onEntityAttributeModification);
         modBus.addListener(this::onCommonSetup);
         if (net.minecraftforge.fml.loading.FMLLoader.getDist().isClient()) {
-            com.ssscript.taczfixes.client.render.light.LightManager.injectShaders();
+            com.ssscript.taczfixes.client.render.LightManager.injectShaders();
             modBus.addListener(this::onClientSetup);
             modBus.addListener(this::onRegisterKeyMappings);
             modBus.addListener(this::onRegisterClientReloadListeners);
@@ -215,7 +215,7 @@ public class TaczFixesMod {
         event.registerReloadListener(new com.ssscript.taczfixes.client.data.ClientDisplayDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
-                        .thenRunAsync(com.ssscript.taczfixes.client.render.crosshair.CrosshairPartLayout::clear, gameExecutor));
+                        .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor));
     }
 
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {

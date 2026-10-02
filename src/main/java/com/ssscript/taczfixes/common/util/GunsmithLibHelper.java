@@ -15,7 +15,6 @@ public class GunsmithLibHelper {
     private static Field aimResultsField = null;
     private static boolean aimResultsFieldChecked = false;
 
-    private static final String HOMING_BEHAVIOR_CLASS = "mod.chloeprime.gunsmithlib.common.gunpack_extension.shared.fire_control.HomingProjectileBehavior";
     private static final String FIRE_CONTROL_BEHAVIOR_CLASS = "mod.chloeprime.gunsmithlib.common.gunpack_extension.shared.fire_control.FireControlBehavior";
 
     public static final String TRACKING_ENABLED_KEY = "gunsmithlib:homing.enabled";

@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.ssscript.taczfixes.client.render.pbr.BeamPbrRouting;
+import com.ssscript.taczfixes.client.render.BeamPbrRouting;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.BeamRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;

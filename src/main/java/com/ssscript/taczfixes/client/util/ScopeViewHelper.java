@@ -57,24 +57,4 @@ public final class ScopeViewHelper {
         return !isScopeView(index, tag);
     }
 
-    /** 当前视图对应的模型/镜内 FOV(display 的 views_fov 按视图取值); 无法确定返回 -1。 */
-    public static float modelFovForCurrentView(ClientAttachmentIndex index, CompoundTag tag) {
-        if (index == null) {
-            return -1.0f;
-        }
-        float[] viewsFov = index.getViewsFov();
-        int[] views = index.getViews();
-        if (viewsFov == null || viewsFov.length == 0) {
-            return -1.0f;
-        }
-        if (views == null || views.length == 0) {
-            return viewsFov[0];
-        }
-        int zoomNumber = tag == null ? 0 : AttachmentItemDataAccessor.getZoomNumberFromTag(tag);
-        int viewIndex = views[Math.floorMod(zoomNumber, views.length)] - 1;
-        if (viewIndex >= 0 && viewIndex < viewsFov.length) {
-            return viewsFov[viewIndex];
-        }
-        return viewsFov[0];
-    }
 }

@@ -61,7 +61,7 @@ public class ServerMessageGunLight {
     public static void handle(ServerMessageGunLight msg, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> com.ssscript.taczfixes.client.render.light.ClientGunLightManager.onLightPacket(
+                () -> () -> com.ssscript.taczfixes.client.render.ClientGunLightManager.onLightPacket(
                         msg.explosion, msg.time, msg.levelMax, msg.levelMin, msg.color,
                         new net.minecraft.world.phys.Vec3(msg.fromX, msg.fromY, msg.fromZ),
                         new net.minecraft.world.phys.Vec3(msg.toX, msg.toY, msg.toZ))));

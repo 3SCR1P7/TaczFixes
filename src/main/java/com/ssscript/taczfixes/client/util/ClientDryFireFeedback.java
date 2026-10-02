@@ -5,7 +5,6 @@ import com.tacz.guns.client.sound.SoundPlayManager;
 import com.tacz.guns.config.common.GunConfig;
 import com.tacz.guns.sound.SoundManager;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 

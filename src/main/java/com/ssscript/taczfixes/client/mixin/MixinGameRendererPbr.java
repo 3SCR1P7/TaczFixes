@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.render.pbr.PbrBloom;
-import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
+import com.ssscript.taczfixes.client.render.PbrBloom;
+import com.ssscript.taczfixes.client.render.PbrRenderer;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

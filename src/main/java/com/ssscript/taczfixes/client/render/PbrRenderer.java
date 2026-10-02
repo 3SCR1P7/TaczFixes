@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.render.pbr;
+package com.ssscript.taczfixes.client.render;
 import com.ssscript.taczfixes.client.mixin.PbrCompositeAccessor;
 import com.ssscript.taczfixes.client.mixin.PbrStateAccessor;
 import com.ssscript.taczfixes.client.mixin.PbrTextureAccessor;
