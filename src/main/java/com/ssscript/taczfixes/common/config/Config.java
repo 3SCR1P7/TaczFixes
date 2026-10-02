@@ -1428,11 +1428,11 @@ public class Config {
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("pbr");
         PBR_ENABLED = BUILDER
-                .comment("是否启用无光影包 PBR 反光和自发光效果，仅影响客户端画面。默认值：true")
+                .comment("是否启用 PBR 反光和自发光效果，仅影响客户端画面。默认值：true")
                 .define("enabled", true);
         PBR_REFLECTION = BUILDER
-                .comment("枪械材质反光强度。默认值：1.0")
-                .defineInRange("reflection_strength", 1.0, 0.0, 4.0);
+                .comment("枪械材质反光强度。默认值：0.5")
+                .defineInRange("reflection_strength", 0.5, 0.0, 4.0);
         PBR_EMISSION = BUILDER
                 .comment("枪械自发光强度。默认值：1.0")
                 .defineInRange("emission_strength", 1.0, 0.0, 4.0);

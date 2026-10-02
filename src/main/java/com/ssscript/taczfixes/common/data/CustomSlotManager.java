@@ -189,6 +189,7 @@ public class CustomSlotManager {
                                       ResourceLocation attachmentId, AttachmentType attachmentType) {
         if (def == null || attachmentId == null) return false;
         if (matchesBlacklist(def, attachmentId)) return false;
+        if (matchesWhitelist(def, attachmentId)) return true;
         if (def.isCustom()) {
             return matchesAllow(def, attachmentId);
         }
@@ -207,6 +208,15 @@ public class CustomSlotManager {
     public static boolean matchesBlacklist(CustomSlotDefinition def, ResourceLocation attachmentId) {
         if (def == null || attachmentId == null) return false;
         for (String entry : def.getBlacklist()) {
+            if (matchesIdOrTag(attachmentId, entry)) return true;
+        }
+        return false;
+    }
+
+    /** 是否命中槽位白名单(支持 #tag), 命中则无视枪械/槽位限制强制可装(黑名单除外)。 */
+    public static boolean matchesWhitelist(CustomSlotDefinition def, ResourceLocation attachmentId) {
+        if (def == null || attachmentId == null) return false;
+        for (String entry : def.getWhitelist()) {
             if (matchesIdOrTag(attachmentId, entry)) return true;
         }
         return false;

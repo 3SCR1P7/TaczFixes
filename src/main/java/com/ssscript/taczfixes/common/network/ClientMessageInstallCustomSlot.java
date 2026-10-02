@@ -59,7 +59,7 @@ public class ClientMessageInstallCustomSlot {
         ItemStack item = inventory.getItem(message.slotIndex);
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) return;
-        if (!isAllowAttachmentForSlot(gunStack, message.slotId, item)) {
+        if (!isAllowAttachmentForSlot(gunStack, message.slotId, item, def)) {
             return;
         }
             boolean match = CustomSlotManager.matchesSlot(def, gunId, attachment.getAttachmentId(item), attachment.getType(item));
@@ -147,14 +147,17 @@ public class ClientMessageInstallCustomSlot {
      * 无适配器 → 仅直连允许; 有适配器 → 适配器允许该配件。
      * 原版 gun.allowAttachment 读共享 SlotAdapters NBT, 自定义槽位需按自身适配器判定。
      */
-    private static boolean isAllowAttachmentForSlot(ItemStack gun, String slotId, ItemStack item) {
+    private static boolean isAllowAttachmentForSlot(ItemStack gun, String slotId, ItemStack item,
+                                                    CustomSlotDefinition def) {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) return false;
         ResourceLocation attachmentId = attachment.getAttachmentId(item);
         if (attachmentId == null) return false;
+        if (CustomSlotManager.matchesBlacklist(def, attachmentId)) return false;
         ResourceLocation adapterId = CustomSlotStorage.getAdapter(gun, slotId);
         if (adapterId == null) {
-            return com.tacz.guns.util.SlotAdapterHelper.allowsDirectAttachment(gun, attachmentId);
+            return com.tacz.guns.util.SlotAdapterHelper.allowsDirectAttachment(gun, attachmentId)
+                    || CustomSlotManager.matchesWhitelist(def, attachmentId);
         }
         return com.tacz.guns.api.TimelessAPI.getCommonSlotAdapterIndex(adapterId)
                 .map(index -> index.allowsAttachment(attachmentId))

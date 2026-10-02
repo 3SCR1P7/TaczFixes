@@ -96,7 +96,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
             if (stack == null || stack.isEmpty()) continue;
             IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
             if (attachment == null) continue;
-            if (!taczfixes$allowAttachmentForSlot(gunStack, selected, stack)) continue;
+            if (!taczfixes$allowAttachmentForSlot(gunStack, selected, stack, def)) continue;
             if (!CustomSlotManager.matchesSlot(def, gunId, attachment.getAttachmentId(stack), attachment.getType(stack))) {
                 continue;
             }
@@ -307,14 +307,17 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
      * 自定义槽位需读取按槽位存储的适配器。
      */
     @Unique
-    private static boolean taczfixes$allowAttachmentForSlot(ItemStack gunStack, String slotId, ItemStack stack) {
+    private static boolean taczfixes$allowAttachmentForSlot(ItemStack gunStack, String slotId, ItemStack stack,
+                                                            CustomSlotDefinition def) {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
         if (attachment == null) return false;
         ResourceLocation attachmentId = attachment.getAttachmentId(stack);
         if (attachmentId == null) return false;
+        if (CustomSlotManager.matchesBlacklist(def, attachmentId)) return false;
         ResourceLocation adapterId = CustomSlotStorage.getAdapter(gunStack, slotId);
         if (adapterId == null) {
-            return com.tacz.guns.util.SlotAdapterHelper.allowsDirectAttachment(gunStack, attachmentId);
+            return com.tacz.guns.util.SlotAdapterHelper.allowsDirectAttachment(gunStack, attachmentId)
+                    || CustomSlotManager.matchesWhitelist(def, attachmentId);
         }
         return com.tacz.guns.api.TimelessAPI.getCommonSlotAdapterIndex(adapterId)
                 .map(index -> index.allowsAttachment(attachmentId))

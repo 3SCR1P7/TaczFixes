@@ -36,10 +36,16 @@ public final class VirtualAttachments {
 
     /** 该槽位适配器是否允许此配件(镜像原版 SlotAdapterHelper 语义)。 */
     public static boolean allowsForSlot(ItemStack gunStack, String slotId, ResourceLocation attachmentId) {
+        return allowsForSlot(gunStack, slotId, attachmentId, null);
+    }
+
+    public static boolean allowsForSlot(ItemStack gunStack, String slotId, ResourceLocation attachmentId,
+                                        @Nullable CustomSlotDefinition def) {
         if (attachmentId == null) return false;
         ResourceLocation adapterId = CustomSlotStorage.getAdapter(gunStack, slotId);
         if (adapterId == null) {
-            return SlotAdapterHelper.allowsDirectAttachment(gunStack, attachmentId);
+            return SlotAdapterHelper.allowsDirectAttachment(gunStack, attachmentId)
+                    || CustomSlotManager.matchesWhitelist(def, attachmentId);
         }
         return TimelessAPI.getCommonSlotAdapterIndex(adapterId)
                 .map(index -> index.allowsAttachment(attachmentId))
@@ -107,7 +113,7 @@ public final class VirtualAttachments {
             IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
             if (attachment == null) continue;
             if (!CustomSlotManager.matchesSlot(def, gunId, id, attachment.getType(item))) continue;
-            if (!allowsForSlot(gunStack, slotId, id)) continue;
+            if (!allowsForSlot(gunStack, slotId, id, def)) continue;
             out.add(id);
         }
         return out;

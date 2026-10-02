@@ -71,7 +71,7 @@ public class ClientMessageInstallVirtualAttachment {
         if (def != null) {
             boolean builtin = CustomSlotManager.isBuiltinCandidate(def, message.attachmentId);
             if (!builtin && !CustomSlotManager.matchesSlot(def, gunId, message.attachmentId, realType)) return;
-            if (!VirtualAttachments.allowsForSlot(gunStack, message.slotKey, message.attachmentId)) return;
+            if (!VirtualAttachments.allowsForSlot(gunStack, message.slotKey, message.attachmentId, def)) return;
             if (!CustomSlotManager.isDependenceMet(gunId, gunStack, def)) return;
 
             Set<String> toUnload = new LinkedHashSet<>();

@@ -191,7 +191,8 @@ public class ClientMessageLoadRefitPreset {
             IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
             if (attachment == null) continue;
             if (!attachmentId.equals(attachment.getAttachmentId(stack))) continue;
-            if (!gun.allowAttachment(gunStack, stack)) continue;
+            if (!gun.allowAttachment(gunStack, stack)
+                    && !CustomSlotManager.matchesWhitelist(def, attachmentId)) continue;
             if (def != null) {
                 boolean match = CustomSlotManager.matchesSlot(def, gun.getGunId(gunStack),
                         attachmentId, attachment.getType(stack));

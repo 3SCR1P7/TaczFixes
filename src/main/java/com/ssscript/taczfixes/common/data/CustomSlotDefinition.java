@@ -15,6 +15,8 @@ public class CustomSlotDefinition {
     public List<String> allow_attachments;
     /** 黑名单(支持 #tag), 列出的配件永远无法装入此槽, 优先级最高。 */
     public List<String> blacklist;
+    /** 白名单(支持 #tag), 列出的配件无视枪械/槽位限制强制可装, 优先级仅次于黑名单。 */
+    public List<String> whitelist;
     public Map<String, JsonElement> dependence;
     public Map<String, JsonElement> conflict;
     @SerializedName("builtin_attachments")
@@ -30,6 +32,10 @@ public class CustomSlotDefinition {
 
     public List<String> getBlacklist() {
         return blacklist == null ? Collections.emptyList() : blacklist;
+    }
+
+    public List<String> getWhitelist() {
+        return whitelist == null ? Collections.emptyList() : whitelist;
     }
 
     public List<String> getBuiltinAttachmentIds() {
