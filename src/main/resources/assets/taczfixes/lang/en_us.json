@@ -408,6 +408,7 @@
     "config.taczfixes.entry.pbr.bloom": "Enable Bloom",
     "config.taczfixes.entry.pbr.bloom_strength": "Bloom Strength",
     "config.taczfixes.entry.pbr.bloom_radius": "Bloom Radius",
+    "config.taczfixes.entry.pbr.bloom_resolution": "Bloom Resolution Scale",
     "config.taczfixes.entry.pbr.bloom_tracer": "Bloom on Tracers",
     "config.taczfixes.entry.pbr.bloom_laser": "Bloom on Lasers",
     "key.taczfixes.focus_aim":  "Focus Aim (Hold)",

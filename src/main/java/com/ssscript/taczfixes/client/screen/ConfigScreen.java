@@ -49,6 +49,7 @@ public class ConfigScreen {
         bool_(cat, entry, "pbr.bloom", Config.PBR_BLOOM);
         dbl_(cat, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);
         dbl_(cat, entry, "pbr.bloom_radius", Config.PBR_BLOOM_RADIUS);
+        dbl_(cat, entry, "pbr.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
         bool_(cat, entry, "pbr.bloom_tracer", Config.PBR_BLOOM_TRACER);
         bool_(cat, entry, "pbr.bloom_laser", Config.PBR_BLOOM_LASER);
     }

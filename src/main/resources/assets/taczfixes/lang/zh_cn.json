@@ -409,6 +409,7 @@
     "config.taczfixes.entry.pbr.bloom": "启用泛光",
     "config.taczfixes.entry.pbr.bloom_strength": "泛光强度",
     "config.taczfixes.entry.pbr.bloom_radius": "泛光半径",
+    "config.taczfixes.entry.pbr.bloom_resolution": "泛光分辨率倍率",
     "config.taczfixes.entry.pbr.bloom_tracer": "曳光弹泛光",
     "config.taczfixes.entry.pbr.bloom_laser": "镭射泛光",
     "key.taczfixes.focus_aim":  "单手瞄准",

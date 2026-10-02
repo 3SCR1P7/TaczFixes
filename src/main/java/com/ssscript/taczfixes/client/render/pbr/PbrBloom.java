@@ -17,34 +17,50 @@ public final class PbrBloom {
     private static RenderTarget emission, horizontal, vertical;
     private static VertexBuffer quad;
     private static boolean active, dirty;
+    private static boolean emissiveThisFrame;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
     public static void beginFrame() {
         active = true;
         dirty = false;
+        emissiveThisFrame = false;
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
             release();
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
     }
 
+    /** 本帧写入了可能发光的顶点(illuminated 组、镭射光束等)。 */
+    public static void markEmissive() {
+        emissiveThisFrame = true;
+    }
+
+    public static boolean hasEmissiveContent() {
+        return emissiveThisFrame;
+    }
+
     public static boolean canCapture() {
         return active && PbrRenderer.enabled() && Config.PBR_BLOOM.get()
                 && Config.PBR_EMISSION.get() > 0 && Config.PBR_BLOOM_STRENGTH.get() > 0
-                && PbrRenderer.blurShader != null && PbrRenderer.compositeShader != null;
+                && PbrRenderer.blurShader != null && PbrRenderer.compositeShader != null
+                && PbrRenderer.maskShader != null;
     }
 
     public static void bindCapture() {
         var main = Minecraft.getInstance().getMainRenderTarget();
-        if (emission == null || emission.width != main.width || emission.height != main.height
+        int width = scaledSize(main.width);
+        int height = scaledSize(main.height);
+        if (emission == null || emission.width != width || emission.height != height
                 || emission.isStencilEnabled() != main.isStencilEnabled()) {
             releaseTargets();
-            emission = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
+            emission = new TextureTarget(width, height, true, Minecraft.ON_OSX);
             if (main.isStencilEnabled()) emission.enableStencil();
             emission.setClearColor(0, 0, 0, 0);
             emission.setFilterMode(GL11.GL_LINEAR);
-            // Keep source rows: nearest half-resolution sampling can drop thin sights entirely.
-            horizontal = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+            // Bloom runs below main resolution; linear upsampling keeps it smooth while
+            // cutting both fill rate and blur taps. Direction is normalized by main size,
+            // so the on-screen radius is unchanged.
+            horizontal = new TextureTarget(width, height, false, Minecraft.ON_OSX);
             vertical = new TextureTarget(horizontal.width, horizontal.height, false, Minecraft.ON_OSX);
             horizontal.setFilterMode(GL11.GL_LINEAR);
             vertical.setFilterMode(GL11.GL_LINEAR);
@@ -58,11 +74,18 @@ public final class PbrBloom {
         if (main.isStencilEnabled()) {
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, emission.frameBufferId);
-            GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, main.width, main.height,
+            GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, emission.width, emission.height,
                     GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
         }
         emission.bindWrite(true);
         RenderSystem.setShaderTexture(5, main.getDepthTextureId());
+    }
+
+    private static int scaledSize(int mainSize) {
+        double scale = Config.PBR_BLOOM_RESOLUTION.get();
+        if (scale > 1.0) scale = 1.0;
+        if (scale < 0.125) scale = 0.125;
+        return Math.max(1, (int) Math.round(mainSize * scale));
     }
 
     public static void endFrame() {
@@ -91,21 +114,24 @@ public final class PbrBloom {
             GL11.glDisable(GL11.GL_STENCIL_TEST);
             ensureQuad();
             float radius = Config.PBR_BLOOM_RADIUS.get().floatValue();
+            // Resolve per-pixel occlusion once, then blur color only.
+            RenderSystem.setShaderTexture(0, emission.getColorTextureId());
             RenderSystem.setShaderTexture(1, emission.getDepthTextureId());
             RenderSystem.setShaderTexture(2, main.getDepthTextureId());
-            PbrRenderer.blurShader.safeGetUniform("CheckDepth").set(1);
+            draw(emission, horizontal, PbrRenderer.maskShader);
+            RenderSystem.setShaderTexture(1, 0);
+            RenderSystem.setShaderTexture(2, 0);
             PbrRenderer.blurShader.safeGetUniform("Direction").set(radius / main.width, 0f);
-            draw(emission, horizontal, PbrRenderer.blurShader);
-            PbrRenderer.blurShader.safeGetUniform("CheckDepth").set(0);
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, radius / main.height);
             draw(horizontal, vertical, PbrRenderer.blurShader);
+            PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, radius / main.height);
+            draw(vertical, horizontal, PbrRenderer.blurShader);
             PbrRenderer.compositeShader.safeGetUniform("Strength").set(Config.PBR_BLOOM_STRENGTH.get().floatValue());
             // ShaderInstance caches BlendMode. If its additive mode is already cached,
             // apply() will not undo the disableBlend() above, and the quad replaces the world.
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO, GL11.GL_ONE);
             main.bindWrite(true);
-            compositeToMain(vertical, PbrRenderer.compositeShader);
+            compositeToMain(horizontal, PbrRenderer.compositeShader);
         } finally {
             dirty = false;
             VertexBuffer.unbind();

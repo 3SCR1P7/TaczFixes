@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.render.pbr;
 
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.platform.NativeImage;
 import com.ssscript.taczfixes.common.config.Config;
 import com.mojang.blaze3d.vertex.*;
 import com.ssscript.taczfixes.TaczFixesMod;
@@ -12,6 +13,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.ClipContext;
@@ -25,6 +27,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
@@ -33,13 +36,13 @@ import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
-    static ShaderInstance shader, blurShader, compositeShader;
+    static ShaderInstance shader, blurShader, compositeShader, maskShader;
     private static VertexBuffer mesh;
     private static final Map<ResourceLocation, Optional<Material>> MATERIALS = new HashMap<>();
     private static final Map<RenderType, RenderType> TYPES = new IdentityHashMap<>();
     private static final Method OPTIFINE_SHADERS = findOptifine();
 
-    private record Material(ResourceLocation specular, ResourceLocation normal) {}
+    private record Material(ResourceLocation specular, ResourceLocation normal, boolean emissive) {}
 
     private static int tracerBloomSuppression;
 
@@ -115,9 +118,11 @@ public final class PbrRenderer {
         TYPES.clear();
         PbrBloom.release();
         if (mesh != null) { mesh.close(); mesh = null; }
-        shader = blurShader = compositeShader = null;
+        shader = blurShader = compositeShader = maskShader = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 new ResourceLocation("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> shader = s);
+        event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                new ResourceLocation("taczfixes", "pbr_mask"), DefaultVertexFormat.POSITION_TEX), s -> maskShader = s);
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 new ResourceLocation("taczfixes", "pbr_blur"), DefaultVertexFormat.POSITION_TEX), s -> blurShader = s);
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
@@ -143,8 +148,26 @@ public final class PbrRenderer {
         ResourceLocation specular = new ResourceLocation(base.getNamespace(), stem + "_s.png");
         ResourceLocation normal = new ResourceLocation(base.getNamespace(), stem + "_n.png");
         var resources = Minecraft.getInstance().getResourceManager();
-        return Optional.of(new Material(resources.getResource(specular).isPresent() ? specular : null,
-                resources.getResource(normal).isPresent() ? normal : null));
+        ResourceLocation specularLocation = resources.getResource(specular).isPresent() ? specular : null;
+        boolean emissive = specularLocation != null && hasEmissiveAlpha(resources, specularLocation);
+        return Optional.of(new Material(specularLocation,
+                resources.getResource(normal).isPresent() ? normal : null, emissive));
+    }
+
+    /** LabPBR alpha 255 为非自发光哨兵值、0 为无自发光, 其余 alpha 代表发光强度。 */
+    private static boolean hasEmissiveAlpha(ResourceManager resources, ResourceLocation location) {
+        var resource = resources.getResource(location);
+        if (resource.isEmpty()) return false;
+        try (InputStream stream = resource.get().open(); NativeImage image = NativeImage.read(stream)) {
+            for (int y = 0; y < image.getHeight(); y++) {
+                for (int x = 0; x < image.getWidth(); x++) {
+                    int alpha = (image.getPixelRGBA(x, y) >>> 24) & 0xFF;
+                    if (alpha != 0 && alpha != 255) return true;
+                }
+            }
+        } catch (IOException | RuntimeException ignored) {
+        }
+        return false;
     }
 
     private static final class PbrType extends RenderType {
@@ -191,6 +214,7 @@ public final class PbrRenderer {
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
 
                 if (PbrBloom.canCapture() && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
+                        && (material.emissive() || PbrBloom.hasEmissiveContent())
                         && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
                         == Minecraft.getInstance().getMainRenderTarget().frameBufferId) {
                     boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);

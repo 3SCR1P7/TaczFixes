@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.client.render.pbr.PbrBloom;
 import com.ssscript.taczfixes.client.render.pbr.PbrRenderer;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import org.spongepowered.asm.mixin.Mixin;
@@ -16,6 +17,7 @@ public abstract class MixinBedrockPartPbr {
         // Preserve TaCZ's flag and inherited illumination without changing its consumer type.
         for (BedrockPart part = (BedrockPart) (Object) this; part != null; part = part.getParent()) {
             if (part.illuminated) {
+                PbrBloom.markEmissive();
                 return packedLight | 1;
             }
         }

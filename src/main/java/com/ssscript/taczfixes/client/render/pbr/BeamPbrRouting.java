@@ -25,6 +25,7 @@ public final class BeamPbrRouting {
         if (entityType == null) {
             return source.getBuffer(original);
         }
+        PbrBloom.markEmissive();
         return new BeamEntityVertexConsumer(source.getBuffer(PbrRenderer.resolve(entityType)));
     }
 

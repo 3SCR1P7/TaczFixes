@@ -15,6 +15,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_EMISSION;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
+    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
     private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
@@ -1444,12 +1445,15 @@ public class Config {
         PBR_BLOOM_RADIUS = BUILDER
                 .comment("泛光半径（屏幕像素），越大开销越高。默认值：8.0")
                 .defineInRange("bloom_radius", 8.0, 1.0, 40.0);
-        PBR_BLOOM_TRACER = BUILDER
-                .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
-                .define("bloom_tracer", false);
+        PBR_BLOOM_RESOLUTION = BUILDER
+                .comment("泛光渲染分辨率倍率，越高效果越好，但开销更大。默认值：1.0")
+                .defineInRange("bloom_resolution", 1.0, 0.25, 1.0);
         PBR_BLOOM_LASER = BUILDER
                 .comment("是否开启镭射泛光。默认值：true")
                 .define("bloom_laser", true);
+        PBR_BLOOM_TRACER = BUILDER
+                .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
+                .define("bloom_tracer", false);
         BUILDER.pop();
         SPECS.put("pbr", BUILDER.build());
     }

@@ -1,0 +1,19 @@
+{
+  "vertex": "taczfixes:pbr_screen",
+  "fragment": "taczfixes:pbr_mask",
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    },
+    {
+      "name": "Sampler2"
+    }
+  ]
+}

@@ -70,7 +70,8 @@ void main() {
     float fog = 1.0 - smoothstep(FogStart, max(FogEnd, FogStart + 0.001), vertexDistance);
     if (EmissionPass != 0) {
         if (emission <= 0.0) discard;
-        float sceneDepth = texelFetch(Sampler5, ivec2(gl_FragCoord.xy), 0).r;
+        // Emission target may be smaller than the main target; sample scene depth by screen UV.
+        float sceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
         if (gl_FragCoord.z > sceneDepth + 0.000001) discard;
         fragColor = vec4(glow * fog, alpha);
         return;
