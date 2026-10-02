@@ -66,7 +66,7 @@ public class ClientMessageInstallVirtualAttachment {
         if (attachment == null) return;
         AttachmentType realType = attachment.getType(built);
         ResourceLocation gunId = gun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, message.slotKey);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, message.slotKey);
 
         if (def != null) {
             boolean builtin = CustomSlotManager.isBuiltinCandidate(def, message.attachmentId);
@@ -81,7 +81,7 @@ public class ClientMessageInstallVirtualAttachment {
                 }
             }
             for (java.util.Map.Entry<String, CustomSlotDefinition> entry
-                    : CustomSlotManager.getSlots(gunId).entrySet()) {
+                        : CustomSlotManager.getSlots(gunStack).entrySet()) {
                 if (entry.getKey().equals(message.slotKey)) continue;
                 JsonElement cond = entry.getValue().getConflict().get(message.slotKey);
                 if (cond != null && CustomSlotManager.satisfies(gunId, gunStack, entry.getKey(), cond)) {
@@ -104,7 +104,7 @@ public class ClientMessageInstallVirtualAttachment {
                 }
             }
             for (String conflictId : toUnload) {
-                if (CustomSlotManager.getSlot(gunId, conflictId) != null) {
+                if (CustomSlotManager.getSlot(gunStack, conflictId) != null) {
                     CustomSlotStorage.unload(gunStack, conflictId);
                 } else {
                     unloadStandard(gunStack, gun, conflictId);

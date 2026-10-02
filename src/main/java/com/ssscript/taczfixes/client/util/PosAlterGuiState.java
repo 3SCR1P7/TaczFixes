@@ -177,12 +177,12 @@ public final class PosAlterGuiState {
         ResourceLocation gunIdLocal = igun.getGunId(gunStack);
         String customSlot = CustomSlotGuiState.get();
         if (customSlot != null) {
-            return GunPosAlterManager.getRange(gunIdLocal, customSlot) != null ? customSlot : null;
+            return GunPosAlterManager.getRange(gunStack, customSlot) != null ? customSlot : null;
         }
         AttachmentType type = RefitTransform.getCurrentTransformType();
         if (type != null && type != AttachmentType.NONE) {
             String key = type.name().toLowerCase(Locale.US);
-            return GunPosAlterManager.getRange(gunIdLocal, key) != null ? key : null;
+            return GunPosAlterManager.getRange(gunStack, key) != null ? key : null;
         }
         return null;
     }
@@ -194,7 +194,7 @@ public final class PosAlterGuiState {
         ItemStack gunStack = player.getMainHandItem();
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return null;
-        float[] range = GunPosAlterManager.getRange(igun.getGunId(gunStack), key);
+        float[] range = GunPosAlterManager.getRange(gunStack, key);
         if (range == null) return null;
         return new PosAlterSlider(x, y, SLIDER_WIDTH, SLIDER_HEIGHT,
                 gunStack, key, range[0], range[1]);

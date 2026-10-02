@@ -6,7 +6,6 @@ import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
-import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import net.minecraft.network.FriendlyByteBuf;
@@ -54,13 +53,12 @@ public class ClientMessageInstallCustomSlotBuiltin {
         if (gun.hasAttachmentLock(gunStack)) return;
 
         ResourceLocation gunId = gun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, message.slotId);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, message.slotId);
         if (def == null) return;
         if (!CustomSlotManager.isBuiltinCandidate(def, message.attachmentId)) return;
         if (!CustomSlotManager.isDependenceMet(gunId, gunStack, def)) return;
 
-        boolean liberated = LiberateCompat.isLiberated(player);
-        java.util.Map<String, CustomSlotDefinition> allSlots = CustomSlotManager.getSlots(gunId);
+            java.util.Map<String, CustomSlotDefinition> allSlots = CustomSlotManager.getSlots(gunStack);
         Set<String> toUnload = new LinkedHashSet<>();
         for (java.util.Map.Entry<String, JsonElement> conflictEntry : def.getConflict().entrySet()) {
             if (CustomSlotManager.satisfies(gunId, gunStack, conflictEntry.getKey(), conflictEntry.getValue())) {
@@ -90,10 +88,10 @@ public class ClientMessageInstallCustomSlotBuiltin {
         }
 
         for (String conflictId : toUnload) {
-            ItemStack removed = CustomSlotManager.getSlot(gunId, conflictId) != null
+                ItemStack removed = CustomSlotManager.getSlot(gunStack, conflictId) != null
                     ? CustomSlotStorage.unload(gunStack, conflictId)
                     : unloadStandard(gunStack, gun, conflictId);
-            if (!removed.isEmpty() && !liberated && !virtual
+            if (!removed.isEmpty() && !virtual
                     && !com.tacz.guns.util.VirtualOemAttachment.isMarked(removed)) {
                 if (!player.getInventory().add(removed)) {
                     player.drop(removed, false);
@@ -102,7 +100,7 @@ public class ClientMessageInstallCustomSlotBuiltin {
         }
 
         ItemStack old = CustomSlotStorage.getPhysical(gunStack, message.slotId);
-        if (!old.isEmpty() && !liberated && !virtual
+        if (!old.isEmpty() && !virtual
                 && !com.tacz.guns.util.VirtualOemAttachment.isMarked(old)) {
             if (!player.getInventory().add(old)) {
                 player.drop(old, false);

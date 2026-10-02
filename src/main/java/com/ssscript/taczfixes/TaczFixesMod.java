@@ -143,6 +143,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new LimbDamageHandler());
         MinecraftForge.EVENT_BUS.register(new SpreadRampHandler());
         MinecraftForge.EVENT_BUS.register(new JumpInaccuracyHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CustomSlotOrphanHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ShieldHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.InputStateCleanHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDataOverrideReloadHandler());
@@ -197,6 +198,7 @@ public class TaczFixesMod {
     /** 启动时应用 gun data 覆盖(zip/目录枪包重写需在包被读取前)。 */
     private void onCommonSetup(net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent event) {
         com.ssscript.taczfixes.common.util.GunDataOverrideStorage.applyAll();
+        com.ssscript.taczfixes.common.util.AttachmentDataOverrideStorage.applyAll();
     }
 
     private void onEntityAttributeModification(net.minecraftforge.event.entity.EntityAttributeModificationEvent event) {

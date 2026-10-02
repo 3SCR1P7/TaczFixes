@@ -45,7 +45,7 @@ public abstract class MixinGunRefitScreenSlotPressFix extends Screen {
                     IGun igun = IGun.getIGunOrNull(gunStack);
                     if (igun != null) {
                         ResourceLocation gunId = igun.getGunId(gunStack);
-                        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, selected);
+                        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, selected);
                         if (def != null && !def.isCustom()) {
                             try {
                                 if (AttachmentType.valueOf(def.type.toUpperCase(Locale.US)) == type) {

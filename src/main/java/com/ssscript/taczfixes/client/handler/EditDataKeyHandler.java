@@ -32,7 +32,8 @@ public class EditDataKeyHandler {
         boolean down = EDIT_DATA_KEY.isDown();
         if (down && !wasDown) {
             net.minecraft.world.item.ItemStack mainHand = mc.player != null ? mc.player.getMainHandItem() : net.minecraft.world.item.ItemStack.EMPTY;
-            if (mainHand.getItem() instanceof com.tacz.guns.api.item.IGun) {
+            if (mainHand.getItem() instanceof com.tacz.guns.api.item.IGun
+                    || mainHand.getItem() instanceof com.tacz.guns.api.item.IAttachment) {
                 mc.setScreen(new GunDataEditScreen());
             }
         }

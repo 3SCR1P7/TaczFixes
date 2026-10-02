@@ -71,7 +71,7 @@ public class MixinHSVSliderGroupCustomSlot {
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null) return ItemStack.EMPTY;
         ResourceLocation gunId = igun.getGunId(gun);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, slotId);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gun, slotId);
         if (def == null) return ItemStack.EMPTY;
         AttachmentType defType;
         try {

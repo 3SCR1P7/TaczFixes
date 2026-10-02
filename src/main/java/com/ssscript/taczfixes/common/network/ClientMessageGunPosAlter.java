@@ -45,17 +45,16 @@ public class ClientMessageGunPosAlter {
         ItemStack gunStack = player.getMainHandItem();
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) return;
-        ResourceLocation gunId = gun.getGunId(gunStack);
-        if (!isValidSlotKey(gunId, message.slotKey)) return;
+        if (!isValidSlotKey(gunStack, message.slotKey)) return;
         float clamped = Math.max(-MAX_ABS, Math.min(MAX_ABS, message.value));
         if (Float.isNaN(clamped) || Float.isInfinite(clamped)) clamped = 0.0F;
         PosAlterStorage.set(gunStack, message.slotKey, clamped);
         player.inventoryMenu.broadcastChanges();
     }
 
-    private static boolean isValidSlotKey(ResourceLocation gunId, String slotKey) {
+    private static boolean isValidSlotKey(ItemStack gunStack, String slotKey) {
         if (slotKey == null || slotKey.isEmpty()) return false;
-        if (CustomSlotManager.getSlot(gunId, slotKey) != null) return true;
+        if (CustomSlotManager.getSlot(gunStack, slotKey) != null) return true;
         try {
             AttachmentType type = AttachmentType.valueOf(slotKey.toUpperCase(Locale.US));
             return type != AttachmentType.NONE;

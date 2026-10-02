@@ -9,5 +9,6 @@ public class GunDataOverrideReloadHandler {
     @SubscribeEvent
     public void onServerAboutToStart(ServerAboutToStartEvent event) {
         GunDataOverrideStorage.applyAll();
+        com.ssscript.taczfixes.common.util.AttachmentDataOverrideStorage.applyAll();
     }
 }

@@ -9,7 +9,6 @@ import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
 import com.ssscript.taczfixes.client.util.TaczFixesClientState;
 import com.ssscript.taczfixes.common.mixin.MixinClientMessageRefitGunAccessor;
-import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -42,7 +41,7 @@ public class MixinSimpleChannelRefitRedirect {
         Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
         if (total == null) return;
         int slotIndex = ((MixinClientMessageRefitGunAccessor) refit).getAttachmentSlotIndex();
-        ItemStack attachmentStack = LiberateCompat.getVirtualInventory(player.getInventory()).getItem(slotIndex);
+        ItemStack attachmentStack = player.getInventory().getItem(slotIndex);
         IAttachment attachment = IAttachment.getIAttachmentOrNull(attachmentStack);
         if (attachment == null) return;
         IGun gun = IGun.getIGunOrNull(gunStack);
@@ -81,20 +80,19 @@ public class MixinSimpleChannelRefitRedirect {
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
         ResourceLocation gunId = igun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, selected);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, selected);
         if (def == null) {
             CustomSlotGuiState.reset();
             return;
         }
         int slotIndex = ((MixinClientMessageRefitGunAccessor) refit).getAttachmentSlotIndex();
-        ItemStack item = LiberateCompat.getVirtualInventory(player.getInventory()).getItem(slotIndex);
+        ItemStack item = player.getInventory().getItem(slotIndex);
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) {
             return;
         }
-        boolean liberated = LiberateCompat.isLiberated(player);
         boolean match = CustomSlotManager.matchesSlot(def, gunId, attachment.getAttachmentId(item), attachment.getType(item));
-        if (!liberated && !match) {
+        if (!match) {
             CustomSlotGuiState.reset();
             return;
         }

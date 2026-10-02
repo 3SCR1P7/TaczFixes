@@ -10,7 +10,6 @@ import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.bedrock.BedrockModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -37,8 +36,7 @@ public abstract class MixinBedrockGunModelRefitView {
         ItemStack gunStack = mc.player.getMainHandItem();
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
-        ResourceLocation gunId = igun.getGunId(gunStack);
-        CustomSlotDefinition def = slotId == null ? null : CustomSlotManager.getSlot(gunId, slotId);
+        CustomSlotDefinition def = slotId == null ? null : CustomSlotManager.getSlot(gunStack, slotId);
         if (slotId != null && def == null) return;
         if (slotId == null) {
             // 界面内: 视图切换缓动结束即可清理; 退出界面: 需等收枪缓动(opening)结束再清理,
@@ -54,7 +52,7 @@ public abstract class MixinBedrockGunModelRefitView {
 
         boolean oldCall = ((++taczfixes$viewCallCount) & 1L) != 0L;
         List<BedrockPart> path = oldCall
-                ? resolveViewFrom((BedrockModel) (Object) this, gunId)
+                ? resolveViewFrom((BedrockModel) (Object) this, gunStack)
                 : resolveToPath((BedrockModel) (Object) this, slotId, def, type);
         if (path != null) {
             cir.setReturnValue(path);
@@ -69,10 +67,10 @@ public abstract class MixinBedrockGunModelRefitView {
         return path != null ? path : pathOf(self, "refit_view");
     }
 
-    private static List<BedrockPart> resolveViewFrom(BedrockModel self, ResourceLocation gunId) {
+    private static List<BedrockPart> resolveViewFrom(BedrockModel self, ItemStack gunStack) {
         String fromSlot = CustomSlotGuiState.getViewFromSlot();
         if (fromSlot != null) {
-            CustomSlotDefinition fromDef = CustomSlotManager.getSlot(gunId, fromSlot);
+            CustomSlotDefinition fromDef = CustomSlotManager.getSlot(gunStack, fromSlot);
             List<BedrockPart> path = pathOf(self, "refit_" + fromSlot.toLowerCase(Locale.US) + "_view");
             if (path != null) return path;
             if (fromDef != null && fromDef.type != null && !fromDef.type.isEmpty()) {

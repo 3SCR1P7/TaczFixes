@@ -3,7 +3,6 @@ package com.ssscript.taczfixes.common.network;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
-import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.network.NetworkHandler;
 import com.tacz.guns.network.message.ServerMessageRefreshRefitScreen;
@@ -46,12 +45,12 @@ public class ClientMessageUnloadCustomSlot {
         if (gun.hasAttachmentLock(gunStack)) return;
 
         ResourceLocation gunId = gun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, message.slotId);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, message.slotId);
         if (def == null) return;
 
         ItemStack removed = CustomSlotStorage.unload(gunStack, message.slotId);
         CustomSlotManager.cascadeUnloadDependents(player, gunStack);
-        if (!removed.isEmpty() && !LiberateCompat.isLiberated(player)
+        if (!removed.isEmpty()
                 && !com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player)
                 && !com.tacz.guns.util.VirtualOemAttachment.isMarked(removed)) {
             if (!player.getInventory().add(removed)) {

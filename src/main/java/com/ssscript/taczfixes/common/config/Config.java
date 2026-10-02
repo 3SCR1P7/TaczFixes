@@ -655,9 +655,9 @@ public class Config {
                 .define("hide_unavailable_default_slots", false);
 
         VIRTUAL_ATTACHMENTS = BUILDER
-                .comment("虚拟配件模式: true=所有玩家, creative=仅创造模式玩家, false=关闭。默认值：false",
-                        "开启后配件拆下不返还背包、安装不消耗, 改装界面候选栏显示所有可用配件, 应用改装方案同样不消耗、不返还。")
-                .defineEnum("virtual_attachments", VirtualAttachmentsMode.FALSE);
+                .comment("是否开启虚拟配件。默认值：creative",
+                        "开启后配件拆下不返还背包、安装不消耗, 改装界面候选栏显示所有可用配件。")
+                .defineEnum("virtual_attachments", VirtualAttachmentsMode.CREATIVE);
 
         REFITSCREEN_SHOW_PRESET_BUTTONS = BUILDER
                 .comment("是否显示\"保存改装方案\"和\"加载改装方案\"按钮。默认值：true")

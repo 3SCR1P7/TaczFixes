@@ -6,7 +6,6 @@ import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.network.ClientMessageLoadRefitPreset;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
-import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.ssscript.taczfixes.common.util.RefitPresetStorage;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
@@ -362,7 +361,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
                 preset.put(type.name(), attachment.getAttachmentId(item));
             }
         }
-        for (Map.Entry<String, CustomSlotDefinition> entry : CustomSlotManager.getSlots(gunId).entrySet()) {
+        for (Map.Entry<String, CustomSlotDefinition> entry : CustomSlotManager.getSlots(gunStack).entrySet()) {
             ResourceLocation attachmentId = CustomSlotStorage.getAttachmentId(gunStack, entry.getKey());
             if (attachmentId != null) {
                 preset.put(entry.getKey(), attachmentId);
@@ -497,7 +496,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         }
         taczfixes$searchWidgets.clear();
         Inventory inv = player.getInventory();
-        Inventory sourceInv = LiberateCompat.isLiberated(player) ? LiberateCompat.getVirtualInventory(inv) : inv;
+        Inventory sourceInv = inv;
         ItemStack gunStack = player.getMainHandItem();
         IGun gun = IGun.getIGunOrNull(gunStack);
         List<Integer> matched = new ArrayList<>();

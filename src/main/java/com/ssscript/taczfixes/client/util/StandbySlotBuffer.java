@@ -35,9 +35,29 @@ public final class StandbySlotBuffer {
     public static void renderSlotAttachment(ItemStack item, ItemStack gun, BedrockPart node,
                                             PoseStack poseStack, ItemDisplayContext displayContext,
                                             int light, int overlay, String slotId) {
+        renderSlotAttachment(item, gun, node, poseStack, displayContext, light, overlay, slotId,
+                Collections.emptyList());
+    }
+
+    public static void renderSlotAttachment(ItemStack item, ItemStack gun, BedrockPart node,
+                                            PoseStack poseStack, ItemDisplayContext displayContext,
+                                            int light, int overlay, String slotId,
+                                            List<CustomSlotMount.Step> chain) {
+        renderSlotAttachment(item, gun, node, poseStack, displayContext, light, overlay, slotId, chain, false);
+    }
+
+    public static void renderSlotAttachment(ItemStack item, ItemStack gun, BedrockPart node,
+                                            PoseStack poseStack, ItemDisplayContext displayContext,
+                                            int light, int overlay, String slotId,
+                                            List<CustomSlotMount.Step> chain, boolean attachmentNode) {
         poseStack.pushPose();
+        CustomSlotMount.apply(poseStack, chain, gun, displayContext, light, overlay);
+        if (attachmentNode) {
+            // 配件模型内的定位组自动补 1.5 格(等价于把 pivot 上调 24 单位; 该位姿空间 Y 反向)
+            poseStack.translate(0.0F, -1.5F, 0.0F);
+        }
         applyNodePathTransform(node, poseStack);
-        applyPosAlter(node, gun, poseStack);
+        applyPosAlter(node, gun, poseStack, slotId);
         applySlotAdapterOffset(item, gun, slotId, poseStack, displayContext, light, overlay);
         IAttachment ia = IAttachment.getIAttachmentOrNull(item);
         if (ia == null) {
@@ -52,17 +72,21 @@ public final class StandbySlotBuffer {
         poseStack.popPose();
     }
 
-    /**
-     * 渲染非原生槽位的瞄具(玩家未使用时): 按普通配件(如 laser)管线渲染 —— AttachmentRender.renderAttachment
-     * 处理模型/UV/贴图, 传入 THIRD_PERSON 避免触发 TACZ 第一人称 renderScope/renderSight/renderBoth 的
-     * ocular 功能路径与模板剔除。不手动设置 ocular 可见性。
-     */
     public static void renderRawMesh(ItemStack item, ItemStack gun, BedrockPart node,
                                      PoseStack poseStack, ItemDisplayContext displayContext,
                                      int light, int overlay, String slotId) {
+        renderRawMesh(item, gun, node, poseStack, displayContext, light, overlay, slotId,
+                Collections.emptyList());
+    }
+
+    public static void renderRawMesh(ItemStack item, ItemStack gun, BedrockPart node,
+                                     PoseStack poseStack, ItemDisplayContext displayContext,
+                                     int light, int overlay, String slotId,
+                                     List<CustomSlotMount.Step> chain) {
         poseStack.pushPose();
+        CustomSlotMount.apply(poseStack, chain, gun, displayContext, light, overlay);
         applyNodePathTransform(node, poseStack);
-        applyPosAlter(node, gun, poseStack);
+        applyPosAlter(node, gun, poseStack, slotId);
         poseStack.translate(0.0F, -1.5F, 0.0F);
         applySlotAdapterOffset(item, gun, slotId, poseStack, displayContext, light, overlay);
         IAttachment ia = IAttachment.getIAttachmentOrNull(item);
@@ -74,13 +98,13 @@ public final class StandbySlotBuffer {
         if (type == null || type == com.tacz.guns.api.item.attachment.AttachmentType.NONE) {
             type = com.tacz.guns.api.item.attachment.AttachmentType.SCOPE;
         }
-        // 与普通配件一致: 用 AttachmentRender 渲染; 强制 THIRD_PERSON 避免 ocular 功能路径/模板
+
         AttachmentRender.renderAttachment(item, gun, type, poseStack,
                 ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, light, overlay);
         poseStack.popPose();
     }
 
-    /** 隐藏该瞄具的 sight 型 ocular(ocular_sight/红点镜片), 组合镜的 sight 部分一并隐藏。 */
+
     public static void hideOcularSightParts(BedrockAttachmentModel model,
                                             List<BedrockPart> restore) {
         try {
@@ -90,7 +114,7 @@ public final class StandbySlotBuffer {
             List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
             if (ocular == null) return;
             for (int i = 0; i < ocular.size(); i++) {
-                // sight 型(ocular_sight)隐藏; scope 型(ocular_scope)保持可见
+                // sight 鍨?ocular_sight)闅愯棌; scope 鍨?ocular_scope)淇濇寔鍙
                 if (isScopeOcular != null && i < isScopeOcular.size() && isScopeOcular.get(i)) {
                     continue;
                 }
@@ -107,8 +131,7 @@ public final class StandbySlotBuffer {
         }
     }
 
-    /** standby(未使用)渲染前: 保证 scope 型 ocular(含其祖先链)可见、sight 型 ocular 隐藏。
-     *  renderTempPart/树遍历可能把父节点设为 false, 导致子树(ocular_scope)不渲染, 故连同祖先一起恢复可见。 */
+
     public static void ensureScopeOcularVisible(BedrockAttachmentModel model,
                                                 List<BedrockPart> restore) {
         try {
@@ -140,10 +163,6 @@ public final class StandbySlotBuffer {
         restore.clear();
     }
 
-    /**
-     * 按槽适配器: 渲染适配器模型(第三人称伪装)并应用 mountOffset(x/16, -y/16, z/16),
-     * 与瞄准视角偏移(handleScopeViewShift)方向一致。仅在适配器存在且允许当前配件时生效。
-     */
     public static void applySlotAdapterOffset(ItemStack item, ItemStack gun, String slotId,
                                               PoseStack poseStack, ItemDisplayContext displayContext,
                                               int light, int overlay) {
@@ -173,12 +192,18 @@ public final class StandbySlotBuffer {
         });
     }
 
-    private static void applyPosAlter(BedrockPart node, ItemStack gun, PoseStack pose) {
-        if (node == null || node.name == null || gun == null || gun.isEmpty()) return;
-        String name = node.name;
-        if (!name.endsWith("_pos")) return;
-        String slotKey = name.substring(0, name.length() - "_pos".length());
-        float z = PosAlterStorage.get(gun, slotKey);
+    public static void applyPosAlter(BedrockPart node, ItemStack gun, PoseStack pose) {
+        applyPosAlter(node, gun, pose, null);
+    }
+
+    public static void applyPosAlter(BedrockPart node, ItemStack gun, PoseStack pose, String slotKey) {
+        if (gun == null || gun.isEmpty()) return;
+        String key = slotKey;
+        if (key == null || key.isEmpty()) {
+            if (node == null || node.name == null || !node.name.endsWith("_pos")) return;
+            key = node.name.substring(0, node.name.length() - "_pos".length());
+        }
+        float z = PosAlterStorage.get(gun, key);
         if (z != 0.0F) {
             pose.translate(0.0F, 0.0F, z / 16.0F);
         }

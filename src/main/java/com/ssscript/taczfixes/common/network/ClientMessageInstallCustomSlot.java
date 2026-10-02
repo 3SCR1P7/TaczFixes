@@ -5,7 +5,6 @@ import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
-import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
@@ -51,21 +50,23 @@ public class ClientMessageInstallCustomSlot {
         if (gun.hasAttachmentLock(gunStack)) return;
 
         ResourceLocation gunId = gun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, message.slotId);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, message.slotId);
         if (def == null) {
             return;
         }
 
-        boolean liberated = LiberateCompat.isLiberated(player);
-        net.minecraft.world.entity.player.Inventory inventory = LiberateCompat.getVirtualInventory(player.getInventory());
+        net.minecraft.world.entity.player.Inventory inventory = player.getInventory();
         ItemStack item = inventory.getItem(message.slotIndex);
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) return;
         if (!isAllowAttachmentForSlot(gunStack, message.slotId, item)) {
             return;
         }
-        boolean match = CustomSlotManager.matchesSlot(def, gunId, attachment.getAttachmentId(item), attachment.getType(item));
-        if (!liberated && !match) {
+            boolean match = CustomSlotManager.matchesSlot(def, gunId, attachment.getAttachmentId(item), attachment.getType(item));
+            if (CustomSlotManager.matchesBlacklist(def, attachment.getAttachmentId(item))) {
+                return;
+            }
+            if (!match) {
             return;
         }
         if (!CustomSlotManager.isDependenceMet(gunId, gunStack, def)) {
@@ -75,7 +76,7 @@ public class ClientMessageInstallCustomSlot {
         boolean builtin = CustomSlotManager.isBuiltinCandidate(def, attachment.getAttachmentId(item));
         boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
 
-        java.util.Map<String, CustomSlotDefinition> allSlots = CustomSlotManager.getSlots(gunId);
+            java.util.Map<String, CustomSlotDefinition> allSlots = CustomSlotManager.getSlots(gunStack);
         java.util.Set<String> toUnload = new java.util.LinkedHashSet<>();
         for (java.util.Map.Entry<String, JsonElement> conflictEntry : def.getConflict().entrySet()) {
             if (CustomSlotManager.satisfies(gunId, gunStack, conflictEntry.getKey(), conflictEntry.getValue())) {
@@ -103,10 +104,10 @@ public class ClientMessageInstallCustomSlot {
             }
         }
         for (String conflictId : toUnload) {
-            ItemStack removed = CustomSlotManager.getSlot(gunId, conflictId) != null
+                ItemStack removed = CustomSlotManager.getSlot(gunStack, conflictId) != null
                     ? CustomSlotStorage.unload(gunStack, conflictId)
                     : unloadStandard(gunStack, gun, conflictId);
-            if (!removed.isEmpty() && !liberated && !virtual
+            if (!removed.isEmpty() && !virtual
                     && !com.tacz.guns.util.VirtualOemAttachment.isMarked(removed)) {
                 if (!player.getInventory().add(removed)) {
                     player.drop(removed, false);
@@ -115,7 +116,7 @@ public class ClientMessageInstallCustomSlot {
         }
 
         ItemStack old = CustomSlotStorage.getPhysical(gunStack, message.slotId);
-        if (!old.isEmpty() && !liberated && !virtual
+        if (!old.isEmpty() && !virtual
                 && !com.tacz.guns.util.VirtualOemAttachment.isMarked(old)) {
             if (!player.getInventory().add(old)) {
                 player.drop(old, false);
@@ -130,7 +131,7 @@ public class ClientMessageInstallCustomSlot {
                 com.tacz.guns.util.VirtualOemAttachment.mark(toInstall);
             }
             CustomSlotStorage.install(gunStack, message.slotId, toInstall);
-            if (!virtual && inventory == player.getInventory()) {
+            if (!virtual) {
                 player.getInventory().setItem(message.slotIndex, ItemStack.EMPTY);
             }
         }

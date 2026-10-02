@@ -9,7 +9,6 @@ import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
 import com.ssscript.taczfixes.client.util.TaczFixesClientState;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
-import com.ssscript.taczfixes.common.util.LiberateCompat;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -67,14 +66,14 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
             return;
         }
 
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, selected);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, selected);
         if (def == null) return;
         List<ResourceLocation> builtinIds = new ArrayList<>();
         // show_icon 为 true 时在改装界面显示原厂候选; 虚拟配件模式下同样遵循该开关
         if (def.builtin_attachments != null && def.builtin_attachments.isShowIcon()) {
             for (String entry : def.getBuiltinAttachmentIds()) {
                 ResourceLocation id = ResourceLocation.tryParse(entry);
-                if (id != null) builtinIds.add(id);
+                if (id != null && CustomSlotManager.isBuiltinCandidate(def, id)) builtinIds.add(id);
             }
         }
         if (virtual) {
@@ -87,7 +86,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
             taczfixes$renderVirtualEntries(ci, player, gunStack, def, ids, selected);
             return;
         }
-        Inventory inventory = LiberateCompat.getVirtualInventory(player.getInventory());
+        Inventory inventory = player.getInventory();
         int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
         int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
         int y0 = ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();

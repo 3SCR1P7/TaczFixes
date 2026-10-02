@@ -59,7 +59,7 @@ public class AttachmentTaczFixesReloadListener implements PreparableReloadListen
         return result;
     }
 
-    private static AttachmentTaczFixesData parse(JsonObject tf) {
+    public static AttachmentTaczFixesData parse(JsonObject tf) {
         AttachmentTaczFixesData data = GSON.fromJson(tf, AttachmentTaczFixesData.class);
         if (data == null) return null;
         JsonElement rmElement = tf.get("recoil_multiplier");
@@ -69,6 +69,11 @@ public class AttachmentTaczFixesReloadListener implements PreparableReloadListen
         JsonElement iaElement = tf.get("inaccuracy_multiplier");
         if (iaElement != null && iaElement.isJsonObject()) {
             data.inaccuracy_multiplier = parseInaccuracyAdjust(iaElement.getAsJsonObject());
+        }
+        // 配件定义的槽位不支持 hidden 开关; dependence/conflict 与枪械槽一致生效。
+        if (data.attachment_slots != null) {
+            data.attachment_slots.hidden_unavailable = null;
+            data.attachment_slots.hidden_unavailable_default = null;
         }
         return data;
     }

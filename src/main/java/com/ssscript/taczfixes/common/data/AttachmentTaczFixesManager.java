@@ -36,6 +36,12 @@ public class AttachmentTaczFixesManager {
         DATA.putAll(map);
     }
 
+    public static void put(ResourceLocation dataId, AttachmentTaczFixesData data) {
+        if (dataId != null && data != null) {
+            DATA.put(dataId, data);
+        }
+    }
+
     public static AttachmentTaczFixesData get(ResourceLocation dataId) {
         return dataId == null ? null : DATA.get(dataId);
     }
@@ -101,7 +107,7 @@ public class AttachmentTaczFixesManager {
             used += getRefitPointConsume(stack);
         }
         ResourceLocation gunId = gun.getGunId(gunItem);
-        for (String slotId : CustomSlotManager.getSlots(gunId).keySet()) {
+        for (String slotId : CustomSlotManager.getSlots(gunItem).keySet()) {
             used += getRefitPointConsume(CustomSlotStorage.getPhysical(gunItem, slotId));
         }
         return used;
@@ -551,5 +557,14 @@ public class AttachmentTaczFixesManager {
                 .map(index -> index.getPojo().getData())
                 .orElse(attachmentId);
         return get(dataId);
+    }
+
+    /** 配件 data 中的 attachment_slots 配置; 无配置返回 null。 */
+    public static AttachmentSlotsConfig getSlotsConfig(ItemStack attachmentStack) {
+        if (attachmentStack == null || attachmentStack.isEmpty()) return null;
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(attachmentStack);
+        if (attachment == null) return null;
+        AttachmentTaczFixesData data = resolveData(attachment.getAttachmentId(attachmentStack));
+        return data == null ? null : data.attachment_slots;
     }
 }

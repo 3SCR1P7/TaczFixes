@@ -37,7 +37,7 @@ public final class CustomScopeArPolicy {
         if (gun == null || gun.isEmpty()) return false;
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null) return false;
-        for (String slot : CustomSlotManager.getSlots(igun.getGunId(gun)).keySet()) {
+        for (String slot : CustomSlotManager.getSlots(gun).keySet()) {
             // Includes physical attachments and effective factory/default attachments.
             ItemStack item = CustomSlotStorage.get(gun, slot);
             IAttachment attachment = IAttachment.getIAttachmentOrNull(item);

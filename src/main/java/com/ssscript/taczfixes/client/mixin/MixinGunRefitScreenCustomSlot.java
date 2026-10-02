@@ -53,7 +53,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return;
         ResourceLocation gunId = igun.getGunId(gunStack);
-        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
+        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunStack);
         boolean hiddenDefault = CustomSlotManager.isHiddenUnavailableDefault(gunId);
         if (slots.isEmpty() && !hiddenDefault && !com.ssscript.taczfixes.client.util.RefitSlotLayout.scaled()) {
             // 无自定义槽、全局未开启隐藏默认槽且槽位尺寸为默认时保持 tacz 原生布局
@@ -219,7 +219,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
     private void taczfixes$addCustomLaserSliders(ItemStack gunStack, ResourceLocation gunId) {
         String slotId = CustomSlotGuiState.get();
         if (slotId == null) return;
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, slotId);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, slotId);
         if (def == null || def.isCustom()) return;
         AttachmentType defType;
         try {

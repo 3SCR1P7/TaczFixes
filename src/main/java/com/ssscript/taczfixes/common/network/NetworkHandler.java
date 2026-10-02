@@ -168,5 +168,10 @@ public class NetworkHandler {
                 ClientMessageInstallVirtualAttachment::decode,
                 ClientMessageInstallVirtualAttachment::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(30, ClientMessageApplyAttachmentData.class,
+                ClientMessageApplyAttachmentData::encode,
+                ClientMessageApplyAttachmentData::decode,
+                ClientMessageApplyAttachmentData::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }

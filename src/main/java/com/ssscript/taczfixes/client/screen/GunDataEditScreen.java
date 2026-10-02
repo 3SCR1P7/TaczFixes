@@ -39,7 +39,9 @@ public class GunDataEditScreen extends Screen {
         super(Component.translatable("gui.taczfixes.edit_data.title"));
         ItemStack held = Minecraft.getInstance().player == null
                 ? ItemStack.EMPTY : Minecraft.getInstance().player.getMainHandItem();
-        String text = GunDataEditorHelper.currentGunDataText(held);
+        String text = held.getItem() instanceof com.tacz.guns.api.item.IAttachment
+                ? com.ssscript.taczfixes.common.util.AttachmentDataEditorHelper.currentAttachmentDataText(held)
+                : GunDataEditorHelper.currentGunDataText(held);
         this.initial = text == null ? "{}" : text;
         this.content = this.initial;
     }
@@ -89,6 +91,29 @@ public class GunDataEditScreen extends Screen {
             return;
         }
         ItemStack held = mc.player.getMainHandItem();
+        if (held.getItem() instanceof com.tacz.guns.api.item.IAttachment) {
+            ResourceLocation attachmentId =
+                    com.ssscript.taczfixes.common.util.AttachmentDataEditorHelper.attachmentIdOf(held);
+            if (attachmentId == null || !com.ssscript.taczfixes.common.util.AttachmentDataEditorHelper
+                    .validateAttachmentData(this.content)) {
+                this.triedConfirm = true;
+                this.clearWidgetFocus();
+                return;
+            }
+            ResourceLocation dataId =
+                    com.ssscript.taczfixes.common.util.AttachmentDataEditorHelper.resolveDataId(attachmentId);
+            com.ssscript.taczfixes.common.util.AttachmentDataEditorHelper.applyTaczFixes(dataId, this.content);
+            if (com.ssscript.taczfixes.common.util.AttachmentDataOverrideStorage.save(dataId, this.content)) {
+                com.ssscript.taczfixes.common.util.AttachmentDataOverrideStorage.applyAll();
+            }
+            com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.sendToServer(
+                    new com.ssscript.taczfixes.common.network.ClientMessageApplyAttachmentData(
+                            attachmentId, this.content));
+            com.ssscript.taczfixes.client.util.CenterMessage.show(
+                    Component.translatable("gui.taczfixes.edit_data.saved"));
+            this.onClose();
+            return;
+        }
         com.tacz.guns.api.item.IGun gun = com.tacz.guns.api.item.IGun.getIGunOrNull(held);
         ResourceLocation gunId = gun == null ? null : gun.getGunId(held);
         if (gun == null || gunId == null) {
@@ -279,6 +304,9 @@ public class GunDataEditScreen extends Screen {
     private void renderScrollbar(GuiGraphics graphics) {
         String[] lines = lines();
         int maxLines = (this.editH - 8) / LINE_H;
+        if (lines.length <= maxLines) {
+            return;
+        }
         int total = Math.max(1, lines.length);
         int trackY = scrollbarTop();
         int trackH = scrollbarHeight();
@@ -291,6 +319,9 @@ public class GunDataEditScreen extends Screen {
     }
 
     private boolean inScrollbar(double mouseX, double mouseY) {
+        if (lines().length <= (this.editH - 8) / LINE_H) {
+            return false;
+        }
         return mouseX >= scrollbarX() - 4 && mouseX <= scrollbarX() + 10
                 && mouseY >= scrollbarTop() && mouseY <= scrollbarTop() + scrollbarHeight();
     }

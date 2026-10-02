@@ -26,9 +26,9 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * 自定义槽瞄具开镜时整枪视图偏移(让自定义槽镜片对齐相机)。
- * 在 GunItemRendererWrapper.renderFirstPerson 的枪械变换之后、枪口粒子/火光定位之前应用,
- * 保证枪口火光与偏移后的枪身一致。
+
+
+
  */
 public final class CustomScopeViewShift {
 
@@ -44,7 +44,7 @@ public final class CustomScopeViewShift {
     private CustomScopeViewShift() {
     }
 
-    /** 计算并压入偏移矩阵; 返回是否已压入。 */
+
     public static void apply(PoseStack poseStack, BedrockGunModel model, ItemDisplayContext displayContext) {
         pushed = false;
         if (displayContext != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
@@ -83,7 +83,7 @@ public final class CustomScopeViewShift {
         if (active != null) {
             IGun igunLocal = IGun.getIGunOrNull(gun);
             if (igunLocal != null) {
-                CustomSlotDefinition def = CustomSlotManager.getSlots(igunLocal.getGunId(gun)).get(active);
+                CustomSlotDefinition def = CustomSlotManager.getSlots(gun).get(active);
                 if (def != null && def.type != null && "scope".equalsIgnoreCase(def.type)) {
                     slotAngle = def.angle;
                     slotOffset = def.offset;
@@ -95,8 +95,9 @@ public final class CustomScopeViewShift {
         List<com.tacz.guns.client.model.bedrock.BedrockPart> scopePosPath = model.getScopePosPath();
         if (active != null && scopePosPath != null && !scopePosPath.isEmpty()) {
             com.tacz.guns.client.model.bedrock.BedrockPart stdNode = scopePosPath.get(scopePosPath.size() - 1);
-            BedrockAnimatedModel self = model;
-            com.tacz.guns.client.model.bedrock.BedrockPart actNode = self.getNode(active + "_pos");
+            CustomSlotManager.SlotEntry activeEntry = CustomSlotManager.getEntry(gun, active);
+            com.tacz.guns.client.model.bedrock.BedrockPart actNode =
+                    activeEntry == null ? null : CustomSlotMount.nodeFor(model, activeEntry, active);
             if (stdNode != null && actNode != null) {
                 ItemStack stdItem = readStandardScope(gun);
                 if (stdItem.isEmpty()) {
@@ -109,7 +110,9 @@ public final class CustomScopeViewShift {
                 Vector3f adapterOffset = getActiveSlotAdapterOffset(gun, actItem, active);
                 Vector3f stdAdapterOffset = getStandardScopeAdapterOffset(gun, stdItem);
                 Vec3 stdPos = slotCenterWorld(stdNode, stdItem, gun, stdAdapterOffset);
-                actPos = slotCenterWorld(actNode, actItem, gun, adapterOffset);
+                actPos = slotCenterWorld(actNode, actItem, gun, adapterOffset,
+                        activeEntry == null ? null : CustomSlotMount.sourceChain(model, gun, activeEntry),
+                        activeEntry != null && !activeEntry.source().isEmpty());
                 if (stdItem.isEmpty()) {
                     List<com.tacz.guns.client.model.bedrock.BedrockPart> ironPath = model.getIronSightPath();
                     if (ironPath != null && !ironPath.isEmpty()) {
@@ -165,7 +168,7 @@ public final class CustomScopeViewShift {
         pushed = true;
     }
 
-    /** 恢复 apply 时压入的矩阵。 */
+
     public static void pop(PoseStack poseStack) {
         if (pushed) {
             poseStack.popPose();
@@ -181,7 +184,7 @@ public final class CustomScopeViewShift {
                 .map(ClientAttachmentIndex::isScope).orElse(false);
     }
 
-    /** 瞄具的"眼睛位置"节点在模型空间中的坐标(无瞄具时用机瞄路径), 供开镜对位使用。 */
+
     public static Vec3 scopeEyePosition(com.tacz.guns.client.model.BedrockGunModel model, ItemStack gun) {
         if (model == null || gun == null || gun.isEmpty()) {
             return null;
@@ -221,6 +224,12 @@ public final class CustomScopeViewShift {
 
     private static Vec3 slotCenterWorld(com.tacz.guns.client.model.bedrock.BedrockPart slotNode,
                                         ItemStack attachmentItem, ItemStack gun, Vector3f adapterOffset) {
+        return slotCenterWorld(slotNode, attachmentItem, gun, adapterOffset, null, false);
+    }
+
+    private static Vec3 slotCenterWorld(com.tacz.guns.client.model.bedrock.BedrockPart slotNode,
+                                        ItemStack attachmentItem, ItemStack gun, Vector3f adapterOffset,
+                                        List<CustomSlotMount.Step> mountChain, boolean attachmentNode) {
         List<com.tacz.guns.client.model.bedrock.BedrockPart> chain = new ArrayList<>();
         com.tacz.guns.client.model.bedrock.BedrockPart cur = slotNode;
         while (cur != null) {
@@ -228,6 +237,10 @@ public final class CustomScopeViewShift {
             cur = cur.getParent();
         }
         PoseStack ps = new PoseStack();
+        CustomSlotMount.applyTransforms(ps, mountChain, gun);
+        if (attachmentNode) {
+            ps.translate(0.0F, -1.5F, 0.0F);
+        }
         for (int i = chain.size() - 1; i >= 0; i--) {
             chain.get(i).translateAndRotateAndScale(ps);
         }

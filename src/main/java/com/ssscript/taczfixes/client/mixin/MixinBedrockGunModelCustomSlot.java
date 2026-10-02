@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
+import com.ssscript.taczfixes.client.util.CustomSlotMount;
 import com.ssscript.taczfixes.client.util.LensDepthWriter;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.TimelessAPI;
@@ -46,8 +47,8 @@ public abstract class MixinBedrockGunModelCustomSlot {
             at = @At(value = "INVOKE", target = "Lcom/tacz/guns/compat/ar/ARCompat;shouldAccelerate()Z", remap = false), remap = false)
     private void taczfixes$customSlotRender(PoseStack poseStack, ItemStack itemStack, ItemDisplayContext displayContext, RenderType renderType, int light, int overlay, float red, float green, float blue, float alpha, net.minecraft.client.renderer.MultiBufferSource bufferSource, CallbackInfo ci) {
         handleCustomSlots(poseStack, displayContext, light, overlay, bufferSource);
-        // 标准槽瞄准(无自定义槽 active)场景: 放行标准槽火控附件在第一人称渲染时绘制预测框;
-        // render 末尾由 renderEnd 恢复为 false
+
+
         boolean aiming = taczfixes$isAiming(itemStack);
         boolean customActive = ScopeSwitchState.getActiveSlot(itemStack) != null;
         if (aiming && !customActive) {
@@ -80,7 +81,7 @@ public abstract class MixinBedrockGunModelCustomSlot {
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null) return;
         ResourceLocation gunId = igun.getGunId(gun);
-        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
+        Map<String, CustomSlotManager.SlotEntry> slots = CustomSlotManager.getEntries(gun);
         if (slots.isEmpty()) return;
 
         if (this.currentAttachmentItem != null) {
@@ -108,14 +109,22 @@ public abstract class MixinBedrockGunModelCustomSlot {
 
         if (active != null && slots.containsKey(active)) {
             ItemStack actItem = CustomSlotStorage.get(gun, active);
+            CustomSlotManager.SlotEntry activeEntry = slots.get(active);
             if (accelerated) {
                 if (this.currentAttachmentItem != null && !actItem.isEmpty()) {
                     this.currentAttachmentItem.put(AttachmentType.SCOPE, actItem);
                 }
-                com.tacz.guns.client.model.bedrock.BedrockPart actNode = self.getNode(active + "_pos");
+                com.tacz.guns.client.model.bedrock.BedrockPart actNode =
+                        CustomSlotMount.nodeFor(self, activeEntry, active);
                 if (actNode != null && CustomScopeViewShift.isScopeAttachment(actItem)) {
                     poseStack.pushPose();
+                    CustomSlotMount.apply(poseStack, CustomSlotMount.sourceChain(self, gun, activeEntry),
+                            gun, displayContext, light, overlay);
+                    if (!activeEntry.source().isEmpty()) {
+                        poseStack.translate(0.0F, -1.5F, 0.0F);
+                    }
                     applyNodePathTransform(actNode, poseStack);
+                    com.ssscript.taczfixes.client.util.StandbySlotBuffer.applyPosAlter(actNode, gun, poseStack, active);
                     LensDepthWriter.writeLensDepth(actItem, gun, poseStack, displayContext, light, overlay);
                     poseStack.popPose();
                 }
@@ -123,14 +132,17 @@ public abstract class MixinBedrockGunModelCustomSlot {
         }
 
         List<Object[]> standby = new ArrayList<>();
-        for (Map.Entry<String, CustomSlotDefinition> entry : slots.entrySet()) {
+        for (Map.Entry<String, CustomSlotManager.SlotEntry> entry : slots.entrySet()) {
             String slotId = entry.getKey();
             if (slotId.equals(active)) continue;
             ItemStack item = CustomSlotStorage.get(gun, slotId);
             if (item.isEmpty()) continue;
-            com.tacz.guns.client.model.bedrock.BedrockPart node = self.getNode(slotId + "_pos");
+            com.tacz.guns.client.model.bedrock.BedrockPart node =
+                    CustomSlotMount.nodeFor(self, entry.getValue(), slotId);
             if (node == null) continue;
-            standby.add(new Object[]{item, node, slotId});
+            standby.add(new Object[]{item, node, slotId,
+                    CustomSlotMount.sourceChain(self, gun, entry.getValue()),
+                    !entry.getValue().source().isEmpty()});
         }
         com.ssscript.taczfixes.client.util.StandbySlotBuffer.setPending(standby);
     }

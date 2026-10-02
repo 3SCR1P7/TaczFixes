@@ -37,6 +37,13 @@ public class CustomSlotStorage {
         return CustomSlotManager.buildBuiltinItem(resolveBuiltinId(gun, slotId));
     }
 
+    /** 返回槽位当前实际生效的配件(调用方已提供槽定义, 避免合并槽解析递归)。 */
+    public static ItemStack getEffective(ItemStack gun, String slotId, CustomSlotDefinition def) {
+        ItemStack physical = getPhysical(gun, slotId);
+        if (!physical.isEmpty()) return physical;
+        return CustomSlotManager.buildBuiltinItem(resolveBuiltinId(gun, slotId, def));
+    }
+
     /** 当前生效的原厂件 id: 显式选择 > default_attached; 已显式清空或未配置返回 null。 */
     public static ResourceLocation resolveBuiltinId(ItemStack gun, String slotId) {
         if (gun == null || gun.isEmpty()) return null;
@@ -45,6 +52,16 @@ public class CustomSlotStorage {
             return raw.isEmpty() ? null : ResourceLocation.tryParse(raw);
         }
         return CustomSlotManager.getBuiltinDefault(defOf(gun, slotId));
+    }
+
+    /** 当前生效的原厂件 id(已提供槽定义, 不反查合并槽表)。 */
+    public static ResourceLocation resolveBuiltinId(ItemStack gun, String slotId, CustomSlotDefinition def) {
+        if (gun == null || gun.isEmpty()) return null;
+        String raw = rawBuiltinEntry(gun, slotId);
+        if (raw != null) {
+            return raw.isEmpty() ? null : ResourceLocation.tryParse(raw);
+        }
+        return CustomSlotManager.getBuiltinDefault(def);
     }
 
     public static ResourceLocation getAdapter(ItemStack gun, String slotId) {
@@ -119,7 +136,7 @@ public class CustomSlotStorage {
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null) return ItemStack.EMPTY;
         ResourceLocation gunId = igun.getGunId(gun);
-        for (Map.Entry<String, CustomSlotDefinition> entry : CustomSlotManager.getSlots(gunId).entrySet()) {
+        for (Map.Entry<String, CustomSlotDefinition> entry : CustomSlotManager.getSlots(gun).entrySet()) {
             CustomSlotDefinition def = entry.getValue();
             if (def == null || def.isCustom()) continue;
             try {
@@ -155,7 +172,7 @@ public class CustomSlotStorage {
 
     private static CustomSlotDefinition defOf(ItemStack gun, String slotId) {
         IGun igun = IGun.getIGunOrNull(gun);
-        return igun == null ? null : CustomSlotManager.getSlot(igun.getGunId(gun), slotId);
+        return igun == null ? null : CustomSlotManager.getSlot(gun, slotId);
     }
 
     private static String rawBuiltinEntry(ItemStack gun, String slotId) {

@@ -25,6 +25,9 @@ public class AttachmentTaczFixesData {
     public StaminaAdjust stamina;
     public GunTaczFixesData.ShieldConfig shield;
     public LightAdjust light;
+    /** 配件定义的自定义配件槽: 枪械安装该配件后追加这些槽; 不支持 dependence/conflict/hidden_unavailable/hidden_unavailable_default。 */
+    @com.google.gson.annotations.JsonAdapter(AttachmentSlotsConfig.Adapter.class)
+    public AttachmentSlotsConfig attachment_slots;
 
     /** 对枪械动态光照的增量调整: time(毫秒)/level_max/level_min 均为加值, 可为负。 */
     public static class LightAdjust {

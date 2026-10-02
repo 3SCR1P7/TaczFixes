@@ -38,7 +38,7 @@ public abstract class MixinAttachmentCachePropertyCustomSlot {
         IGun gun = IGun.getIGunOrNull(gunItem);
         if (gun == null) return;
         ResourceLocation gunId = gun.getGunId(gunItem);
-        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
+        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunItem);
         if (slots.isEmpty()) return;
         for (Map.Entry<String, CustomSlotDefinition> entry : slots.entrySet()) {
             ItemStack item = CustomSlotStorage.get(gunItem, entry.getKey());

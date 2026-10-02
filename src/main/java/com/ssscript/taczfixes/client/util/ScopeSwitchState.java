@@ -91,7 +91,7 @@ public final class ScopeSwitchState {
         if (active == null) return false;
         ResourceLocation gunId = gunId(gun);
         if (gunId == null) return false;
-        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
+        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gun);
         CustomSlotDefinition def = slots.get(active);
         return def != null && !def.isCustom() && "scope".equalsIgnoreCase(def.type);
     }
@@ -161,7 +161,7 @@ public final class ScopeSwitchState {
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null) return list;
         ResourceLocation gunId = igun.getGunId(gun);
-        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gunId);
+        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gun);
         for (Map.Entry<String, CustomSlotDefinition> entry : slots.entrySet()) {
             CustomSlotDefinition def = entry.getValue();
             if (def == null || def.isCustom() || !"scope".equalsIgnoreCase(def.type)) continue;

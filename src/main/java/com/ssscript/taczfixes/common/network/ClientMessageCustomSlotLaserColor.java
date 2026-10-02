@@ -47,7 +47,7 @@ public class ClientMessageCustomSlotLaserColor {
         if (gun.hasAttachmentLock(gunStack)) return;
 
         ResourceLocation gunId = gun.getGunId(gunStack);
-        CustomSlotDefinition def = CustomSlotManager.getSlot(gunId, message.slotId);
+        CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, message.slotId);
         if (def == null) return;
 
         ItemStack item = CustomSlotStorage.get(gunStack, message.slotId);
