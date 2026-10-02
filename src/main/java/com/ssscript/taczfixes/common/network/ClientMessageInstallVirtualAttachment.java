@@ -92,13 +92,11 @@ public class ClientMessageInstallVirtualAttachment {
             if (total != null) {
                 int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
                 int delta = -AttachmentTaczFixesManager.getRefitPointConsume(
-                        CustomSlotStorage.getPhysical(gunStack, message.slotKey));
+                        CustomSlotStorage.get(gunStack, message.slotKey));
                 for (String conflictId : toUnload) {
                     delta -= refitPointInSlot(gunStack, gun, conflictId);
                 }
-                if (!builtin) {
-                    delta += AttachmentTaczFixesManager.getRefitPointConsume(built);
-                }
+                delta += AttachmentTaczFixesManager.getRefitPointConsume(built);
                 if (used + delta > total) {
                     return;
                 }
@@ -162,7 +160,7 @@ public class ClientMessageInstallVirtualAttachment {
     }
 
     private static int refitPointInSlot(ItemStack gunStack, IGun gun, String refId) {
-        ItemStack stack = CustomSlotStorage.getPhysical(gunStack, refId);
+        ItemStack stack = CustomSlotStorage.get(gunStack, refId);
         if (stack.isEmpty()) {
             try {
                 AttachmentType type = AttachmentType.valueOf(refId.toUpperCase(Locale.US));

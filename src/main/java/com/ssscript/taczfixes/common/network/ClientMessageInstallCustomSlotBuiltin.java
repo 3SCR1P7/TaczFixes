@@ -78,10 +78,12 @@ public class ClientMessageInstallCustomSlotBuiltin {
         if (total != null) {
             int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
             int delta = -AttachmentTaczFixesManager.getRefitPointConsume(
-                    CustomSlotStorage.getPhysical(gunStack, message.slotId));
+                    CustomSlotStorage.get(gunStack, message.slotId));
             for (String conflictId : toUnload) {
                 delta -= refitPointInSlot(gunStack, gun, conflictId);
             }
+            delta += AttachmentTaczFixesManager.getRefitPointConsume(
+                    CustomSlotManager.buildBuiltinItem(message.attachmentId));
             if (used + delta > total) {
                 return;
             }
@@ -117,7 +119,7 @@ public class ClientMessageInstallCustomSlotBuiltin {
     }
 
     private static int refitPointInSlot(ItemStack gunStack, IGun gun, String refId) {
-        ItemStack stack = CustomSlotStorage.getPhysical(gunStack, refId);
+        ItemStack stack = CustomSlotStorage.get(gunStack, refId);
         if (stack.isEmpty()) {
             try {
                 com.tacz.guns.api.item.attachment.AttachmentType type =

@@ -108,7 +108,7 @@ public class AttachmentTaczFixesManager {
         }
         ResourceLocation gunId = gun.getGunId(gunItem);
         for (String slotId : CustomSlotManager.getSlots(gunItem).keySet()) {
-            used += getRefitPointConsume(CustomSlotStorage.getPhysical(gunItem, slotId));
+            used += getRefitPointConsume(CustomSlotStorage.get(gunItem, slotId));
         }
         return used;
     }

@@ -136,7 +136,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
             final ItemStack stack = inventory.getItem(index);
             InventoryAttachmentSlot slot = new InventoryAttachmentSlot(x, slotY, index, inventory,
                     btn -> {
-                        ItemStack installed = CustomSlotStorage.getPhysical(gunStack, selected);
+                        ItemStack installed = CustomSlotStorage.get(gunStack, selected);
                         int oldConsume = installed.isEmpty() ? 0 : AttachmentTaczFixesManager.getRefitPointConsume(installed);
                         Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
                         if (total != null) {
@@ -208,8 +208,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
                         if (total != null) {
                             int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
                             int oldConsume = taczfixes$refitPointInSlot(gunStack, slotKey);
-                            int add = def != null && CustomSlotManager.isBuiltinCandidate(def, id)
-                                    ? 0 : AttachmentTaczFixesManager.getRefitPointConsume(stack);
+                            int add = AttachmentTaczFixesManager.getRefitPointConsume(stack);
                             if (used + add > total + oldConsume) {
                                 btn.setFocused(false);
                                 TaczFixesClientState.markRejectFocusClear();
@@ -252,7 +251,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
 
     @Unique
     private static int taczfixes$refitPointInSlot(ItemStack gunStack, String slotKey) {
-        ItemStack stack = CustomSlotStorage.getPhysical(gunStack, slotKey);
+        ItemStack stack = CustomSlotStorage.get(gunStack, slotKey);
         if (stack.isEmpty()) {
             try {
                 AttachmentType type = AttachmentType.valueOf(slotKey.toUpperCase(java.util.Locale.US));
