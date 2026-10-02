@@ -2,6 +2,29 @@
   "taczfixes": {
     "custom_hud": "tacz:custom_hud_1",
 	"enchantment_ability": 100,
+	"allow_shooting_underwater": true,
+    "blocking": {
+      "enable": true,
+      // 玩家前方多少格内有方块或实体时启用阻挡
+      "distance_max": 0.5,
+      "distance_min": 0.25,
+      // 当与前方方块的距离为distance_min时，模型向左倾斜的角度
+      // 从distance_max到distance_min会线性插值。
+      "angle": 60.0,
+      // 当与前方方块的距离为distance_min时，模型向后退的格数
+      // 从distance_max到distance_min会线性插值。
+      "back_off": 0.25,
+      // 当与前方方块的距离为distance_min时，模型水平移动的格数
+      // 从distance_max到distance_min会线性插值。
+      "offset_yaw": 0,
+      // 被block时，子弹的发射位置将偏移distance*deflection*tan(angle)格。
+      "deflection": 1.5,
+      // 当到方块或实体的距离小于disable_fire时，无法开火，只会播放dry_fire音效。
+      "disable_fire": 0.1,
+      "disable_aiming": 0.25,
+      "facing": 180,
+      "facing_dual_wield": 90
+    },
     "imbuement": {
       "enable": true,
       "count": 1,
