@@ -261,6 +261,8 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
         CustomSlotButton button = new CustomSlotButton(x, y, def, slotId, gunStack, entry.unavailable, btn -> {
             if (entry.unavailable) return;
             if (slotId.equals(CustomSlotGuiState.get())) {
+                // 先记录来源槽位, 保证取消选中时从当前(配件提供的)改装视角缓动回初始视角
+                CustomSlotGuiState.beginRefitViewTransition();
                 CustomSlotGuiState.reset();
                 if (!RefitTransform.changeRefitScreenView(AttachmentType.NONE)) {
                     // 视图过渡中无法立即切换: 延迟到过渡结束再切回 NONE 并重建, 避免默认槽被选中

@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.common.compat.ArcanaFlashlightBridge;
+import com.ssscript.taczfixes.client.util.ArcanaFlashlightBridge;
 import group.taczexpands.dist.DKdo8Awk;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;

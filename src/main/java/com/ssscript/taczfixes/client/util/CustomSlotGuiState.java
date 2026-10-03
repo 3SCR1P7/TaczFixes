@@ -36,7 +36,11 @@ public final class CustomSlotGuiState {
     }
 
     public static void beginRefitViewTransition() {
-        viewFromSlot = selectedSlot;
+        // 取消选中的流程会先 reset 再调用 changeRefitScreenView,
+        // 此时 selectedSlot 已为 null, 不能覆盖先前显式记录的来源槽位。
+        if (selectedSlot != null) {
+            viewFromSlot = selectedSlot;
+        }
         viewFromType = RefitTransform.getCurrentTransformType();
     }
 

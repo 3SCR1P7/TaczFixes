@@ -45,8 +45,9 @@ public abstract class MixinBedrockGunModelRefitView {
             // 否则收枪过程中路径回退到 tacz 原始(可能为 null), 枪械会从 0,0,0 缓动回。
             boolean screenOpen = Minecraft.getInstance().screen
                     instanceof com.tacz.guns.client.gui.GunRefitScreen;
-            if (screenOpen ? RefitTransform.getTransformProgress() >= 1f
-                    : RefitTransform.getOpeningProgress() <= 0f) {
+            if (!CustomSlotGuiState.hasPendingViewReset()
+                    && (screenOpen ? RefitTransform.getTransformProgress() >= 1f
+                            : RefitTransform.getOpeningProgress() <= 0f)) {
                 CustomSlotGuiState.clearViewTransition();
                 return;
             }

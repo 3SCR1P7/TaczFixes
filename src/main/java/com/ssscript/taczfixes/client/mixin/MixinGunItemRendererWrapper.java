@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.TimelessAPI;
@@ -14,6 +15,7 @@ import com.ssscript.taczfixes.client.client.DualReloadAnimationManager;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.util.CustomSlotRenderBridge;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
@@ -73,6 +75,21 @@ public abstract class MixinGunItemRendererWrapper {
             return null;
         }
         return invokedDisplay.getLodModel();
+    }
+
+    /**
+     * 第三人称下 TaCZ 走 SBM 外部网格(ExternalGunItemVboRenderer)时会在调用
+     * renderExternalAttachmentLasers 后直接返回, 不再经过 BedrockGunModel.render,
+     * 导致自定义槽配件(含 Arcana 手电)完全不渲染。这里在同一姿态下补画一次。
+     */
+    @Inject(method = {"lambda$renderByItem$6"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/renderer/item/GunItemRendererWrapper;renderExternalAttachmentLasers(Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/client/model/BedrockGunModel;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/MultiBufferSource;)V", shift = At.Shift.AFTER, remap = false)}, require = 0, remap = false)
+    private static void taczfixes$renderCustomSlotsThirdPerson(ItemDisplayContext context, PoseStack poseStack, MultiBufferSource bufferSource, int light, int overlay, ItemStack stack, GunDisplayInstance display, CallbackInfo callback, @Local BedrockGunModel gunModel) {
+        if (stack == null || stack.isEmpty() || gunModel == null) {
+            return;
+        }
+        if (gunModel instanceof CustomSlotRenderBridge bridge) {
+            bridge.taczfixes$renderCustomSlotsFor(stack, poseStack, context, light, overlay);
+        }
     }
 
     @WrapOperation(method = {"lambda$renderByItem$6"}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockGunModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V", remap = false)}, require = ServerMessageOffhandActionResult.ACTION_RELOAD, allow = ServerMessageOffhandActionResult.ACTION_RELOAD, remap = false)

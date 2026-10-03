@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.client.util.CustomSlotMount;
+import com.ssscript.taczfixes.client.util.CustomSlotRenderBridge;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.StandbySlotBuffer;
 import com.tacz.guns.api.TimelessAPI;
@@ -32,7 +33,7 @@ import java.util.EnumMap;
 import java.util.List;
 
 @Mixin(BedrockGunModel.class)
-public abstract class MixinBedrockGunModelScopeHideOthers {
+public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotRenderBridge {
 
     @Shadow(remap = false) private ItemStack currentGunItem;
     @Shadow(remap = false) protected List<BedrockPart> scopePosPath;
@@ -44,6 +45,18 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
     private static final String TACZFIXES_SUPER_RENDER_TARGET =
             "Lcom/tacz/guns/client/model/BedrockAnimatedModel;render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V";
 
+    @Unique
+    private boolean taczfixes$standbyRendered;
+
+    @Inject(method = "render" + TACZFIXES_RENDER_DESC, at = @At("HEAD"), remap = false)
+    private void taczfixes$resetStandbyRendered(PoseStack pose, ItemStack itemStack,
+                                                ItemDisplayContext displayContext, RenderType renderType,
+                                                int light, int overlay, float red, float green, float blue, float alpha,
+                                                net.minecraft.client.renderer.MultiBufferSource bufferSource,
+                                                CallbackInfo ci) {
+        taczfixes$standbyRendered = false;
+    }
+
     @Inject(method = "render" + TACZFIXES_RENDER_DESC, at = @At(value = "INVOKE",
             target = TACZFIXES_SUPER_RENDER_TARGET, remap = false), remap = false)
     private void taczfixes$renderStandbySlots(PoseStack pose, ItemStack itemStack,
@@ -52,6 +65,61 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
                                               net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                               CallbackInfo ci) {
         renderStandbyIfConfigured(pose, displayContext, light, overlay);
+    }
+
+    /**
+     * 兜底: 若本次 `BedrockGunModel.render` 既没有走加速分支、也没有在 super.render 处渲染自定义槽
+     * (例如第三人称某些路径), 在 RETURN 时补渲染一次。已渲染过则跳过, 避免重复。
+     */
+    @Inject(method = "render" + TACZFIXES_RENDER_DESC, at = @At("RETURN"), remap = false)
+    private void taczfixes$ensureStandbyRendered(PoseStack pose, ItemStack itemStack,
+                                                 ItemDisplayContext displayContext, RenderType renderType,
+                                                 int light, int overlay, float red, float green, float blue, float alpha,
+                                                 net.minecraft.client.renderer.MultiBufferSource bufferSource,
+                                                 CallbackInfo ci) {
+        if (taczfixes$standbyRendered) {
+            return;
+        }
+        StandbySlotBuffer.takePending();
+        taczfixes$renderCustomSlots(pose, displayContext, light, overlay);
+    }
+
+    /** 外部渲染路径(第三人称 SBM 外部网格)用: 不经过 BedrockGunModel.render, 直接补画自定义槽配件。 */
+    @Override
+    public void taczfixes$renderCustomSlotsFor(ItemStack gun, PoseStack pose, ItemDisplayContext displayContext,
+                                               int light, int overlay) {
+        ItemStack previous = this.currentGunItem;
+        this.currentGunItem = gun;
+        try {
+            taczfixes$renderCustomSlots(pose, displayContext, light, overlay);
+        } finally {
+            this.currentGunItem = previous;
+        }
+    }
+
+    @Unique
+    private void taczfixes$renderCustomSlots(PoseStack pose, ItemDisplayContext displayContext,
+                                             int light, int overlay) {
+        ItemStack gun = this.currentGunItem;
+        if (gun == null || gun.isEmpty()) return;
+        IGun igun = IGun.getIGunOrNull(gun);
+        if (igun == null) return;
+        java.util.Map<String, CustomSlotManager.SlotEntry> slots = CustomSlotManager.getEntries(gun);
+        if (slots.isEmpty()) return;
+        BedrockAnimatedModel self = (BedrockAnimatedModel) (Object) this;
+        String active = ScopeSwitchState.getActiveSlot(gun);
+        renderActiveSlot(pose, displayContext, light, overlay);
+        for (java.util.Map.Entry<String, CustomSlotManager.SlotEntry> entry : slots.entrySet()) {
+            String slotId = entry.getKey();
+            if (slotId.equals(active)) continue;
+            ItemStack item = CustomSlotStorage.get(gun, slotId);
+            if (item.isEmpty()) continue;
+            BedrockPart node = CustomSlotMount.nodeFor(self, entry.getValue(), slotId);
+            if (node == null) continue;
+            renderStandbySlot(item, gun, node, slotId, !entry.getValue().source().isEmpty(),
+                    CustomSlotMount.sourceChain(self, gun, entry.getValue()),
+                    pose, displayContext, light, overlay);
+        }
     }
 
     @Inject(method = "renderAccelerated" + TACZFIXES_ACCEL_DESC, at = @At("HEAD"), remap = false)
@@ -67,6 +135,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         if (gun == null || gun.isEmpty()) return;
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null || CustomSlotManager.getSlots(gun).isEmpty()) return;
+        taczfixes$standbyRendered = true;
         renderActiveSlot(pose, displayContext, light, overlay);
         for (Object[] slot : StandbySlotBuffer.takePending()) {
             renderStandbySlot((ItemStack) slot[0], gun, (BedrockPart) slot[1],
@@ -85,6 +154,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers {
         if (gun == null || gun.isEmpty()) return;
         IGun igun = IGun.getIGunOrNull(gun);
         if (igun == null || CustomSlotManager.getSlots(gun).isEmpty()) return;
+        taczfixes$standbyRendered = true;
         renderStandby(pose, displayContext, light, overlay);
     }
 
