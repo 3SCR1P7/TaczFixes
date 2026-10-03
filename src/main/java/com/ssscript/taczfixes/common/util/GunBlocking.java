@@ -298,7 +298,7 @@ public final class GunBlocking {
             double clamped = Math.max(0.0d, Math.min(angleDeg(cfg), multMax));
             multiplier = multMax - clamped / multMax * (multMax - multMin);
         }
-        double angleRad = Math.toRadians(angleDeg(cfg) * factor * multiplier);
+        double angleRad = Math.toRadians(angleDeg(cfg) * factor);
         double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg, gunStack));
         Vec3 axis = right(player.getLookAngle()).scale(Math.sin(facingRad))
                 .subtract(new Vec3(0.0d, 1.0d, 0.0d).scale(Math.cos(facingRad)));
@@ -306,8 +306,12 @@ public final class GunBlocking {
             return null;
         }
         Vec3 rotated = rotateAroundAxis(direction, axis.normalize(), angleRad).normalize();
-        float newYaw = (float) (Math.atan2(-rotated.x, rotated.z) * 180.0d / Math.PI);
+        // 补偿系数只作用于水平方向(yaw), 竖直方向(pitch)保持与模型相同的角度。
         float newPitch = (float) (-Math.asin(Math.max(-1.0d, Math.min(1.0d, rotated.y))) * 180.0d / Math.PI);
+        float baseYaw = (float) (Math.atan2(-direction.x, direction.z) * 180.0d / Math.PI);
+        float rotatedYaw = (float) (Math.atan2(-rotated.x, rotated.z) * 180.0d / Math.PI);
+        float yawDelta = net.minecraft.util.Mth.wrapDegrees(rotatedYaw - baseYaw);
+        float newYaw = net.minecraft.util.Mth.wrapDegrees(baseYaw + (float) (yawDelta * multiplier));
         return new float[]{newPitch, newYaw};
     }
 
