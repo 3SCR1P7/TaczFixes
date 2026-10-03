@@ -16,11 +16,6 @@ import org.joml.Vector3f;
  * 旋转与后退都在世界(视线)空间定义, 再映射到当前姿态空间, 因此与手部姿态/镜像无关; 强度做平滑过渡。
  */
 public final class BlockingModelTransform {
-    private static final float SMOOTH_TAU = 0.12f;
-    private static float mainFactor;
-    private static float offhandFactor;
-    private static long mainNanos;
-    private static long offhandNanos;
 
     private BlockingModelTransform() {
     }
@@ -31,14 +26,12 @@ public final class BlockingModelTransform {
         if (pose == null || model == null || gunStack == null || player == null) {
             return false;
         }
-        GunTaczFixesData.BlockingConfig cfg = GunBlocking.resolve(gunStack);
-        double target = GunBlocking.isEnabled(gunStack)
-                ? GunBlocking.factor(player, GunBlocking.distanceMax(cfg), GunBlocking.distanceMin(cfg))
-                : 0.0d;
-        float factor = smooth(forceDual, (float) target, System.nanoTime());
+        // 因子由 GunBlocking 统一平滑: 客户端每帧更新, 服务端每 tick 更新, 子弹与模型共用同一值。
+        float factor = GunBlocking.updateAndGetFactor(player, forceDual);
         if (factor <= 0.001f) {
             return false;
         }
+        GunTaczFixesData.BlockingConfig cfg = GunBlocking.resolve(gunStack);
         float[] center = GunModelPivot.center(model, gunStack);
         if (center == null) {
             return false;
@@ -68,24 +61,5 @@ public final class BlockingModelTransform {
         pose.pushPose();
         pose.mulPoseMatrix(local);
         return true;
-    }
-
-    private static float smooth(boolean offhand, float target, long now) {
-        float current = offhand ? offhandFactor : mainFactor;
-        long last = offhand ? offhandNanos : mainNanos;
-        float dt = last == 0L ? 1.0f / 60.0f : Math.min((now - last) / 1_000_000_000.0f, 0.1f);
-        float decay = (float) Math.exp(-dt / SMOOTH_TAU);
-        float next = target + (current - target) * decay;
-        if (Math.abs(target - next) < 0.001f) {
-            next = target;
-        }
-        if (offhand) {
-            offhandFactor = next;
-            offhandNanos = now;
-        } else {
-            mainFactor = next;
-            mainNanos = now;
-        }
-        return next;
     }
 }

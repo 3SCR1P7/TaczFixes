@@ -183,6 +183,8 @@
     "config.taczfixes.entry.blocking.facing":  "枪械偏转方向",
     "config.taczfixes.entry.blocking.facing_pistol":  "手枪偏转方向",
     "config.taczfixes.entry.blocking.facing_dual_wield":  "双持偏转方向",
+    "config.taczfixes.entry.blocking.shot_multiplier_max":  "弹道偏转补偿上限",
+    "config.taczfixes.entry.blocking.shot_multiplier_min":  "弹道偏转补偿下限",
     "config.taczfixes.category.attachment_slots":  "配件槽",
     "config.taczfixes.entry.misc.hide_unavailable_default_slots":  "隐藏不可用的默认配件槽",
     "config.taczfixes.entry.misc.virtual_attachments":  "虚拟配件",

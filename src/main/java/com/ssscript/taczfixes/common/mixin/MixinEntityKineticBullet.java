@@ -120,8 +120,9 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
             return;
         }
         double maxDistance = com.ssscript.taczfixes.common.util.GunBlocking.distanceMax(cfg);
-        double minDistance = com.ssscript.taczfixes.common.util.GunBlocking.distanceMin(cfg);
-        double factor = com.ssscript.taczfixes.common.util.GunBlocking.factor(player, maxDistance, minDistance);
+        // 与模型同一平滑因子, 保证子弹方向偏转与枪身视觉偏转一致。
+        double factor = com.ssscript.taczfixes.common.util.GunBlocking.smoothedFactor(player,
+                com.ssscript.taczfixes.common.util.GunBlocking.isOffhandGun(player, gunItem));
         if (factor <= 0.0d) {
             return;
         }

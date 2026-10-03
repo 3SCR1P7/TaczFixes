@@ -151,6 +151,92 @@ public final class GunBlocking {
         return Math.max(0.0d, Math.min(1.0d, factor));
     }
 
+    // ---- 模型与弹道共用的平滑因子 ----
+    // 模型(客户端每帧更新)和弹道(服务端每 tick 更新)取同一个平滑值, 保证视觉偏转角与射击偏转角一致。
+    private static final float SMOOTH_TAU = 0.12f;
+    private static final java.util.Map<java.util.UUID, SmoothState> SMOOTH = new java.util.concurrent.ConcurrentHashMap<>();
+
+    private static final class SmoothState {
+        float mainFactor;
+        float offhandFactor;
+        long mainNanos;
+        long offhandNanos;
+    }
+
+    /** 服务端每 tick 刷新主/副手平滑因子(子弹用)。 */
+    public static void tick(@Nullable Player player) {
+        if (player == null) {
+            return;
+        }
+        updateSmooth(player, false, targetFactor(player, player.getMainHandItem()));
+        updateSmooth(player, true, targetFactor(player, player.getOffhandItem()));
+    }
+
+    /** 客户端每帧刷新指定手的平滑因子并返回(模型用)。 */
+    public static float updateAndGetFactor(@Nullable Player player, boolean offhand) {
+        if (player == null) {
+            return 0.0f;
+        }
+        updateSmooth(player, offhand, targetFactor(player, offhand ? player.getOffhandItem() : player.getMainHandItem()));
+        return smoothedFactor(player, offhand);
+    }
+
+    /** 当前平滑后的阻挡强度; 尚无状态时回退为瞬时值。 */
+    public static float smoothedFactor(@Nullable Player player, boolean offhand) {
+        if (player == null) {
+            return 0.0f;
+        }
+        SmoothState state = SMOOTH.get(player.getUUID());
+        if (state == null) {
+            return targetFactor(player, offhand ? player.getOffhandItem() : player.getMainHandItem());
+        }
+        return offhand ? state.offhandFactor : state.mainFactor;
+    }
+
+    public static void clearState(@Nullable java.util.UUID playerId) {
+        if (playerId != null) {
+            SMOOTH.remove(playerId);
+        }
+    }
+
+    private static float targetFactor(Player player, ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty() || IGun.getIGunOrNull(gunStack) == null
+                || !isEnabled(gunStack)) {
+            return 0.0f;
+        }
+        GunTaczFixesData.BlockingConfig cfg = resolve(gunStack);
+        return (float) factor(player, distanceMax(cfg), distanceMin(cfg));
+    }
+
+    private static void updateSmooth(Player player, boolean offhand, float target) {
+        SmoothState state = SMOOTH.computeIfAbsent(player.getUUID(), id -> new SmoothState());
+        long now = System.nanoTime();
+        float current = offhand ? state.offhandFactor : state.mainFactor;
+        long last = offhand ? state.offhandNanos : state.mainNanos;
+        float dt = last == 0L ? 1.0f / 20.0f : Math.min((now - last) / 1_000_000_000.0f, 0.25f);
+        float decay = (float) Math.exp(-dt / SMOOTH_TAU);
+        float next = target + (current - target) * decay;
+        if (Math.abs(target - next) < 0.001f) {
+            next = target;
+        }
+        if (offhand) {
+            state.offhandFactor = next;
+            state.offhandNanos = now;
+        } else {
+            state.mainFactor = next;
+            state.mainNanos = now;
+        }
+    }
+
+    /** 枪械是否来自副手(双持)。 */
+    public static boolean isOffhandGun(@Nullable Player player, ItemStack gunStack) {
+        if (player == null || gunStack == null || gunStack.isEmpty()) {
+            return false;
+        }
+        ItemStack offhand = player.getOffhandItem();
+        return gunStack == offhand || DualWieldStackId.matches(gunStack, offhand);
+    }
+
     /** 前方最近障碍距离(距玩家眼位, 格); 无阻挡返回 distanceMax。 */
     public static double nearestDistance(@Nullable Player player, double distanceMax) {
         return distanceMax * nearestRatio(player, distanceMax);
@@ -190,7 +276,8 @@ public final class GunBlocking {
             return null;
         }
         GunTaczFixesData.BlockingConfig cfg = resolve(gunStack);
-        double factor = factor(player, distanceMax(cfg), distanceMin(cfg));
+        // 与模型完全相同的平滑因子与角度, 保证视觉上弹道方向与枪身偏转一致。
+        double factor = smoothedFactor(player, isOffhandGun(player, gunStack));
         if (factor <= 0.0d) {
             return null;
         }
@@ -199,7 +286,18 @@ public final class GunBlocking {
             return null;
         }
         boolean dual = DualWieldEligibility.isDualWielding(player);
-        double multiplier = 2.0d - Math.max(0.0d, Math.min(angleDeg(cfg), 2.0)) / 3.0d;
+        // 视觉补偿: 子弹绕眼位旋转, 模型绕模型枢轴做屏幕空间旋转, 等角时弹道观感偏小,
+        // 该系数用于让弹道方向在视觉上与枪身偏转对齐(可配置, 默认 2.0 -> 1.5)。
+        // 补偿系数上限同时作为过渡旋转角: angle=0 时为 max, angle>=max 时为 min。
+        double multMax = com.ssscript.taczfixes.common.config.Config.BLOCKING_SHOT_MULTIPLIER_MAX.get();
+        double multMin = com.ssscript.taczfixes.common.config.Config.BLOCKING_SHOT_MULTIPLIER_MIN.get();
+        double multiplier;
+        if (multMax <= 1.0E-6d) {
+            multiplier = multMin;
+        } else {
+            double clamped = Math.max(0.0d, Math.min(angleDeg(cfg), multMax));
+            multiplier = multMax - clamped / multMax * (multMax - multMin);
+        }
         double angleRad = Math.toRadians(angleDeg(cfg) * factor * multiplier);
         double facingRad = Math.toRadians(dual ? facingDual(cfg) : facing(cfg, gunStack));
         Vec3 axis = right(player.getLookAngle()).scale(Math.sin(facingRad))

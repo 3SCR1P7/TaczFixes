@@ -74,6 +74,8 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_PISTOL;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_DUAL_WIELD;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MAX;
+    public static final ForgeConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MIN;
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
     /** 枪械类型（tacz 枪械 data 的 type 字段）名称, 与 GunTabType 一致。 */
@@ -740,6 +742,12 @@ public class Config {
         BLOCKING_FACING_DUAL_WIELD = BUILDER
                 .comment("双持时的偏转方向。默认值：90")
                 .defineInRange("facing_dual_wield", 90.0, -360.0, 360.0);
+        BLOCKING_SHOT_MULTIPLIER_MAX = BUILDER
+                .comment("子弹偏转角视觉补偿系数上限。默认值：2.50")
+                .defineInRange("shot_multiplier_max", 2.50, 0.0, 10.0);
+        BLOCKING_SHOT_MULTIPLIER_MIN = BUILDER
+                .comment("子弹偏转角视觉补偿系数下限。默认值：1.67")
+                .defineInRange("shot_multiplier_min", 1.67, 0.0, 10.0);
         BUILDER.pop();
         SPECS.put("blocking", BUILDER.build());
 

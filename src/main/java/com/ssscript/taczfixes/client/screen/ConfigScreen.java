@@ -312,6 +312,8 @@ public class ConfigScreen {
         dbl_(cat, entry, "blocking.facing", Config.BLOCKING_FACING);
         dbl_(cat, entry, "blocking.facing_pistol", Config.BLOCKING_FACING_PISTOL);
         dbl_(cat, entry, "blocking.facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);
+        dbl_(cat, entry, "blocking.shot_multiplier_max", Config.BLOCKING_SHOT_MULTIPLIER_MAX);
+        dbl_(cat, entry, "blocking.shot_multiplier_min", Config.BLOCKING_SHOT_MULTIPLIER_MIN);
     }
 
     private static void buildRefit(ConfigCategory cat, ConfigEntryBuilder entry) {

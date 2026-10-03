@@ -185,6 +185,8 @@
     "config.taczfixes.entry.blocking.facing":  "Facing (Non-Pistol)",
     "config.taczfixes.entry.blocking.facing_pistol":  "Facing (Pistol)",
     "config.taczfixes.entry.blocking.facing_dual_wield":  "Facing (Dual Wield)",
+    "config.taczfixes.entry.blocking.shot_multiplier_max":  "Shot Angle Compensation (Max / Ramp)",
+    "config.taczfixes.entry.blocking.shot_multiplier_min":  "Shot Angle Compensation (Min)",
     "config.taczfixes.category.attachment_slots":  "Attachment Slots",
     "config.taczfixes.entry.misc.hide_unavailable_default_slots":  "Hide Unavailable Default Attachment Slots",
     "config.taczfixes.entry.misc.virtual_attachments":  "Virtual Attachments",
