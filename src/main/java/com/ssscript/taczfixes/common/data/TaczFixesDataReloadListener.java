@@ -41,6 +41,7 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
         return CompletableFuture.supplyAsync(() -> scan(resourceManager), backgroundExecutor)
                 .thenCompose(barrier::wait)
                 .thenAcceptAsync(result -> {
+                    TaczFixesDataManager.clear();
                     TaczFixesDataManager.putAll(result.gunData);
                     TaczFixesDataManager.putAll(scanFileSystemGunData());
                     syncCustomFireModes();

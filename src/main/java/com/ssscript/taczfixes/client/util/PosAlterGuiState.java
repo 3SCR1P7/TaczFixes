@@ -174,17 +174,24 @@ public final class PosAlterGuiState {
         ItemStack gunStack = player.getMainHandItem();
         IGun igun = IGun.getIGunOrNull(gunStack);
         if (igun == null) return null;
-        ResourceLocation gunIdLocal = igun.getGunId(gunStack);
-        String customSlot = CustomSlotGuiState.get();
-        if (customSlot != null) {
-            return GunPosAlterManager.getRange(gunStack, customSlot) != null ? customSlot : null;
+        ResourceLocation gunId = igun.getGunId(gunStack);
+
+        // 1) 当前 refit 视图是标准配件类型(原生默认槽/默认槽位定义): 用该类型的范围。
+        //    必须在选中槽位判空之前检查, 否则切换后残留的槽位选中态会让默认槽滑条消失。
+        AttachmentType viewType = RefitTransform.getCurrentTransformType();
+        String selected = CustomSlotGuiState.get();
+        String result = null;
+        if (viewType != null && viewType != AttachmentType.NONE
+                && GunPosAlterManager.getRange(gunId, viewType.name().toLowerCase(Locale.US)) != null) {
+            result = viewType.name().toLowerCase(Locale.US);
         }
-        AttachmentType type = RefitTransform.getCurrentTransformType();
-        if (type != null && type != AttachmentType.NONE) {
-            String key = type.name().toLowerCase(Locale.US);
-            return GunPosAlterManager.getRange(gunStack, key) != null ? key : null;
+
+        // 2) 选中槽位自身配置的范围(自定义槽位, 或自带 pos_alter 的槽位定义)。
+        if (result == null && selected != null
+                && GunPosAlterManager.getRange(gunStack, selected) != null) {
+            result = selected;
         }
-        return null;
+        return result;
     }
 
     private static AbstractSliderButton createSlider(Screen screen, String key, int x, int y) {

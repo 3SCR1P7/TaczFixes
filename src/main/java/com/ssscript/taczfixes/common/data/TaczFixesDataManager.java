@@ -19,8 +19,12 @@ public class TaczFixesDataManager {
     private TaczFixesDataManager() {
     }
 
-    public static void putAll(Map<ResourceLocation, GunTaczFixesData> map) {
+    public static void clear() {
         DATA.clear();
+    }
+
+    /** 增量写入: 调用方(重载监听)在重载开始时先 clear(), 之后多次 putAll 不会互相覆盖。 */
+    public static void putAll(Map<ResourceLocation, GunTaczFixesData> map) {
         for (Map.Entry<ResourceLocation, GunTaczFixesData> entry : map.entrySet()) {
             if (entry.getKey() != null && entry.getValue() != null) {
                 DATA.put(entry.getKey(), entry.getValue());
