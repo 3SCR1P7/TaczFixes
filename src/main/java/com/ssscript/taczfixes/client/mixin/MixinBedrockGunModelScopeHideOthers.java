@@ -244,15 +244,19 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         IAttachment ia = IAttachment.getIAttachmentOrNull(actItem);
         if (ia != null) {
             ResourceLocation actId = ia.getAttachmentId(actItem);
-            TimelessAPI.getClientAttachmentIndex(actId).ifPresent(index -> {
-                com.tacz.guns.client.model.BedrockAttachmentModel actModel = index.getAttachmentModel();
-                ResourceLocation actTexture = index.getModelTexture();
-                if (actModel != null && actTexture != null) {
-                    RenderType renderType = RenderType.entityCutout(actTexture);
-                    actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
-                }
-
-        });
+            com.ssscript.taczfixes.client.util.GunRecolorManager.pushRenderStack(actItem);
+            try {
+                TimelessAPI.getClientAttachmentIndex(actId).ifPresent(index -> {
+                    com.tacz.guns.client.model.BedrockAttachmentModel actModel = index.getAttachmentModel();
+                    ResourceLocation actTexture = index.getModelTexture();
+                    if (actModel != null && actTexture != null) {
+                        RenderType renderType = RenderType.entityCutout(actTexture);
+                        actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
+                    }
+                });
+            } finally {
+                com.ssscript.taczfixes.client.util.GunRecolorManager.popRenderStack();
+            }
         }
         pose.popPose();
     }
@@ -353,51 +357,55 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         java.util.Optional<com.tacz.guns.client.resource.index.ClientAttachmentIndex> idx =
                 TimelessAPI.getClientAttachmentIndex(id);
         if (!idx.isPresent()) return;
-        com.tacz.guns.client.model.BedrockAttachmentModel model = idx.get().getAttachmentModel();
-        ResourceLocation texture = idx.get().getModelTexture();
-        if (model == null || texture == null) return;
-        java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore = new java.util.LinkedHashMap<>();
-
-        StandbySlotBuffer.ensureScopeOcularVisible(model, restore);
-        MixinBedrockAttachmentModelScopeSuppress acc = (MixinBedrockAttachmentModelScopeSuppress) model;
-
-
+        com.ssscript.taczfixes.client.util.GunRecolorManager.pushRenderStack(item);
         try {
-            taczfixes$activateIfPresent(restore, acc.taczfixes$scopeBodyPath());
-            taczfixes$activateIfPresent(restore, acc.taczfixes$ocularRingPath());
-            java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> oculars = acc.taczfixes$ocularNodePaths();
-            if (oculars != null) {
-                java.util.List<Boolean> ocularFlags = acc.taczfixes$isScopeOcular();
-                for (int i = 0; i < oculars.size(); i++) {
-                    boolean isScopeOcular = ocularFlags != null && i < ocularFlags.size()
-                            && Boolean.TRUE.equals(ocularFlags.get(i));
-                    if (isScopeOcular) {
-                        taczfixes$activateIfPresent(restore, oculars.get(i));
-                    } else {
-                        taczfixes$hideIfPresent(restore, oculars.get(i));
+            com.tacz.guns.client.model.BedrockAttachmentModel model = idx.get().getAttachmentModel();
+            ResourceLocation texture = idx.get().getModelTexture();
+            if (model == null || texture == null) return;
+            java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore = new java.util.LinkedHashMap<>();
+
+            StandbySlotBuffer.ensureScopeOcularVisible(model, restore);
+            MixinBedrockAttachmentModelScopeSuppress acc = (MixinBedrockAttachmentModelScopeSuppress) model;
+
+            try {
+                taczfixes$activateIfPresent(restore, acc.taczfixes$scopeBodyPath());
+                taczfixes$activateIfPresent(restore, acc.taczfixes$ocularRingPath());
+                java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> oculars = acc.taczfixes$ocularNodePaths();
+                if (oculars != null) {
+                    java.util.List<Boolean> ocularFlags = acc.taczfixes$isScopeOcular();
+                    for (int i = 0; i < oculars.size(); i++) {
+                        boolean isScopeOcular = ocularFlags != null && i < ocularFlags.size()
+                                && Boolean.TRUE.equals(ocularFlags.get(i));
+                        if (isScopeOcular) {
+                            taczfixes$activateIfPresent(restore, oculars.get(i));
+                        } else {
+                            taczfixes$hideIfPresent(restore, oculars.get(i));
+                        }
                     }
                 }
-            }
-            java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> divisions = acc.taczfixes$divisionNodePaths();
-            if (divisions != null) {
-                for (java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path : divisions) {
-                    taczfixes$hideIfPresent(restore, path);
+                java.util.List<java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart>> divisions = acc.taczfixes$divisionNodePaths();
+                if (divisions != null) {
+                    for (java.util.List<com.tacz.guns.client.model.bedrock.BedrockPart> path : divisions) {
+                        taczfixes$hideIfPresent(restore, path);
+                    }
                 }
-            }
-            boolean oldScope = acc.taczfixes$isScope();
-            boolean oldSight = acc.taczfixes$isSight();
-            acc.taczfixes$setIsScope(false);
-            acc.taczfixes$setIsSight(false);
+                boolean oldScope = acc.taczfixes$isScope();
+                boolean oldSight = acc.taczfixes$isSight();
+                acc.taczfixes$setIsScope(false);
+                acc.taczfixes$setIsSight(false);
 
-        try {
-                model.render(item, gun, pose, displayContext,
-                        RenderType.entityCutout(texture), light, overlay);
+                try {
+                    model.render(item, gun, pose, displayContext,
+                            RenderType.entityCutout(texture), light, overlay);
+                } finally {
+                    acc.taczfixes$setIsScope(oldScope);
+                    acc.taczfixes$setIsSight(oldSight);
+                }
             } finally {
-                acc.taczfixes$setIsScope(oldScope);
-                acc.taczfixes$setIsSight(oldSight);
+                StandbySlotBuffer.restoreOcularVisibility(restore);
             }
         } finally {
-            StandbySlotBuffer.restoreOcularVisibility(restore);
+            com.ssscript.taczfixes.client.util.GunRecolorManager.popRenderStack();
         }
     }
 

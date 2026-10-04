@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
+import com.ssscript.taczfixes.client.util.GunRecolorManager;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
@@ -20,6 +21,30 @@ import java.util.Locale;
 /** 配件模型实际绘制的唯一入口, 在这里应用 group_offset 与 pos_alter, 保证所有渲染路径只应用一次。 */
 @Mixin(AttachmentRender.class)
 public abstract class MixinAttachmentRenderGroupOffset {
+
+    private static final String TACZFIXES_RENDER_DESC =
+            "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;" +
+                    "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lcom/mojang/blaze3d/vertex/PoseStack;" +
+                    "Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource;)V";
+
+    /** 调色: 渲染配件模型期间记录当前配件, 供 ClientAttachmentIndex.getModelTexture 替换贴图。 */
+    @Inject(method = "renderAttachment" + TACZFIXES_RENDER_DESC, at = @At("HEAD"), remap = false)
+    private static void taczfixes$pushRecolorStack(ItemStack attachmentStack, ItemStack gunStack,
+                                                   AttachmentType type, PoseStack poseStack,
+                                                   ItemDisplayContext displayContext, int light, int overlay,
+                                                   MultiBufferSource bufferSource,
+                                                   org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        GunRecolorManager.pushRenderStack(attachmentStack);
+    }
+
+    @Inject(method = "renderAttachment" + TACZFIXES_RENDER_DESC, at = @At("RETURN"), remap = false)
+    private static void taczfixes$popRecolorStack(ItemStack attachmentStack, ItemStack gunStack,
+                                                  AttachmentType type, PoseStack poseStack,
+                                                  ItemDisplayContext displayContext, int light, int overlay,
+                                                  MultiBufferSource bufferSource,
+                                                  org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
+        GunRecolorManager.popRenderStack();
+    }
 
     @Inject(method = "lambda$renderAttachment$0", at = @At("HEAD"), remap = false)
     private static void taczfixes$applyAttachmentOffset(ItemStack attachmentStack, ItemStack gunStack,

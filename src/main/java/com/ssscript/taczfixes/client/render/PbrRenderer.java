@@ -144,7 +144,10 @@ public final class PbrRenderer {
             var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
             var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
             if (texture.isEmpty()) return original;
-            var material = MATERIALS.computeIfAbsent(texture.get(), PbrRenderer::findMaterial);
+            // 重着色贴图沿用原始贴图的 _s/_n 材质
+            var material = MATERIALS.computeIfAbsent(
+                    com.ssscript.taczfixes.client.util.GunRecolorManager.sourceOf(texture.get()),
+                    PbrRenderer::findMaterial);
             return material.<RenderType>map(m -> new PbrType(original, m)).orElse(original);
         });
     }

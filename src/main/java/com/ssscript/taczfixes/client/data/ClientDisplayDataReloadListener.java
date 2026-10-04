@@ -37,6 +37,7 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                     TaczFixesDataManager.syncPosAlterRanges();
                     com.ssscript.taczfixes.client.hud.CustomHudManager.clear();
                     com.ssscript.taczfixes.client.util.GunPackIconLoader.clear();
+                    com.ssscript.taczfixes.client.util.GunRecolorManager.clearTextures();
                 }, gameExecutor);
     }
 

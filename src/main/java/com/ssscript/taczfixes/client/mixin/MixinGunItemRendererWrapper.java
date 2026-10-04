@@ -16,6 +16,7 @@ import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
 import com.ssscript.taczfixes.client.util.CustomSlotRenderBridge;
+import com.ssscript.taczfixes.client.util.GunRecolorManager;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
@@ -50,6 +51,37 @@ public abstract class MixinGunItemRendererWrapper {
     private static final ThreadLocal<Integer> DUAL_WIELD_ACTIVE_MAIN_RENDER_DEPTH = ThreadLocal.withInitial(() -> {
         return 0;
     });
+
+    /** 调色: 在枪械渲染上下文中记录当前物品, 供 GunDisplayInstance.getModelTexture 替换贴图。 */
+    @Inject(method = {"lambda$renderByItem$6"}, at = {@At("HEAD")}, remap = false)
+    private static void taczfixes$pushRecolorStack(ItemDisplayContext transformType, PoseStack poseStack,
+                                                   MultiBufferSource bufferSource, int light, int overlay,
+                                                   ItemStack stack, GunDisplayInstance display, CallbackInfo callback) {
+        GunRecolorManager.pushRenderStack(stack);
+    }
+
+    @Inject(method = {"lambda$renderByItem$6"}, at = {@At("RETURN")}, remap = false)
+    private static void taczfixes$popRecolorStack(ItemDisplayContext transformType, PoseStack poseStack,
+                                                  MultiBufferSource bufferSource, int light, int overlay,
+                                                  ItemStack stack, GunDisplayInstance display, CallbackInfo callback) {
+        GunRecolorManager.popRenderStack();
+    }
+
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At("HEAD")}, remap = false)
+    private void taczfixes$pushRecolorStackFirstPerson(ItemStack stack, LocalPlayer player, float partialTick,
+                                                       PoseStack poseStack, ItemDisplayContext context, int light,
+                                                       MultiBufferSource bufferSource, GunDisplayInstance display,
+                                                       CallbackInfo callback) {
+        GunRecolorManager.pushRenderStack(stack);
+    }
+
+    @Inject(method = {"lambda$renderFirstPerson$5"}, at = {@At("RETURN")}, remap = false)
+    private void taczfixes$popRecolorStackFirstPerson(ItemStack stack, LocalPlayer player, float partialTick,
+                                                      PoseStack poseStack, ItemDisplayContext context, int light,
+                                                      MultiBufferSource bufferSource, GunDisplayInstance display,
+                                                      CallbackInfo callback) {
+        GunRecolorManager.popRenderStack();
+    }
 
     @Redirect(method = {"renderByItem"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/TimelessAPI;getGunDisplay(Lnet/minecraft/world/item/ItemStack;)Ljava/util/Optional;", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = true)
     private Optional<GunDisplayInstance> dualWield$useIndependentThirdPersonOffhandDisplay(ItemStack stack) {

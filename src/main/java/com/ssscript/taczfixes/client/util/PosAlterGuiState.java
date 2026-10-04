@@ -56,6 +56,9 @@ public final class PosAlterGuiState {
 
     public static void tickAndRender(Screen screen, GuiGraphics graphics, int mouseX, int mouseY,
                                      float partialTick) {
+        if (GunRecolorGuiState.isOpen()) {
+            return;
+        }
         String key = currentSlotKey();
         String id = currentGunId();
         int x = computeSliderX(screen);

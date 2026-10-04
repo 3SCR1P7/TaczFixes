@@ -58,6 +58,7 @@ public final class DualFirstPersonRenderer {
         boolean renderHandValue = false;
         boolean mirroredModel = false;
         boolean cullWasEnabled = false;
+        boolean recolorPushed = false;
         boolean charmsFrame = false;
         boolean selfFlagsSet = false;
         try {
@@ -101,6 +102,9 @@ public final class DualFirstPersonRenderer {
                 model.setRenderHand(false);
                 renderHandSaved = true;
             }
+            // 调色: 该路径不经过 GunItemRendererWrapper 的渲染上下文, 需手动 push/pop 副手枪械
+            com.ssscript.taczfixes.client.util.GunRecolorManager.pushRenderStack(stack);
+            recolorPushed = true;
             RenderType renderType = display.enablesTransparency() ? RenderType.entityTranslucent(display.getModelTexture()) : RenderType.entityCutout(display.getModelTexture());
             charmsFrame = CharmsOffhandRenderCompat.beginFrame(stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, bufferSource, light, OverlayTexture.NO_OVERLAY, partialTick);
             if (mirroredModel) {
@@ -114,6 +118,8 @@ public final class DualFirstPersonRenderer {
             } else {
                 model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
             }
+            com.ssscript.taczfixes.client.util.GunRecolorManager.popRenderStack();
+            recolorPushed = false;
             if (charmsFrame) {
                 CharmsOffhandRenderCompat.renderCaptured(poseStack);
             }
@@ -134,6 +140,9 @@ public final class DualFirstPersonRenderer {
             TaczFixesMod.LOGGER.error("Failed to render independent offhand gun; using fallback renderer", exception);
             return false;
         } finally {
+            if (recolorPushed) {
+                com.ssscript.taczfixes.client.util.GunRecolorManager.popRenderStack();
+            }
             if (mirroredModel) {
                 if (cullWasEnabled) {
                     RenderSystem.enableCull();

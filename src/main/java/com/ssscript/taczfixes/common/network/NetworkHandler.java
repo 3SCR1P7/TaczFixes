@@ -173,5 +173,10 @@ public class NetworkHandler {
                 ClientMessageApplyAttachmentData::decode,
                 ClientMessageApplyAttachmentData::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(31, ClientMessageGunColor.class,
+                ClientMessageGunColor::encode,
+                ClientMessageGunColor::decode,
+                ClientMessageGunColor::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
     }
 }
