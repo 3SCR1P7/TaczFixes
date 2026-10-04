@@ -39,7 +39,8 @@ public final class GunRecolorManager {
     private static final int DEFAULT_GUN_CLUSTERS = 6;
     private static final int DEFAULT_ATTACHMENT_CLUSTERS = 3;
     private static final int SAMPLE_MAX = 12000;
-    private static final float MERGE_DISTANCE = 7.0f;
+    /** 聚类距离阈值(加权 HSL 空间)。 */
+    private static final float MERGE_DISTANCE = 0.22f;
     private static final int CACHE_LIMIT = 16;
     private static final long KMEANS_SEED = 0x5EEDL;
 
@@ -281,25 +282,19 @@ public final class GunRecolorManager {
         }
         image.close();
 
-        // 1. sRGB -> Lab
-        float[] lin = new float[256];
-        for (int i = 0; i < 256; i++) lin[i] = srgb2lin(i / 255.0f);
-        float[] lab = new float[n * 3];
+        // 1. 每像素 HSL(聚类在"色相权重更高"的空间进行, 权重可配置)
+        float[] hsl = new float[n * 3];
+        byte[] pixS = new byte[n];
+        byte[] pixL = new byte[n];
         for (int i = 0; i < n; i++) {
             int p = argb[i];
             if (((p >>> 24) & 255) < 10) continue;
-            float r = lin[(p >>> 16) & 255];
-            float g = lin[(p >>> 8) & 255];
-            float b = lin[p & 255];
-            float x = (r * 0.4124564f + g * 0.3575761f + b * 0.1804375f) / 0.95047f;
-            float y = (r * 0.2126729f + g * 0.7151522f + b * 0.0721750f);
-            float z = (r * 0.0193339f + g * 0.1191920f + b * 0.9503041f) / 1.08883f;
-            x = x > 0.008856f ? (float) Math.cbrt(x) : 7.787f * x + 16.0f / 116.0f;
-            y = y > 0.008856f ? (float) Math.cbrt(y) : 7.787f * y + 16.0f / 116.0f;
-            z = z > 0.008856f ? (float) Math.cbrt(z) : 7.787f * z + 16.0f / 116.0f;
-            lab[i * 3] = 116.0f * y - 16.0f;
-            lab[i * 3 + 1] = 500.0f * (x - y);
-            lab[i * 3 + 2] = 200.0f * (y - z);
+            float[] c = rgbToHsl(((p >>> 16) & 255) / 255.0f, ((p >>> 8) & 255) / 255.0f, (p & 255) / 255.0f);
+            hsl[i * 3] = c[0];
+            hsl[i * 3 + 1] = c[1];
+            hsl[i * 3 + 2] = c[2];
+            pixS[i] = (byte) (int) (c[1] * 255.0f);
+            pixL[i] = (byte) (int) (c[2] * 255.0f);
         }
 
         // 2. 采样
@@ -312,9 +307,9 @@ public final class GunRecolorManager {
         int si = 0;
         for (int i = 0; i < n; i += step) {
             if (((argb[i] >>> 24) & 255) < 10) continue;
-            samples[si++] = lab[i * 3];
-            samples[si++] = lab[i * 3 + 1];
-            samples[si++] = lab[i * 3 + 2];
+            samples[si++] = hsl[i * 3];
+            samples[si++] = hsl[i * 3 + 1];
+            samples[si++] = hsl[i * 3 + 2];
         }
 
         // 3. k-means + 合并
@@ -331,47 +326,29 @@ public final class GunRecolorManager {
         double[] sumL = new double[clusterN];
         int[] count = new int[clusterN];
         byte[] assign = new byte[n];
-        byte[] pixS = new byte[n];
-        byte[] pixL = new byte[n];
         Arrays.fill(assign, (byte) -1);
         for (int i = 0; i < n; i++) {
             int p = argb[i];
             if (((p >>> 24) & 255) < 10) continue;
-            float l = lab[i * 3];
-            float a = lab[i * 3 + 1];
-            float b = lab[i * 3 + 2];
+            float h = hsl[i * 3];
+            float s = hsl[i * 3 + 1];
+            float l = hsl[i * 3 + 2];
             int best = 0;
             float bestDist = Float.MAX_VALUE;
             for (int c = 0; c < clusterN; c++) {
                 float[] center = centers.get(c);
-                float dl = l - center[0];
-                float da = a - center[1];
-                float db = b - center[2];
-                float dist = dl * dl + da * da + db * db;
+                float dist = weightedDistanceSq(h, s, l, center[0], center[1], center[2]);
                 if (dist < bestDist) {
                     bestDist = dist;
                     best = c;
                 }
             }
             assign[i] = (byte) best;
-            int r = (p >>> 16) & 255;
-            int g = (p >>> 8) & 255;
-            int b2 = p & 255;
-            int mx = Math.max(r, Math.max(g, b2));
-            int mn = Math.min(r, Math.min(g, b2));
-            float lf = (mx + mn) / 510.0f;
-            float sf = 0.0f;
-            if (mx != mn) {
-                float d = (mx - mn) / 255.0f;
-                sf = lf > 0.5f ? d / (2.0f - mx / 255.0f - mn / 255.0f) : d / (mx / 255.0f + mn / 255.0f);
-            }
-            pixS[i] = (byte) (int) (sf * 255.0f);
-            pixL[i] = (byte) (int) (lf * 255.0f);
-            sumR[best] += r;
-            sumG[best] += g;
-            sumB[best] += b2;
-            sumS[best] += sf;
-            sumL[best] += lf;
+            sumR[best] += (p >>> 16) & 255;
+            sumG[best] += (p >>> 8) & 255;
+            sumB[best] += p & 255;
+            sumS[best] += s;
+            sumL[best] += l;
             count[best]++;
         }
 
@@ -432,6 +409,19 @@ public final class GunRecolorManager {
 
     // ---------------- 算法工具 ----------------
 
+    /** 加权距离平方: 色相权重最大(按双方饱和度衰减, 灰色不参与色相较), 饱和度/亮度权重次之。 */
+    private static float weightedDistanceSq(float h1, float s1, float l1, float h2, float s2, float l2) {
+        float dh = Math.abs(h1 - h2);
+        if (dh > 0.5f) dh = 1.0f - dh;
+        float hueWeight = com.ssscript.taczfixes.common.config.Config.RECOLOR_HUE_WEIGHT.get().floatValue();
+        float satWeight = com.ssscript.taczfixes.common.config.Config.RECOLOR_SATURATION_WEIGHT.get().floatValue();
+        float lightWeight = com.ssscript.taczfixes.common.config.Config.RECOLOR_LIGHTNESS_WEIGHT.get().floatValue();
+        float wh = dh * hueWeight * Math.min(s1, s2);
+        float ws = (s1 - s2) * satWeight;
+        float wl = (l1 - l2) * lightWeight;
+        return wh * wh + ws * ws + wl * wl;
+    }
+
     private static List<float[]> kmeans(float[] samples, int n, int k) {
         k = Math.min(k, Math.max(1, n));
         List<float[]> centers = new ArrayList<>();
@@ -445,10 +435,8 @@ public final class GunRecolorManager {
             float[] last = centers.get(c - 1);
             float total = 0.0f;
             for (int i = 0; i < n; i++) {
-                float dl = samples[i * 3] - last[0];
-                float da = samples[i * 3 + 1] - last[1];
-                float db = samples[i * 3 + 2] - last[2];
-                float dist = dl * dl + da * da + db * db;
+                float dist = weightedDistanceSq(samples[i * 3], samples[i * 3 + 1], samples[i * 3 + 2],
+                        last[0], last[1], last[2]);
                 if (dist < d2[i]) d2[i] = dist;
                 total += d2[i];
             }
@@ -467,42 +455,48 @@ public final class GunRecolorManager {
             centers.add(new float[]{samples[chosen * 3], samples[chosen * 3 + 1], samples[chosen * 3 + 2]});
         }
 
-        float[] sums = new float[k * 3];
+        float[] sumS = new float[k];
+        float[] sumL = new float[k];
+        float[] sumHx = new float[k];
+        float[] sumHy = new float[k];
         int[] counts = new int[k];
-        int[] asg = new int[n];
-        Arrays.fill(asg, -1);
         for (int iter = 0; iter < 20; iter++) {
-            Arrays.fill(sums, 0.0f);
+            Arrays.fill(sumS, 0.0f);
+            Arrays.fill(sumL, 0.0f);
+            Arrays.fill(sumHx, 0.0f);
+            Arrays.fill(sumHy, 0.0f);
             Arrays.fill(counts, 0);
             for (int i = 0; i < n; i++) {
-                float l = samples[i * 3];
-                float a = samples[i * 3 + 1];
-                float b = samples[i * 3 + 2];
+                float h = samples[i * 3];
+                float s = samples[i * 3 + 1];
+                float l = samples[i * 3 + 2];
                 int best = 0;
                 float bestDist = Float.MAX_VALUE;
                 for (int c = 0; c < k; c++) {
                     float[] center = centers.get(c);
-                    float dl = l - center[0];
-                    float da = a - center[1];
-                    float db = b - center[2];
-                    float dist = dl * dl + da * da + db * db;
+                    float dist = weightedDistanceSq(h, s, l, center[0], center[1], center[2]);
                     if (dist < bestDist) {
                         bestDist = dist;
                         best = c;
                     }
                 }
-                asg[i] = best;
-                sums[best * 3] += l;
-                sums[best * 3 + 1] += a;
-                sums[best * 3 + 2] += b;
+                double angle = h * Math.PI * 2.0;
+                sumHx[best] += (float) Math.cos(angle);
+                sumHy[best] += (float) Math.sin(angle);
+                sumS[best] += s;
+                sumL[best] += l;
                 counts[best]++;
             }
             for (int c = 0; c < k; c++) {
                 if (counts[c] > 0) {
                     float[] center = centers.get(c);
-                    center[0] = sums[c * 3] / counts[c];
-                    center[1] = sums[c * 3 + 1] / counts[c];
-                    center[2] = sums[c * 3 + 2] / counts[c];
+                    if (sumHx[c] != 0.0f || sumHy[c] != 0.0f) {
+                        float h = (float) (Math.atan2(sumHy[c], sumHx[c]) / (Math.PI * 2.0));
+                        if (h < 0.0f) h += 1.0f;
+                        center[0] = h;
+                    }
+                    center[1] = sumS[c] / counts[c];
+                    center[2] = sumL[c] / counts[c];
                 }
             }
         }
@@ -510,6 +504,7 @@ public final class GunRecolorManager {
     }
 
     private static List<float[]> mergeCenters(List<float[]> centers, float threshold) {
+        float thresholdSq = threshold * threshold;
         List<float[]> out = new ArrayList<>();
         for (float[] center : centers) out.add(center.clone());
         boolean changed = true;
@@ -517,13 +512,21 @@ public final class GunRecolorManager {
             changed = false;
             for (int i = 0; i < out.size() && !changed; i++) {
                 for (int j = i + 1; j < out.size(); j++) {
-                    float dl = out.get(i)[0] - out.get(j)[0];
-                    float da = out.get(i)[1] - out.get(j)[1];
-                    float db = out.get(i)[2] - out.get(j)[2];
-                    if (Math.sqrt(dl * dl + da * da + db * db) < threshold) {
-                        out.get(i)[0] = (out.get(i)[0] + out.get(j)[0]) / 2.0f;
-                        out.get(i)[1] = (out.get(i)[1] + out.get(j)[1]) / 2.0f;
-                        out.get(i)[2] = (out.get(i)[2] + out.get(j)[2]) / 2.0f;
+                    if (weightedDistanceSq(out.get(i)[0], out.get(i)[1], out.get(i)[2],
+                            out.get(j)[0], out.get(j)[1], out.get(j)[2]) < thresholdSq) {
+                        float[] a = out.get(i);
+                        float[] b = out.get(j);
+                        double ax = Math.cos(a[0] * Math.PI * 2.0);
+                        double ay = Math.sin(a[0] * Math.PI * 2.0);
+                        double bx = Math.cos(b[0] * Math.PI * 2.0);
+                        double by = Math.sin(b[0] * Math.PI * 2.0);
+                        if (ax + bx != 0.0 || ay + by != 0.0) {
+                            float h = (float) (Math.atan2(ay + by, ax + bx) / (Math.PI * 2.0));
+                            if (h < 0.0f) h += 1.0f;
+                            a[0] = h;
+                        }
+                        a[1] = (a[1] + b[1]) / 2.0f;
+                        a[2] = (a[2] + b[2]) / 2.0f;
                         out.remove(j);
                         changed = true;
                         break;
@@ -589,10 +592,6 @@ public final class GunRecolorManager {
         if (t < 1.0f / 2.0f) return q;
         if (t < 2.0f / 3.0f) return p + (q - p) * (2.0f / 3.0f - t) * 6.0f;
         return p;
-    }
-
-    private static float srgb2lin(float c) {
-        return c <= 0.04045f ? c / 12.92f : (float) Math.pow((c + 0.055f) / 1.055f, 2.4);
     }
 
     private static float clamp01(float v) {

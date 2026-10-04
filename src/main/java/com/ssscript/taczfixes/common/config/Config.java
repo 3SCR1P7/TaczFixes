@@ -61,6 +61,9 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue PREVENT_SHOOTING_UNDERWATER;
     public static final ForgeConfigSpec.BooleanValue HIDE_UNAVAILABLE_DEFAULT_SLOTS;
     public static final ForgeConfigSpec.EnumValue<VirtualAttachmentsMode> VIRTUAL_ATTACHMENTS;
+    public static final ForgeConfigSpec.DoubleValue RECOLOR_HUE_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue RECOLOR_SATURATION_WEIGHT;
+    public static final ForgeConfigSpec.DoubleValue RECOLOR_LIGHTNESS_WEIGHT;
     public static final ForgeConfigSpec.BooleanValue BLOCKING_ENABLE;
     public static final ForgeConfigSpec.BooleanValue BLOCKING_ENTITY_ENABLE;
     public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MAX;
@@ -562,6 +565,16 @@ public class Config {
         PREVENT_SHOOTING_UNDERWATER = BUILDER
                 .comment("是否阻止水下开火。默认值：true")
                 .define("prevent_shooting_underwater", true);
+
+        RECOLOR_HUE_WEIGHT = BUILDER
+                .comment("调色分组的色相权重。默认值：2.0")
+                .defineInRange("recolor_hue_weight", 2.0, 0.0, 20.0);
+        RECOLOR_SATURATION_WEIGHT = BUILDER
+                .comment("调色分组的饱和度权重。默认值：1.0")
+                .defineInRange("recolor_saturation_weight", 1.0, 0.0, 20.0);
+        RECOLOR_LIGHTNESS_WEIGHT = BUILDER
+                .comment("调色分组的亮度权重。默认值：1.0")
+                .defineInRange("recolor_lightness_weight", 1.0, 0.0, 20.0);
 
         BUILDER.push("stepless_zoom");
         STEPLESS_ZOOM_ENABLED = BUILDER

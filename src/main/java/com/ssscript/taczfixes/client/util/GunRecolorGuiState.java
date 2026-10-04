@@ -171,7 +171,6 @@ public final class GunRecolorGuiState {
         saturationSlider = null;
         lightnessSlider = null;
         selected = -1;
-        ItemStack target = target();
         background = new RecolorPanelBackground(X, Y, W, 100);
         add(adder, background);
 
@@ -182,7 +181,7 @@ public final class GunRecolorGuiState {
                 () -> {
                     int count = clusterCountOf(clusterSlider.value());
                     if (count != GunRecolorManager.clusterCount()) {
-                        GunRecolorManager.setClusterCount(target, count);
+                        GunRecolorManager.setClusterCount(target(), count);
                         writeBack();
                     }
                 });
@@ -210,12 +209,7 @@ public final class GunRecolorGuiState {
         add(adder, new RecolorActionButton(X + 2, Y, buttonWidth, 18,
                 Component.translatable("gui.taczfixes.recolor.reset_group"), button -> resetSelected()));
         add(adder, new RecolorActionButton(X + 2 + buttonWidth + 4, Y, buttonWidth, 18,
-                Component.translatable("gui.taczfixes.recolor.reset_all"), button -> {
-            GunRecolorManager.resetAll(target);
-            writeBack();
-            syncSliders();
-            send();
-        }));
+                Component.translatable("gui.taczfixes.recolor.reset_all"), button -> resetAll()));
         add(adder, new RecolorActionButton(X + 2 + 2 * (buttonWidth + 4), Y, buttonWidth, 18,
                 Component.translatable("gui.taczfixes.recolor.done"), button -> done(rebuild)));
         for (AbstractWidget widget : PANEL) {
@@ -324,6 +318,17 @@ public final class GunRecolorGuiState {
             return;
         }
         GunRecolorManager.resetTarget(target(), selected);
+        writeBack();
+        syncSliders();
+        send();
+    }
+
+    private static void resetAll() {
+        ItemStack target = target();
+        if (target.isEmpty()) {
+            return;
+        }
+        GunRecolorManager.resetAll(target);
         writeBack();
         syncSliders();
         send();

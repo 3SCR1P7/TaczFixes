@@ -287,6 +287,12 @@ public class ConfigScreen {
         bool_(debug, entry, "misc.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(debug, entry, "misc.disable_third_person", Config.DISABLE_THIRD_PERSON);
         cat.addEntry(entry.startSubCategory(cat("debug"), debug).build());
+
+        List<AbstractConfigListEntry> recolor = new ArrayList<>();
+        dbl_(recolor, entry, "misc.recolor_hue_weight", Config.RECOLOR_HUE_WEIGHT);
+        dbl_(recolor, entry, "misc.recolor_saturation_weight", Config.RECOLOR_SATURATION_WEIGHT);
+        dbl_(recolor, entry, "misc.recolor_lightness_weight", Config.RECOLOR_LIGHTNESS_WEIGHT);
+        cat.addEntry(entry.startSubCategory(cat("recolor"), recolor).build());
     }
 
     private static void buildDynamicCrosshair(ConfigCategory cat, ConfigEntryBuilder entry) {
