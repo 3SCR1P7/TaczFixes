@@ -68,13 +68,22 @@ public final class PbrRenderer {
     public static void updateCelestialLight(float partialTick) {
         if (shader == null) return;
         var level = Minecraft.getInstance().level;
-        if (level == null || !level.dimensionType().hasSkyLight()
+        if (level == null) return;
+        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+        var origin = camera.getPosition();
+        // 局部光源(火把/灯笼等): 非天空维度也有
+        updateLocalLight(level, origin);
+        shader.safeGetUniform("LocalLightDirection").set(localLightX, localLightY, localLightZ);
+        shader.safeGetUniform("LocalLightColor").set(localLightR, localLightG, localLightB);
+        shader.safeGetUniform("LocalLightStrength").set(localLightStrength);
+        if (!level.dimensionType().hasSkyLight()
                 || level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL) {
             shader.safeGetUniform("CelestialDirection").set(0f, 1f, 0f);
             shader.safeGetUniform("CelestialColor").set(0f, 0f, 0f);
             shader.safeGetUniform("SkyAmbient").set(0f);
             shader.safeGetUniform("CelestialVisibility").set(0f);
             shader.safeGetUniform("LocalSkyExposure").set(0f);
+            shader.safeGetUniform("Wetness").set(0f);
             return;
         }
         var light = CelestialLight.sample(level.getTimeOfDay(partialTick), level.getRainLevel(partialTick),
@@ -82,14 +91,94 @@ public final class PbrRenderer {
         shader.safeGetUniform("CelestialDirection").set(light.x(), light.y(), 0f);
         shader.safeGetUniform("CelestialColor").set(light.red(), light.green(), light.blue());
         shader.safeGetUniform("SkyAmbient").set(light.ambient());
-        var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-        var origin = camera.getPosition();
         // A bounded ray catches ceilings and walls in the light's actual direction.
         var end = origin.add(new Vec3(light.x(), light.y(), 0).scale(96));
         boolean visible = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
         shader.safeGetUniform("CelestialVisibility").set(visible ? 1f : 0f);
         shader.safeGetUniform("LocalSkyExposure").set(level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
+        // 淋雨打湿: 仅在露天淋雨时生效, 强度跟随雨量
+        float wetness = 0f;
+        if (level.isRaining()) {
+            float rain = level.getRainLevel(partialTick);
+            if (level.isRainingAt(BlockPos.containing(origin))) {
+                wetness = rain;
+            }
+        }
+        shader.safeGetUniform("Wetness").set(wetness);
+    }
+
+    private static float localLightX = 0f;
+    private static float localLightY = 1f;
+    private static float localLightZ = 0f;
+    private static float localLightR = 1f;
+    private static float localLightG = 1f;
+    private static float localLightB = 1f;
+    private static float localLightStrength = 0f;
+    private static long localLightNextScan = 0L;
+    private static BlockPos localLightBlock = null;
+    private static int localLightEmission = 0;
+
+    /** 扫描附近发光方块(节流); 方向/强度每帧按当前位置重算, 移动时高光平滑跟随不卡顿。 */
+    private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin) {
+        long now = System.currentTimeMillis();
+        if (now >= localLightNextScan) {
+            localLightNextScan = now + 250L;
+            BlockPos center = BlockPos.containing(origin);
+            BlockPos best = null;
+            int bestEmission = 0;
+            double bestScore = 0.0D;
+            for (BlockPos pos : BlockPos.betweenClosed(center.offset(-6, -4, -6), center.offset(6, 4, 6))) {
+                net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
+                int emission = state.getLightEmission(level, pos);
+                if (emission <= 0) continue;
+                double dx = pos.getX() + 0.5D - origin.x;
+                double dy = pos.getY() + 0.5D - origin.y;
+                double dz = pos.getZ() + 0.5D - origin.z;
+                double score = emission / (1.0D + (dx * dx + dy * dy + dz * dz) * 0.35D);
+                if (score > bestScore) {
+                    bestScore = score;
+                    best = pos.immutable();
+                    bestEmission = emission;
+                }
+            }
+            localLightBlock = best;
+            localLightEmission = bestEmission;
+            if (best != null) {
+                int color = level.getBlockState(best).getMapColor(level, best).col;
+                int r = (color >> 16) & 255;
+                int g = (color >> 8) & 255;
+                int b = color & 255;
+                if (r + g + b < 24) {
+                    r = 255;
+                    g = 220;
+                    b = 170;
+                }
+                localLightR = r / 255f;
+                localLightG = g / 255f;
+                localLightB = b / 255f;
+            }
+        }
+        float targetStrength = 0f;
+        float targetX = localLightX;
+        float targetY = localLightY;
+        float targetZ = localLightZ;
+        if (localLightBlock != null) {
+            double dx = localLightBlock.getX() + 0.5D - origin.x;
+            double dy = localLightBlock.getY() + 0.5D - origin.y;
+            double dz = localLightBlock.getZ() + 0.5D - origin.z;
+            double len = Math.max(1.0E-4D, Math.sqrt(dx * dx + dy * dy + dz * dz));
+            targetX = (float) (dx / len);
+            targetY = (float) (dy / len);
+            targetZ = (float) (dz / len);
+            double score = localLightEmission / (1.0D + len * len * 0.35D);
+            targetStrength = (float) Math.max(0.0D, Math.min(1.0D, score / 7.0D));
+        }
+        // 方向每帧更新(连续), 强度轻微平滑避免切换光源跳变
+        localLightX = targetX;
+        localLightY = targetY;
+        localLightZ = targetZ;
+        localLightStrength += (targetStrength - localLightStrength) * 0.35f;
     }
 
     private static Method findOptifine() {

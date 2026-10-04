@@ -20,6 +20,10 @@ uniform vec3 CelestialColor;
 uniform float SkyAmbient;
 uniform float CelestialVisibility;
 uniform float LocalSkyExposure;
+uniform float Wetness;
+uniform vec3 LocalLightDirection;
+uniform vec3 LocalLightColor;
+uniform float LocalLightStrength;
 in float vertexDistance;
 in vec4 vertexColor;
 in vec4 rawVertexColor;
@@ -91,9 +95,13 @@ void main() {
     float nl = max(dot(n, l), 0.0);
     float nh = max(dot(n, h), 0.0);
     float vh = max(dot(v, h), 0.0);
+    // 下雨打湿: 底色压暗、表面变光滑; 无 _s 贴图的枪也给一层湿润反光
+    float wet = clamp(Wetness, 0.0, 1.0);
+    vec3 wetBase = base.rgb * mix(1.0, 0.7, wet);
     float roughness = max(pow(1.0 - specular.r, 2.0), 0.045);
+    roughness = mix(roughness, max(roughness * 0.25, 0.05), wet);
     float metallic = step(229.5 / 255.0, specular.g);
-    vec3 linearBase = pow(base.rgb, vec3(2.2));
+    vec3 linearBase = pow(wetBase, vec3(2.2));
     // 介电质 F0 上限 0.16: 防止 _s 图的 reflectance 通道过高导致黑/灰枪出现大片白光
     vec3 f0 = metallic > 0.5 ? metalF0(floor(specular.g * 255.0 + 0.5), linearBase)
             : vec3(min(specular.g, 0.16));
@@ -106,6 +114,22 @@ void main() {
     // 粗糙表面压低太阳直射高光, 避免整枪发白的宽高光
     vec3 direct = fresnel * d * g / max(4.0 * nv, 0.001) * mix(0.35, 1.0, 1.0 - roughness)
             * CelestialColor * exposure * exposure * CelestialVisibility;
+    // 局部光源(火把/灯笼/岩浆等)高光, 让非日月光方向也有反光。
+    // 局部光用较宽的高光叶 + 一层环境贡献, 保证在大多数视角都明显可见。
+    vec3 ll = safeNormalize(transpose(IViewRotMat) * LocalLightDirection);
+    vec3 lh = safeNormalize(v + ll);
+    float lnl = max(dot(n, ll), 0.0);
+    float lnh = max(dot(n, lh), 0.0);
+    float lvh = max(dot(v, lh), 0.0);
+    vec3 lfresnel = f0 + (1.0 - f0) * pow(1.0 - lvh, 5.0);
+    float localRoughness = mix(roughness, 0.25, 0.6);
+    float la2 = pow(localRoughness, 4.0);
+    float ld = la2 / max(3.14159265 * pow(lnh * lnh * (la2 - 1.0) + 1.0, 2.0), 1e-6);
+    float lk = pow(localRoughness + 1.0, 2.0) / 8.0;
+    float lg = nv / (nv * (1.0 - lk) + lk) * lnl / (lnl * (1.0 - lk) + lk);
+    vec3 localDirect = lfresnel * ld * lg / max(4.0 * nv, 0.001) * mix(0.5, 1.0, 1.0 - localRoughness)
+            * LocalLightColor * LocalLightStrength * 0.22;
+    vec3 localAmbient = LocalLightColor * LocalLightStrength * 0.015;
     vec3 reflected = IViewRotMat * reflect(-v, n);
     // 环境反射: 天空/地面渐变 + 地平线亮带, 让侧向/掠射角也有明显反光。
     // 反射必须带材质色(深色枪身反射深色环境), 否则抬头看天时天空反射会把整枪洗成灰色;
@@ -122,10 +146,12 @@ void main() {
             * (0.15 + 0.85 * baseLuma);
     float envVisibility = (0.25 + 0.75 * SkyAmbient) * (0.30 + 0.70 * exposure)
             * (1.0 - roughness * 0.6);
+    // 局部光反光不受 _s 贴图有无限制(没有反射强度配置时也能看到)
     vec3 reflection = (direct + environment * envTint * envFresnel * envVisibility)
-            * ao * ReflectionStrength;
+            * ao * max(ReflectionStrength, wet * 0.6)
+            + (localDirect + localAmbient) * ao;
     reflection = reflection / (1.0 + reflection);
-    vec3 color = base.rgb * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;
+    vec3 color = wetBase * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;
     // Keep vanilla's lit albedo as the baseline. This renderer has no captured
     // environment to replace the diffuse energy removed by a full metal BRDF.
     // Darkening all metal here made it black indoors or away from the highlight.

@@ -40,6 +40,10 @@
     { "name": "CelestialDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
     { "name": "CelestialColor", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
     { "name": "SkyAmbient", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "Wetness", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "LocalLightDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
+    { "name": "LocalLightColor", "type": "float", "count": 3, "values": [1.0, 1.0, 1.0] },
+    { "name": "LocalLightStrength", "type": "float", "count": 1, "values": [0.0] },
     {
       "name": "ModelViewMat",
       "type": "matrix4x4",
