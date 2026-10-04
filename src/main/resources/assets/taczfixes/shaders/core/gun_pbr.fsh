@@ -94,25 +94,32 @@ void main() {
     float roughness = max(pow(1.0 - specular.r, 2.0), 0.045);
     float metallic = step(229.5 / 255.0, specular.g);
     vec3 linearBase = pow(base.rgb, vec3(2.2));
-    vec3 f0 = metallic > 0.5 ? metalF0(floor(specular.g * 255.0 + 0.5), linearBase) : vec3(specular.g);
+    // 介电质 F0 上限 0.16: 防止 _s 图的 reflectance 通道过高导致黑/灰枪出现大片白光
+    vec3 f0 = metallic > 0.5 ? metalF0(floor(specular.g * 255.0 + 0.5), linearBase)
+            : vec3(min(specular.g, 0.16));
     vec3 fresnel = f0 + (1.0 - f0) * pow(1.0 - vh, 5.0);
     float a2 = pow(roughness, 4.0);
     float d = a2 / max(3.14159265 * pow(nh * nh * (a2 - 1.0) + 1.0, 2.0), 1e-6);
     float k = pow(roughness + 1.0, 2.0) / 8.0;
     float g = nv / (nv * (1.0 - k) + k) * nl / (nl * (1.0 - k) + k);
     float exposure = min(skyExposure, LocalSkyExposure);
-    vec3 direct = fresnel * d * g / max(4.0 * nv, 0.001)
+    // 粗糙表面压低太阳直射高光, 避免整枪发白的宽高光
+    vec3 direct = fresnel * d * g / max(4.0 * nv, 0.001) * mix(0.35, 1.0, 1.0 - roughness)
             * CelestialColor * exposure * exposure * CelestialVisibility;
     vec3 reflected = IViewRotMat * reflect(-v, n);
     // 环境反射: 天空/地面渐变 + 地平线亮带, 让侧向/掠射角也有明显反光。
     // 反射必须带材质色(深色枪身反射深色环境), 否则抬头看天时天空反射会把整枪洗成灰色;
     // 金属按 F0 着色, 并带菲涅尔掠射增强。
     float sky = smoothstep(-0.35, 0.9, reflected.y);
-    vec3 environment = mix(vec3(0.15, 0.14, 0.13), vec3(0.52, 0.63, 0.82), sky);
+    // 天空色降低饱和度, 避免中性色枪身反射出蓝调
+    vec3 environment = mix(vec3(0.15, 0.14, 0.13), vec3(0.58, 0.63, 0.74), sky);
     float horizon = exp(-abs(reflected.y) * 5.0);
     environment += CelestialColor * horizon * 0.2 * CelestialVisibility;
     vec3 envFresnel = f0 + (1.0 - f0) * pow(1.0 - nv, 5.0);
-    vec3 envTint = mix(max(linearBase, vec3(0.15)), min(f0 * 2.0, vec3(0.9)), metallic);
+    // 反射整体按底色亮度缩放(含金属): 黑/灰枪即使被 _s 图标成金属也不会被天空反射洗白/偏蓝
+    float baseLuma = clamp(dot(linearBase, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+    vec3 envTint = mix(min(linearBase * 1.3, vec3(0.8)), min(f0 * 2.0, vec3(0.9)), metallic)
+            * (0.15 + 0.85 * baseLuma);
     float envVisibility = (0.25 + 0.75 * SkyAmbient) * (0.30 + 0.70 * exposure)
             * (1.0 - roughness * 0.6);
     vec3 reflection = (direct + environment * envTint * envFresnel * envVisibility)
