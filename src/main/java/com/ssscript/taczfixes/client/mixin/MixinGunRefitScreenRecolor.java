@@ -3,6 +3,8 @@ package com.ssscript.taczfixes.client.mixin;
 import com.ssscript.taczfixes.client.util.GunRecolorGuiState;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import com.tacz.guns.client.gui.components.FlatColorButton;
+import com.tacz.guns.client.gui.components.refit.GunPropertyDiagrams;
+import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
@@ -10,6 +12,7 @@ import net.minecraft.network.chat.Component;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 改装界面"调色"入口与调色面板(打开时隐藏其它全部控件)。 */
@@ -42,6 +45,18 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
         if (GunRecolorGuiState.isOpen()) {
             GunRecolorGuiState.sweep((Screen) (Object) this);
         }
+    }
+
+    /** 调色界面打开时连同"显示图表"画出的图表一起隐藏。 */
+    @Redirect(method = "m_88315_", at = @At(value = "INVOKE",
+            target = "Lcom/tacz/guns/client/gui/components/refit/GunPropertyDiagrams;draw" +
+                    "(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;II)V",
+            remap = false), remap = false)
+    private static void taczfixes$hideDiagrams(GuiGraphics graphics, Font font, int x, int y) {
+        if (GunRecolorGuiState.isOpen()) {
+            return;
+        }
+        GunPropertyDiagrams.draw(graphics, font, x, y);
     }
 
     @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
