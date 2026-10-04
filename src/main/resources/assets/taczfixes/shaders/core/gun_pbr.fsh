@@ -104,13 +104,17 @@ void main() {
     vec3 direct = fresnel * d * g / max(4.0 * nv, 0.001)
             * CelestialColor * exposure * exposure * CelestialVisibility;
     vec3 reflected = IViewRotMat * reflect(-v, n);
-    float sky = smoothstep(-0.3, 0.8, reflected.y);
-    vec3 environment = mix(vec3(0.12, 0.10, 0.08), vec3(0.55, 0.67, 0.85), sky);
+    // 环境反射: 天空/地面渐变 + 地平线亮带, 让侧向/掠射角也有明显反光;
+    // 反射与底色明暗解耦(金属按 F0 着色), 并带菲涅尔掠射增强。
+    float sky = smoothstep(-0.35, 0.9, reflected.y);
+    vec3 environment = mix(vec3(0.16, 0.15, 0.14), vec3(0.60, 0.72, 0.94), sky);
+    float horizon = exp(-abs(reflected.y) * 5.0);
+    environment += CelestialColor * horizon * 0.25 * CelestialVisibility;
     vec3 envFresnel = f0 + (1.0 - f0) * pow(1.0 - nv, 5.0);
-    // Environment approximation must not paint a pale layer over the albedo.
-    // Keep it subtle, material-tinted and attenuated indoors independently of torch light.
-    vec3 reflection = (direct + environment * linearBase * 0.15 * SkyAmbient * envFresnel
-            * (1.0 - roughness) * exposure * exposure * lightMapColor.rgb)
+    vec3 envTint = mix(vec3(1.0), min(f0 * 2.2, vec3(1.0)), metallic);
+    float envVisibility = (0.30 + 0.70 * SkyAmbient) * (0.30 + 0.70 * exposure)
+            * (1.0 - roughness * 0.55);
+    vec3 reflection = (direct + environment * envTint * envFresnel * envVisibility)
             * ao * ReflectionStrength;
     reflection = reflection / (1.0 + reflection);
     vec3 color = base.rgb * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;

@@ -52,7 +52,7 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
             target = "Lcom/tacz/guns/client/gui/components/refit/GunPropertyDiagrams;draw" +
                     "(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;II)V",
             remap = false), remap = false)
-    private static void taczfixes$hideDiagrams(GuiGraphics graphics, Font font, int x, int y) {
+    private void taczfixes$hideDiagrams(GuiGraphics graphics, Font font, int x, int y) {
         if (GunRecolorGuiState.isOpen()) {
             return;
         }
