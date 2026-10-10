@@ -34,6 +34,26 @@ public class GunTaczFixesData {
     public ImbuementConfig imbuement;
     /** 前方阻挡配置; 有该字段时启用。 */
     public BlockingConfig blocking;
+    /** 枪械耐久配置; 有该字段时启用。 */
+    public DurabilityConfig durability;
+
+    /** 枪械耐久: 开火消耗耐久, 归零后按 damage_action 处理; 支持铁砧修复/合并。 */
+    public static class DurabilityConfig {
+        /** 耐久值上限。 */
+        public Integer durability;
+        /** 开火时消耗的耐久值。 */
+        public Integer fire_consumption;
+        /** 无耐久时的动作, 可选 remove(直接消失)、disable(无法开火)、none(无); 未填默认 disable。 */
+        public String damage_action;
+        /** 铁砧修复支持的材料(物品 id 或 #标签); 为空则无法在铁砧修复。 */
+        public java.util.List<String> repair_material;
+        /** 铁砧中每个材料修复的耐久值。 */
+        public Integer repair_value;
+        /** 是否允许在铁砧/工作台/砂轮中合并相同枪械以修复耐久(同原版工具规则)。 */
+        public Boolean allow_merge;
+        /** 是否以原版耐久条显示耐久; 否则仅 F3+H 可见。 */
+        public Boolean durability_bar;
+    }
 
     /** 枪械 data 中 taczfixes.imbuement: 逐枪覆盖法术注入配置, 优先级高于 config。 */
     public static class ImbuementConfig {

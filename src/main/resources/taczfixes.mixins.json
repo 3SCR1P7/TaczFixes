@@ -86,6 +86,7 @@
         "MixinIronsCanImbue",
         "MixinIronsSpellSelection",
         "MixinIronsAnvilContainer",
-        "MixinIronsEquipmentChangeCast"
+        "MixinIronsEquipmentChangeCast",
+        "MixinRepairItemRecipeGunMerge"
     ]
 }

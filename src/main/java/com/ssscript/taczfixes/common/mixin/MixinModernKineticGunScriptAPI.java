@@ -182,6 +182,30 @@ public abstract class MixinModernKineticGunScriptAPI {
         return com.ssscript.taczfixes.common.util.ChargeStorage.getMax(this.itemStack);
     }
 
+    /** lua: api:getDurability() 当前耐久值(未配置耐久的枪械返回 0)。 */
+    @Unique
+    public int getDurability() {
+        return com.ssscript.taczfixes.common.util.DurabilityStorage.get(this.itemStack);
+    }
+
+    /** lua: api:getDurabilityMax() 最大耐久值(未配置耐久的枪械返回 0)。 */
+    @Unique
+    public int getDurabilityMax() {
+        return com.ssscript.taczfixes.common.util.DurabilityStorage.getMax(this.itemStack);
+    }
+
+    /** lua: api:setDurability(int) 设置当前耐久值, 自动截断到 [0, 上限]。 */
+    @Unique
+    public void setDurability(int value) {
+        com.ssscript.taczfixes.common.util.DurabilityStorage.set(this.itemStack, value);
+    }
+
+    /** lua: api:setRecoilMultiplier(float) 此枪械开火时的后坐力乘以此数值。 */
+    @Unique
+    public void setRecoilMultiplier(float value) {
+        com.ssscript.taczfixes.common.util.RecoilMultiplierStorage.set(this.itemStack, value);
+    }
+
     /** lua: api:getEnchantments() 返回此枪械全部附魔及等级, 如 {{"taczfixes:abyssgazer",1},{"taczfixes:pandora_paradox",2}}。 */
     @Unique
     public org.luaj.vm2.LuaValue getEnchantments() {
@@ -299,6 +323,68 @@ public abstract class MixinModernKineticGunScriptAPI {
             return;
         }
         ClientOnlyDispatch.playDryFireFeedback(this.shooter, this.itemStack);
+    }
+
+    /** 耐久为 0 时的开火前处理: disable 阻拦开火(播放 dry_fire), remove 移除枪械。 */
+    @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
+    private void taczfixes$checkDurability(boolean needConsumeAmmo, CallbackInfo ci) {
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.DurabilityConfig cfg =
+                com.ssscript.taczfixes.common.util.DurabilityStorage.config(this.itemStack);
+        if (cfg == null || com.ssscript.taczfixes.common.util.DurabilityStorage.getMax(this.itemStack) <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.DurabilityStorage.get(this.itemStack) > 0) {
+            return;
+        }
+        String action = com.ssscript.taczfixes.common.util.DurabilityStorage.damageAction(cfg);
+        if ("none".equals(action)) {
+            return;
+        }
+        if ("remove".equals(action)) {
+            taczfixes$removeBrokenGun();
+        } else {
+            taczfixes$playDryFire();
+        }
+        ci.cancel();
+    }
+
+    /** 每发实际开火消耗一次耐久; 归零时按 damage_action 移除枪械(disable 由开火前检查拦截)。 */
+    @Inject(method = "lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
+            at = @At(value = "NEW", target = "com/tacz/guns/network/message/event/ServerMessageGunFire"),
+            cancellable = true, remap = false)
+    private void taczfixes$consumeDurabilityPerShot(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
+                                                    GunData gunData, BulletData bulletData, IGunOperator operator,
+                                                    float damageMultiplier, float bulletSpeed, float inaccuracy,
+                                                    int soundDistance, boolean silenced, CallbackInfoReturnable<Boolean> cir) {
+        if (this.itemStack == null || this.itemStack.isEmpty()) {
+            // 归零后被移除的枪械(remove): 终止本轮连发的后续子弹
+            cir.setReturnValue(false);
+            return;
+        }
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.DurabilityConfig cfg =
+                com.ssscript.taczfixes.common.util.DurabilityStorage.config(this.itemStack);
+        if (cfg == null || com.ssscript.taczfixes.common.util.DurabilityStorage.getMax(this.itemStack) <= 0) {
+            return;
+        }
+        int consumption = cfg.fire_consumption == null ? 0 : cfg.fire_consumption;
+        if (consumption <= 0) {
+            return;
+        }
+        int remaining = com.ssscript.taczfixes.common.util.DurabilityStorage.consume(this.itemStack, consumption);
+        if (remaining <= 0 && "remove".equals(com.ssscript.taczfixes.common.util.DurabilityStorage.damageAction(cfg))) {
+            taczfixes$removeBrokenGun();
+        }
+    }
+
+    /** 移除损坏的枪械并播放原版损坏音效(仅服务端)。 */
+    @Unique
+    private void taczfixes$removeBrokenGun() {
+        this.itemStack.shrink(this.itemStack.getCount());
+        if (this.shooter != null && this.shooter.level() != null && !this.shooter.level().isClientSide) {
+            this.shooter.level().playSound(null, this.shooter.getX(), this.shooter.getY(), this.shooter.getZ(),
+                    net.minecraft.sounds.SoundEvents.ITEM_BREAK, this.shooter.getSoundSource(), 0.8f,
+                    0.8f + this.shooter.level().random.nextFloat() * 0.4f);
+        }
     }
 
     /** lua: api:replaceData("tacz:ak47_data") 将此枪械的 data 替换为指定 id 的枪械数据, 成功返回 true。 */

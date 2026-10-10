@@ -780,6 +780,20 @@ public final class DualWieldClient {
             SoundPlayManager.playDryFireSound(player, display);
             return false;
         }
+        // 耐久为 0: disable 播放 dry_fire, remove 静默拦截(消失由服务端同步)
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.DurabilityConfig durabilityCfg =
+                com.ssscript.taczfixes.common.util.DurabilityStorage.config(stack);
+        if (durabilityCfg != null
+                && com.ssscript.taczfixes.common.util.DurabilityStorage.getMax(stack) > 0
+                && com.ssscript.taczfixes.common.util.DurabilityStorage.get(stack) <= 0) {
+            String durabilityAction = com.ssscript.taczfixes.common.util.DurabilityStorage.damageAction(durabilityCfg);
+            if (!"none".equals(durabilityAction)) {
+                if (!"remove".equals(durabilityAction)) {
+                    SoundPlayManager.playDryFireSound(player, display);
+                }
+                return false;
+            }
+        }
         if (bolt == Bolt.MANUAL_ACTION && !inBarrel) {
             tryStartOffhandBolt(player, stack, state);
             return false;

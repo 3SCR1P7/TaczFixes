@@ -94,6 +94,13 @@ public class MixinCameraSetupEvent {
         }
         taczfixes$recoilMultiplierPitch *= stabilityFactor;
         taczfixes$recoilMultiplierYaw *= stabilityFactor;
+
+        // lua: api:setRecoilMultiplier(float) 设置的逐枪后坐力倍率
+        float stackMultiplier = com.ssscript.taczfixes.common.util.RecoilMultiplierStorage.get(gunItem);
+        if (stackMultiplier != 1.0f) {
+            taczfixes$recoilMultiplierPitch *= stackMultiplier;
+            taczfixes$recoilMultiplierYaw *= stackMultiplier;
+        }
     }
 
     /** 原生调用签名 (F)。 */

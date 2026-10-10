@@ -29,6 +29,9 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
             GunRecolorGuiState.buildPanel((Screen) (Object) this, this::addRenderableWidget, this::init);
             return;
         }
+        if (!com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_RECOLOR_BUTTON.get()) {
+            return;
+        }
         // 使用与 TaCZ "显示图表" 相同的 FlatColorButton, 保证透明度/样式一致;
         // 该按钮位于 (11, 11, 288, 16), 调色按钮放在其右侧并与之对齐
         FlatColorButton button = new FlatColorButton(303, 11, 48, 16,

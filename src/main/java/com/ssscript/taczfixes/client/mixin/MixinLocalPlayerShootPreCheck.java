@@ -94,4 +94,28 @@ public class MixinLocalPlayerShootPreCheck {
             cir.setReturnValue(ShootResult.NO_AMMO);
         }
     }
+
+    /** 耐久为 0 时的客户端开火拦截: disable 播放 dry_fire, remove 静默拦截(消失由服务端同步)。 */
+    @Inject(method = "preCheck", at = @At("TAIL"), cancellable = true, remap = false, require = 0)
+    private void taczfixes$blockNoDurability(IGun iGun, IGunOperator gunOperator, ClientGunIndex gunIndex,
+                                             ItemStack mainHandItem, GunDisplayInstance display, GunData gunData,
+                                             boolean playDrySound, CallbackInfoReturnable<ShootResult> cir) {
+        if (cir.getReturnValue() != null) return;
+        com.ssscript.taczfixes.common.data.GunTaczFixesData.DurabilityConfig cfg =
+                com.ssscript.taczfixes.common.util.DurabilityStorage.config(mainHandItem);
+        if (cfg == null || com.ssscript.taczfixes.common.util.DurabilityStorage.getMax(mainHandItem) <= 0) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.DurabilityStorage.get(mainHandItem) > 0) {
+            return;
+        }
+        String action = com.ssscript.taczfixes.common.util.DurabilityStorage.damageAction(cfg);
+        if ("none".equals(action)) {
+            return;
+        }
+        if (!"remove".equals(action) && playDrySound) {
+            SoundPlayManager.playDryFireSound(player, display);
+        }
+        cir.setReturnValue(ShootResult.NO_AMMO);
+    }
 }

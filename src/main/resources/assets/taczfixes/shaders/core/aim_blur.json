@@ -1,0 +1,23 @@
+{
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "fragment": "taczfixes:aim_blur",
+  "vertex": "taczfixes:pbr_screen",
+  "uniforms": [
+    {
+      "type": "float",
+      "count": 1,
+      "name": "MaskStart",
+      "values": [
+        0.65
+      ]
+    }
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    }
+  ]
+}

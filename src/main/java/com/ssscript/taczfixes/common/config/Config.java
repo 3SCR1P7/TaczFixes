@@ -48,6 +48,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
+    public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_RECOLOR_BUTTON;
     public static final ForgeConfigSpec.DoubleValue REFIT_SLOT_SIZE;
     public static final ForgeConfigSpec.BooleanValue SPREAD_RAMP_ENABLED;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
@@ -296,6 +297,13 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_ENABLED;
     public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_CTRL_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_ALT_MULTIPLIER;
+    public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_GLOBAL_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_GLOBAL_SPEED;
+    public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_AIM_BLUR_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_RANGE;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE;
+    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR;
 
     public static final ForgeConfigSpec.BooleanValue DUAL_WIELD_ALLOW_OTHER_GUN_TYPES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_TYPES;
@@ -576,18 +584,6 @@ public class Config {
                 .comment("调色分组的亮度权重。默认值：1.0")
                 .defineInRange("recolor_lightness_weight", 1.0, 0.0, 20.0);
 
-        BUILDER.push("stepless_zoom");
-        STEPLESS_ZOOM_ENABLED = BUILDER
-                .comment("是否启用瞄具无极变倍功能。默认值：true")
-                .define("enabled", true);
-        STEPLESS_ZOOM_CTRL_MULTIPLIER = BUILDER
-                .comment("按住 Ctrl 滚动滚轮时，倍率调整速度的倍率。默认值：4")
-                .defineInRange("zoom_ctrl_multiplier", 4.0, 1.0, 10.0);
-        STEPLESS_ZOOM_ALT_MULTIPLIER = BUILDER
-                .comment("按住 Alt 滚动滚轮时，倍率调整速度的倍率。默认值：0.25")
-                .defineInRange("zoom_alt_multiplier", 0.25, 0.1, 1.0);
-        BUILDER.pop();
-
         BUILDER.push("burst_fire");
         BURST_BLOCK_ATTACHMENTS = BUILDER
                 .comment("禁用连发模式的配件列表。",
@@ -640,6 +636,44 @@ public class Config {
         SPECS.put("misc", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER.push("stepless_zoom");
+
+        STEPLESS_ZOOM_ENABLED = BUILDER
+                .comment("是否启用瞄具无极变倍功能。默认值：true")
+                .define("enabled", true);
+        STEPLESS_ZOOM_CTRL_MULTIPLIER = BUILDER
+                .comment("按住 Ctrl 滚动滚轮时，倍率调整速度的倍率。默认值：4")
+                .defineInRange("zoom_ctrl_multiplier", 4.0, 1.0, 10.0);
+        STEPLESS_ZOOM_ALT_MULTIPLIER = BUILDER
+                .comment("按住 Alt 滚动滚轮时，倍率调整速度的倍率。默认值：0.25")
+                .defineInRange("zoom_alt_multiplier", 0.25, 0.1, 1.0);
+        STEPLESS_ZOOM_GLOBAL_ENABLED = BUILDER
+                .comment("是否开启全局无极变倍。默认值：false",
+                        "开启后，scope 类型、能切换倍率、不是组合瞄具(多个不同视图)且未配置 stepless 字段的瞄具也会启用无极变倍。")
+                .define("global_enabled", false);
+        STEPLESS_ZOOM_GLOBAL_SPEED = BUILDER
+                .comment("全局无极变倍的倍率调整速度。默认值：0.5")
+                .defineInRange("global_speed", 0.5, 0.01, 10.0);
+        STEPLESS_ZOOM_AIM_BLUR_ENABLED = BUILDER
+                .comment("是否启用开镜模糊。默认值：false")
+                .define("aim_blur_enabled", false);
+        STEPLESS_ZOOM_AIM_BLUR_RANGE = BUILDER
+                .comment("开镜模糊范围。默认值：1.0")
+                .defineInRange("aim_blur_range", 1.0, 0.0, 2.0);
+        STEPLESS_ZOOM_AIM_BLUR_STRENGTH = BUILDER
+                .comment("开镜模糊强度。默认值：4.0")
+                .defineInRange("aim_blur_strength", 5.0, 0.0, 20.0);
+        STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE = BUILDER
+                .comment("开镜模糊范围达到最大值的距离。默认值：32.0")
+                .defineInRange("aim_blur_far_distance", 32.0, 0.0, 256.0);
+        STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR = BUILDER
+                .comment("开镜模糊最小范围倍率。默认值：0.3")
+                .defineInRange("aim_blur_min_factor", 0.3, 0.0, 1.0);
+
+        BUILDER.pop();
+        SPECS.put("stepless_zoom", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("dynamic_crosshair");
         DYNAMIC_CROSSHAIR_ENABLED = BUILDER
                 .comment("是否启用动态准星。默认值：true")
@@ -681,6 +715,10 @@ public class Config {
         REFITSCREEN_SHOW_SEARCH_BOX = BUILDER
                 .comment("是否显示改装界面的搜索框。默认值：true")
                 .define("show_search_box", true);
+
+        REFITSCREEN_SHOW_RECOLOR_BUTTON = BUILDER
+                .comment("是否显示改装界面的调色按钮。默认值：true")
+                .define("show_recolor_button", true);
 
         REFIT_SLOT_SIZE = BUILDER
                 .comment("配件槽尺寸: 1.0 为当前值, 0.5 为边长一半, 2.0 为边长两倍；",
@@ -1296,7 +1334,7 @@ public class Config {
                 .comment("上肢耐力消耗速度的默认值，每秒消耗。默认值：2")
                 .defineInRange("consumption_per_second", 2.0, 0.0, 100000.0);
         AIMING_STAMINA_CONSUMPTION_MULTIPLIER = BUILDER
-                .comment("上肢耐力消耗倍率(属性 aiming_stamina_consumption 的默认值)。默认值：1.0")
+                .comment("上肢耐力消耗倍率的默认值。默认值：1.0")
                 .defineInRange("consumption_multiplier", 1.0, 0.0, 100000.0);
         AIMING_STAMINA_RECOVERY = BUILDER
                 .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：20")
@@ -1306,10 +1344,10 @@ public class Config {
                 .defineInRange("recovery_delay_ms", 1000, 0, 600000);
         AIMING_STAMINA_MIN_TO_AIM = BUILDER
                 .comment("上肢耐力低于此值时无法重新开镜。默认值：20")
-                .defineInRange("min_stamina_to_aim", 20.0, 0.0, 100000.0);
+                .defineInRange("min_stamina_to_aim", 20.0, 0.0, 100.0);
         AIMING_STAMINA_HOLD_BREATH_MULTIPLIER = BUILDER
-                .comment("屏息时上肢耐力消耗速度的倍率。默认值：2.5")
-                .defineInRange("hold_breath_consumption_multiplier", 2.5, 1.0, 100.0);
+                .comment("屏息时上肢耐力消耗速度的倍率。默认值：2.0")
+                .defineInRange("hold_breath_consumption_multiplier", 2.0, 1.0, 100.0);
         AIMING_STAMINA_WEIGHT_PER_KG = BUILDER
                 .comment("枪械每 1kg 重量增加的耐力消耗速度比例。默认值：0.03")
                 .defineInRange("weight_consumption_per_kg", 0.03, 0.0, 10.0);
@@ -1418,9 +1456,11 @@ public class Config {
                 .comment("禁用双持的枪械列表。")
                 .defineListAllowEmpty("deniedGunIds",
                         List.of("applied_armorer:niklas_pistol_double_win_win",
-                                "eos:elp_13_t3x2", "eos:eos_m_57cw_t2x2", "sfms:inf_x", "sfms:inf_xj",
-                                "emxarms:emx_tknife", "sfms:sword_life", "sfms:trident_dea",
-                                "sfms:emergency_baton", "sfms:katana", "sfms:tb23"),
+                                "eos:elp_13_t3x2", "eos:eos_m_57cw_t2x2", "sfms:inf_x",
+                                "sfms:inf_xj", "emxarms:emx_tknife", "sfms:sword_life",
+                                "sfms:trident_dea", "sfms:emergency_baton", "sfms:katana",
+                                "sfms:tb23", "emx_re:re_kund50_x2", "emx_re:pulsex2",
+                                "emx_re:re_umx32_x2", "fmic:shield_pm17"),
                         value -> value instanceof String text && !text.isBlank());
         DUAL_WIELD_RECOIL_MULTIPLIER = BUILDER
                 .comment("双持时的后坐力倍率。默认值：2.0")

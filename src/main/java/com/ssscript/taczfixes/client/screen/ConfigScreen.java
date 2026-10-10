@@ -30,6 +30,7 @@ public class ConfigScreen {
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
         buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
         buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
+        buildSteplessZoom(builder.getOrCreateCategory(cat("stepless_zoom")), entry);
         buildDynamicCrosshair(builder.getOrCreateCategory(cat("dynamic_crosshair")), entry);
         buildBlocking(builder.getOrCreateCategory(cat("blocking")), entry);
         buildRefit(builder.getOrCreateCategory(cat("refit")), entry);
@@ -250,13 +251,20 @@ public class ConfigScreen {
         });
     }
 
-    private static void buildMisc(ConfigCategory cat, ConfigEntryBuilder entry) {
-        List<AbstractConfigListEntry> stepless = new ArrayList<>();
-        bool_(stepless, entry, "misc.stepless_zoom_enabled", Config.STEPLESS_ZOOM_ENABLED);
-        dbl_(stepless, entry, "misc.stepless_zoom_ctrl_multiplier", Config.STEPLESS_ZOOM_CTRL_MULTIPLIER);
-        dbl_(stepless, entry, "misc.stepless_zoom_alt_multiplier", Config.STEPLESS_ZOOM_ALT_MULTIPLIER);
-        cat.addEntry(entry.startSubCategory(cat("stepless_zoom"), stepless).build());
+    private static void buildSteplessZoom(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "stepless_zoom.enabled", Config.STEPLESS_ZOOM_ENABLED);
+        dbl_(cat, entry, "stepless_zoom.ctrl_multiplier", Config.STEPLESS_ZOOM_CTRL_MULTIPLIER);
+        dbl_(cat, entry, "stepless_zoom.alt_multiplier", Config.STEPLESS_ZOOM_ALT_MULTIPLIER);
+        bool_(cat, entry, "stepless_zoom.global_enabled", Config.STEPLESS_ZOOM_GLOBAL_ENABLED);
+        dbl_(cat, entry, "stepless_zoom.global_speed", Config.STEPLESS_ZOOM_GLOBAL_SPEED);
+        bool_(cat, entry, "stepless_zoom.aim_blur_enabled", Config.STEPLESS_ZOOM_AIM_BLUR_ENABLED);
+        dbl_(cat, entry, "stepless_zoom.aim_blur_range", Config.STEPLESS_ZOOM_AIM_BLUR_RANGE);
+        dbl_(cat, entry, "stepless_zoom.aim_blur_strength", Config.STEPLESS_ZOOM_AIM_BLUR_STRENGTH);
+        dbl_(cat, entry, "stepless_zoom.aim_blur_far_distance", Config.STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE);
+        dbl_(cat, entry, "stepless_zoom.aim_blur_min_factor", Config.STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR);
+    }
 
+    private static void buildMisc(ConfigCategory cat, ConfigEntryBuilder entry) {
         List<AbstractConfigListEntry> underwater = new ArrayList<>();
         bool_(underwater, entry, "misc.prevent_shooting_underwater", Config.PREVENT_SHOOTING_UNDERWATER);
         cat.addEntry(entry.startSubCategory(cat("underwater"), underwater).build());
@@ -327,6 +335,7 @@ public class ConfigScreen {
         enum_(cat, entry, "refit.virtual_attachments", Config.VIRTUAL_ATTACHMENTS);
         bool_(cat, entry, "refit.show_preset_buttons", Config.REFITSCREEN_SHOW_PRESET_BUTTONS);
         bool_(cat, entry, "refit.show_search_box", Config.REFITSCREEN_SHOW_SEARCH_BOX);
+        bool_(cat, entry, "refit.show_recolor_button", Config.REFITSCREEN_SHOW_RECOLOR_BUTTON);
         dbl_(cat, entry, "refit.slot_size", Config.REFIT_SLOT_SIZE);
         int_(cat, entry, "refit.toast_duration_ms", Config.REFIT_TOAST_DURATION_MS);
         int_(cat, entry, "refit.toast_fade_ms", Config.REFIT_TOAST_FADE_MS);

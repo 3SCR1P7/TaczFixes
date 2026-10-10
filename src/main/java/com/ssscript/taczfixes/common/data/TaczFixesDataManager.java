@@ -162,6 +162,17 @@ public class TaczFixesDataManager {
         return data == null ? null : data.charge;
     }
 
+    /** 枪械 data 中的耐久配置, 未配置返回 null。 */
+    @Nullable
+    public static GunTaczFixesData.DurabilityConfig resolveDurability(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return null;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+        ResourceLocation dataId = resolveDataId(gun.getGunId(gunStack));
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.durability;
+    }
+
     /** 枪械 data 字段 allow_shooting_underwater; 未配置返回 null(跟随配置文件)。 */
     @Nullable
     public static Boolean resolveAllowShootingUnderwater(ItemStack gunStack) {

@@ -151,6 +151,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new GunLevelHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.PlayerStateCleanupHandler());
         MinecraftForge.EVENT_BUS.register(new GunAnvilHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDurabilityHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ChargeCapabilityHandler());
@@ -242,6 +243,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ArcanaOffhandKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.CrawlHitboxDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler());
         });
     }
 }

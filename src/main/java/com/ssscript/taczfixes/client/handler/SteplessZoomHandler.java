@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.handler;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.ssscript.taczfixes.client.util.ScopeViewHelper;
 import com.ssscript.taczfixes.common.util.SteplessConfig;
 import com.ssscript.taczfixes.common.util.SteplessDisplayAccessor;
 import com.tacz.guns.api.DefaultAssets;
@@ -12,6 +13,7 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.ClientAssetsManager;
+import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import net.minecraft.client.Minecraft;
@@ -27,6 +29,8 @@ import java.util.Optional;
 public class SteplessZoomHandler {
     private static ResourceLocation activeScopeId = null;
     private static float currentZoom = 1.0f;
+    private static ResourceLocation globalScopeId = null;
+    private static SteplessConfig globalConfig = null;
 
     @SubscribeEvent
     public void onMouseScroll(InputEvent.MouseScrollingEvent event) {
@@ -100,12 +104,48 @@ public class SteplessZoomHandler {
         if (!(display instanceof SteplessDisplayAccessor accessor)) return null;
 
         SteplessConfig cfg = accessor.getStepless();
+        if (cfg == null) {
+            cfg = getGlobalConfig(slotId);
+        }
         if (cfg == null || !cfg.enable) return null;
 
         if (!displayId.equals(activeScopeId)) {
             activeScopeId = displayId;
             currentZoom = cfg.clampZoom(cfg.zoom_default);
         }
+        return cfg;
+    }
+
+    /**
+     * 全局无极变倍: 未配置 stepless 字段的瞄具在开启全局开关后自动启用。
+     * 条件: scope 类型、能切换倍率、不是组合瞄具(多个不同视图)。
+     * zoom_min/zoom_max 取可切换倍率的最小/最大值, zoom_default 取列表第一项, speed 取全局配置。
+     */
+    private static SteplessConfig getGlobalConfig(ResourceLocation slotId) {
+        if (!Config.STEPLESS_ZOOM_GLOBAL_ENABLED.get()) return null;
+        ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(slotId).orElse(null);
+        if (index == null || !index.isScope()) return null;
+        float[] zooms = index.getZoom();
+        if (zooms == null || zooms.length == 0) return null;
+        if (ScopeViewHelper.isCombinedSight(index)) return null;
+
+        SteplessConfig cfg = globalConfig;
+        if (cfg == null || !slotId.equals(globalScopeId)) {
+            float min = zooms[0];
+            float max = zooms[0];
+            for (float zoom : zooms) {
+                min = Math.min(min, zoom);
+                max = Math.max(max, zoom);
+            }
+            cfg = new SteplessConfig();
+            cfg.enable = true;
+            cfg.zoom_min = min;
+            cfg.zoom_max = max;
+            cfg.zoom_default = zooms[0];
+            globalConfig = cfg;
+            globalScopeId = slotId;
+        }
+        cfg.speed = Config.STEPLESS_ZOOM_GLOBAL_SPEED.get().floatValue();
         return cfg;
     }
 }
