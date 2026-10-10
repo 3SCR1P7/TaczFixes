@@ -3,6 +3,24 @@
     "custom_hud": "tacz:custom_hud_1",
 	"enchantment_ability": 100,
 	"allow_shooting_underwater": true,
+	"durability": {
+      // 耐久值上限
+      "durability": 1000,
+      // 开火时消耗的耐久值
+      "fire_consumption": 1,
+      // 无耐久时的动作，可选remove，disable，none
+      // remove为直接消失，disable为无法开火，none为无
+      "damage_action": "disable",
+      // 在铁砧修复时支持的材料，为空则无法在铁砧修复
+      "repair_material": ["minecraft:iron_ingot","#c:ingots"],
+      // 在铁砧修复时每个材料修复的耐久
+      "repair_value": 250,
+      // 是否允许在铁砧/工作台/砂轮中合并相同枪械以修复耐久
+      // 和原版工具规则相同
+      "allow_merge": true,
+      // 是否以原版耐久条显示耐久，否则只有F3+H可以看到剩余耐久
+      "durability_bar": true
+    },
     "blocking": {
       "enable": true,
       // 玩家前方多少格内有方块或实体时启用阻挡
