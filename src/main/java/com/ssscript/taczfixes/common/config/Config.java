@@ -662,7 +662,7 @@ public class Config {
                 .defineInRange("aim_blur_range", 1.0, 0.0, 2.0);
         STEPLESS_ZOOM_AIM_BLUR_STRENGTH = BUILDER
                 .comment("开镜模糊强度。默认值：4.0")
-                .defineInRange("aim_blur_strength", 5.0, 0.0, 20.0);
+                .defineInRange("aim_blur_strength", 4.0, 0.0, 20.0);
         STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE = BUILDER
                 .comment("开镜模糊范围达到最大值的距离。默认值：32.0")
                 .defineInRange("aim_blur_far_distance", 32.0, 0.0, 256.0);
