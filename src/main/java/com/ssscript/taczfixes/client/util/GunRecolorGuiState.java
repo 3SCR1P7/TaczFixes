@@ -343,7 +343,7 @@ public final class GunRecolorGuiState {
             return;
         }
         int rgb = colorOf(selected);
-        float[] hsl = GunRecolorManager.rgbToHsl(((rgb >> 16) & 255) / 255.0F,
+        float[] hsl = GunRecolorManager.rgbToHsv(((rgb >> 16) & 255) / 255.0F,
                 ((rgb >> 8) & 255) / 255.0F, (rgb & 255) / 255.0F);
         hueSlider.setSilently(hsl[0]);
         saturationSlider.setSilently(hsl[1]);
@@ -354,7 +354,7 @@ public final class GunRecolorGuiState {
         if (selected < 0 || hueSlider == null) {
             return;
         }
-        int rgb = GunRecolorManager.hslToRgb((float) hueSlider.value(),
+        int rgb = GunRecolorManager.hsvToRgb((float) hueSlider.value(),
                 (float) saturationSlider.value(), (float) lightnessSlider.value());
         GunRecolorManager.setTarget(target(), selected, rgb);
         writeBack();

@@ -519,6 +519,27 @@ public class Config {
         RECOIL_KNOCKBACK_SEMI_FACTOR = BUILDER
                 .comment("半自动模式的开火击退力度倍率。默认值：4")
                 .defineInRange("semi_factor", 4.0, 1.0, 10.0);
+        BURST_BLOCK_ATTACHMENTS = BUILDER
+                .comment("禁用连发模式的配件列表。",
+                        "Example: [\"ccrp:ammo_mod_hap\"]")
+                .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
+        EXPLOSION_BULLET_ONLY = BUILDER
+                .comment("爆炸击退是否仅对子弹生效。默认值：true")
+                .define("explosion_bullet_only", false);
+        PENETRATION_BLOCKED_ENTITIES = BUILDER
+                .comment("子弹无法穿透的实体列表。",
+                        "Example: [\"irons_spellbooks:shield\"]")
+                .defineList("unpierceable_entities", List.of("irons_spellbooks:shield"), it -> it instanceof String);
+        DAMAGE_REDUCTION_ENTITIES = BUILDER
+                .comment("降低指定实体所受子弹伤害的列表。格式: \"entity_id,reduction\"",
+                        "\"entity_id\"为其命名空间id，\"reduction\"为其降低伤害的比例。")
+                .defineList("damage_reduction_entities", List.of("irons_spellbooks:shield,0.95"), it -> it instanceof String);
+        BULLET_IGNORE_ENTITY_ENABLE = BUILDER
+                .comment("子弹命中实体后，此子弹是否在一定时间内忽略此实体。默认值：true")
+                .define("ignore_damaged_entity_enable", true);
+        BULLET_IGNORE_ENTITY_COOLDOWN_MS = BUILDER
+                .comment("子弹命中实体后，此子弹忽略此实体的时间。默认值：500")
+                .defineInRange("ignore_damaged_entity_cooldown_ms", 500, 0, 600000);
         BUILDER.pop();
         SPECS.put("recoil_knockback", BUILDER.build());
 
@@ -566,74 +587,6 @@ public class Config {
                 .defineInRange("cooldown_multiplier", 0.5, 0.0, 100.0);
         BUILDER.pop();
         SPECS.put("gun_spell", BUILDER.build());
-
-        BUILDER = new ForgeConfigSpec.Builder();
-        BUILDER.push("misc");
-
-        PREVENT_SHOOTING_UNDERWATER = BUILDER
-                .comment("是否阻止水下开火。默认值：true")
-                .define("prevent_shooting_underwater", true);
-
-        RECOLOR_HUE_WEIGHT = BUILDER
-                .comment("调色分组的色相权重。默认值：2.0")
-                .defineInRange("recolor_hue_weight", 2.0, 0.0, 20.0);
-        RECOLOR_SATURATION_WEIGHT = BUILDER
-                .comment("调色分组的饱和度权重。默认值：1.0")
-                .defineInRange("recolor_saturation_weight", 1.0, 0.0, 20.0);
-        RECOLOR_LIGHTNESS_WEIGHT = BUILDER
-                .comment("调色分组的亮度权重。默认值：1.0")
-                .defineInRange("recolor_lightness_weight", 1.0, 0.0, 20.0);
-
-        BUILDER.push("burst_fire");
-        BURST_BLOCK_ATTACHMENTS = BUILDER
-                .comment("禁用连发模式的配件列表。",
-                        "Example: [\"ccrp:ammo_mod_hap\"]")
-                .defineList("burst_block_attachments", List.of("ccrp:ammo_mod_hap"), it -> it instanceof String);
-        BUILDER.pop();
-
-        BUILDER.push("explosion");
-        EXPLOSION_BULLET_ONLY = BUILDER
-                .comment("爆炸击退是否仅对子弹生效。默认值：true")
-                .define("bullet_only", false);
-        BUILDER.pop();
-
-        BUILDER.push("peek_aim");
-        AUTO_AIM_WHEN_PEEKING = BUILDER
-                .comment("是否启用探头自动开镜。默认值：true",
-                        "需要GD656Peek模组。")
-                .define("auto_aim_when_peeking", false);
-        BUILDER.pop();
-
-        BUILDER.push("unpierceable");
-        PENETRATION_BLOCKED_ENTITIES = BUILDER
-                .comment("子弹无法穿透的实体列表。",
-                        "Example: [\"irons_spellbooks:shield\"]")
-                .defineList("entities", List.of("irons_spellbooks:shield"), it -> it instanceof String);
-        BUILDER.pop();
-
-        BUILDER.push("damage");
-        DAMAGE_REDUCTION_ENTITIES = BUILDER
-                .comment("降低指定实体所受子弹伤害的列表。格式: \"entity_id,reduction\"",
-                        "\"entity_id\"为其命名空间id，\"reduction\"为其降低伤害的比例。")
-                .defineList("entities", List.of("irons_spellbooks:shield,0.95"), it -> it instanceof String);
-        BULLET_IGNORE_ENTITY_ENABLE = BUILDER
-                .comment("子弹命中实体后，此子弹是否在一定时间内忽略此实体。默认值：true")
-                .define("ignore_damaged_entity_enable", true);
-        BULLET_IGNORE_ENTITY_COOLDOWN_MS = BUILDER
-                .comment("子弹命中实体后，此子弹忽略此实体的时间。默认值：500")
-                .defineInRange("ignore_damaged_entity_cooldown_ms", 500, 0, 600000);
-        BUILDER.pop();
-
-        BUILDER.push("debug");
-        DISABLE_HITBOXES = BUILDER
-                .comment("禁用实体碰撞箱显示。默认值：false")
-                .define("disable_hitboxes", false);        DISABLE_THIRD_PERSON = BUILDER
-                .comment("禁用切换第三人称视角。默认值：false")
-                .define("disable_third_person", false);
-        BUILDER.pop();
-
-        BUILDER.pop();
-        SPECS.put("misc", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("stepless_zoom");
@@ -749,6 +702,16 @@ public class Config {
                 .comment("配件改装点数的全局默认消耗。data中未填写refit_point_consume字段的配件使用此值。默认值：0")
                 .defineInRange("point_default_consume", 0, 0, 100);
 
+        RECOLOR_HUE_WEIGHT = BUILDER
+                .comment("调色分组的色相权重。默认值：2.0")
+                .defineInRange("recolor_hue_weight", 2.0, 0.0, 20.0);
+        RECOLOR_SATURATION_WEIGHT = BUILDER
+                .comment("调色分组的饱和度权重。默认值：1.0")
+                .defineInRange("recolor_saturation_weight", 1.0, 0.0, 20.0);
+        RECOLOR_LIGHTNESS_WEIGHT = BUILDER
+                .comment("调色分组的亮度权重。默认值：1.0")
+                .defineInRange("recolor_lightness_weight", 1.0, 0.0, 20.0);
+
         BUILDER.pop();
         SPECS.put("refit", BUILDER.build());
 
@@ -799,6 +762,9 @@ public class Config {
         BLOCKING_SHOT_MULTIPLIER_MIN = BUILDER
                 .comment("子弹偏转角视觉补偿系数下限。默认值：1.67")
                 .defineInRange("shot_multiplier_min", 1.67, 0.0, 10.0);
+        PREVENT_SHOOTING_UNDERWATER = BUILDER
+                .comment("是否阻止水下开火。默认值：true")
+                .define("prevent_shooting_underwater", true);
         BUILDER.pop();
         SPECS.put("blocking", BUILDER.build());
 
@@ -827,6 +793,16 @@ public class Config {
                 .comment("持枪时是否阻止冲刺恢复（防止冲刺触发系列滑块颤抖）。默认值：true",
                         "需要TaCZ Tweaks模组。")
                 .define("prevent_sprint_reengage_when_tilt", true);
+        AUTO_AIM_WHEN_PEEKING = BUILDER
+                .comment("是否启用探头自动开镜。默认值：true",
+                        "需要GD656Peek模组。")
+                .define("auto_aim_when_peeking", false);
+        DISABLE_HITBOXES = BUILDER
+                .comment("禁用实体碰撞箱显示。默认值：false")
+                .define("disable_hitboxes", false);
+        DISABLE_THIRD_PERSON = BUILDER
+                .comment("禁用切换第三人称视角。默认值：false")
+                .define("disable_third_person", false);
         BUILDER.pop();
         SPECS.put("compat", BUILDER.build());
 

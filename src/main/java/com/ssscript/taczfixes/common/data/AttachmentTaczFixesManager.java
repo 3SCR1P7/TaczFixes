@@ -551,7 +551,30 @@ public class AttachmentTaczFixesManager {
                 result.add(data);
             }
         }
+        collectAdapterData(gunItem, result);
         return result;
+    }
+
+    /** 把已安装槽位适配器(标准槽 + 自定义槽)的 data 也纳入, 使其像配件一样提供加成。 */
+    private static void collectAdapterData(ItemStack gunItem, List<AttachmentTaczFixesData> result) {
+        for (AttachmentType type : AttachmentType.values()) {
+            if (type == AttachmentType.NONE) continue;
+            addAdapterData(com.tacz.guns.util.SlotAdapterHelper.getSlotAdapter(gunItem, type), result);
+        }
+        for (String slotId : CustomSlotManager.getSlots(gunItem).keySet()) {
+            addAdapterData(CustomSlotStorage.getAdapter(gunItem, slotId), result);
+        }
+    }
+
+    private static void addAdapterData(@Nullable ResourceLocation adapterId, List<AttachmentTaczFixesData> result) {
+        if (adapterId == null) return;
+        ResourceLocation dataId = TimelessAPI.getCommonSlotAdapterIndex(adapterId)
+                .map(index -> index.getPojo().getData())
+                .orElse(null);
+        AttachmentTaczFixesData data = dataId == null ? null : get(dataId);
+        if (data != null) {
+            result.add(data);
+        }
     }
 
     public static AttachmentTaczFixesData resolveData(ResourceLocation attachmentId) {

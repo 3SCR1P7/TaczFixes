@@ -140,44 +140,49 @@ public final class CustomScopeViewShift {
             }
         }
         Vec3 pivot = actPos != null ? actPos : Vec3.ZERO;
-        Vec3 t = actPos != null ? target : Vec3.ZERO;
-        float theta = actPos != null ? slotAngle : 0f;
-        float off = actPos != null ? slotOffset : 0f;
-        Vec3 targetS = new Vec3(t.x * progress, t.y * progress, t.z * progress);
-        float targetTh = theta * progress;
-        float targetO = off * progress;
+        Vec3 targetS = actPos != null ? target : Vec3.ZERO;
+        float targetTh = actPos != null ? slotAngle : 0f;
+        float targetO = actPos != null ? slotOffset : 0f;
         String slotKey = active == null ? "" : active;
         if (!slotKey.equals(prevSlot)) {
             String oldKey = prevSlot;
             prevSlot = slotKey;
             animMode = (oldKey.isEmpty() || slotKey.isEmpty()) ? 1 : 2;
         }
+        // 基准偏移不预乘开镜进度: 仅用于槽位切换时的平滑, 开镜进度(新版缓动)在最后统一加权。
         float smooth = smoothFactor();
         if (animMode == 1) {
             if (active != null) {
                 smoothPivot = pivot;
+                smoothShift = targetS;
+                smoothAngle = targetTh;
+                smoothOffset = targetO;
             }
         } else {
             smoothPivot = smoothPivot.add(pivot.subtract(smoothPivot).scale(smooth));
+            smoothShift = smoothShift.add(targetS.subtract(smoothShift).scale(smooth));
+            smoothAngle += (targetTh - smoothAngle) * smooth;
+            smoothOffset += (targetO - smoothOffset) * smooth;
         }
-        smoothShift = smoothShift.add(targetS.subtract(smoothShift).scale(smooth));
-        smoothAngle += (targetTh - smoothAngle) * smooth;
-        smoothOffset += (targetO - smoothOffset) * smooth;
-        double rad = Math.toRadians(smoothAngle);
+        // 应用 TaCZ 新版开镜缓动(SecondOrderDynamics 输出的 aimingProgress), 使自定义槽瞄具与枪械本体开镜缓动一致。
+        Vec3 shift = smoothShift.scale(progress);
+        float angle = smoothAngle * progress;
+        float offset = smoothOffset * progress;
+        double rad = Math.toRadians(angle);
         double cos = Math.cos(rad);
         double sin = Math.sin(rad);
         Vec3 p = smoothPivot;
         Vec3 g = new Vec3(
-                p.x + smoothShift.x - (cos * p.x - sin * p.y),
-                p.y + smoothShift.y - (sin * p.x + cos * p.y),
-                smoothShift.z - smoothOffset);
-        if (g.lengthSqr() < 1.0E-8 && Math.abs(smoothAngle) < 0.001f) {
+                p.x + shift.x - (cos * p.x - sin * p.y),
+                p.y + shift.y - (sin * p.x + cos * p.y),
+                shift.z - offset);
+        if (g.lengthSqr() < 1.0E-8 && Math.abs(angle) < 0.001f) {
             return;
         }
         poseStack.pushPose();
         poseStack.translate(g.x, g.y, g.z);
-        if (Math.abs(smoothAngle) > 0.001f) {
-            poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(smoothAngle));
+        if (Math.abs(angle) > 0.001f) {
+            poseStack.mulPose(com.mojang.math.Axis.ZP.rotationDegrees(angle));
         }
         pushed = true;
     }

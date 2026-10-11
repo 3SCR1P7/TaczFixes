@@ -19,7 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(targets = "com.tacz.guns.client.event.FirstPersonRenderGunEvent", remap = false)
 public class MixinFirstPersonRenderGunEvent {
     @Inject(method = "applyFirstPersonPositioningTransform", at = @At("HEAD"), remap = false)
-    private static void taczfixes$captureAimProgress(PoseStack poseStack, BedrockGunModel model, ItemStack stack, float aimingProgress, float refitScreenOpeningProgress, CallbackInfo ci) {
+    private static void taczfixes$captureAimProgress(PoseStack poseStack, BedrockGunModel model, ItemStack stack, float aimingProgress, float refitScreenOpeningProgress, com.tacz.guns.client.resource.pojo.display.gun.AdsPath adsPath, CallbackInfo ci) {
         ScopeSwitchState.aimingProgressValue = aimingProgress;
     }
 

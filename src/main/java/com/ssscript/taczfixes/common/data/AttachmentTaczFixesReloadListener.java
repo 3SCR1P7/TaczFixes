@@ -33,7 +33,10 @@ public class AttachmentTaczFixesReloadListener implements PreparableReloadListen
 
     private static Map<ResourceLocation, AttachmentTaczFixesData> scan(ResourceManager resourceManager) {
         Map<ResourceLocation, AttachmentTaczFixesData> result = new HashMap<>();
-        Map<ResourceLocation, JsonElement> all = ResourceScanner.scanDirectory(resourceManager, "data/attachments", GSON);
+        Map<ResourceLocation, JsonElement> all = new HashMap<>();
+        all.putAll(ResourceScanner.scanDirectory(resourceManager, "data/attachments", GSON));
+        // 槽位适配器 data(data/<ns>/slot_adapters) 复用配件 taczfixes 格式, 使适配器能像配件一样提供加成
+        all.putAll(ResourceScanner.scanDirectory(resourceManager, "data/slot_adapters", GSON));
         for (Map.Entry<ResourceLocation, JsonElement> entry : all.entrySet()) {
             JsonElement element = entry.getValue();
             if (element == null || !element.isJsonObject()) continue;

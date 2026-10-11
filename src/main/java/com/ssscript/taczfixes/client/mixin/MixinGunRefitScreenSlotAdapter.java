@@ -75,7 +75,7 @@ public abstract class MixinGunRefitScreenSlotAdapter extends Screen {
     }
 
 
-    @Inject(method = "lambda$addSlotAdapterButtons$22", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "lambda$addSlotAdapterButtons$24", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$customAdapterClick(Inventory inventory,
                                               com.tacz.guns.api.item.attachment.AttachmentType type,
                                               ResourceLocation adapterId, Button button, CallbackInfo ci) {
@@ -86,7 +86,7 @@ public abstract class MixinGunRefitScreenSlotAdapter extends Screen {
         taczfixes$handleCustomAdapterClick(inventory, type, adapterId, ci);
     }
 
-    @Inject(method = "lambda$addSlotAdapterButtons$21", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "lambda$addSlotAdapterButtons$23", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$customAdapterNoneClick(Inventory inventory,
                                                   com.tacz.guns.api.item.attachment.AttachmentType type,
                                                   Button button, CallbackInfo ci) {

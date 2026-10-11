@@ -29,7 +29,6 @@ public class ConfigScreen {
         buildRecoilKnockback(builder.getOrCreateCategory(cat("recoil_knockback")), entry);
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
         buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
-        buildMisc(builder.getOrCreateCategory(cat("misc")), entry);
         buildSteplessZoom(builder.getOrCreateCategory(cat("stepless_zoom")), entry);
         buildDynamicCrosshair(builder.getOrCreateCategory(cat("dynamic_crosshair")), entry);
         buildBlocking(builder.getOrCreateCategory(cat("blocking")), entry);
@@ -211,6 +210,12 @@ public class ConfigScreen {
         dbl_(cat, entry, "recoil_knockback.multiplier", Config.RECOIL_KNOCKBACK_MULTIPLIER);
         dbl_(cat, entry, "recoil_knockback.sneak_multiplier", Config.RECOIL_KNOCKBACK_SNEAK_MULTIPLIER);
         dbl_(cat, entry, "recoil_knockback.semi_factor", Config.RECOIL_KNOCKBACK_SEMI_FACTOR);
+        lst_(cat, entry, "recoil_knockback.burst_block_attachments", Config.BURST_BLOCK_ATTACHMENTS);
+        bool_(cat, entry, "recoil_knockback.explosion_bullet_only", Config.EXPLOSION_BULLET_ONLY);
+        lst_(cat, entry, "recoil_knockback.unpierceable_entities", Config.PENETRATION_BLOCKED_ENTITIES);
+        lst_(cat, entry, "recoil_knockback.damage_reduction_entities", Config.DAMAGE_REDUCTION_ENTITIES);
+        bool_(cat, entry, "recoil_knockback.ignore_entity_enable", Config.BULLET_IGNORE_ENTITY_ENABLE);
+        int_(cat, entry, "recoil_knockback.ignore_entity_cooldown_ms", Config.BULLET_IGNORE_ENTITY_COOLDOWN_MS);
     }
 
     private static void buildGunSpell(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -264,45 +269,6 @@ public class ConfigScreen {
         dbl_(cat, entry, "stepless_zoom.aim_blur_min_factor", Config.STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR);
     }
 
-    private static void buildMisc(ConfigCategory cat, ConfigEntryBuilder entry) {
-        List<AbstractConfigListEntry> underwater = new ArrayList<>();
-        bool_(underwater, entry, "misc.prevent_shooting_underwater", Config.PREVENT_SHOOTING_UNDERWATER);
-        cat.addEntry(entry.startSubCategory(cat("underwater"), underwater).build());
-
-        List<AbstractConfigListEntry> burst = new ArrayList<>();
-        lst_(burst, entry, "misc.burst_block_attachments", Config.BURST_BLOCK_ATTACHMENTS);
-        cat.addEntry(entry.startSubCategory(cat("burst"), burst).build());
-
-        List<AbstractConfigListEntry> explosion = new ArrayList<>();
-        bool_(explosion, entry, "misc.explosion_bullet_only", Config.EXPLOSION_BULLET_ONLY);
-        cat.addEntry(entry.startSubCategory(cat("explosion"), explosion).build());
-
-        List<AbstractConfigListEntry> peek = new ArrayList<>();
-        bool_(peek, entry, "misc.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
-        cat.addEntry(entry.startSubCategory(cat("peek"), peek).build());
-
-        List<AbstractConfigListEntry> unpie = new ArrayList<>();
-        lst_(unpie, entry, "misc.penetration_blocked_entities", Config.PENETRATION_BLOCKED_ENTITIES);
-        cat.addEntry(entry.startSubCategory(cat("non_penetrable"), unpie).build());
-
-        List<AbstractConfigListEntry> damage = new ArrayList<>();
-        lst_(damage, entry, "misc.damage_reduction_entities", Config.DAMAGE_REDUCTION_ENTITIES);
-        bool_(damage, entry, "misc.ignore_entity_enable", Config.BULLET_IGNORE_ENTITY_ENABLE);
-        int_(damage, entry, "misc.ignore_entity_cooldown_ms", Config.BULLET_IGNORE_ENTITY_COOLDOWN_MS);
-        cat.addEntry(entry.startSubCategory(cat("damage"), damage).build());
-
-        List<AbstractConfigListEntry> debug = new ArrayList<>();
-        bool_(debug, entry, "misc.disable_hitboxes", Config.DISABLE_HITBOXES);
-        bool_(debug, entry, "misc.disable_third_person", Config.DISABLE_THIRD_PERSON);
-        cat.addEntry(entry.startSubCategory(cat("debug"), debug).build());
-
-        List<AbstractConfigListEntry> recolor = new ArrayList<>();
-        dbl_(recolor, entry, "misc.recolor_hue_weight", Config.RECOLOR_HUE_WEIGHT);
-        dbl_(recolor, entry, "misc.recolor_saturation_weight", Config.RECOLOR_SATURATION_WEIGHT);
-        dbl_(recolor, entry, "misc.recolor_lightness_weight", Config.RECOLOR_LIGHTNESS_WEIGHT);
-        cat.addEntry(entry.startSubCategory(cat("recolor"), recolor).build());
-    }
-
     private static void buildDynamicCrosshair(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "dynamic_crosshair.enabled", Config.DYNAMIC_CROSSHAIR_ENABLED);
         dbl_(cat, entry, "dynamic_crosshair.factor", Config.DYNAMIC_CROSSHAIR_FACTOR);
@@ -328,6 +294,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "blocking.facing_dual_wield", Config.BLOCKING_FACING_DUAL_WIELD);
         dbl_(cat, entry, "blocking.shot_multiplier_max", Config.BLOCKING_SHOT_MULTIPLIER_MAX);
         dbl_(cat, entry, "blocking.shot_multiplier_min", Config.BLOCKING_SHOT_MULTIPLIER_MIN);
+        bool_(cat, entry, "blocking.prevent_shooting_underwater", Config.PREVENT_SHOOTING_UNDERWATER);
     }
 
     private static void buildRefit(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -343,6 +310,9 @@ public class ConfigScreen {
         dbl_(cat, entry, "refit.view_zoom_max", Config.REFIT_VIEW_ZOOM_MAX);
         dbl_(cat, entry, "refit.button_opacity", Config.REFIT_BUTTON_OPACITY);
         int_(cat, entry, "refit.point_default_consume", Config.REFIT_POINT_DEFAULT_CONSUME);
+        dbl_(cat, entry, "refit.recolor_hue_weight", Config.RECOLOR_HUE_WEIGHT);
+        dbl_(cat, entry, "refit.recolor_saturation_weight", Config.RECOLOR_SATURATION_WEIGHT);
+        dbl_(cat, entry, "refit.recolor_lightness_weight", Config.RECOLOR_LIGHTNESS_WEIGHT);
     }
 
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -352,6 +322,9 @@ public class ConfigScreen {
         dbl_(cat, entry, "compat.peek_headshot_height", Config.PEEK_HEADSHOT_HEIGHT);
         bool_(cat, entry, "compat.ads_interrupt_sprint", Config.ADS_INTERRUPT_SPRINT);
         bool_(cat, entry, "compat.prevent_sprint_reengage_when_tilt", Config.PREVENT_SPRINT_REENGAGE_WHEN_TILT);
+        bool_(cat, entry, "compat.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
+        bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
+        bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);
     }
 
     private static void buildEnchantment(ConfigCategory cat, ConfigEntryBuilder entry) {

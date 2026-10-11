@@ -17,7 +17,7 @@ import net.minecraft.world.item.ItemStack;
 
 @Mixin(value = {ModernKineticGunItem.class}, remap = false)
 public abstract class MixinModernKineticGunItemSpread {
-    @Inject(method = {"lambda$doBulletSpread$29(Lcom/tacz/guns/entity/EntityKineticBullet;Lnet/minecraft/world/entity/LivingEntity;FFFF)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_RELOAD)
+    @Inject(method = {"lambda$doBulletSpread$30(Lcom/tacz/guns/entity/EntityKineticBullet;Lnet/minecraft/world/entity/LivingEntity;FFFF)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_RELOAD)
     private static void dualWield$applyDefaultSpread(EntityKineticBullet bullet, LivingEntity shooter, float pitch, float yaw, float processedSpeed, float inaccuracy, CallbackInfo callback) {
         float multiplier = dualWield$getHipFireMultiplier(bullet, shooter);
         if (multiplier == 1.0f) {
@@ -27,7 +27,7 @@ public abstract class MixinModernKineticGunItemSpread {
         callback.cancel();
     }
 
-    @Inject(method = {"lambda$doBulletSpread$28(Lcom/tacz/guns/entity/EntityKineticBullet;Lnet/minecraft/world/entity/LivingEntity;FFFLorg/joml/Vector2d;)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_RELOAD)
+    @Inject(method = {"lambda$doBulletSpread$29(Lcom/tacz/guns/entity/EntityKineticBullet;Lnet/minecraft/world/entity/LivingEntity;FFFLorg/joml/Vector2d;)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_RELOAD)
     private static void dualWield$applyScriptSpread(EntityKineticBullet bullet, LivingEntity shooter, float pitch, float yaw, float processedSpeed, Vector2d spread, CallbackInfo callback) {
         float multiplier = dualWield$getHipFireMultiplier(bullet, shooter);
         if (multiplier == 1.0f) {

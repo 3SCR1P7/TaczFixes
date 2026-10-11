@@ -48,7 +48,7 @@ public abstract class MixinModernKineticGunItemReload {
         }
     }
 
-    @Redirect(method = {"lambda$startReload$10(Lcom/tacz/guns/item/ModernKineticGunScriptAPI;Lorg/luaj/vm2/LuaFunction;)Ljava/lang/Boolean;"}, at = @At(value = "INVOKE", target = "Lorg/luaj/vm2/LuaValue;checkboolean()Z"), require = ServerMessageOffhandActionResult.ACTION_RELOAD)
+    @Redirect(method = {"lambda$startReload$11(Lcom/tacz/guns/item/ModernKineticGunScriptAPI;Lorg/luaj/vm2/LuaFunction;)Ljava/lang/Boolean;"}, at = @At(value = "INVOKE", target = "Lorg/luaj/vm2/LuaValue;checkboolean()Z"), require = ServerMessageOffhandActionResult.ACTION_RELOAD)
     private static boolean dualWield$acceptMissingOffhandReloadResult(LuaValue result) {
         ShooterDataHolder activeData = OffhandShooterManager.getActiveData();
         if (result.isnil() && OffhandShooterManager.isOffhandData(activeData)) {

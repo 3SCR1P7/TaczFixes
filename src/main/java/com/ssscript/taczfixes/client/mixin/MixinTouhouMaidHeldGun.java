@@ -56,9 +56,7 @@ public abstract class MixinTouhouMaidHeldGun {
             }
             poseStack.translate(0.0d, -0.0625d, -0.1d);
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f));
-            boolean zRenderOffhand = DualThirdPersonRenderer.renderOffhand(maid, stack, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
-            poseStack.popPose();
-            return zRenderOffhand;
+            return DualThirdPersonRenderer.renderOffhand(maid, stack, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         } finally {
             poseStack.popPose();
         }
@@ -78,9 +76,7 @@ public abstract class MixinTouhouMaidHeldGun {
             TouhouMaidDualWieldAnimation.applyFallbackOffhandLowReady(maid, poseStack);
             poseStack.translate(0.0d, -0.0625d, -0.1d);
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f));
-            boolean zRenderOffhand = DualThirdPersonRenderer.renderOffhand(maid, stack, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
-            poseStack.popPose();
-            return zRenderOffhand;
+            return DualThirdPersonRenderer.renderOffhand(maid, stack, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
         } finally {
             poseStack.popPose();
         }

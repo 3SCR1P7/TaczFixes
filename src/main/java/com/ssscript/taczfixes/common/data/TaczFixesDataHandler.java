@@ -8,5 +8,6 @@ public class TaczFixesDataHandler {
     public void onAddReloadListener(AddReloadListenerEvent event) {
         event.addListener(new TaczFixesDataReloadListener());
         event.addListener(new AttachmentTaczFixesReloadListener());
+        event.addListener(new AdapterNativeDataReloadListener());
     }
 }

@@ -184,6 +184,10 @@ public class TaczFixesMod {
         modBus.addListener(this::onEntityAttributeModification);
         modBus.addListener(this::onCommonSetup);
         if (net.minecraftforge.fml.loading.FMLLoader.getDist().isClient()) {
+            ModLoadingContext.get().registerExtensionPoint(
+                    net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory.class,
+                    () -> new net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory(
+                            (mc, parent) -> com.ssscript.taczfixes.client.screen.ConfigScreen.create(parent)));
             com.ssscript.taczfixes.client.render.LightManager.injectShaders();
             modBus.addListener(this::onClientSetup);
             modBus.addListener(this::onRegisterKeyMappings);
@@ -214,6 +218,7 @@ public class TaczFixesMod {
 
     private void onRegisterClientReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new com.ssscript.taczfixes.client.data.ClientDisplayDataReloadListener());
+        event.registerReloadListener(new com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
                         .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor));

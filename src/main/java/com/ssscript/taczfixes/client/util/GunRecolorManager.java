@@ -282,14 +282,14 @@ public final class GunRecolorManager {
         }
         image.close();
 
-        // 1. 每像素 HSL(聚类在"色相权重更高"的空间进行, 权重可配置)
+        // 1. 每像素 HSV(聚类在"色相权重更高"的空间进行, 权重可配置)
         float[] hsl = new float[n * 3];
         byte[] pixS = new byte[n];
         byte[] pixL = new byte[n];
         for (int i = 0; i < n; i++) {
             int p = argb[i];
             if (((p >>> 24) & 255) < 10) continue;
-            float[] c = rgbToHsl(((p >>> 16) & 255) / 255.0f, ((p >>> 8) & 255) / 255.0f, (p & 255) / 255.0f);
+            float[] c = rgbToHsv(((p >>> 16) & 255) / 255.0f, ((p >>> 8) & 255) / 255.0f, (p & 255) / 255.0f);
             hsl[i * 3] = c[0];
             hsl[i * 3 + 1] = c[1];
             hsl[i * 3 + 2] = c[2];
@@ -359,7 +359,7 @@ public final class GunRecolorManager {
             float r = sumR[c] / (float) count[c];
             float g = sumG[c] / (float) count[c];
             float b = sumB[c] / (float) count[c];
-            float h = rgbToHsl(r / 255.0f, g / 255.0f, b / 255.0f)[0];
+            float h = rgbToHsv(r / 255.0f, g / 255.0f, b / 255.0f)[0];
             clusters.add(new Cluster(((int) r << 16) | ((int) g << 8) | (int) b,
                     r, g, b, h, (float) (sumS[c] / count[c]), (float) (sumL[c] / count[c]), count[c]));
         }
@@ -387,7 +387,7 @@ public final class GunRecolorManager {
         for (int c = 0; c < clusterN; c++) {
             if (c >= targets.length || targets[c] < 0) continue;
             Cluster cluster = data.clusters.get(c);
-            float[] hsl = rgbToHsl(((targets[c] >> 16) & 255) / 255.0f,
+            float[] hsl = rgbToHsv(((targets[c] >> 16) & 255) / 255.0f,
                     ((targets[c] >> 8) & 255) / 255.0f, (targets[c] & 255) / 255.0f);
             tables[c] = buildTable(hsl[0], hsl[1] - cluster.s(), hsl[2] - cluster.l());
         }
@@ -544,35 +544,47 @@ public final class GunRecolorManager {
             int base = si << 8;
             for (int li = 0; li < 256; li++) {
                 float l = clamp01(li / 255.0f + dL);
-                table[base | li] = hslToRgb(h, s, l);
+                table[base | li] = hsvToRgb(h, s, l);
             }
         }
         return table;
     }
 
-    public static int hslToRgb(float h, float s, float l) {
+    /** HSV(色相/饱和度/明度) 转 RGB; 明度 v=1 即满饱和色, 与调色滑块一致。 */
+    public static int hsvToRgb(float h, float s, float v) {
         h = h - (float) Math.floor(h);
+        s = clamp01(s);
+        v = clamp01(v);
         if (s <= 1.0E-6f) {
-            int v = (int) Math.round(l * 255.0f);
-            return (v << 16) | (v << 8) | v;
+            int gray = Math.round(v * 255.0f);
+            return (gray << 16) | (gray << 8) | gray;
         }
-        float q = l < 0.5f ? l * (1.0f + s) : l + s - l * s;
-        float p = 2.0f * l - q;
-        float r = hue2rgb(p, q, h + 1.0f / 3.0f);
-        float g = hue2rgb(p, q, h);
-        float b = hue2rgb(p, q, h - 1.0f / 3.0f);
+        float hh = h * 6.0f;
+        int i = (int) Math.floor(hh);
+        float f = hh - i;
+        float p = v * (1.0f - s);
+        float q = v * (1.0f - s * f);
+        float t = v * (1.0f - s * (1.0f - f));
+        float r;
+        float g;
+        float b;
+        switch (i % 6) {
+            case 0 -> { r = v; g = t; b = p; }
+            case 1 -> { r = q; g = v; b = p; }
+            case 2 -> { r = p; g = v; b = t; }
+            case 3 -> { r = p; g = q; b = v; }
+            case 4 -> { r = t; g = p; b = v; }
+            default -> { r = v; g = p; b = q; }
+        }
         return (Math.round(r * 255.0f) << 16) | (Math.round(g * 255.0f) << 8) | Math.round(b * 255.0f);
     }
 
-    public static float[] rgbToHsl(float r, float g, float b) {
+    public static float[] rgbToHsv(float r, float g, float b) {
         float mx = Math.max(r, Math.max(g, b));
         float mn = Math.min(r, Math.min(g, b));
-        float l = (mx + mn) / 2.0f;
+        float d = mx - mn;
         float h = 0.0f;
-        float s = 0.0f;
-        if (mx != mn) {
-            float d = mx - mn;
-            s = l > 0.5f ? d / (2.0f - mx - mn) : d / (mx + mn);
+        if (d > 1.0E-6f) {
             if (mx == r) {
                 h = (g - b) / d + (g < b ? 6.0f : 0.0f);
             } else if (mx == g) {
@@ -582,16 +594,8 @@ public final class GunRecolorManager {
             }
             h /= 6.0f;
         }
-        return new float[]{h, s, l};
-    }
-
-    private static float hue2rgb(float p, float q, float t) {
-        if (t < 0.0f) t += 1.0f;
-        if (t > 1.0f) t -= 1.0f;
-        if (t < 1.0f / 6.0f) return p + (q - p) * 6.0f * t;
-        if (t < 1.0f / 2.0f) return q;
-        if (t < 2.0f / 3.0f) return p + (q - p) * (2.0f / 3.0f - t) * 6.0f;
-        return p;
+        float s = mx <= 1.0E-6f ? 0.0f : d / mx;
+        return new float[]{h, s, mx};
     }
 
     private static float clamp01(float v) {

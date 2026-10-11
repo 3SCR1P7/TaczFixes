@@ -87,6 +87,8 @@
         "MixinIronsSpellSelection",
         "MixinIronsAnvilContainer",
         "MixinIronsEquipmentChangeCast",
-        "MixinRepairItemRecipeGunMerge"
+        "MixinRepairItemRecipeGunMerge",
+        "MixinAttachmentDataUtilsAdapter",
+        "MixinAttachmentCachePropertyAdapter"
     ]
 }
