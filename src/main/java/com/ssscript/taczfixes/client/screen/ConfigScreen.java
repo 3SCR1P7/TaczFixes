@@ -160,6 +160,7 @@ public class ConfigScreen {
         dbl_(gunTypes, entry, "limb_damage.factor_smg", Config.GUN_TYPE_SMG);
         dbl_(gunTypes, entry, "limb_damage.factor_rpg", Config.GUN_TYPE_RPG);
         dbl_(gunTypes, entry, "limb_damage.factor_mg", Config.GUN_TYPE_MG);
+        dbl_(gunTypes, entry, "limb_damage.factor_dmr", Config.GUN_TYPE_DMR);
         dbl_(gunTypes, entry, "limb_damage.factor_other", Config.GUN_TYPE_OTHER);
         cat.addEntry(entry.startSubCategory(cat("gun_types"), gunTypes).build());
 

@@ -100,6 +100,7 @@ public class LimbDamageHandler {
                 case "smg" -> Config.GUN_TYPE_SMG.get();
                 case "rpg" -> Config.GUN_TYPE_RPG.get();
                 case "mg" -> Config.GUN_TYPE_MG.get();
+                case "dmr" -> Config.GUN_TYPE_DMR.get();
                 default -> Config.GUN_TYPE_OTHER.get();
             };
         }

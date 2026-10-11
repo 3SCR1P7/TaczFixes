@@ -38,6 +38,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_SMG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_RPG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
+    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_DMR;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
     public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
@@ -83,7 +84,7 @@ public class Config {
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
     /** 枪械类型（tacz 枪械 data 的 type 字段）名称, 与 GunTabType 一致。 */
-    public static final String[] GUN_LIGHT_TYPE_NAMES = {"pistol", "sniper", "rifle", "shotgun", "smg", "rpg", "mg"};
+    public static final String[] GUN_LIGHT_TYPE_NAMES = {"pistol", "sniper", "rifle", "shotgun", "smg", "rpg", "mg", "dmr"};
     /** 每种枪械类型的全局光照覆盖配置(time>0 时覆盖通用全局值)。 */
     public static final java.util.Map<String, GunLightTypeConfig> GUN_LIGHT_TYPE_CONFIGS = new java.util.LinkedHashMap<>();
     /** 枪口配件未配置 light 字段时, 对光照参数的全局增量调整。 */
@@ -388,6 +389,9 @@ public class Config {
         GUN_TYPE_MG = BUILDER
                 .comment("机枪的默认四肢伤害倍率。默认值：0.7")
                 .defineInRange("mg", 0.7, 0.0, 1.0);
+        GUN_TYPE_DMR = BUILDER
+                .comment("射手步枪的默认四肢伤害倍率。默认值：0.65")
+                .defineInRange("dmr", 0.65, 0.0, 1.0);
         GUN_TYPE_OTHER = BUILDER
                 .comment("其他类型枪械的默认四肢伤害倍率。默认值：0.6")
                 .defineInRange("other", 0.6, 0.0, 1.0);
