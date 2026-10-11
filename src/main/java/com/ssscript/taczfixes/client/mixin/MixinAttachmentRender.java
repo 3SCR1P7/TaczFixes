@@ -74,7 +74,7 @@ public abstract class MixinAttachmentRender {
         }
     }
 
-    /** 副手瞄具以实体模型渲染, 目镜组(ocular_sight/ocular_scope_n)可能已被主手开镜渲染置为不可见, 这里临时恢复。 */
+    /** 副手瞄具以实体模型渲染, 目镜组(ocular_sight/ocular_scope_n)可能已被主手开镜渲染置为不可见, 这里按类型恢复: 仅 scope 类型目镜恢复可见, sight 类型目镜保持隐藏。 */
     @Unique
     private static Map<BedrockPart, Boolean> taczfixes$showOcularParts(BedrockAttachmentModel model) {
         Map<BedrockPart, Boolean> restore = new IdentityHashMap<>();
@@ -84,15 +84,19 @@ public abstract class MixinAttachmentRender {
             if (oculars == null) {
                 return restore;
             }
-            for (List<BedrockPart> path : oculars) {
+            List<Boolean> scopeFlags = accessor.taczfixes$isScopeOcular();
+            for (int i = 0; i < oculars.size(); i++) {
+                List<BedrockPart> path = oculars.get(i);
                 if (path == null) {
                     continue;
                 }
+                boolean scopeOcular = scopeFlags != null && i < scopeFlags.size()
+                        && Boolean.TRUE.equals(scopeFlags.get(i));
                 for (BedrockPart part : path) {
-                    if (!part.visible) {
-                        restore.put(part, Boolean.FALSE);
-                        part.visible = true;
+                    if (!restore.containsKey(part)) {
+                        restore.put(part, Boolean.valueOf(part.visible));
                     }
+                    part.visible = scopeOcular;
                 }
             }
         } catch (Throwable ignored) {
