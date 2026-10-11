@@ -6,7 +6,7 @@
 
 --逻辑机运行指令支持
 
---PBR反光与泛光（无需光影）
+--PBR反光与泛光
 
 --四肢伤害倍率修改
 
@@ -36,6 +36,8 @@
 
 --跳弹机制
 
+--耐久机制
+
 --双持机制
 
 --更多...
@@ -46,7 +48,7 @@
 
 前置模组：
 
---Timeless and Classics Zero 1.1.9 或更高
+--Timeless and Classics Zero 1.2.0 或更高
 
 --Cloth Config API 11.1.136 (可选)
 
