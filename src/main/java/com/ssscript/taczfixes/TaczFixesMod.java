@@ -229,6 +229,7 @@ public class TaczFixesMod {
         event.register(com.ssscript.taczfixes.client.handler.ConfigKeyHandler.OPEN_CONFIG_KEY);
         event.register(com.ssscript.taczfixes.client.handler.EditDataKeyHandler.EDIT_DATA_KEY);
         event.register(com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler.HOLD_BREATH_KEY);
+        event.register(com.ssscript.taczfixes.client.handler.GunPackKeyHandler.GUN_PACK_KEY);
     }
 
     private void onClientSetup(FMLClientSetupEvent event) {
@@ -249,6 +250,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.CrawlHitboxDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackKeyHandler());
         });
     }
 }

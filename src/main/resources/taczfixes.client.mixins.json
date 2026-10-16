@@ -85,6 +85,8 @@
         "MixinRangefinderLock",
         "MixinRangefinderProjection",
         "MixinGunPropertyDiagrams",
+        "MixinInventoryAttachmentSlotPreview",
+        "MixinGunRefitScreenScrollPage",
         "MixinZoomKey",
         "MixinScreenRefitReject",
         "MixinClientTrackingSync",

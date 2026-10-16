@@ -8,14 +8,27 @@ import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.ssscript.taczfixes.TaczFixesMod;
+import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.common.util.AimingBlurConfig;
+import com.ssscript.taczfixes.common.util.AimingBlurDisplayAccessor;
+import com.ssscript.taczfixes.common.util.CustomSlotStorage;
+import com.tacz.guns.api.DefaultAssets;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.api.item.IAttachment;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.resource.ClientAssetsManager;
+import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
+import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.projectile.ProjectileUtil;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
@@ -29,6 +42,7 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
 import java.io.IOException;
+import java.util.Optional;
 
 /**
  * 开镜模糊: 在 renderLevel 结束后对主帧缓冲做高斯模糊, 只作用于屏幕边缘。
@@ -58,15 +72,16 @@ public final class AimBlur {
 
     /** 在 renderLevel 结束时调用: 模糊已绘制完的世界与手部, 不影响之后绘制的 HUD。 */
     public static void composite() {
-        if (!Config.STEPLESS_ZOOM_AIM_BLUR_ENABLED.get()) return;
         if (shader == null || PbrRenderer.blurShader == null) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (!(player instanceof IClientPlayerGunOperator operator)) return;
+        AimingParams params = resolveParams(player);
+        if (!params.enabled()) return;
         float progress = operator.getClientAimingProgress(mc.getFrameTime());
         if (progress <= 0.01f) return;
-        float range = Config.STEPLESS_ZOOM_AIM_BLUR_RANGE.get().floatValue() * distanceFactor(mc, player);
-        float radius = Config.STEPLESS_ZOOM_AIM_BLUR_STRENGTH.get().floatValue() * progress;
+        float range = params.range() * distanceFactor(mc, player, params);
+        float radius = params.strength() * progress;
         if (range <= 0.002f || radius < 0.1f) return;
         RenderTarget main = mc.getMainRenderTarget();
         if (main == null) return;
@@ -120,8 +135,66 @@ public final class AimBlur {
         }
     }
 
+    /** 开镜模糊参数: 瞄具 display 的 aiming_blur 优先, 未配置项回退配置文件。 */
+    private record AimingParams(boolean enabled, float range, float strength, double farDistance, float minFactor) {
+    }
+
+    private static AimingParams resolveParams(LocalPlayer player) {
+        AimingBlurConfig cfg = resolveDisplayConfig(player);
+        boolean enabled = cfg != null && cfg.aim_blur_enabled != null
+                ? cfg.aim_blur_enabled.booleanValue()
+                : Config.STEPLESS_ZOOM_AIM_BLUR_ENABLED.get();
+        float range = cfg != null && cfg.aim_blur_range != null
+                ? cfg.aim_blur_range.floatValue()
+                : Config.STEPLESS_ZOOM_AIM_BLUR_RANGE.get().floatValue();
+        float strength = cfg != null && cfg.aim_blur_strength != null
+                ? cfg.aim_blur_strength.floatValue()
+                : Config.STEPLESS_ZOOM_AIM_BLUR_STRENGTH.get().floatValue();
+        double far = cfg != null && cfg.aim_blur_far_distance != null
+                ? cfg.aim_blur_far_distance.doubleValue()
+                : Config.STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE.get();
+        float min = cfg != null && cfg.aim_blur_min_factor != null
+                ? cfg.aim_blur_min_factor.floatValue()
+                : Config.STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR.get().floatValue();
+        return new AimingParams(enabled, range, strength, far, min);
+    }
+
+    /** 当前生效瞄具(或切换到的自定义槽瞄具)的 display 上的 aiming_blur 配置, 无则 null。 */
+    private static AimingBlurConfig resolveDisplayConfig(LocalPlayer player) {
+        ItemStack gunStack = player.getMainHandItem();
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return null;
+
+        ResourceLocation slotId = null;
+        String active = ScopeSwitchState.getActiveSlot(gunStack);
+        if (active != null) {
+            ItemStack scope = CustomSlotStorage.get(gunStack, active);
+            if (!scope.isEmpty()) {
+                IAttachment attachment = IAttachment.getIAttachmentOrNull(scope);
+                if (attachment != null) {
+                    slotId = attachment.getAttachmentId(scope);
+                }
+            }
+        }
+        if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) {
+            slotId = gun.getAttachmentId(gunStack, AttachmentType.SCOPE);
+        }
+        if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) {
+            slotId = gun.getBuiltInAttachmentId(gunStack, AttachmentType.SCOPE);
+        }
+        if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) return null;
+
+        Optional<CommonAttachmentIndex> indexOpt = TimelessAPI.getCommonAttachmentIndex(slotId);
+        if (indexOpt.isEmpty()) return null;
+        ResourceLocation displayId = indexOpt.get().getPojo().getDisplay();
+        if (displayId == null) return null;
+        AttachmentDisplay display = ClientAssetsManager.INSTANCE.getAttachmentDisplay(displayId);
+        if (!(display instanceof AimingBlurDisplayAccessor accessor)) return null;
+        return accessor.getAimingBlur();
+    }
+
     /** 模糊范围随瞄准目标(方块/实体)距离的系数: 0距离处为配置的最小比例, 远处为 1; 未命中(天空等)按最远处处理。 */
-    private static float distanceFactor(Minecraft mc, LocalPlayer player) {
+    private static float distanceFactor(Minecraft mc, LocalPlayer player, AimingParams params) {
         float partial = mc.getFrameTime();
         Vec3 eye = player.getEyePosition(partial);
         Vec3 view = player.getViewVector(partial);
@@ -137,13 +210,12 @@ public final class AimBlur {
         if (entityHit != null) {
             distance = Math.min(distance, eye.distanceTo(entityHit.getLocation()));
         }
-        double far = Math.max(RANGE_NEAR_DISTANCE + 0.001,
-                Config.STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE.get());
+        double far = Math.max(RANGE_NEAR_DISTANCE + 0.001, params.farDistance());
         float factor = Mth.clamp(
                 (float) ((distance - RANGE_NEAR_DISTANCE) / (far - RANGE_NEAR_DISTANCE)),
                 0.0f, 1.0f);
         // 非线性: 近距离即有明显模糊, 随距离快速上升后逐渐饱和(sqrt 曲线)
-        float min = Config.STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR.get().floatValue();
+        float min = params.minFactor();
         return min + (1.0f - min) * (float) Math.sqrt(factor);
     }
 

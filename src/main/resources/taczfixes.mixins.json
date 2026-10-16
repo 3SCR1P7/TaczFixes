@@ -89,6 +89,7 @@
         "MixinIronsEquipmentChangeCast",
         "MixinRepairItemRecipeGunMerge",
         "MixinAttachmentDataUtilsAdapter",
-        "MixinAttachmentCachePropertyAdapter"
+        "MixinAttachmentCachePropertyAdapter",
+        "MixinGunPackLoader"
     ]
 }

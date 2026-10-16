@@ -1,14 +1,20 @@
 package com.ssscript.taczfixes.client.util;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.ssscript.taczfixes.common.data.CustomSlotManager;
+import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.GunColorStorage;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.resource.CommonAssetsManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 
@@ -24,6 +30,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
@@ -46,14 +53,18 @@ public final class GunRecolorManager {
 
     private static int gunClusterCount = DEFAULT_GUN_CLUSTERS;
     private static int attachmentClusterCount = DEFAULT_ATTACHMENT_CLUSTERS;
-    private static int clusterCount = DEFAULT_GUN_CLUSTERS;
+    /** 调色面板当前显示的分组数(跟随面板目标类型)。 */
+    private static int uiClusterCount = DEFAULT_GUN_CLUSTERS;
 
     /** 查询原始贴图时置位, 阻止 getModelTexture 的调色拦截递归/串用。 */
     private static final ThreadLocal<Boolean> SOURCE_LOOKUP = ThreadLocal.withInitial(() -> Boolean.FALSE);
 
     private static final ThreadLocal<Deque<ItemStack>> RENDER_STACK =
             ThreadLocal.withInitial(ArrayDeque::new);
-    private static final Map<ResourceLocation, TextureData> TEXTURES = new HashMap<>();
+    /** 与 RENDER_STACK 同步的"是否禁用本模组调色"标记(安装了涂装模块的枪械)。 */
+    private static final ThreadLocal<Deque<Boolean>> SUPPRESS_STACK =
+            ThreadLocal.withInitial(ArrayDeque::new);
+    private static final Map<String, TextureData> TEXTURES = new HashMap<>();
     private static final LinkedHashMap<String, Recached> RECACHED = new LinkedHashMap<>();
     /** 重着色贴图 -> 原始贴图, 供 PBR 查找原 _s/_n 贴图。 */
     private static final Map<ResourceLocation, ResourceLocation> SOURCES = new HashMap<>();
@@ -89,21 +100,15 @@ public final class GunRecolorManager {
     }
 
     public static int clusterCount() {
-        return clusterCount;
+        return uiClusterCount;
     }
 
-    /** 打开调色面板前按目标类型切换到该类型记住的分组数(枪械默认 6, 配件默认 3)。 */
+    /** 打开调色面板前按目标类型切换到该类型记住的分组数(枪械默认 6, 配件默认 3)。不做任何缓存清理。 */
     public static void applyClusterCountFor(ItemStack target) {
-        int wanted = isAttachment(target) ? attachmentClusterCount : gunClusterCount;
-        if (wanted == clusterCount) {
-            return;
-        }
-        clusterCount = wanted;
-        TEXTURES.clear();
-        releaseAll();
+        uiClusterCount = isAttachment(target) ? attachmentClusterCount : gunClusterCount;
     }
 
-    /** 修改分组数: 按目标类型记住, 清空聚类缓存并重置该目标的调色板。 */
+    /** 修改分组数: 按目标类型记住, 并重置该目标的调色板(索引已失效)。不影响其它物品的着色。 */
     public static void setClusterCount(ItemStack target, int value) {
         int clamped = Math.max(MIN_CLUSTERS, Math.min(MAX_CLUSTERS, value));
         if (isAttachment(target)) {
@@ -111,15 +116,15 @@ public final class GunRecolorManager {
         } else {
             gunClusterCount = clamped;
         }
-        if (clamped == clusterCount) {
-            return;
-        }
-        clusterCount = clamped;
-        TEXTURES.clear();
-        releaseAll();
+        uiClusterCount = clamped;
         if (target != null && !target.isEmpty()) {
             GunColorStorage.set(target, new int[0]);
         }
+    }
+
+    /** 该物品使用的分组数(按类型: 枪械 / 配件), 与面板 UI 选择无关。 */
+    private static int countFor(ItemStack item) {
+        return isAttachment(item) ? attachmentClusterCount : gunClusterCount;
     }
 
     private static boolean isAttachment(ItemStack item) {
@@ -130,12 +135,16 @@ public final class GunRecolorManager {
     // ---------------- 渲染上下文 ----------------
 
     public static void pushRenderStack(ItemStack stack) {
+        // 仅按当前物品自身判断: 枪械装了涂装模块时只禁用枪械本体的调色, 配件仍可调色。
+        SUPPRESS_STACK.get().push(Boolean.valueOf(hasPaintModule(stack)));
         RENDER_STACK.get().push(stack);
     }
 
     public static void popRenderStack() {
         Deque<ItemStack> stack = RENDER_STACK.get();
         if (!stack.isEmpty()) stack.pop();
+        Deque<Boolean> suppress = SUPPRESS_STACK.get();
+        if (!suppress.isEmpty()) suppress.pop();
     }
 
     private static ItemStack currentStack() {
@@ -143,18 +152,124 @@ public final class GunRecolorManager {
         return stack.isEmpty() ? null : stack.peek();
     }
 
+    /** 当前渲染上下文是否因"涂装模块"(arcana 调色喷罐附件)而禁用本模组调色。 */
+    public static boolean isSuppressed() {
+        Deque<Boolean> suppress = SUPPRESS_STACK.get();
+        return !suppress.isEmpty() && Boolean.TRUE.equals(suppress.peek());
+    }
+
+    /**
+     * 该物品是否属于/安装了涂装模块(tacz:paint_module 标签)。
+     * 涂装模块由 arcana 自行上色, 此时本模组调色让位, 避免两边互相覆盖。
+     */
+    public static boolean hasPaintModule(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        if (stack.getItem() instanceof IGun gun) {
+            return gunHasPaintModule(stack, gun);
+        }
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
+        return attachment != null && isPaintModule(attachment.getAttachmentId(stack));
+    }
+
+    private static boolean gunHasPaintModule(ItemStack gunStack, IGun gun) {
+        Set<String> modules = paintModuleIds();
+        if (modules.isEmpty()) {
+            return false;
+        }
+        for (AttachmentType type : AttachmentType.values()) {
+            if (type == AttachmentType.NONE) {
+                continue;
+            }
+            ResourceLocation id = gun.getAttachmentId(gunStack, type);
+            if (id != null && modules.contains(id.toString())) {
+                return true;
+            }
+        }
+        for (String slotId : CustomSlotManager.getSlots(gunStack).keySet()) {
+            ResourceLocation id = CustomSlotStorage.getAttachmentId(gunStack, slotId);
+            if (id != null && modules.contains(id.toString())) {
+                return true;
+            }
+        }
+        // 兜底: 扫描枪械 NBT 中所有配件物品(含第三方槽位/自定义存储)。
+        CompoundTag tag = gunStack.getTag();
+        return tag != null && taczfixes$nbtHasPaintModule(tag, modules, 0);
+    }
+
+    private static boolean taczfixes$nbtHasPaintModule(CompoundTag tag, Set<String> modules, int depth) {
+        if (depth > 3) {
+            return false;
+        }
+        for (String key : tag.getAllKeys()) {
+            int type = tag.getTagType(key);
+            if (type == 10) {
+                CompoundTag child = tag.getCompound(key);
+                if (taczfixes$isPaintModuleStack(child, modules) || taczfixes$nbtHasPaintModule(child, modules, depth + 1)) {
+                    return true;
+                }
+            } else if (type == 9) {
+                ListTag list = tag.getList(key, 10);
+                for (int i = 0; i < list.size(); i++) {
+                    CompoundTag child = list.getCompound(i);
+                    if (taczfixes$isPaintModuleStack(child, modules) || taczfixes$nbtHasPaintModule(child, modules, depth + 1)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    private static boolean taczfixes$isPaintModuleStack(CompoundTag child, Set<String> modules) {
+        if (!child.contains("id", 8)) {
+            return false;
+        }
+        try {
+            ItemStack stack = ItemStack.of(child);
+            if (stack.isEmpty()) {
+                return false;
+            }
+            IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
+            return attachment != null && modules.contains(String.valueOf(attachment.getAttachmentId(stack)));
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static boolean isPaintModule(ResourceLocation id) {
+        if (id == null) {
+            return false;
+        }
+        Set<String> modules = paintModuleIds();
+        return !modules.isEmpty() && modules.contains(id.toString());
+    }
+
+    /** tacz:paint_module 标签里的配件 id 集合; 未安装涂装包时为空。 */
+    private static Set<String> paintModuleIds() {
+        try {
+            Set<String> ids = CommonAssetsManager.getInstance()
+                    .getAttachmentTags(new ResourceLocation("tacz", "paint_module"));
+            return ids == null ? Set.of() : ids;
+        } catch (Throwable ignored) {
+            return Set.of();
+        }
+    }
+
     /**
      * 由 GunDisplayInstance.getModelTexture() 调用。当前渲染物品有调色数据时返回重着色贴图, 否则 null。
      */
     public static ResourceLocation recolored(ResourceLocation original) {
         if (original == null || Boolean.TRUE.equals(SOURCE_LOOKUP.get())) return null;
+        if (isSuppressed()) return null;
         ItemStack stack = currentStack();
         if (stack == null || stack.isEmpty()) return null;
         if (!(stack.getItem() instanceof IGun) && !(stack.getItem() instanceof IAttachment)) return null;
         // 只允许用物品自己的贴图做调色, 防止残留/错误的渲染上下文把别的调色板套到当前贴图上
         ResourceLocation own = originalTexture(stack);
         if (own == null || !own.equals(original)) return null;
-        TextureData data = textureData(original);
+        TextureData data = textureData(original, countFor(stack));
         if (data == null || data.clusters.isEmpty()) return null;
         int[] targets = palette(stack, data.clusters.size());
         if (!hasAnyTarget(targets)) return null;
@@ -175,6 +290,11 @@ public final class GunRecolorManager {
         return rl;
     }
 
+    /** 当前渲染物品的基础模型贴图(供 PBR 在贴图被第三方运行时替换时找回 _s/_n)。 */
+    public static ResourceLocation currentBaseTexture() {
+        return originalTexture(currentStack());
+    }
+
     /** 重着色贴图对应的原始贴图(非重着色贴图原样返回), PBR 用它定位 _s/_n。 */
     public static ResourceLocation sourceOf(ResourceLocation texture) {
         if (texture == null) return null;
@@ -187,7 +307,7 @@ public final class GunRecolorManager {
     public static List<Cluster> clustersOf(ItemStack gun) {
         ResourceLocation texture = originalTexture(gun);
         if (texture == null) return List.of();
-        TextureData data = textureData(texture);
+        TextureData data = textureData(texture, countFor(gun));
         return data == null ? List.of() : data.clusters;
     }
 
@@ -256,14 +376,16 @@ public final class GunRecolorManager {
 
     // ---------------- 数据装载 ----------------
 
-    private static TextureData textureData(ResourceLocation rl) {
-        if (TEXTURES.containsKey(rl)) return TEXTURES.get(rl);
-        TextureData data = buildTextureData(rl);
-        TEXTURES.put(rl, data);
+    private static TextureData textureData(ResourceLocation rl, int count) {
+        // 按 (贴图, 分组数) 缓存: 枪械与配件使用各自的分组数, 互不影响。
+        String key = rl + "@" + count;
+        if (TEXTURES.containsKey(key)) return TEXTURES.get(key);
+        TextureData data = buildTextureData(rl, count);
+        TEXTURES.put(key, data);
         return data;
     }
 
-    private static TextureData buildTextureData(ResourceLocation rl) {
+    private static TextureData buildTextureData(ResourceLocation rl, int clusterTarget) {
         NativeImage image = readTexture(rl);
         if (image == null) return null;
         int width = image.getWidth();
@@ -313,7 +435,7 @@ public final class GunRecolorManager {
         }
 
         // 3. k-means + 合并
-        int k = Math.max(1, Math.min(clusterCount(), si / 3));
+        int k = Math.max(1, Math.min(clusterTarget, si / 3));
         List<float[]> centers = kmeans(samples, si / 3, k);
         centers = mergeCenters(centers, MERGE_DISTANCE);
         int clusterN = Math.max(1, centers.size());

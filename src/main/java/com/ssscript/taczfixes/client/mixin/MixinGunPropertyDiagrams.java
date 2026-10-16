@@ -42,6 +42,18 @@ public class MixinGunPropertyDiagrams {
         taczfixes$sprintFillCount = 0;
     }
 
+    /** 悬浮候选配件时, 显示图表改用"卸下该槽原配件 + 安装此配件"后的属性缓存。 */
+    @Redirect(method = "draw",
+            at = @At(value = "INVOKE",
+                    target = "Lcom/tacz/guns/api/entity/IGunOperator;getCacheProperty()Lcom/tacz/guns/resource/modifier/AttachmentCacheProperty;",
+                    remap = false), remap = false)
+    private static com.tacz.guns.resource.modifier.AttachmentCacheProperty taczfixes$previewCache(
+            com.tacz.guns.api.entity.IGunOperator operator) {
+        com.tacz.guns.resource.modifier.AttachmentCacheProperty preview =
+                com.ssscript.taczfixes.client.util.RefitDiagramPreview.previewCache();
+        return preview != null ? preview : operator.getCacheProperty();
+    }
+
     @Redirect(method = "lambda$draw$3",
             at = @At(value = "INVOKE",
                     target = "Lcom/tacz/guns/resource/pojo/data/gun/GunData;getSprintTime()F", remap = false), remap = false)

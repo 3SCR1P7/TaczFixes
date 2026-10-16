@@ -35,6 +35,17 @@ public class BuiltinAttachmentSlot extends Button implements IStackTooltip {
     public void renderWidget(@Nonnull GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         int originalWidth = getWidth();
         int originalHeight = getHeight();
+        // 悬浮预览: 用"安装此配件后"的数值显示图表
+        if (isHoveredOrFocused()) {
+            String slotId = CustomSlotGuiState.get();
+            if (slotId != null) {
+                RefitDiagramPreview.setCustom(slotId, this.stack, getX(), getY(), originalWidth, originalHeight);
+            } else {
+                RefitDiagramPreview.setStandard(
+                        com.tacz.guns.client.animation.screen.RefitTransform.getCurrentTransformType(),
+                        this.stack, getX(), getY(), originalWidth, originalHeight);
+            }
+        }
         float scale = originalWidth / (float) GunRefitScreen.SLOT_SIZE;
         boolean scaled = scale != 1f;
         if (scaled) {

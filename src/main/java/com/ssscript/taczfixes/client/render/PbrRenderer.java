@@ -234,11 +234,24 @@ public final class PbrRenderer {
             var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
             if (texture.isEmpty()) return original;
             // 重着色贴图沿用原始贴图的 _s/_n 材质
-            var material = MATERIALS.computeIfAbsent(
-                    com.ssscript.taczfixes.client.util.GunRecolorManager.sourceOf(texture.get()),
-                    PbrRenderer::findMaterial);
-            return material.<RenderType>map(m -> new PbrType(original, m)).orElse(original);
+            ResourceLocation base = com.ssscript.taczfixes.client.util.GunRecolorManager.sourceOf(texture.get());
+            Material material = material(base);
+            if (material == null || material.specular() == null && material.normal() == null) {
+                // 第三方(arcana 涂装等)运行期生成的贴图不带 _s/_n: 回退到当前物品基础贴图的材质
+                ResourceLocation own = com.ssscript.taczfixes.client.util.GunRecolorManager.currentBaseTexture();
+                if (own != null && !own.equals(base)) {
+                    Material ownMaterial = material(own);
+                    if (ownMaterial != null && (ownMaterial.specular() != null || ownMaterial.normal() != null)) {
+                        material = ownMaterial;
+                    }
+                }
+            }
+            return material == null ? original : new PbrType(original, material);
         });
+    }
+
+    private static Material material(ResourceLocation base) {
+        return MATERIALS.computeIfAbsent(base, PbrRenderer::findMaterial).orElse(null);
     }
 
     private static Optional<Material> findMaterial(ResourceLocation base) {

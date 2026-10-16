@@ -157,6 +157,12 @@ public final class CustomScopeViewShift {
                 smoothShift = targetS;
                 smoothAngle = targetTh;
                 smoothOffset = targetO;
+            } else {
+                // 瞄具被拆除/切回默认: 清掉残留偏移, 立即回到默认视角。
+                smoothPivot = Vec3.ZERO;
+                smoothShift = Vec3.ZERO;
+                smoothAngle = 0f;
+                smoothOffset = 0f;
             }
         } else {
             smoothPivot = smoothPivot.add(pivot.subtract(smoothPivot).scale(smooth));

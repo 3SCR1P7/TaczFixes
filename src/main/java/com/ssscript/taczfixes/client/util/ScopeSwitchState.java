@@ -44,7 +44,20 @@ public final class ScopeSwitchState {
     public static String getActiveSlot(ItemStack gun) {
         ResourceLocation gunId = gunId(gun);
         if (gunId == null) return null;
-        return ACTIVE.get(gunId);
+        String active = ACTIVE.get(gunId);
+        if (active != null && !isCandidateInstalled(gun, active)) {
+            // 瞄具已被拆除: 失效并回到默认(标准槽瞄具/机瞄)视角。
+            ACTIVE.remove(gunId);
+            return null;
+        }
+        return active;
+    }
+
+    /** 该槽位是否仍是有效的自定义瞄具槽(定义存在、为 scope 类型且仍装有效果配件)。 */
+    private static boolean isCandidateInstalled(ItemStack gun, String slotId) {
+        CustomSlotDefinition def = CustomSlotManager.getSlots(gun).get(slotId);
+        if (def == null || def.isCustom() || !"scope".equalsIgnoreCase(def.type)) return false;
+        return !CustomSlotStorage.get(gun, slotId).isEmpty();
     }
 
     public static void cycle(ItemStack gun) {

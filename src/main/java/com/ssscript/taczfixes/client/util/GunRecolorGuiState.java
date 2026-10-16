@@ -65,6 +65,29 @@ public final class GunRecolorGuiState {
         return targetItem.isEmpty() ? gun() : targetItem;
     }
 
+    /** 若此刻打开调色面板, 调色对象会是谁: 自定义槽物理配件 > 标准槽配件 > 枪械本体。 */
+    public static ItemStack resolveTarget(ItemStack gun) {
+        if (gun == null || gun.isEmpty()) {
+            return ItemStack.EMPTY;
+        }
+        String slotId = CustomSlotGuiState.get();
+        if (slotId != null) {
+            ItemStack physical = CustomSlotStorage.getPhysical(gun, slotId);
+            return physical.isEmpty() ? gun : physical;
+        }
+        AttachmentType type = RefitTransform.getCurrentTransformType();
+        if (type != null && type != AttachmentType.NONE) {
+            IGun igun = IGun.getIGunOrNull(gun);
+            if (igun != null) {
+                ItemStack attachment = igun.getAttachment(gun, type);
+                if (!attachment.isEmpty()) {
+                    return attachment;
+                }
+            }
+        }
+        return gun;
+    }
+
     public static void open() {
         open = true;
         selected = -1;
@@ -106,6 +129,11 @@ public final class GunRecolorGuiState {
             return;
         }
         send();
+        close();
+    }
+
+    /** 直接关闭并重置状态(不发送)。用于安装涂装模块后强制让位。 */
+    public static void close() {
         open = false;
         selected = -1;
         targetSlot = null;

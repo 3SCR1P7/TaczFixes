@@ -2,17 +2,21 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
 import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.model.bedrock.BedrockPart;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.util.EnumMap;
+import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -49,5 +53,33 @@ public class MixinFirstPersonRenderGunEventAimScope {
         v.y -= y;
         v.z += z + posAlterZ;
         return v;
+    }
+
+    /**
+     * iron_view: 机瞄(未安装瞄具, mountOffset 为 null)时, 按 group_offset.iron_view 平移开镜瞄准定位(机瞄相机)。
+     * 与 scope 的 mountOffset 写入方式一致: 平移前置, 偏移量按 (-x/16, -y/16, -z/16) 写入。
+     */
+    @WrapOperation(method = "applyFirstPersonPositioningTransform",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/event/FirstPersonRenderGunEvent;getPositioningNodeInverse(Ljava/util/List;Lorg/joml/Vector3f;I)Lorg/joml/Matrix4f;"),
+            require = 0, remap = false)
+    private static Matrix4f taczfixes$ironViewOffset(List<BedrockPart> path, Vector3f mountOffset, int viewIndex,
+                                                     Operation<Matrix4f> original,
+                                                     @Local(argsOnly = true) ItemStack gunStack) {
+        Matrix4f matrix = original.call(path, mountOffset, viewIndex);
+        if (mountOffset != null || gunStack == null || gunStack.isEmpty()) return matrix;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return matrix;
+        EnumMap<AttachmentType, ItemStack> attachments = new EnumMap<>(AttachmentType.class);
+        for (AttachmentType type : AttachmentType.values()) {
+            ItemStack attachment = gun.getAttachment(gunStack, type);
+            if (attachment != null && !attachment.isEmpty()) {
+                attachments.put(type, attachment);
+            }
+        }
+        float[] sum = AttachmentGroupOffsetHelper.sumOffsets(attachments, "iron_view");
+        if (sum == null) return matrix;
+        return new Matrix4f()
+                .translate(-sum[0] / 16.0F, -sum[1] / 16.0F, -sum[2] / 16.0F)
+                .mul(matrix);
     }
 }

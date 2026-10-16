@@ -9,6 +9,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -25,6 +26,22 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
 
     @Inject(method = "addAttachmentTypeButtons", at = @At("TAIL"), remap = false)
     private void taczfixes$addRecolorButton(CallbackInfo ci) {
+        ItemStack gun = GunRecolorGuiState.gun();
+        ItemStack target = GunRecolorGuiState.resolveTarget(gun);
+        boolean hide;
+        if (target.getItem() instanceof com.tacz.guns.api.item.IGun) {
+            // 枪械本体: 安装了 arcana 涂装模块(调色喷罐)时隐藏入口, 让位给 arcana。
+            hide = com.ssscript.taczfixes.client.util.GunRecolorManager.hasPaintModule(gun);
+        } else {
+            // 配件: 无 uv 贴图的配件不提供调色入口。
+            hide = com.ssscript.taczfixes.client.util.GunRecolorManager.originalTexture(target) == null;
+        }
+        if (hide) {
+            if (GunRecolorGuiState.isOpen()) {
+                GunRecolorGuiState.close();
+            }
+            return;
+        }
         if (GunRecolorGuiState.isOpen()) {
             GunRecolorGuiState.buildPanel((Screen) (Object) this, this::addRenderableWidget, this::init);
             return;
