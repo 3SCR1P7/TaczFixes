@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.parcool;
 
 import com.alrex.parcool.common.action.impl.Crawl;
 import com.alrex.parcool.common.capability.IStamina;

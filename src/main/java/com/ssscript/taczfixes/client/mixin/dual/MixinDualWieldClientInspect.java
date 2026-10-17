@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.dual;
 
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import net.minecraft.client.player.LocalPlayer;

@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.parcool;
 
 import com.ssscript.taczfixes.common.config.Config;
 import net.minecraft.client.gui.GuiGraphics;

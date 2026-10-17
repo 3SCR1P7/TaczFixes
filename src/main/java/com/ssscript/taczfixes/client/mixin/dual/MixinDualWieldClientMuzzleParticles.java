@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.dual;
 
 import com.tacz.guns.client.particle.MuzzleParticleManager;
 import com.tacz.guns.client.resource.GunDisplayInstance;

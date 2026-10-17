@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.parcool;
 
 import com.ssscript.taczfixes.client.util.ParCoolStaminaConsumeHelper;
 import net.minecraft.world.entity.player.Player;
@@ -8,9 +8,9 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** ParCool 耐力消耗改为消耗本模组耐力(ParCoolStamina)。 */
-@Mixin(targets = "com.alrex.parcool.common.capability.stamina.ParCoolStamina", remap = false)
-public class MixinParCoolStamina {
+/** ParCool 耐力消耗改为消耗本模组耐力(ParCoolStaminaHunger)。 */
+@Mixin(targets = "com.alrex.parcool.common.capability.stamina.HungerStamina", remap = false)
+public class MixinParCoolStaminaHunger {
     @Shadow(remap = false)
     private Player player;
 
