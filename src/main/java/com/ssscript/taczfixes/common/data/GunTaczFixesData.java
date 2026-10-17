@@ -36,6 +36,44 @@ public class GunTaczFixesData {
     public BlockingConfig blocking;
     /** 枪械耐久配置; 有该字段时启用。 */
     public DurabilityConfig durability;
+    /** 压制效果配置; 字段存在时逐项覆盖配置文件。 */
+    public SuppressionConfig suppression;
+
+    /** 逐枪压制效果覆盖(子弹从身边飞过时的模糊/色散/变暗)。 */
+    public static class SuppressionConfig {
+        /** 是否启用; 不填默认启用。 */
+        public Boolean enable;
+        /** 检测子弹范围(格)。 */
+        public Double detection_range;
+        public SuppressionExposureConfig exposure;
+        public SuppressionBlurConfig blur;
+        public SuppressionDarkenConfig darken;
+    }
+
+    public static class SuppressionExposureConfig {
+        /** 色散强度(像素)。 */
+        public Double strength;
+        /** 色散持续时长(毫秒)。 */
+        public Integer duration;
+    }
+
+    public static class SuppressionBlurConfig {
+        /** 模糊强度。 */
+        public Double strength;
+        /** 模糊持续时长(毫秒)。 */
+        public Integer duration;
+        /** 模糊范围(自屏幕边缘向内的覆盖面)。 */
+        public Double range;
+    }
+
+    public static class SuppressionDarkenConfig {
+        /** 变暗强度。 */
+        public Double strength;
+        /** 变暗持续时长(毫秒)。 */
+        public Integer duration;
+        /** 变暗范围。 */
+        public Double range;
+    }
 
     /** 枪械耐久: 开火消耗耐久, 归零后按 damage_action 处理; 支持铁砧修复/合并。 */
     public static class DurabilityConfig {

@@ -370,32 +370,16 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         return preset;
     }
 
-    // ==================== 搜索框（既有功能） ====================
-
-    @Inject(method = "addInventoryAttachmentButtons", at = @At("TAIL"), remap = false)
-    private void taczfixes$onInventoryListRebuild(CallbackInfo ci) {
-        if (taczfixes$searchBox != null && !taczfixes$searchBox.getValue().trim().isEmpty()) {
-            taczfixes$rebuildSearchList();
-            taczfixes$appliedSearch = taczfixes$searchBox.getValue() + "|" + RefitTransform.getCurrentTransformType();
-        }
-    }
+    // ==================== 搜索框 ====================
 
     @Unique
     private EditBox taczfixes$searchBox;
     @Unique
     private boolean taczfixes$searchBoxShown;
     @Unique
-    private String taczfixes$lastSearchText = "";
-    @Unique
     private String taczfixes$appliedSearch = "";
     @Unique
     private long taczfixes$lastTickMs;
-    @Unique
-    private int taczfixes$searchPage;
-    @Unique
-    private boolean taczfixes$searchActive;
-    @Unique
-    private final List<Renderable> taczfixes$searchWidgets = new ArrayList<>();
 
     /** 仅在选中了配件槽(标准槽)后显示搜索框。 */
     @Unique
@@ -425,158 +409,39 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
 
     @Unique
     private void taczfixes$removeSearchBox() {
+        boolean wasActive = com.ssscript.taczfixes.client.util.RefitSearchState.active();
+        com.ssscript.taczfixes.client.util.RefitSearchState.clear();
         taczfixes$searchBoxShown = false;
         if (taczfixes$searchBox != null) {
             this.removeWidget(taczfixes$searchBox);
             taczfixes$searchBox = null;
         }
-        taczfixes$searchActive = false;
-        taczfixes$searchPage = 0;
-        for (Renderable r : taczfixes$searchWidgets) {
-            if (r instanceof GuiEventListener listener) {
-                this.removeWidget(listener);
-            } else {
-                this.renderables.remove(r);
-            }
+        if (wasActive) {
+            taczfixes$appliedSearch = "";
+            this.init();
         }
-        taczfixes$searchWidgets.clear();
     }
 
     @Unique
     private void taczfixes$updateSearch() {
-        String query = taczfixes$searchBox.getValue();
+        String query = taczfixes$searchBox.getValue().trim();
         AttachmentType type = RefitTransform.getCurrentTransformType();
         String key = query + "|" + type;
-        if (query.equals(taczfixes$lastSearchText) && key.equals(taczfixes$appliedSearch)) {
-            if (taczfixes$searchActive && !query.trim().isEmpty() && type != AttachmentType.NONE) {
-                boolean stale = taczfixes$searchWidgets.isEmpty();
-                if (!stale) {
-                    for (Renderable r : taczfixes$searchWidgets) {
-                        if (!this.renderables.contains(r)) {
-                            stale = true;
-                            break;
-                        }
-                    }
-                }
-                if (stale) {
-                    taczfixes$rebuildSearchList();
-                }
-            }
+        if (key.equals(taczfixes$appliedSearch)) {
             return;
         }
-        taczfixes$lastSearchText = query;
-        if (query.trim().isEmpty()) {
-            if (taczfixes$searchActive) {
-                taczfixes$searchActive = false;
-                taczfixes$searchPage = 0;
+        taczfixes$appliedSearch = key;
+        boolean wasActive = com.ssscript.taczfixes.client.util.RefitSearchState.active();
+        if (query.isEmpty() || type == AttachmentType.NONE) {
+            com.ssscript.taczfixes.client.util.RefitSearchState.clear();
+            if (wasActive) {
                 this.init();
             }
-        } else if (type != AttachmentType.NONE) {
-            taczfixes$rebuildSearchList();
+        } else {
+            com.ssscript.taczfixes.client.util.RefitSearchState.setQuery(query);
+            ((com.ssscript.taczfixes.client.util.RefitSearchListBuilder) (Object) this)
+                    .taczfixes$buildSearchList();
         }
-        taczfixes$appliedSearch = key;
-    }
-
-    @Unique
-    private void taczfixes$rebuildSearchList() {
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) return;
-        AttachmentType currentType = RefitTransform.getCurrentTransformType();
-        if (currentType == AttachmentType.NONE) return;
-        String query = taczfixes$searchBox.getValue().trim();
-        if (query.isEmpty()) return;
-        List<GuiEventListener> toRemove = new ArrayList<>();
-        for (Renderable renderable : this.renderables) {
-            if (renderable instanceof InventoryAttachmentSlot || renderable instanceof RefitTurnPageButton) {
-                toRemove.add((GuiEventListener) renderable);
-            }
-        }
-        for (GuiEventListener renderable : toRemove) {
-            this.removeWidget(renderable);
-        }
-        taczfixes$searchWidgets.clear();
-        Inventory inv = player.getInventory();
-        Inventory sourceInv = inv;
-        ItemStack gunStack = player.getMainHandItem();
-        IGun gun = IGun.getIGunOrNull(gunStack);
-        List<Integer> matched = new ArrayList<>();
-        String[] keywords = query.toLowerCase(Locale.ROOT).split("\\s+");
-        for (int i = 0; i < sourceInv.getContainerSize(); i++) {
-            ItemStack stack = sourceInv.getItem(i);
-            IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
-            if (attachment == null) continue;
-            if (attachment.getType(stack) != currentType) continue;
-            if (gun != null && !gun.allowAttachment(gunStack, stack)) continue;
-            String name = stack.getHoverName().getString().toLowerCase(Locale.ROOT);
-            boolean allMatch = true;
-            for (String keyword : keywords) {
-                if (!name.contains(keyword)) {
-                    allMatch = false;
-                    break;
-                }
-            }
-            if (allMatch) {
-                matched.add(i);
-            }
-        }
-        int x = com.ssscript.taczfixes.client.util.RefitSlotLayout.firstX(this.width);
-        int slotSize = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
-        int y = ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();
-        int totalPages = Math.max(1, (matched.size() + 7) / 8);
-        if (taczfixes$searchPage > totalPages - 1) taczfixes$searchPage = totalPages - 1;
-        if (taczfixes$searchPage < 0) taczfixes$searchPage = 0;
-        int start = taczfixes$searchPage * 8;
-        int end = Math.min(start + 8, matched.size());
-        for (int k = start; k < end; k++) {
-            int index = matched.get(k);
-            InventoryAttachmentSlot slot = new InventoryAttachmentSlot(x, y, index, sourceInv,
-                    b -> taczfixes$installAttachment(sourceInv, b));
-            slot.setWidth(slotSize);
-            slot.setHeight(slotSize);
-            this.addRenderableWidget(slot);
-            taczfixes$searchWidgets.add(slot);
-            y += slotSize;
-        }
-        taczfixes$searchActive = true;
-        if (totalPages > 1) {
-            if (taczfixes$searchPage > 0) {
-                RefitTurnPageButton prev = new RefitTurnPageButton(x, ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY() - 10, true,
-                        b -> {
-                            taczfixes$searchPage--;
-                            taczfixes$rebuildSearchList();
-                        });
-                prev.setWidth(slotSize);
-                this.addRenderableWidget(prev);
-                taczfixes$searchWidgets.add(prev);
-            }
-            if (taczfixes$searchPage < totalPages - 1) {
-                RefitTurnPageButton next = new RefitTurnPageButton(x,
-                        ((com.ssscript.taczfixes.client.util.RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY() + slotSize * 8 + 2, false,
-                        b -> {
-                            taczfixes$searchPage++;
-                            taczfixes$rebuildSearchList();
-                        });
-                next.setWidth(slotSize);
-                this.addRenderableWidget(next);
-                taczfixes$searchWidgets.add(next);
-            }
-        }
-    }
-
-    @Unique
-    private void taczfixes$installAttachment(Inventory inv, Button button) {
-        int index = ((InventoryAttachmentSlot) button).getSlotIndex();
-        LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null) return;
-        int gunSlot = player.getInventory().selected;
-        for (int i = 0; i < 9; i++) {
-            if (IGun.getIGunOrNull(player.getInventory().getItem(i)) != null) {
-                gunSlot = i;
-                break;
-            }
-        }
-        SoundPlayManager.playerRefitSound(inv.getItem(index), player, SoundManager.INSTALL_SOUND);
-        com.tacz.guns.network.NetworkHandler.CHANNEL.sendToServer(new ClientMessageRefitGun(index, gunSlot, RefitTransform.getCurrentTransformType()));
     }
 
     // ==================== 渲染 / 提示 ====================
@@ -650,6 +515,8 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         if (taczfixes$searchBox != null) {
             taczfixes$searchBox.setValue("");
         }
+        com.ssscript.taczfixes.client.util.RefitSearchState.clear();
+        taczfixes$appliedSearch = "";
         closeOverlay();
     }
 

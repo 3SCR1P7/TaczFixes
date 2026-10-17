@@ -3,31 +3,7 @@ package com.ssscript.taczfixes;
 import com.ssscript.taczfixes.common.config.Config;
 
 import com.ssscript.taczfixes.common.data.TaczFixesDataHandler;
-import com.ssscript.taczfixes.common.enchantment.AnnihilationEnchantment;
-import com.ssscript.taczfixes.common.enchantment.AbyssGazerEnchantment;
-import com.ssscript.taczfixes.common.enchantment.AntiGravityEnchantment;
-import com.ssscript.taczfixes.common.enchantment.ArcanaEdenEnchantment;
-import com.ssscript.taczfixes.common.enchantment.ChainExplosionEnchantment;
-import com.ssscript.taczfixes.common.enchantment.ChargeEnchantment;
-import com.ssscript.taczfixes.common.enchantment.CollectorEnchantment;
-import com.ssscript.taczfixes.common.enchantment.DecapitationEnchantment;
-import com.ssscript.taczfixes.common.enchantment.DeepLearningEnchantment;
-import com.ssscript.taczfixes.common.enchantment.DoubleShotEnchantment;
-import com.ssscript.taczfixes.common.enchantment.ElectromagneticCoilEnchantment;
-import com.ssscript.taczfixes.common.enchantment.EqualizerEnchantment;
-import com.ssscript.taczfixes.common.enchantment.ExplosionExpertEnchantment;
-import com.ssscript.taczfixes.common.enchantment.FocusedAmmoEnchantment;
-import com.ssscript.taczfixes.common.enchantment.LifeLeechEnchantment;
-import com.ssscript.taczfixes.common.enchantment.NeurotoxinEnchantment;
-import com.ssscript.taczfixes.common.enchantment.OverloadEnchantment;
-import com.ssscript.taczfixes.common.enchantment.PandoraParadoxEnchantment;
-import com.ssscript.taczfixes.common.enchantment.PatienceEnchantment;
-import com.ssscript.taczfixes.common.enchantment.PreemptiveStrikeEnchantment;
-import com.ssscript.taczfixes.common.enchantment.RandomEnchantment;
-import com.ssscript.taczfixes.common.enchantment.SmartScopeEnchantment;
-import com.ssscript.taczfixes.common.enchantment.SniperEliteEnchantment;
-import com.ssscript.taczfixes.common.enchantment.StabilityEnchantment;
-import com.ssscript.taczfixes.common.enchantment.StandardAmmoEnchantment;
+import com.ssscript.taczfixes.common.util.GunEnchantments;
 import com.ssscript.taczfixes.common.handler.GunAnvilHandler;
 import com.ssscript.taczfixes.client.handler.GunEnchantmentHandler;
 import com.ssscript.taczfixes.common.handler.GunLevelHandler;
@@ -84,55 +60,55 @@ public class TaczFixesMod {
                     () -> new net.minecraft.world.entity.ai.attributes.RangedAttribute(
                             "attribute.name.taczfixes.stamina_consumption", 1.0, 0.0, 100000.0).setSyncable(true));
     public static final RegistryObject<Enchantment> OVERLOAD_ENCHANTMENT =
-            ENCHANTMENTS.register("overload", OverloadEnchantment::new);
+            ENCHANTMENTS.register("overload", GunEnchantments.Overload::new);
     public static final RegistryObject<Enchantment> ANNIHILATION_ENCHANTMENT =
-            ENCHANTMENTS.register("annihilation", AnnihilationEnchantment::new);
+            ENCHANTMENTS.register("annihilation", GunEnchantments.Annihilation::new);
     public static final RegistryObject<Enchantment> STABILITY_ENCHANTMENT =
-            ENCHANTMENTS.register("stability", StabilityEnchantment::new);
+            ENCHANTMENTS.register("stability", GunEnchantments.Stability::new);
     public static final RegistryObject<Enchantment> ANTI_GRAVITY_ENCHANTMENT =
-            ENCHANTMENTS.register("anti_gravity", AntiGravityEnchantment::new);
+            ENCHANTMENTS.register("anti_gravity", GunEnchantments.AntiGravity::new);
     public static final RegistryObject<Enchantment> ELECTROMAGNETIC_COIL_ENCHANTMENT =
-            ENCHANTMENTS.register("electromagnetic_coil", ElectromagneticCoilEnchantment::new);
+            ENCHANTMENTS.register("electromagnetic_coil", GunEnchantments.ElectromagneticCoil::new);
     public static final RegistryObject<Enchantment> STANDARD_AMMO_ENCHANTMENT =
-            ENCHANTMENTS.register("standard_ammo", StandardAmmoEnchantment::new);
+            ENCHANTMENTS.register("standard_ammo", GunEnchantments.StandardAmmo::new);
     public static final RegistryObject<Enchantment> NEUROTOXIN_ENCHANTMENT =
-            ENCHANTMENTS.register("neurotoxin", NeurotoxinEnchantment::new);
+            ENCHANTMENTS.register("neurotoxin", GunEnchantments.Neurotoxin::new);
     public static final RegistryObject<Enchantment> CHAIN_EXPLOSION_ENCHANTMENT =
-            ENCHANTMENTS.register("chain_explosion", ChainExplosionEnchantment::new);
+            ENCHANTMENTS.register("chain_explosion", GunEnchantments.ChainExplosion::new);
     public static final RegistryObject<Enchantment> PREEMPTIVE_STRIKE_ENCHANTMENT =
-            ENCHANTMENTS.register("preemptive_strike", PreemptiveStrikeEnchantment::new);
+            ENCHANTMENTS.register("preemptive_strike", GunEnchantments.PreemptiveStrike::new);
     public static final RegistryObject<Enchantment> COLLECTOR_ENCHANTMENT =
-            ENCHANTMENTS.register("collector", CollectorEnchantment::new);
+            ENCHANTMENTS.register("collector", GunEnchantments.Collector::new);
     public static final RegistryObject<Enchantment> EXPLOSION_EXPERT_ENCHANTMENT =
-            ENCHANTMENTS.register("explosion_expert", ExplosionExpertEnchantment::new);
+            ENCHANTMENTS.register("explosion_expert", GunEnchantments.ExplosionExpert::new);
     public static final RegistryObject<Enchantment> LIFE_LEECH_ENCHANTMENT =
-            ENCHANTMENTS.register("life_leech", LifeLeechEnchantment::new);
+            ENCHANTMENTS.register("life_leech", GunEnchantments.LifeLeech::new);
     public static final RegistryObject<Enchantment> SNIPER_ELITE_ENCHANTMENT =
-            ENCHANTMENTS.register("sniper_elite", SniperEliteEnchantment::new);
+            ENCHANTMENTS.register("sniper_elite", GunEnchantments.SniperElite::new);
     public static final RegistryObject<Enchantment> PANDORA_PARADOX_ENCHANTMENT =
-            ENCHANTMENTS.register("pandora_paradox", PandoraParadoxEnchantment::new);
+            ENCHANTMENTS.register("pandora_paradox", GunEnchantments.PandoraParadox::new);
     public static final RegistryObject<Enchantment> SMART_SCOPE_ENCHANTMENT =
-            ENCHANTMENTS.register("smart_scope", SmartScopeEnchantment::new);
+            ENCHANTMENTS.register("smart_scope", GunEnchantments.SmartScope::new);
     public static final RegistryObject<Enchantment> DEEP_LEARNING_ENCHANTMENT =
-            ENCHANTMENTS.register("deep_learning", DeepLearningEnchantment::new);
+            ENCHANTMENTS.register("deep_learning", GunEnchantments.DeepLearning::new);
     public static final RegistryObject<Enchantment> EQUALIZER_ENCHANTMENT =
-            ENCHANTMENTS.register("equalizer", EqualizerEnchantment::new);
+            ENCHANTMENTS.register("equalizer", GunEnchantments.Equalizer::new);
     public static final RegistryObject<Enchantment> RANDOM_ENCHANTMENT =
-            ENCHANTMENTS.register("random", RandomEnchantment::new);
+            ENCHANTMENTS.register("random", GunEnchantments.Random::new);
     public static final RegistryObject<Enchantment> DECAPITATION_ENCHANTMENT =
-            ENCHANTMENTS.register("decapitation", DecapitationEnchantment::new);
+            ENCHANTMENTS.register("decapitation", GunEnchantments.Decapitation::new);
     public static final RegistryObject<Enchantment> CHARGE_ENCHANTMENT =
-            ENCHANTMENTS.register("charge", ChargeEnchantment::new);
+            ENCHANTMENTS.register("charge", GunEnchantments.Charge::new);
     public static final RegistryObject<Enchantment> ABYSS_GAZER_ENCHANTMENT =
-            ENCHANTMENTS.register("abyssgazer", AbyssGazerEnchantment::new);
+            ENCHANTMENTS.register("abyssgazer", GunEnchantments.AbyssGazer::new);
     public static final RegistryObject<Enchantment> DOUBLE_SHOT_ENCHANTMENT =
-            ENCHANTMENTS.register("double_shot", DoubleShotEnchantment::new);
+            ENCHANTMENTS.register("double_shot", GunEnchantments.DoubleShot::new);
     public static final RegistryObject<Enchantment> FOCUSED_AMMO_ENCHANTMENT =
-            ENCHANTMENTS.register("focused_ammo", FocusedAmmoEnchantment::new);
+            ENCHANTMENTS.register("focused_ammo", GunEnchantments.FocusedAmmo::new);
     public static final RegistryObject<Enchantment> ARCANA_EDEN_ENCHANTMENT =
-            ENCHANTMENTS.register("arcana_eden", ArcanaEdenEnchantment::new);
+            ENCHANTMENTS.register("arcana_eden", GunEnchantments.ArcanaEden::new);
     public static final RegistryObject<Enchantment> PATIENCE_ENCHANTMENT =
-            ENCHANTMENTS.register("patience", PatienceEnchantment::new);
+            ENCHANTMENTS.register("patience", GunEnchantments.Patience::new);
 
     public TaczFixesMod() {
         for (java.util.Map.Entry<String, net.minecraftforge.common.ForgeConfigSpec> entry : Config.SPECS.entrySet()) {

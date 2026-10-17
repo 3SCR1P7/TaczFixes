@@ -45,7 +45,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.contains(".MixinLr")) {
             return LRTACTICAL_PRESENT;
         }
-        if (mixinClassName.contains(".MixinTouhouMaid")) {
+        if (mixinClassName.contains(".MixinTml") || mixinClassName.contains(".MixinTouhouMaid")) {
             return TOUHOU_LITTLE_MAID_PRESENT;
         }
         if (mixinClassName.contains(".MixinYsm")) {

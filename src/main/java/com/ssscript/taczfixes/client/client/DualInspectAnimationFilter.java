@@ -110,7 +110,7 @@ public final class DualInspectAnimationFilter {
                 Map<BedrockPart, BedrockPart> parents = new IdentityHashMap<>();
                 indexTree(modelRoot, null, nodesByName, parents);
                 FilterPlan plan = createFilterPlan(animatedModel, modelRoot, nodesByName, parents);
-                BedrockPart holdingHandEndpoint = findHoldingHandEndpoint(nodesByName, parents);
+                BedrockPart holdingHandEndpoint = InspectTreeMath.findHoldingHandEndpoint(nodesByName, parents);
                 addExternalAmmunitionFollowers(prototype, plan, nodesByName, parents, holdingHandEndpoint);
                 applyFilterPlan(filtered, plan, nodesByName, parents, holdingHandEndpoint);
                 hideSupportHands(filtered, modelRoot, parents, plan.gunAnchor, plan.installedMagazine);
@@ -174,7 +174,7 @@ public final class DualInspectAnimationFilter {
 
     private static RuntimePlan getOrCreateThirdPersonAnchorPlan(BedrockAnimatedModel model, BedrockPart modelRoot) {
         RuntimePlan cached = THIRD_PERSON_ANCHOR_PLANS.get(model);
-        if (cached != null && cached.gunCarrier != null && isAncestor(modelRoot, cached.gunCarrier, cached.parents)) {
+        if (cached != null && cached.gunCarrier != null && InspectTreeMath.isAncestor(modelRoot, cached.gunCarrier, cached.parents)) {
             return cached;
         }
         Map<String, BedrockPart> nodesByName = new LinkedHashMap<>();
@@ -194,7 +194,7 @@ public final class DualInspectAnimationFilter {
         if (plan == null || root == null) {
             return;
         }
-        List<BedrockPart> controlPath = pathFromAncestor(root, plan.gunCarrier, plan.parents);
+        List<BedrockPart> controlPath = InspectTreeMath.pathFromAncestor(root, plan.gunCarrier, plan.parents);
         for (int index = 1; index < controlPath.size(); index++) {
             mirrorLocalAnimationDelta(controlPath.get(index));
         }
@@ -414,7 +414,7 @@ public final class DualInspectAnimationFilter {
 
     private static synchronized boolean shouldFilter(AnimationController controller, int track, ObjectAnimation.PlayType playType, String animationName, BedrockAnimatedModel model) {
         boolean directInspectTrigger = FILTER_DEPTH.get().intValue() > 0 && (FILTER_TARGET.get() == null || FILTER_TARGET.get() == model);
-        boolean namedInspect = normalize(animationName).contains("inspect");
+        boolean namedInspect = InspectModelNames.normalize(animationName).contains("inspect");
         boolean directInspectClip = directInspectTrigger && playType != ObjectAnimation.PlayType.LOOP;
         InspectSession session = getActiveSession(model);
         if ((directInspectTrigger || namedInspect) && (session == null || session.controller != controller)) {
@@ -450,7 +450,7 @@ public final class DualInspectAnimationFilter {
     }
 
     private static boolean isCompetingActionAnimation(String animationName) {
-        String normalized = normalize(animationName);
+        String normalized = InspectModelNames.normalize(animationName);
         return normalized.contains("shoot") || normalized.contains("shot") || normalized.contains("fire") || hasAnimationWord(animationName, "aim") || hasAnimationWord(animationName, "ads") || normalized.contains("reload") || normalized.contains("bolt") || normalized.contains("pump") || normalized.contains("pomp") || normalized.contains("cock") || normalized.contains("chamber") || normalized.contains("melee") || normalized.contains("putaway") || normalized.startsWith("draw");
     }
 
@@ -472,7 +472,7 @@ public final class DualInspectAnimationFilter {
         if (installedMagazine == null) {
             bedrockPartLowestCommonAncestor = modelRoot;
         } else {
-            bedrockPartLowestCommonAncestor = lowestCommonAncestor(gunAnchor, installedMagazine, parents);
+            bedrockPartLowestCommonAncestor = InspectTreeMath.lowestCommonAncestor(gunAnchor, installedMagazine, parents);
         }
         BedrockPart commonCarrier = bedrockPartLowestCommonAncestor;
         if (commonCarrier == null) {
@@ -497,7 +497,7 @@ public final class DualInspectAnimationFilter {
             String nodeName = (String) it.next();
             BedrockPart part = nodesByName.get(nodeName);
             boolean filteredOperation = isFilteredOperationPath(part, plan.commonCarrier, plan.gunAnchor, parents);
-            if (!isHoldingEndpointControlPath(part, holdingHandEndpoint, parents) && (frozenNames.contains(nodeName) || filteredOperation)) {
+            if (!InspectTreeMath.isHoldingEndpointControlPath(part, holdingHandEndpoint, parents) && (frozenNames.contains(nodeName) || filteredOperation)) {
                 List<ObjectAnimationChannel> channels = (List) filtered.getChannels().get(nodeName);
                 if (channels != null) {
                     channels.removeIf(channel -> {
@@ -687,7 +687,7 @@ public final class DualInspectAnimationFilter {
         }
         for (String nodeName : prototype.getChannels().keySet()) {
             BedrockPart part = nodesByName.get(nodeName);
-            if (part != null && !isAncestor(plan.gunMotionCarrier, part, parents) && !isAncestor(part, plan.gunMotionCarrier, parents) && !isAncestor(part, holdingHandEndpoint, parents) && hasAmmunitionOperationPath(part, plan.commonCarrier, parents) && !hasDetachedPropPath(part, plan.commonCarrier, parents) && (carrier = findExternalAmmunitionCarrier(part, plan.gunAnchor, parents, holdingHandEndpoint)) != null && !isAncestor(plan.gunMotionCarrier, carrier, parents) && !isAncestor(carrier, plan.gunMotionCarrier, parents) && !isAncestor(carrier, holdingHandEndpoint, parents)) {
+            if (part != null && !InspectTreeMath.isAncestor(plan.gunMotionCarrier, part, parents) && !InspectTreeMath.isAncestor(part, plan.gunMotionCarrier, parents) && !InspectTreeMath.isAncestor(part, holdingHandEndpoint, parents) && hasAmmunitionOperationPath(part, plan.commonCarrier, parents) && !hasDetachedPropPath(part, plan.commonCarrier, parents) && (carrier = findExternalAmmunitionCarrier(part, plan.gunAnchor, parents, holdingHandEndpoint)) != null && !InspectTreeMath.isAncestor(plan.gunMotionCarrier, carrier, parents) && !InspectTreeMath.isAncestor(carrier, plan.gunMotionCarrier, parents) && !InspectTreeMath.isAncestor(carrier, holdingHandEndpoint, parents)) {
                 addOutermostFollower(plan.freezeSubtrees, carrier, parents);
             }
         }
@@ -698,7 +698,7 @@ public final class DualInspectAnimationFilter {
         while (true) {
             BedrockPart current = bedrockPart;
             if (current != null && current != stop) {
-                if (!isAmmunitionOperationName(current.name)) {
+                if (!InspectModelNames.isAmmunitionOperationName(current.name)) {
                     bedrockPart = parents.get(current);
                 } else {
                     return true;
@@ -714,7 +714,7 @@ public final class DualInspectAnimationFilter {
         while (true) {
             BedrockPart current = bedrockPart;
             if (current != null && current != stop) {
-                if (!isClearlyDetachedPropName(current.name)) {
+                if (!InspectModelNames.isClearlyDetachedPropName(current.name)) {
                     bedrockPart = parents.get(current);
                 } else {
                     return true;
@@ -726,15 +726,15 @@ public final class DualInspectAnimationFilter {
     }
 
     private static BedrockPart findExternalAmmunitionCarrier(BedrockPart member, BedrockPart gunAnchor, Map<BedrockPart, BedrockPart> parents, BedrockPart holdingHandEndpoint) {
-        BedrockPart branchPoint = lowestCommonAncestor(member, gunAnchor, parents);
-        if (branchPoint == null || isAncestor(member, gunAnchor, parents)) {
+        BedrockPart branchPoint = InspectTreeMath.lowestCommonAncestor(member, gunAnchor, parents);
+        if (branchPoint == null || InspectTreeMath.isAncestor(member, gunAnchor, parents)) {
             return null;
         }
         BedrockPart carrier = member;
         BedrockPart bedrockPart = parents.get(member);
         while (true) {
             BedrockPart parent = bedrockPart;
-            if (parent == null || parent == branchPoint || isAncestor(parent, holdingHandEndpoint, parents) || isAncestor(parent, gunAnchor, parents) || countRenderableGeometry(parent, member) > 0) {
+            if (parent == null || parent == branchPoint || InspectTreeMath.isAncestor(parent, holdingHandEndpoint, parents) || InspectTreeMath.isAncestor(parent, gunAnchor, parents) || countRenderableGeometry(parent, member) > 0) {
                 break;
             }
             carrier = parent;
@@ -747,10 +747,10 @@ public final class DualInspectAnimationFilter {
         Iterator it = new ArrayList(followers).iterator();
         while (it.hasNext()) {
             BedrockPart existing = (BedrockPart) it.next();
-            if (isAncestor(existing, candidate, parents)) {
+            if (InspectTreeMath.isAncestor(existing, candidate, parents)) {
                 return;
             }
-            if (isAncestor(candidate, existing, parents)) {
+            if (InspectTreeMath.isAncestor(candidate, existing, parents)) {
                 followers.remove(existing);
             }
         }
@@ -759,26 +759,26 @@ public final class DualInspectAnimationFilter {
 
     private static void addIndependentBranch(Set<BedrockPart> result, BedrockPart member, BedrockPart gunAnchor, Map<BedrockPart, BedrockPart> parents) {
         BedrockPart branchPoint;
-        if (member == null || gunAnchor == null || (branchPoint = lowestCommonAncestor(member, gunAnchor, parents)) == null || isAncestor(member, gunAnchor, parents)) {
+        if (member == null || gunAnchor == null || (branchPoint = InspectTreeMath.lowestCommonAncestor(member, gunAnchor, parents)) == null || InspectTreeMath.isAncestor(member, gunAnchor, parents)) {
             return;
         }
         BedrockPart carrier = member;
         BedrockPart bedrockPart = parents.get(member);
         while (true) {
             BedrockPart parent = bedrockPart;
-            if (parent == null || parent == branchPoint || isAncestor(parent, gunAnchor, parents) || countRenderableGeometry(parent, member) > 0) {
+            if (parent == null || parent == branchPoint || InspectTreeMath.isAncestor(parent, gunAnchor, parents) || countRenderableGeometry(parent, member) > 0) {
                 break;
             }
             carrier = parent;
             bedrockPart = parents.get(parent);
         }
-        if (!isAncestor(carrier, gunAnchor, parents)) {
+        if (!InspectTreeMath.isAncestor(carrier, gunAnchor, parents)) {
             result.add(carrier);
         }
     }
 
     private static BedrockPart selectStableGunCarrier(BedrockPart ancestor, BedrockPart descendant, BedrockPart installedMagazine, Map<BedrockPart, BedrockPart> parents) {
-        List<BedrockPart> path = pathFromAncestor(ancestor, descendant, parents);
+        List<BedrockPart> path = InspectTreeMath.pathFromAncestor(ancestor, descendant, parents);
         BedrockPart deepestGeometryCarrier = null;
         int bestGeometry = -1;
         for (int index = 1; index < path.size(); index++) {
@@ -796,10 +796,10 @@ public final class DualInspectAnimationFilter {
     }
 
     private static int countRenderableGeometry(BedrockPart part, BedrockPart excludedSubtree) {
-        if (part == null || part == excludedSubtree || isClearlyDetachedPropName(part.name)) {
+        if (part == null || part == excludedSubtree || InspectModelNames.isClearlyDetachedPropName(part.name)) {
             return 0;
         }
-        int result = (isPureHandGeometryName(part.name) || isGeometryExcludedBranchName(part.name)) ? 0 : part.cubes.size();
+        int result = (InspectModelNames.isPureHandGeometryName(part.name) || InspectModelNames.isGeometryExcludedBranchName(part.name)) ? 0 : part.cubes.size();
         ObjectListIterator it = part.children.iterator();
         while (it.hasNext()) {
             BedrockPart child = (BedrockPart) it.next();
@@ -809,14 +809,14 @@ public final class DualInspectAnimationFilter {
     }
 
     private static boolean isFilteredOperationPath(BedrockPart part, BedrockPart stop, BedrockPart gunAnchor, Map<BedrockPart, BedrockPart> parents) {
-        if (part == null || isAncestor(part, gunAnchor, parents)) {
+        if (part == null || InspectTreeMath.isAncestor(part, gunAnchor, parents)) {
             return false;
         }
         BedrockPart bedrockPart = part;
         while (true) {
             BedrockPart current = bedrockPart;
             if (current != null && current != stop) {
-                if (!isForbiddenName(current.name)) {
+                if (!InspectModelNames.isForbiddenName(current.name)) {
                     bedrockPart = parents.get(current);
                 } else {
                     return true;
@@ -825,155 +825,27 @@ public final class DualInspectAnimationFilter {
                 return false;
             }
         }
-    }
-
-    private static List<BedrockPart> pathFromAncestor(BedrockPart ancestor, BedrockPart descendant, Map<BedrockPart, BedrockPart> parents) {
-        if (ancestor == null || descendant == null || !isAncestor(ancestor, descendant, parents)) {
-            return Collections.emptyList();
-        }
-        List<BedrockPart> reversed = new ArrayList<>();
-        BedrockPart bedrockPart = descendant;
-        while (true) {
-            BedrockPart current = bedrockPart;
-            if (current == null || current == ancestor) {
-                break;
-            }
-            reversed.add(current);
-            bedrockPart = parents.get(current);
-        }
-        reversed.add(ancestor);
-        Collections.reverse(reversed);
-        return reversed;
-    }
-
-    private static BedrockPart lowestCommonAncestor(BedrockPart first, BedrockPart second, Map<BedrockPart, BedrockPart> parents) {
-        if (first == null || second == null) {
-            return null;
-        }
-        Set<BedrockPart> ancestors = Collections.newSetFromMap(new IdentityHashMap());
-        BedrockPart bedrockPart = first;
-        while (true) {
-            BedrockPart current = bedrockPart;
-            if (current == null) {
-                break;
-            }
-            ancestors.add(current);
-            bedrockPart = parents.get(current);
-        }
-        BedrockPart bedrockPart2 = second;
-        while (true) {
-            BedrockPart current2 = bedrockPart2;
-            if (current2 != null) {
-                if (!ancestors.contains(current2)) {
-                    bedrockPart2 = parents.get(current2);
-                } else {
-                    return current2;
-                }
-            } else {
-                return null;
-            }
-        }
-    }
-
-    private static boolean isAncestor(BedrockPart ancestor, BedrockPart descendant, Map<BedrockPart, BedrockPart> parents) {
-        if (ancestor == null || descendant == null) {
-            return false;
-        }
-        BedrockPart bedrockPart = descendant;
-        while (true) {
-            BedrockPart current = bedrockPart;
-            if (current != null) {
-                if (current != ancestor) {
-                    bedrockPart = parents.get(current);
-                } else {
-                    return true;
-                }
-            } else {
-                return false;
-            }
-        }
-    }
-
-    private static BedrockPart findNodeNormalized(Map<String, BedrockPart> nodesByName, String normalizedName) {
-        for (Map.Entry<String, BedrockPart> entry : nodesByName.entrySet()) {
-            if (normalize(entry.getKey()).equals(normalizedName)) {
-                return entry.getValue();
-            }
-        }
-        return null;
-    }
-
-    private static BedrockPart findHoldingHandEndpoint(Map<String, BedrockPart> nodes, Map<BedrockPart, BedrockPart> parents) {
-        String[] candidates = {"righthandpos", "righthandposition", "handrightpos", "handrightposition", "rhandpos", "rhandposition", "mainhandpos", "mainhandposition", "holdinghandpos", "holdinghandposition", "rightarmpos", "rightarmposition"};
-        for (String candidate : candidates) {
-            BedrockPart found = findNodeNormalized(nodes, candidate);
-            if (found != null) {
-                return found;
-            }
-        }
-        for (BedrockPart part : nodes.values()) {
-            String name = normalize(part.name);
-            if (!name.equals("pos") && !name.equals("position")) {
-                continue;
-            }
-            BedrockPart current = parents.get(part);
-            while (current != null) {
-                if (isHoldingHandControlName(normalize(current.name))) {
-                    return part;
-                }
-                current = parents.get(current);
-            }
-        }
-        return null;
-    }
-
-    private static boolean isHoldingHandControlName(String normalizedName) {
-        return normalizedName.equals("righthand") || normalizedName.equals("handright") || normalizedName.equals("rhand") || normalizedName.equals("mainhand") || normalizedName.equals("holdinghand") || normalizedName.equals("rightarm");
-    }
-
-    private static boolean isHoldingEndpointControlPath(BedrockPart part, BedrockPart holdingHandEndpoint, Map<BedrockPart, BedrockPart> parents) {
-        if (part == null || holdingHandEndpoint == null) {
-            return false;
-        }
-        BedrockPart holdingControl = null;
-        BedrockPart bedrockPart = parents.get(holdingHandEndpoint);
-        while (true) {
-            BedrockPart current = bedrockPart;
-            if (current == null) {
-                break;
-            }
-            if (!isHoldingHandControlName(normalize(current.name))) {
-                bedrockPart = parents.get(current);
-            } else {
-                holdingControl = current;
-                break;
-            }
-        }
-        if (holdingControl == null) {
-            return part == holdingHandEndpoint;
-        }
-        return pathFromAncestor(holdingControl, holdingHandEndpoint, parents).contains(part);
     }
 
     private static BedrockPart findInstalledMagazine(Map<String, BedrockPart> nodesByName) {
-        BedrockPart installed = findNodeNormalized(nodesByName, "magazine");
+        BedrockPart installed = InspectTreeMath.findNodeNormalized(nodesByName, "magazine");
         if (installed == null) {
-            installed = findNodeNormalized(nodesByName, "magzine");
+            installed = InspectTreeMath.findNodeNormalized(nodesByName, "magzine");
         }
         if (installed == null) {
-            installed = findNodeNormalized(nodesByName, "mag");
+            installed = InspectTreeMath.findNodeNormalized(nodesByName, "mag");
         }
         if (installed == null) {
-            installed = findNodeNormalized(nodesByName, "magandbullet");
+            installed = InspectTreeMath.findNodeNormalized(nodesByName, "magandbullet");
         }
         if (installed == null) {
-            installed = findNodeNormalized(nodesByName, "magazineandbullet");
+            installed = InspectTreeMath.findNodeNormalized(nodesByName, "magazineandbullet");
         }
         if (installed == null) {
-            installed = findNodeNormalized(nodesByName, "magandammo");
+            installed = InspectTreeMath.findNodeNormalized(nodesByName, "magandammo");
         }
         if (installed == null) {
-            installed = findNodeNormalized(nodesByName, "magazineandammo");
+            installed = InspectTreeMath.findNodeNormalized(nodesByName, "magazineandammo");
         }
         return installed;
     }
@@ -985,7 +857,7 @@ public final class DualInspectAnimationFilter {
             List<BedrockPart> muzzlePath = gunModel.getMuzzleFlashPosPath();
             if (muzzlePath != null && !muzzlePath.isEmpty()) {
                 BedrockPart muzzle = muzzlePath.get(muzzlePath.size() - 1);
-                if (isAncestor(modelRoot, muzzle, parents)) {
+                if (InspectTreeMath.isAncestor(modelRoot, muzzle, parents)) {
                     if (hasRenderableCarrierBelowRoot(modelRoot, muzzle, installedMagazine, parents)) {
                         return muzzle;
                     }
@@ -996,7 +868,7 @@ public final class DualInspectAnimationFilter {
         List<BedrockPart> constraintPath = model.getConstraintPath();
         if (constraintPath != null && !constraintPath.isEmpty()) {
             BedrockPart constraint = constraintPath.get(constraintPath.size() - 1);
-            if (isAncestor(modelRoot, constraint, parents) && hasRenderableCarrierBelowRoot(modelRoot, constraint, installedMagazine, parents)) {
+            if (InspectTreeMath.isAncestor(modelRoot, constraint, parents) && hasRenderableCarrierBelowRoot(modelRoot, constraint, installedMagazine, parents)) {
                 return constraint;
             }
         }
@@ -1009,14 +881,14 @@ public final class DualInspectAnimationFilter {
             return geometryAnchor;
         }
         BedrockPart rightHand = model.getNode("righthand_pos");
-        if (isAncestor(modelRoot, rightHand, parents) && hasRenderableCarrierBelowRoot(modelRoot, rightHand, installedMagazine, parents)) {
+        if (InspectTreeMath.isAncestor(modelRoot, rightHand, parents) && hasRenderableCarrierBelowRoot(modelRoot, rightHand, installedMagazine, parents)) {
             return rightHand;
         }
         return muzzleFallback;
     }
 
     private static boolean hasRenderableCarrierBelowRoot(BedrockPart modelRoot, BedrockPart endpoint, BedrockPart installedMagazine, Map<BedrockPart, BedrockPart> parents) {
-        List<BedrockPart> path = pathFromAncestor(modelRoot, endpoint, parents);
+        List<BedrockPart> path = InspectTreeMath.pathFromAncestor(modelRoot, endpoint, parents);
         for (int index = 1; index < path.size(); index++) {
             if (countRenderableGeometry(path.get(index), installedMagazine) > 0) {
                 return true;
@@ -1036,7 +908,7 @@ public final class DualInspectAnimationFilter {
     }
 
     private static void collectBestGunGeometry(BedrockPart part, BedrockPart installedMagazine, int depth, GeometryCandidate best) {
-        if (part == null || part == installedMagazine || isGeometryExcludedBranchName(part.name)) {
+        if (part == null || part == installedMagazine || InspectModelNames.isGeometryExcludedBranchName(part.name)) {
             return;
         }
         int geometry = countRenderableGeometry(part, installedMagazine);
@@ -1056,7 +928,7 @@ public final class DualInspectAnimationFilter {
         if (installedMagazine == null) {
             return null;
         }
-        List<BedrockPart> path = pathFromAncestor(modelRoot, installedMagazine, parents);
+        List<BedrockPart> path = InspectTreeMath.pathFromAncestor(modelRoot, installedMagazine, parents);
         GeometryCandidate best = new GeometryCandidate(null, 0, -1);
         for (int index = 1; index + 1 < path.size(); index++) {
             BedrockPart part = path.get(index);
@@ -1116,14 +988,14 @@ public final class DualInspectAnimationFilter {
     }
 
     private static boolean isSafeSupportHideCandidate(BedrockPart part, BedrockPart gunAnchor, BedrockPart installedMagazine, Map<BedrockPart, BedrockPart> parents) {
-        return (part == null || part.name == null || !isSupportHandName(part.name) || isAmmunitionOperationName(part.name) || isAncestor(part, gunAnchor, parents) || isAncestor(part, installedMagazine, parents) || !hasOnlySupportDescendants(part)) ? false : true;
+        return (part == null || part.name == null || !InspectModelNames.isSupportHandName(part.name) || InspectModelNames.isAmmunitionOperationName(part.name) || InspectTreeMath.isAncestor(part, gunAnchor, parents) || InspectTreeMath.isAncestor(part, installedMagazine, parents) || !hasOnlySupportDescendants(part)) ? false : true;
     }
 
     private static boolean hasOnlySupportDescendants(BedrockPart part) {
         ObjectListIterator it = part.children.iterator();
         while (it.hasNext()) {
             BedrockPart child = (BedrockPart) it.next();
-            if (child.name == null || !isSupportHandName(child.name) || !hasOnlySupportDescendants(child)) {
+            if (child.name == null || !InspectModelNames.isSupportHandName(child.name) || !hasOnlySupportDescendants(child)) {
                 return false;
             }
         }
@@ -1139,7 +1011,7 @@ public final class DualInspectAnimationFilter {
                 if (current == null) {
                     break;
                 }
-                if (current.name != null && isClearlyDetachedPropName(current.name)) {
+                if (current.name != null && InspectModelNames.isClearlyDetachedPropName(current.name)) {
                     detachedNodes.add(current.name);
                     break;
                 }
@@ -1165,83 +1037,6 @@ public final class DualInspectAnimationFilter {
         animation.getChannels().put(nodeName, arrayList);
     }
 
-    private static boolean isClearlyDetachedPropName(String name) {
-        String normalized = normalize(name);
-        return normalized.contains("additionalmag") || normalized.contains("sparemag") || normalized.contains("newmag") || normalized.contains("magout") || normalized.contains("ammoout") || normalized.equals("loader") || normalized.equals("loaderandround") || normalized.startsWith("speedloader") || normalized.startsWith("reloader");
-    }
-
-    private static boolean isGeometryExcludedBranchName(String name) {
-        if (name == null || isClearlyDetachedPropName(name)) {
-            return name != null;
-        }
-        String normalized = normalize(name);
-        if (normalized.endsWith("leftmag") || normalized.endsWith("rightmag")) {
-            return true;
-        }
-        String[] tokens = name.toLowerCase(Locale.ROOT).split("[^a-z0-9]+");
-        for (String token : tokens) {
-            String base = token.replaceFirst("[0-9]+$", "");
-            if (base.equals("magazine") || base.equals("magzine") || base.equals("mag") || base.equals("clip") || base.equals("loader") || base.equals("bullet") || base.equals("bullets") || base.equals("round") || base.equals("cartridge") || base.equals("shell") || base.equals("ammo") || base.equals("flash")) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static boolean isForbiddenName(String name) {
-        String normalized = normalize(name);
-        if (isSupportHandName(name)) {
-            return true;
-        }
-        if (name == null) {
-            return false;
-        }
-        String[] tokens = name.toLowerCase(Locale.ROOT).split("[^a-z0-9]+");
-        for (String token : tokens) {
-            for (String forbidden : FORBIDDEN_TOKENS) {
-                if (token.equals(forbidden) || token.startsWith(forbidden)) {
-                    return true;
-                }
-            }
-        }
-        return normalized.contains("magazine") || normalized.contains("magzine") || normalized.contains("lefthand") || normalized.contains("supporthand");
-    }
-
-    private static boolean isAmmunitionOperationName(String name) {
-        if (name == null) {
-            return false;
-        }
-        String normalized = normalize(name);
-        if (normalized.contains("magazine") || normalized.contains("magzine")) {
-            return true;
-        }
-        String[] tokens = name.toLowerCase(Locale.ROOT).split("[^a-z0-9]+");
-        for (String token : tokens) {
-            for (String ammunition : FORBIDDEN_TOKENS) {
-                if (token.equals(ammunition) || token.startsWith(ammunition)) {
-                    return true;
-                }
-            }
-        }
-        return false;
-    }
-
-    private static boolean isSupportHandName(String name) {
-        String normalized = normalize(name);
-        return normalized.contains("lefthand") || normalized.contains("supporthand") || normalized.contains("handsupport") || normalized.equals("lhand");
-    }
-
-    private static boolean isPureHandGeometryName(String name) {
-        String normalized = normalize(name);
-        return normalized.equals("righthand") || normalized.equals("righthandpos") || normalized.equals("handright") || normalized.equals("rhand") || normalized.equals("lefthand") || normalized.equals("lefthandpos") || normalized.equals("supporthand") || normalized.equals("handsupport") || normalized.equals("lhand");
-    }
-
-    private static String normalize(String value) {
-        if (value == null) {
-            return "";
-        }
-        return value.toLowerCase(Locale.ROOT).replaceAll("[^a-z0-9]", "");
-    }
 
     private static final class FilterPlan {
         private final BedrockPart commonCarrier;

@@ -385,6 +385,12 @@ public class TaczFixesDataManager {
         return result;
     }
 
+    /** 枪械 data 字段 suppression: 逐项覆盖压制效果配置; 未填写时返回 null(使用全局配置)。 */
+    public static GunTaczFixesData.SuppressionConfig getSuppressionConfig(ResourceLocation dataId) {
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null ? null : data.suppression;
+    }
+
     /** 枪械 data 字段 jump_inaccuracy: 滞空散布倍率及其涨落速度。
      * 缺失时回退到配置文件默认值(分别默认 1.0 / 0.1)。 */
     public static GunTaczFixesData.JumpInaccuracyConfig getJumpInaccuracyConfig(ResourceLocation dataId) {

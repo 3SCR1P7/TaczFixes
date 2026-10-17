@@ -4,6 +4,7 @@ import com.tacz.guns.client.input.MeleeKey;
 import com.tacz.guns.util.InputExtraCheck;
 import com.ssscript.taczfixes.client.client.DualFocusAimKey;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.client.DualWieldMelee;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraftforge.client.event.InputEvent;
@@ -26,7 +27,7 @@ public abstract class MixinMeleeKey {
             return;
         }
         LocalPlayer player = minecraft.player;
-        if (player != null && DualWieldClient.handleDualMeleeKey(player)) {
+        if (player != null && DualWieldMelee.handleDualMeleeKey(player)) {
             callback.cancel();
         }
     }

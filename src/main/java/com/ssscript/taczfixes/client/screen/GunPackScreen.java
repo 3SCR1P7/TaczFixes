@@ -1,9 +1,9 @@
 package com.ssscript.taczfixes.client.screen;
 
 import com.ssscript.taczfixes.client.util.PendingResourceReload;
-import com.ssscript.taczfixes.common.gunpack.GunPackInfoScanner;
-import com.ssscript.taczfixes.common.gunpack.GunPackResources;
-import com.ssscript.taczfixes.common.gunpack.GunPackSettings;
+import com.ssscript.taczfixes.common.data.GunPackInfoScanner;
+import com.ssscript.taczfixes.common.data.GunPackResources;
+import com.ssscript.taczfixes.common.data.GunPackSettings;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;

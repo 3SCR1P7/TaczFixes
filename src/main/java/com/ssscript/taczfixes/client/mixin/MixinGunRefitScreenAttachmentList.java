@@ -7,17 +7,27 @@ import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.network.ClientMessageInstallCustomSlot;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
+import com.ssscript.taczfixes.client.util.RefitInventoryLayout;
+import com.ssscript.taczfixes.client.util.RefitSearchListBuilder;
+import com.ssscript.taczfixes.client.util.RefitSearchState;
+import com.ssscript.taczfixes.client.util.RefitSlotLayout;
 import com.ssscript.taczfixes.client.util.TaczFixesClientState;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import com.tacz.guns.client.gui.components.refit.InventoryAttachmentSlot;
 import com.tacz.guns.client.gui.components.refit.RefitTurnPageButton;
 import com.tacz.guns.client.sound.SoundPlayManager;
+import com.tacz.guns.network.message.ClientMessageRefitGun;
+import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
 import com.tacz.guns.sound.SoundManager;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.Renderable;
+import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
@@ -32,9 +42,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 @Mixin(GunRefitScreen.class)
-public abstract class MixinGunRefitScreenAttachmentList extends Screen {
+public abstract class MixinGunRefitScreenAttachmentList extends Screen implements RefitSearchListBuilder {
 
     protected MixinGunRefitScreenAttachmentList(LocalPlayer player) {
         super(Component.literal(""));
@@ -52,6 +64,14 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
         ResourceLocation gunId = igun.getGunId(gunStack);
         String selected = CustomSlotGuiState.get();
         boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
+
+        // 搜索激活时接管整个候选列表(标准槽 / 自定义槽 / 虚拟配件): 必须取消原版/自绘列表,
+        // 否则原列表会把全部配件重新加回来(表现为搜索匹配所有且无法翻页)。
+        if (RefitSearchState.active()) {
+            taczfixes$buildSearchList();
+            ci.cancel();
+            return;
+        }
 
         if (selected == null) {
             // 虚拟配件模式: 标准槽候选栏显示所有可用配件
@@ -321,5 +341,257 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen {
         return com.tacz.guns.api.TimelessAPI.getCommonSlotAdapterIndex(adapterId)
                 .map(index -> index.allowsAttachment(attachmentId))
                 .orElse(false);
+    }
+
+    // ==================== 配件搜索(名称 + 属性关键词) ====================
+
+    /** 搜索结果条目: inventoryIndex >= 0 表示背包物品(用原版槽位), 否则用内置/虚拟配件槽位渲染。 */
+    private record SearchEntry(ItemStack stack, int inventoryIndex, Runnable install) {
+    }
+
+    @Override
+    public void taczfixes$buildSearchList() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) return;
+        String query = RefitSearchState.query();
+        if (query.isEmpty()) return;
+        AttachmentType currentType = RefitTransform.getCurrentTransformType();
+        String selected = CustomSlotGuiState.get();
+        if (selected == null && currentType == AttachmentType.NONE) return;
+        for (Renderable renderable : new ArrayList<>(this.renderables)) {
+            if (renderable instanceof InventoryAttachmentSlot
+                    || renderable instanceof com.ssscript.taczfixes.client.util.BuiltinAttachmentSlot
+                    || renderable instanceof RefitTurnPageButton) {
+                this.removeWidget((GuiEventListener) renderable);
+            }
+        }
+        Inventory inventory = player.getInventory();
+        ItemStack gunStack = player.getMainHandItem();
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return;
+        boolean virtual = com.ssscript.taczfixes.common.util.VirtualAttachments.isActive(player);
+        String[] keywords = query.toLowerCase(Locale.ROOT).split("\\s+");
+        List<SearchEntry> entries = new ArrayList<>();
+        if (selected == null) {
+            if (virtual) {
+                // 虚拟配件: 标准槽列出所有可用配件
+                for (ResourceLocation id : com.ssscript.taczfixes.common.util.VirtualAttachments
+                        .availableForStandard(gunStack, gun, currentType)) {
+                    ItemStack stack = CustomSlotManager.buildBuiltinItem(id);
+                    if (stack.isEmpty() || !taczfixes$matches(stack, keywords)) continue;
+                    final ResourceLocation attachmentId = id;
+                    entries.add(new SearchEntry(stack, -1, () -> {
+                        SoundPlayManager.playerRefitSound(stack, player, SoundManager.INSTALL_SOUND);
+                        NetworkHandler.CHANNEL.sendToServer(new com.ssscript.taczfixes.common.network
+                                .ClientMessageInstallVirtualAttachment(currentType.name(), attachmentId));
+                    }));
+                }
+            } else {
+                for (int i = 0; i < inventory.getContainerSize(); i++) {
+                    ItemStack stack = inventory.getItem(i);
+                    IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
+                    if (attachment == null) continue;
+                    if (attachment.getType(stack) != currentType) continue;
+                    if (!gun.allowAttachment(gunStack, stack)) continue;
+                    if (!taczfixes$matches(stack, keywords)) continue;
+                    final int index = i;
+                    entries.add(new SearchEntry(stack, i, () -> {
+                        SoundPlayManager.playerRefitSound(stack, player, SoundManager.INSTALL_SOUND);
+                        NetworkHandler.CHANNEL.sendToServer(new ClientMessageRefitGun(index,
+                                taczfixes$selectedGunSlot(player), currentType));
+                    }));
+                }
+            }
+        } else {
+            CustomSlotDefinition def = CustomSlotManager.getSlot(gunStack, selected);
+            if (def == null) return;
+            // 原厂候选
+            if (def.builtin_attachments != null && def.builtin_attachments.isShowIcon()) {
+                for (String entry : def.getBuiltinAttachmentIds()) {
+                    ResourceLocation id = ResourceLocation.tryParse(entry);
+                    if (id == null || !CustomSlotManager.isBuiltinCandidate(def, id)) continue;
+                    ItemStack stack = CustomSlotManager.buildBuiltinItem(id);
+                    if (stack.isEmpty() || !taczfixes$matches(stack, keywords)) continue;
+                    final ResourceLocation builtinId = id;
+                    entries.add(new SearchEntry(stack, -1, () -> {
+                        SoundPlayManager.playerRefitSound(stack, player, SoundManager.INSTALL_SOUND);
+                        NetworkHandler.CHANNEL.sendToServer(new com.ssscript.taczfixes.common.network
+                                .ClientMessageInstallCustomSlotBuiltin(selected, builtinId));
+                    }));
+                }
+            }
+            if (virtual) {
+                for (ResourceLocation id : com.ssscript.taczfixes.common.util.VirtualAttachments
+                        .availableForCustom(gunStack, gun, selected, def)) {
+                    if (def.builtin_attachments != null && def.builtin_attachments.isShowIcon()
+                            && CustomSlotManager.isBuiltinCandidate(def, id)) continue;
+                    ItemStack stack = CustomSlotManager.buildBuiltinItem(id);
+                    if (stack.isEmpty() || !taczfixes$matches(stack, keywords)) continue;
+                    final ResourceLocation attachmentId = id;
+                    entries.add(new SearchEntry(stack, -1, () -> {
+                        SoundPlayManager.playerRefitSound(stack, player, SoundManager.INSTALL_SOUND);
+                        NetworkHandler.CHANNEL.sendToServer(new com.ssscript.taczfixes.common.network
+                                .ClientMessageInstallVirtualAttachment(selected, attachmentId));
+                    }));
+                }
+            } else {
+                ResourceLocation gunId = gun.getGunId(gunStack);
+                for (int i = 0; i < inventory.getContainerSize(); i++) {
+                    ItemStack stack = inventory.getItem(i);
+                    IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
+                    if (attachment == null) continue;
+                    if (!taczfixes$allowAttachmentForSlot(gunStack, selected, stack, def)) continue;
+                    if (!CustomSlotManager.matchesSlot(def, gunId, attachment.getAttachmentId(stack),
+                            attachment.getType(stack))) continue;
+                    if (!taczfixes$matches(stack, keywords)) continue;
+                    final int index = i;
+                    final ItemStack candidate = stack;
+                    entries.add(new SearchEntry(stack, i, () -> {
+                        ItemStack installed = CustomSlotStorage.get(gunStack, selected);
+                        int oldConsume = installed.isEmpty() ? 0
+                                : AttachmentTaczFixesManager.getRefitPointConsume(installed);
+                        Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
+                        if (total != null) {
+                            int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
+                            int add = AttachmentTaczFixesManager.getRefitPointConsume(candidate);
+                            if (used + add > total + oldConsume) {
+                                TaczFixesClientState.markRejectFocusClear();
+                                SoundPlayManager.playerRefitSound(candidate, player, SoundManager.INSTALL_SOUND);
+                                return;
+                            }
+                        }
+                        SoundPlayManager.playerRefitSound(candidate, player, SoundManager.INSTALL_SOUND);
+                        NetworkHandler.CHANNEL.sendToServer(new ClientMessageInstallCustomSlot(index, selected));
+                    }));
+                }
+            }
+        }
+        // 渲染(搜索分页)
+        int x = RefitSlotLayout.firstX(this.width);
+        int slotSize = RefitSlotLayout.size();
+        int y0 = ((RefitInventoryLayout) this).taczfixes$getInventoryAttachmentStartY();
+        int perPage = 8;
+        int totalPages = Math.max(1, (entries.size() + perPage - 1) / perPage);
+        int page = Math.max(0, Math.min(RefitSearchState.page(), totalPages - 1));
+        RefitSearchState.setPage(page);
+        int start = page * perPage;
+        int end = Math.min(start + perPage, entries.size());
+        for (int k = start; k < end; k++) {
+            SearchEntry entry = entries.get(k);
+            int slotY = y0 + (k - start) * slotSize;
+            net.minecraft.client.gui.components.AbstractWidget slot;
+            if (entry.inventoryIndex() >= 0) {
+                slot = new InventoryAttachmentSlot(x, slotY, entry.inventoryIndex(), inventory,
+                        button -> entry.install().run());
+            } else {
+                slot = new com.ssscript.taczfixes.client.util.BuiltinAttachmentSlot(x, slotY, entry.stack(),
+                        button -> entry.install().run());
+            }
+            slot.setWidth(slotSize);
+            slot.setHeight(slotSize);
+            this.addRenderableWidget(slot);
+        }
+        if (totalPages > 1) {
+            if (page > 0) {
+                RefitTurnPageButton prev = new RefitTurnPageButton(x, y0 - 10, true, button -> {
+                    RefitSearchState.setPage(page - 1);
+                    taczfixes$buildSearchList();
+                });
+                prev.setWidth(slotSize);
+                this.addRenderableWidget(prev);
+            }
+            if (page < totalPages - 1) {
+                RefitTurnPageButton next = new RefitTurnPageButton(x, y0 + slotSize * 8 + 2, false, button -> {
+                    RefitSearchState.setPage(page + 1);
+                    taczfixes$buildSearchList();
+                });
+                next.setWidth(slotSize);
+                this.addRenderableWidget(next);
+            }
+        }
+    }
+
+    @Unique
+    private static int taczfixes$selectedGunSlot(LocalPlayer player) {
+        int gunSlot = player.getInventory().selected;
+        for (int i = 0; i < 9; i++) {
+            if (IGun.getIGunOrNull(player.getInventory().getItem(i)) != null) {
+                gunSlot = i;
+                break;
+            }
+        }
+        return gunSlot;
+    }
+
+    @Unique
+    private static boolean taczfixes$matches(ItemStack stack, String[] keywords) {
+        String text = taczfixes$searchText(stack);
+        for (String keyword : keywords) {
+            if (!text.contains(keyword)) return false;
+        }
+        return true;
+    }
+
+    /** 可搜索文本: 物品名 + 配件 id + 配件显示名 + 各属性词条(如 "伤害"/"后坐力")。 */
+    @Unique
+    private static String taczfixes$searchText(ItemStack stack) {
+        StringBuilder sb = new StringBuilder(64);
+        sb.append(stack.getHoverName().getString()).append(' ');
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
+        ResourceLocation id = attachment == null ? null : attachment.getAttachmentId(stack);
+        if (id != null) {
+            sb.append(id).append(' ').append(id.getPath().replace('_', ' ')).append(' ');
+            var index = TimelessAPI.getClientAttachmentIndex(id).orElse(null);
+            if (index != null) {
+                if (index.getName() != null) sb.append(index.getName()).append(' ');
+                AttachmentData data = index.getData();
+                if (data != null) {
+                    if (data.getModifier() != null) {
+                        for (Map.Entry<String, com.tacz.guns.api.modifier.JsonProperty<?>> entry
+                                : data.getModifier().entrySet()) {
+                            sb.append(taczfixes$statSearchText(entry.getKey())).append(' ');
+                            // 嵌套属性也要展开: recoil 的值是 (pitch, yaw) 的 Pair, 其它可能是 Map;
+                            // 否则搜"竖直后坐力/水平后坐力"无结果。
+                            Object value = entry.getValue() == null ? null : entry.getValue().getValue();
+                            if (value instanceof Map<?, ?> nested) {
+                                for (Object nestedKey : nested.keySet()) {
+                                    if (nestedKey != null) {
+                                        sb.append(taczfixes$statSearchText(String.valueOf(nestedKey))).append(' ');
+                                    }
+                                }
+                            } else if (value instanceof it.unimi.dsi.fastutil.Pair<?, ?>) {
+                                sb.append(taczfixes$statSearchText("pitch")).append(' ');
+                                sb.append(taczfixes$statSearchText("yaw")).append(' ');
+                            }
+                        }
+                    }
+                    // 重量等不在 modifier 表中的独立字段
+                    if (data.getWeight() != 0.0f) {
+                        sb.append(taczfixes$statSearchText("weight")).append(' ');
+                    }
+                    if (data.hasFlashHider()) {
+                        sb.append(taczfixes$statSearchText("flash_hider")).append(' ');
+                    }
+                    if (data.hasSmokeHider()) {
+                        sb.append(taczfixes$statSearchText("smoke_hider")).append(' ');
+                    }
+                }
+            }
+        }
+        return sb.toString().toLowerCase(Locale.ROOT);
+    }
+
+    /** TaCZ 的属性文本键: tooltip.tacz.attachment.&lt;key&gt;.increase/.decrease(部分属性直接用基础键)。 */
+    @Unique
+    private static String taczfixes$statSearchText(String key) {
+        String base = "tooltip.tacz.attachment." + key;
+        StringBuilder sb = new StringBuilder(key.replace('_', ' ')).append(' ');
+        String increase = Component.translatable(base + ".increase").getString();
+        if (!increase.equals(base + ".increase")) sb.append(increase).append(' ');
+        String decrease = Component.translatable(base + ".decrease").getString();
+        if (!decrease.equals(base + ".decrease")) sb.append(decrease).append(' ');
+        String plain = Component.translatable(base).getString();
+        if (!plain.equals(base)) sb.append(plain).append(' ');
+        return sb.toString();
     }
 }

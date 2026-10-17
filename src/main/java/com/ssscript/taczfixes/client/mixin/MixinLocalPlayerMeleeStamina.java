@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.client.DualWieldMelee;
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
@@ -19,7 +20,7 @@ public class MixinLocalPlayerMeleeStamina {
     private void taczfixes$blockLowAimingStamina(CallbackInfo ci) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return;
-        if (DualWieldClient.isDualMode(player) && DualWieldClient.offhandMeleeBlocksMainHand()) {
+        if (DualWieldClient.isDualMode(player) && DualWieldMelee.offhandMeleeBlocksMainHand()) {
             ci.cancel();
             return;
         }

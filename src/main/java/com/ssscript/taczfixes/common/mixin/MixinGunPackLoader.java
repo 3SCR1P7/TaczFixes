@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.ssscript.taczfixes.common.gunpack.GunPackHooks;
-import com.ssscript.taczfixes.common.gunpack.GunPackSettings;
+import com.ssscript.taczfixes.common.data.GunPackHooks;
+import com.ssscript.taczfixes.common.data.GunPackSettings;
 import com.tacz.guns.resource.GunPackLoader;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
