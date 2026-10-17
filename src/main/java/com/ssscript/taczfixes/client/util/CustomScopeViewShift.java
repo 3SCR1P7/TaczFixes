@@ -37,10 +37,8 @@ public final class CustomScopeViewShift {
     private static long smoothLastFrameNanos = 0L;
     private static String prevSlot = "";
     private static int animMode = 1;
-    private static Vec3 smoothPivot = Vec3.ZERO;
-    private static Vec3 smoothShift = Vec3.ZERO;
+    private static Vec3 smoothG = Vec3.ZERO;
     private static float smoothAngle = 0f;
-    private static float smoothOffset = 0f;
     private static boolean pushed = false;
 
     private CustomScopeViewShift() {
@@ -81,9 +79,8 @@ public final class CustomScopeViewShift {
         if (progress < 0.001f) {
             prevSlot = "";
             animMode = 1;
-            smoothShift = Vec3.ZERO;
+            smoothG = Vec3.ZERO;
             smoothAngle = 0f;
-            smoothOffset = 0f;
             return;
         }
         ItemStack gun = model.getCurrentGunItem();
@@ -142,46 +139,39 @@ public final class CustomScopeViewShift {
         Vec3 pivot = actPos != null ? actPos : Vec3.ZERO;
         Vec3 targetS = actPos != null ? target : Vec3.ZERO;
         float targetTh = actPos != null ? slotAngle : 0f;
-        float targetO = actPos != null ? slotOffset : 0f;
         String slotKey = active == null ? "" : active;
         if (!slotKey.equals(prevSlot)) {
             String oldKey = prevSlot;
             prevSlot = slotKey;
             animMode = (oldKey.isEmpty() || slotKey.isEmpty()) ? 1 : 2;
         }
-        // 基准偏移不预乘开镜进度: 仅用于槽位切换时的平滑, 开镜进度(新版缓动)在最后统一加权。
+        // 直接插值最终平移量: 分别插值 pivot 和角度时, 45 度等非零角度会绕出弧线,
+        // 默认槽与自定义槽互切时会先偏到反方向再回到目标位置。
+        Vec3 targetG = Vec3.ZERO;
+        float targetAngle = 0f;
+        if (actPos != null) {
+            double targetRad = Math.toRadians(targetTh);
+            double targetCos = Math.cos(targetRad);
+            double targetSin = Math.sin(targetRad);
+            targetG = new Vec3(
+                    pivot.x + targetS.x - (targetCos * pivot.x - targetSin * pivot.y),
+                    pivot.y + targetS.y - (targetSin * pivot.x + targetCos * pivot.y),
+                    targetS.z - slotOffset);
+            targetAngle = targetTh;
+        }
         float smooth = smoothFactor();
-        if (animMode == 1) {
-            if (active != null) {
-                smoothPivot = pivot;
-                smoothShift = targetS;
-                smoothAngle = targetTh;
-                smoothOffset = targetO;
-            } else {
-                // 瞄具被拆除/切回默认: 清掉残留偏移, 立即回到默认视角。
-                smoothPivot = Vec3.ZERO;
-                smoothShift = Vec3.ZERO;
-                smoothAngle = 0f;
-                smoothOffset = 0f;
-            }
+        // 默认槽与自定义槽互切时: 开镜过程中平滑过渡; 仅在开镜刚开始时直接对齐(此时偏移被开镜进度掩盖)。
+        boolean snap = animMode == 1 && progress < 0.05f;
+        if (snap) {
+            smoothG = targetG;
+            smoothAngle = targetAngle;
         } else {
-            smoothPivot = smoothPivot.add(pivot.subtract(smoothPivot).scale(smooth));
-            smoothShift = smoothShift.add(targetS.subtract(smoothShift).scale(smooth));
-            smoothAngle += (targetTh - smoothAngle) * smooth;
-            smoothOffset += (targetO - smoothOffset) * smooth;
+            smoothG = smoothG.add(targetG.subtract(smoothG).scale(smooth));
+            smoothAngle += (targetAngle - smoothAngle) * smooth;
         }
         // 应用 TaCZ 新版开镜缓动(SecondOrderDynamics 输出的 aimingProgress), 使自定义槽瞄具与枪械本体开镜缓动一致。
-        Vec3 shift = smoothShift.scale(progress);
+        Vec3 g = smoothG.scale(progress);
         float angle = smoothAngle * progress;
-        float offset = smoothOffset * progress;
-        double rad = Math.toRadians(angle);
-        double cos = Math.cos(rad);
-        double sin = Math.sin(rad);
-        Vec3 p = smoothPivot;
-        Vec3 g = new Vec3(
-                p.x + shift.x - (cos * p.x - sin * p.y),
-                p.y + shift.y - (sin * p.x + cos * p.y),
-                shift.z - offset);
         if (g.lengthSqr() < 1.0E-8 && Math.abs(angle) < 0.001f) {
             return;
         }
