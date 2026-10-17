@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.render;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -53,6 +54,7 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class AimBlur {
     private static ShaderInstance shader;
+    private static com.mojang.blaze3d.shaders.AbstractUniform uMaskStart;
     private static RenderTarget horizontal, vertical;
     private static VertexBuffer quad;
     private static final Matrix4f IDENTITY = new Matrix4f();
@@ -65,9 +67,13 @@ public final class AimBlur {
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         release();
         shader = null;
+        uMaskStart = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 new ResourceLocation("taczfixes", "aim_blur"), DefaultVertexFormat.POSITION_TEX),
-                s -> shader = s);
+                s -> {
+                    shader = s;
+                    uMaskStart = s.safeGetUniform("MaskStart");
+                });
     }
 
     /** 在 renderLevel 结束时调用: 模糊已绘制完的世界与手部, 不影响之后绘制的 HUD。 */
@@ -108,16 +114,16 @@ public final class AimBlur {
             ensureQuad();
             // 第一层: 弱模糊(半径 = 总强度的一半), 覆盖范围带的内侧
             float halfRadius = radius * 0.5f;
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(halfRadius / main.width, 0f);
+            PbrRenderer.setBlurDirection(halfRadius / main.width, 0f);
             draw(horizontal, main.getColorTextureId(), PbrRenderer.blurShader);
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, halfRadius / main.height);
+            PbrRenderer.setBlurDirection(0f, halfRadius / main.height);
             draw(vertical, horizontal.getColorTextureId(), PbrRenderer.blurShader);
             compositeMasked(main, vertical, 1.0f - range);
             // 第二层: 在第一层结果上继续模糊(累计半径 ≈ 总强度), 覆盖范围带的外侧
             float addRadius = radius * 0.866f;
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(addRadius / main.width, 0f);
+            PbrRenderer.setBlurDirection(addRadius / main.width, 0f);
             draw(horizontal, vertical.getColorTextureId(), PbrRenderer.blurShader);
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, addRadius / main.height);
+            PbrRenderer.setBlurDirection(0f, addRadius / main.height);
             draw(vertical, horizontal.getColorTextureId(), PbrRenderer.blurShader);
             compositeMasked(main, vertical, 1.0f - range * 0.5f);
         } finally {
@@ -240,7 +246,7 @@ public final class AimBlur {
 
     /** 将模糊结果按边缘遮罩叠加到主帧缓冲: MaskStart 处开始出现该层模糊。 */
     private static void compositeMasked(RenderTarget main, RenderTarget input, float maskStart) {
-        shader.safeGetUniform("MaskStart").set(maskStart);
+        if (uMaskStart != null) uMaskStart.set(maskStart);
         RenderSystem.enableBlend();
         RenderSystem.blendEquation(GL14.GL_FUNC_ADD);
         RenderSystem.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA,

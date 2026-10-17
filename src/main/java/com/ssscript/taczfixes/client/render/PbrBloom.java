@@ -121,11 +121,11 @@ public final class PbrBloom {
             draw(emission, horizontal, PbrRenderer.maskShader);
             RenderSystem.setShaderTexture(1, 0);
             RenderSystem.setShaderTexture(2, 0);
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(radius / main.width, 0f);
+            PbrRenderer.setBlurDirection(radius / main.width, 0f);
             draw(horizontal, vertical, PbrRenderer.blurShader);
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, radius / main.height);
+            PbrRenderer.setBlurDirection(0f, radius / main.height);
             draw(vertical, horizontal, PbrRenderer.blurShader);
-            PbrRenderer.compositeShader.safeGetUniform("Strength").set(Config.PBR_BLOOM_STRENGTH.get().floatValue());
+            PbrRenderer.setBloomStrength(Config.PBR_BLOOM_STRENGTH.get().floatValue());
             // ShaderInstance caches BlendMode. If its additive mode is already cached,
             // apply() will not undo the disableBlend() above, and the quad replaces the world.
             RenderSystem.enableBlend();

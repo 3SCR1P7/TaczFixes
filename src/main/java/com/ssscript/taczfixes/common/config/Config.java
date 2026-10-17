@@ -1482,8 +1482,8 @@ public class Config {
                 .comment("光源直射时枪身反光的面积倍率。默认值：2.0")
                 .defineInRange("reflection_area", 2.0, 0.5, 10.0);
         PBR_GLARE_STRENGTH = BUILDER
-                .comment("枪身高光的眩光强度。默认值：2.0")
-                .defineInRange("glare_strength", 2.0, 0.0, 10.0);
+                .comment("枪身高光的眩光强度。默认值：1.0")
+                .defineInRange("glare_strength", 1.0, 0.0, 10.0);
         PBR_EMISSION = BUILDER
                 .comment("枪械自发光强度。默认值：1.0")
                 .defineInRange("emission_strength", 1.0, 0.0, 4.0);

@@ -243,7 +243,8 @@ public final class GunBlocking {
     }
 
     private static double nearestRatio(@Nullable Player player, double distance) {
-        if (player == null || distance <= 0.0d) {
+        // 疾跑时不触发方块/实体阻挡(模型偏转、禁止开火/开镜全部跳过)。
+        if (player == null || distance <= 0.0d || player.isSprinting()) {
             return 1.0d;
         }
         Level level = player.level();

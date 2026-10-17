@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.render;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
+import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
@@ -42,6 +43,8 @@ import java.util.Set;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class SuppressionEffect {
     private static ShaderInstance shader;
+    private static com.mojang.blaze3d.shaders.AbstractUniform uMaskStart, uMaskStartWeak, uBlurOpacity;
+    private static com.mojang.blaze3d.shaders.AbstractUniform uAbOpacity, uDarken, uDarkenMaskStart, uDarkenOpacity, uAberration;
     private static RenderTarget original, weakH, weakV, strongH, strongV;
     private static VertexBuffer quad;
     private static final Matrix4f IDENTITY = new Matrix4f();
@@ -73,9 +76,21 @@ public final class SuppressionEffect {
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         release();
         shader = null;
+        uMaskStart = uMaskStartWeak = uBlurOpacity = null;
+        uAbOpacity = uDarken = uDarkenMaskStart = uDarkenOpacity = uAberration = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 new ResourceLocation("taczfixes", "suppress_blur"), DefaultVertexFormat.POSITION_TEX),
-                s -> shader = s);
+                s -> {
+                    shader = s;
+                    uMaskStart = s.safeGetUniform("MaskStart");
+                    uMaskStartWeak = s.safeGetUniform("MaskStartWeak");
+                    uBlurOpacity = s.safeGetUniform("BlurOpacity");
+                    uAbOpacity = s.safeGetUniform("AbOpacity");
+                    uDarken = s.safeGetUniform("Darken");
+                    uDarkenMaskStart = s.safeGetUniform("DarkenMaskStart");
+                    uDarkenOpacity = s.safeGetUniform("DarkenOpacity");
+                    uAberration = s.safeGetUniform("Aberration");
+                });
     }
 
     /**
@@ -286,31 +301,31 @@ public final class SuppressionEffect {
             GL11.glDisable(GL11.GL_STENCIL_TEST);
             ensureQuad();
             // 原画面拷贝(供色散采样, 避免自读自写)
-            PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, 0f);
+            PbrRenderer.setBlurDirection(0f, 0f);
             draw(original, main.getColorTextureId(), PbrRenderer.blurShader);
             if (blurActive) {
                 // 弱模糊层
                 float weakRadius = radius * 0.5f;
-                PbrRenderer.blurShader.safeGetUniform("Direction").set(weakRadius / main.width, 0f);
+                PbrRenderer.setBlurDirection(weakRadius / main.width, 0f);
                 draw(weakH, original.getColorTextureId(), PbrRenderer.blurShader);
-                PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, weakRadius / main.height);
+                PbrRenderer.setBlurDirection(0f, weakRadius / main.height);
                 draw(weakV, weakH.getColorTextureId(), PbrRenderer.blurShader);
                 // 强模糊层(在弱模糊基础上继续模糊, 累计半径 ≈ 设定强度)
                 float addRadius = radius * 0.866f;
-                PbrRenderer.blurShader.safeGetUniform("Direction").set(addRadius / main.width, 0f);
+                PbrRenderer.setBlurDirection(addRadius / main.width, 0f);
                 draw(strongH, weakV.getColorTextureId(), PbrRenderer.blurShader);
-                PbrRenderer.blurShader.safeGetUniform("Direction").set(0f, addRadius / main.height);
+                PbrRenderer.setBlurDirection(0f, addRadius / main.height);
                 draw(strongV, strongH.getColorTextureId(), PbrRenderer.blurShader);
             }
-            shader.safeGetUniform("MaskStart").set(1.0f - range * 0.5f);
-            shader.safeGetUniform("MaskStartWeak").set(1.0f - range);
-            shader.safeGetUniform("BlurOpacity").set(blurActive ? blurOpacity : 0f);
-            shader.safeGetUniform("AbOpacity").set(abOpacity);
-            shader.safeGetUniform("Darken").set(darkenStrength);
-            shader.safeGetUniform("DarkenMaskStart").set(1.0f - darkenRange);
-            shader.safeGetUniform("DarkenOpacity").set(darkenActive ? darkenOpacity : 0f);
+            PbrRenderer.setUniform(uMaskStart, 1.0f - range * 0.5f);
+            PbrRenderer.setUniform(uMaskStartWeak, 1.0f - range);
+            PbrRenderer.setUniform(uBlurOpacity, blurActive ? blurOpacity : 0f);
+            PbrRenderer.setUniform(uAbOpacity, abOpacity);
+            PbrRenderer.setUniform(uDarken, darkenStrength);
+            PbrRenderer.setUniform(uDarkenMaskStart, 1.0f - darkenRange);
+            PbrRenderer.setUniform(uDarkenOpacity, darkenActive ? darkenOpacity : 0f);
             float ab = aberration / Math.max(1, main.height);
-            shader.safeGetUniform("Aberration").set(ab, ab);
+            PbrRenderer.setUniform(uAberration, ab, ab);
             shader.setSampler("Sampler0", weakV.getColorTextureId());
             shader.setSampler("Sampler1", strongV.getColorTextureId());
             shader.setSampler("Sampler2", original.getColorTextureId());
@@ -341,15 +356,20 @@ public final class SuppressionEffect {
     }
 
     private static void ensureTargets(RenderTarget main) {
-        if (original != null && original.width == main.width && original.height == main.height) {
+        int blurWidth = Math.max(1, main.width / 2);
+        int blurHeight = Math.max(1, main.height / 2);
+        if (original != null && original.width == main.width && original.height == main.height
+                && weakH != null && weakH.width == blurWidth && weakH.height == blurHeight) {
             return;
         }
         releaseTargets();
+        // 原画面保持全分辨率(色散需要原始细节); 模糊层降半分辨率, 填充率降到 1/4。
+        // 模糊方向是 UV 单位, 用 main 尺寸计算可保持相同的屏幕空间模糊半径。
         original = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
-        weakH = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
-        weakV = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
-        strongH = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
-        strongV = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+        weakH = new TextureTarget(blurWidth, blurHeight, false, Minecraft.ON_OSX);
+        weakV = new TextureTarget(blurWidth, blurHeight, false, Minecraft.ON_OSX);
+        strongH = new TextureTarget(blurWidth, blurHeight, false, Minecraft.ON_OSX);
+        strongV = new TextureTarget(blurWidth, blurHeight, false, Minecraft.ON_OSX);
         for (RenderTarget target : new RenderTarget[]{original, weakH, weakV, strongH, strongV}) {
             target.setFilterMode(GL11.GL_LINEAR);
         }

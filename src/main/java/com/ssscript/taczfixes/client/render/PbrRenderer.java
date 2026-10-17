@@ -3,6 +3,7 @@ import com.ssscript.taczfixes.client.mixin.pbr.PbrCompositeAccessor;
 import com.ssscript.taczfixes.client.mixin.pbr.PbrStateAccessor;
 import com.ssscript.taczfixes.client.mixin.pbr.PbrTextureAccessor;
 
+import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.ssscript.taczfixes.common.config.Config;
@@ -33,17 +34,30 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
-import java.util.IdentityHashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
+    // 缓存 Uniform 引用, 避免每帧/每次枪械绘制都按字符串查找。
+    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass;
+    private static AbstractUniform uReflectionStrength, uReflectionArea, uGlareStrength, uEmissionStrength;
+    private static AbstractUniform uLocalLightDirection, uLocalLightColor, uLocalLightStrength;
+    private static AbstractUniform uCelestialDirection, uCelestialColor, uSkyAmbient;
+    private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness;
+    private static AbstractUniform uBlurDirection, uCompositeStrength;
     private static VertexBuffer mesh;
     private static final Map<ResourceLocation, Optional<Material>> MATERIALS = new HashMap<>();
-    private static final Map<RenderType, RenderType> TYPES = new IdentityHashMap<>();
     private static final int TYPES_MAX = 512;
+    // RenderType 未覆写 equals/hashCode(默认标识语义), 用访问序 LRU 避免战斗/改装中整体清空重建。
+    private static final Map<RenderType, RenderType> TYPES =
+            new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<RenderType, RenderType> eldest) {
+                    return size() > TYPES_MAX;
+                }
+            };
     private static final Method OPTIFINE_SHADERS = findOptifine();
 
     private record Material(ResourceLocation specular, ResourceLocation normal, boolean emissive) {}
@@ -73,30 +87,30 @@ public final class PbrRenderer {
         var origin = camera.getPosition();
         // 局部光源(火把/灯笼等): 非天空维度也有
         updateLocalLight(level, origin);
-        shader.safeGetUniform("LocalLightDirection").set(localLightX, localLightY, localLightZ);
-        shader.safeGetUniform("LocalLightColor").set(localLightR, localLightG, localLightB);
-        shader.safeGetUniform("LocalLightStrength").set(localLightStrength);
+        setUniform(uLocalLightDirection, localLightX, localLightY, localLightZ);
+        setUniform(uLocalLightColor, localLightR, localLightG, localLightB);
+        setUniform(uLocalLightStrength, localLightStrength);
         if (!level.dimensionType().hasSkyLight()
                 || level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL) {
-            shader.safeGetUniform("CelestialDirection").set(0f, 1f, 0f);
-            shader.safeGetUniform("CelestialColor").set(0f, 0f, 0f);
-            shader.safeGetUniform("SkyAmbient").set(0f);
-            shader.safeGetUniform("CelestialVisibility").set(0f);
-            shader.safeGetUniform("LocalSkyExposure").set(0f);
-            shader.safeGetUniform("Wetness").set(0f);
+            setUniform(uCelestialDirection, 0f, 1f, 0f);
+            setUniform(uCelestialColor, 0f, 0f, 0f);
+            setUniform(uSkyAmbient, 0f);
+            setUniform(uCelestialVisibility, 0f);
+            setUniform(uLocalSkyExposure, 0f);
+            setUniform(uWetness, 0f);
             return;
         }
         var light = CelestialLight.sample(level.getTimeOfDay(partialTick), level.getRainLevel(partialTick),
                 level.getThunderLevel(partialTick), level.getMoonBrightness());
-        shader.safeGetUniform("CelestialDirection").set(light.x(), light.y(), 0f);
-        shader.safeGetUniform("CelestialColor").set(light.red(), light.green(), light.blue());
-        shader.safeGetUniform("SkyAmbient").set(light.ambient());
+        setUniform(uCelestialDirection, light.x(), light.y(), 0f);
+        setUniform(uCelestialColor, light.red(), light.green(), light.blue());
+        setUniform(uSkyAmbient, light.ambient());
         // A bounded ray catches ceilings and walls in the light's actual direction.
         var end = origin.add(new Vec3(light.x(), light.y(), 0).scale(96));
         boolean visible = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
-        shader.safeGetUniform("CelestialVisibility").set(visible ? 1f : 0f);
-        shader.safeGetUniform("LocalSkyExposure").set(level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
+        setUniform(uCelestialVisibility, visible ? 1f : 0f);
+        setUniform(uLocalSkyExposure, level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
         // 淋雨打湿: 仅主世界、露天且头顶无遮挡时生效, 强度跟随雨量。
         // 用玩家位置而不是相机位置: 第三人称相机可能在屋檐外, 但枪和玩家在遮挡下不应打湿。
         float wetness = 0f;
@@ -109,7 +123,7 @@ public final class PbrRenderer {
                 wetness = level.getRainLevel(partialTick);
             }
         }
-        shader.safeGetUniform("Wetness").set(wetness);
+        setUniform(uWetness, wetness);
     }
 
     private static float localLightX = 0f;
@@ -216,23 +230,84 @@ public final class PbrRenderer {
         PbrBloom.release();
         if (mesh != null) { mesh.close(); mesh = null; }
         shader = blurShader = compositeShader = maskShader = null;
+        clearUniformCache();
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> shader = s);
+                new ResourceLocation("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> {
+                    shader = s;
+                    cacheGunUniforms(s);
+                });
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 new ResourceLocation("taczfixes", "pbr_mask"), DefaultVertexFormat.POSITION_TEX), s -> maskShader = s);
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "pbr_blur"), DefaultVertexFormat.POSITION_TEX), s -> blurShader = s);
+                new ResourceLocation("taczfixes", "pbr_blur"), DefaultVertexFormat.POSITION_TEX), s -> {
+                    blurShader = s;
+                    uBlurDirection = s.safeGetUniform("Direction");
+                });
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "pbr_composite"), DefaultVertexFormat.POSITION_TEX), s -> compositeShader = s);
+                new ResourceLocation("taczfixes", "pbr_composite"), DefaultVertexFormat.POSITION_TEX), s -> {
+                    compositeShader = s;
+                    uCompositeStrength = s.safeGetUniform("Strength");
+                });
+    }
+
+    private static void clearUniformCache() {
+        uHasSpecular = uHasNormal = uEmissionPass = null;
+        uReflectionStrength = uReflectionArea = uGlareStrength = uEmissionStrength = null;
+        uLocalLightDirection = uLocalLightColor = uLocalLightStrength = null;
+        uCelestialDirection = uCelestialColor = uSkyAmbient = null;
+        uCelestialVisibility = uLocalSkyExposure = uWetness = null;
+        uBlurDirection = uCompositeStrength = null;
+    }
+
+    private static void cacheGunUniforms(ShaderInstance s) {
+        uHasSpecular = s.safeGetUniform("HasSpecular");
+        uHasNormal = s.safeGetUniform("HasNormal");
+        uEmissionPass = s.safeGetUniform("EmissionPass");
+        uReflectionStrength = s.safeGetUniform("ReflectionStrength");
+        uReflectionArea = s.safeGetUniform("ReflectionArea");
+        uGlareStrength = s.safeGetUniform("GlareStrength");
+        uEmissionStrength = s.safeGetUniform("EmissionStrength");
+        uLocalLightDirection = s.safeGetUniform("LocalLightDirection");
+        uLocalLightColor = s.safeGetUniform("LocalLightColor");
+        uLocalLightStrength = s.safeGetUniform("LocalLightStrength");
+        uCelestialDirection = s.safeGetUniform("CelestialDirection");
+        uCelestialColor = s.safeGetUniform("CelestialColor");
+        uSkyAmbient = s.safeGetUniform("SkyAmbient");
+        uCelestialVisibility = s.safeGetUniform("CelestialVisibility");
+        uLocalSkyExposure = s.safeGetUniform("LocalSkyExposure");
+        uWetness = s.safeGetUniform("Wetness");
+    }
+
+    /** 缓存为空(资源重载/着色器缺失)时跳过写入。 */
+    static void setUniform(AbstractUniform uniform, int value) {
+        if (uniform != null) uniform.set(value);
+    }
+
+    static void setUniform(AbstractUniform uniform, float value) {
+        if (uniform != null) uniform.set(value);
+    }
+
+    static void setUniform(AbstractUniform uniform, float x, float y) {
+        if (uniform != null) uniform.set(x, y);
+    }
+
+    static void setUniform(AbstractUniform uniform, float x, float y, float z) {
+        if (uniform != null) uniform.set(x, y, z);
+    }
+
+    /** 共享模糊着色器的方向(UV 单位)。 */
+    static void setBlurDirection(float x, float y) {
+        if (uBlurDirection != null) uBlurDirection.set(x, y);
+    }
+
+    /** 共享泛光合成着色器的强度。 */
+    static void setBloomStrength(float value) {
+        if (uCompositeStrength != null) uCompositeStrength.set(value);
     }
 
     public static RenderType resolve(RenderType original) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
-        // 逐帧新建的 RenderType 不能被无限缓存, 超限时整体清空重建
-        if (TYPES.size() >= TYPES_MAX) {
-            TYPES.clear();
-        }
         return TYPES.computeIfAbsent(original, key -> {
             var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
             var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
@@ -322,13 +397,13 @@ public final class PbrRenderer {
                 }
                 if (material.specular() != null) RenderSystem.setShaderTexture(3, material.specular());
                 if (material.normal() != null) RenderSystem.setShaderTexture(4, material.normal());
-                shader.safeGetUniform("HasSpecular").set(material.specular() == null ? 0 : 1);
-                shader.safeGetUniform("HasNormal").set(material.normal() == null ? 0 : 1);
-                shader.safeGetUniform("ReflectionStrength").set(material.specular() == null ? 0f : Config.PBR_REFLECTION.get().floatValue());
-                shader.safeGetUniform("ReflectionArea").set(Config.PBR_REFLECTION_AREA.get().floatValue());
-                shader.safeGetUniform("GlareStrength").set(material.specular() == null ? 0f : Config.PBR_GLARE_STRENGTH.get().floatValue());
-                shader.safeGetUniform("EmissionStrength").set(Config.PBR_EMISSION.get().floatValue());
-                shader.safeGetUniform("EmissionPass").set(0);
+                setUniform(uHasSpecular, material.specular() == null ? 0 : 1);
+                setUniform(uHasNormal, material.normal() == null ? 0 : 1);
+                setUniform(uReflectionStrength, material.specular() == null ? 0f : Config.PBR_REFLECTION.get().floatValue());
+                setUniform(uReflectionArea, Config.PBR_REFLECTION_AREA.get().floatValue());
+                setUniform(uGlareStrength, material.specular() == null ? 0f : Config.PBR_GLARE_STRENGTH.get().floatValue());
+                setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
+                setUniform(uEmissionPass, 0);
                 RenderSystem.setShader(() -> shader);
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
 
@@ -341,10 +416,10 @@ public final class PbrRenderer {
                     try {
                         RenderSystem.depthMask(true);
                         PbrBloom.bindCapture();
-                        shader.safeGetUniform("EmissionPass").set(1);
+                        setUniform(uEmissionPass, 1);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                     } finally {
-                        shader.safeGetUniform("EmissionPass").set(0);
+                        setUniform(uEmissionPass, 0);
                         RenderSystem.depthMask(depthMask);
                         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
                     }
