@@ -137,11 +137,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         if (igun == null || CustomSlotManager.getSlots(gun).isEmpty()) return;
         taczfixes$standbyRendered = true;
         renderActiveSlot(pose, displayContext, light, overlay);
-        for (Object[] slot : StandbySlotBuffer.takePending()) {
-            renderStandbySlot((ItemStack) slot[0], gun, (BedrockPart) slot[1],
-                    (String) slot[2], taczfixes$isAttachmentNode(slot), taczfixes$chain(slot),
-                    pose, displayContext, light, overlay);
-        }
+        renderStandbySlotsWithFallback(gun, StandbySlotBuffer.takePending(), pose, displayContext, light, overlay);
         // Native AR scope callbacks establish stencil when the GPU actually draws.
         // Do not run the immediate stencil repair or duplicate the standard scope.
     }
@@ -170,15 +166,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         com.mojang.blaze3d.systems.RenderSystem.stencilOp(org.lwjgl.opengl.GL11.GL_KEEP,
                 org.lwjgl.opengl.GL11.GL_KEEP, org.lwjgl.opengl.GL11.GL_KEEP);
 
-        List<Object[]> standby = StandbySlotBuffer.takePending();
-        for (Object[] slot : standby) {
-            renderStandbySlot((ItemStack) slot[0], gun,
-                    (BedrockPart) slot[1],
-                    (String) slot[2],
-                    taczfixes$isAttachmentNode(slot),
-                    taczfixes$chain(slot),
-                    pose, displayContext, light, overlay);
-        }
+        renderStandbySlotsWithFallback(gun, StandbySlotBuffer.takePending(), pose, displayContext, light, overlay);
 
         String activeSlot = ScopeSwitchState.getActiveSlot(gun);
         if (activeSlot != null && !activeSlot.isEmpty()) {
@@ -193,6 +181,29 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
     }
 
 
+    @Unique
+    private void renderStandbySlotsWithFallback(ItemStack gun, List<Object[]> pending,
+                                                PoseStack pose, ItemDisplayContext displayContext, int light, int overlay) {
+        String activeSlot = ScopeSwitchState.getActiveSlot(gun);
+        java.util.Set<String> rendered = new java.util.HashSet<>();
+        for (Object[] slot : pending) {
+            rendered.add((String) slot[2]);
+            renderStandbySlot((ItemStack) slot[0], gun, (BedrockPart) slot[1], (String) slot[2],
+                    taczfixes$isAttachmentNode(slot), taczfixes$chain(slot), pose, displayContext, light, overlay);
+        }
+        BedrockAnimatedModel self = (BedrockAnimatedModel) (Object) this;
+        for (java.util.Map.Entry<String, CustomSlotManager.SlotEntry> entry : CustomSlotManager.getEntries(gun).entrySet()) {
+            String slotId = entry.getKey();
+            if (slotId.equals(activeSlot) || rendered.contains(slotId)) continue;
+            ItemStack item = CustomSlotStorage.get(gun, slotId);
+            if (item.isEmpty()) continue;
+            BedrockPart node = CustomSlotMount.nodeFor(self, entry.getValue(), slotId);
+            if (node == null) continue;
+            renderStandbySlot(item, gun, node, slotId, !entry.getValue().source().isEmpty(),
+                    CustomSlotMount.sourceChain(self, gun, entry.getValue()),
+                    pose, displayContext, light, overlay);
+        }
+    }
     @Unique
     private void rerenderStandardScope(PoseStack pose, ItemDisplayContext displayContext,
                                        int light, int overlay) {
@@ -325,28 +336,29 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                                    int light, int overlay) {
         if (node == null) return;
         if (!isScopeLikeAttachment(item)) {
-            // 闈炵瀯鍏烽厤浠?laser/grip 绛?: 璧板師鐗?renderSlotAttachment 绠＄嚎(鍚?mount 澶勭悊), 浣嶇疆姝ｇ‘
             StandbySlotBuffer.renderSlotAttachment(item, gun, node, pose, displayContext, light, overlay, slotId, chain, attachmentNode);
             return;
         }
+        // 标准 scope 的遮挡 stencil 会把自定义 sight 一起裁掉; 备用槽的 sight 绕过 stencil 渲染。
+        boolean sightOnly = isSightOnlyAttachment(item);
+        boolean restoreStencil = sightOnly && org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+        if (restoreStencil) org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
         pose.pushPose();
-        CustomSlotMount.apply(pose, chain, gun, displayContext, light, overlay);
-        if (attachmentNode) {
+        try {
+            CustomSlotMount.apply(pose, chain, gun, displayContext, light, overlay);
+            if (attachmentNode) {
+                pose.translate(0.0F, -1.5F, 0.0F);
+            }
+            StandbySlotBuffer.applyNodePathTransform(node, pose);
+            StandbySlotBuffer.applyPosAlter(node, gun, pose, slotId);
             pose.translate(0.0F, -1.5F, 0.0F);
+            StandbySlotBuffer.applySlotAdapterOffset(item, gun, slotId, pose, displayContext, light, overlay);
+            renderLikeNative(item, gun, pose, displayContext, light, overlay);
+        } finally {
+            pose.popPose();
+            if (restoreStencil) org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
         }
-        StandbySlotBuffer.applyNodePathTransform(node, pose);
-        StandbySlotBuffer.applyPosAlter(node, gun, pose, slotId);
-        pose.translate(0.0F, -1.5F, 0.0F);
-        StandbySlotBuffer.applySlotAdapterOffset(item, gun, slotId, pose, displayContext, light, overlay);
-
-
-        renderLikeNative(item, gun, pose, displayContext, light, overlay);
-        pose.popPose();
     }
-
-
-
-
     @Unique
     private static void renderLikeNative(ItemStack item, ItemStack gun, PoseStack pose,
                                          ItemDisplayContext displayContext, int light, int overlay) {
@@ -392,7 +404,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                 boolean oldScope = acc.taczfixes$isScope();
                 boolean oldSight = acc.taczfixes$isSight();
                 acc.taczfixes$setIsScope(false);
-                acc.taczfixes$setIsSight(false);
+                // 不再清除 isSight: 备用槽的 sight 在标准 scope 存在时会走不到模型渲染。
 
                 try {
                     model.render(item, gun, pose, displayContext,
@@ -438,6 +450,14 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         if (ia == null) return false;
         return TimelessAPI.getClientAttachmentIndex(ia.getAttachmentId(item))
                 .map(index -> index.isScope() || index.isSight()).orElse(false);
+    }
+    @Unique
+    private static boolean isSightOnlyAttachment(ItemStack item) {
+        if (item == null || item.isEmpty()) return false;
+        IAttachment ia = IAttachment.getIAttachmentOrNull(item);
+        if (ia == null) return false;
+        return TimelessAPI.getClientAttachmentIndex(ia.getAttachmentId(item))
+                .map(index -> index.isSight() && !index.isScope()).orElse(false);
     }
 
 

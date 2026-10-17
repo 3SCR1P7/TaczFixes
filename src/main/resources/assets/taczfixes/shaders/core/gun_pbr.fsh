@@ -65,10 +65,10 @@ vec3 metalF0(float code, vec3 albedo) {
 }
 
 // 眩光高光: 比主反光更宽的高光叶, 写入泛光目标后由泛光链路模糊成光晕
-vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0) {
+vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
     float nv = max(dot(n, v), 0.001);
     float area = clamp(ReflectionArea, 0.1, 8.0);
-    // 雨天打湿会大幅降低粗糙度, GGX 峰值按四次方暴涨导致眩光过强: 给眩光单独设粗糙度下限。
+    // 雨天打湿会大幅降低粗糙度, GGX 峰值按四次方暴涨导致眩光过强; 给眩光单独设粗糙度下限。
     float glareRoughness = max(roughness, 0.12);
     // 眩光与天气平衡: 晴天(含室内局部光)整体增强, 下雨时衰减, 避免雨天过曝/晴天过暗。
     float wet = clamp(Wetness, 0.0, 1.0);
@@ -100,7 +100,12 @@ vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0) {
     vec3 lf = f0 + (1.0 - f0) * pow(1.0 - lvh, 5.0);
     sum += lf * ld * lg / max(4.0 * nv, 0.001) * mix(0.5, 1.0, 1.0 - gr)
             * LocalLightColor * LocalLightStrength * 0.22;
-    return sum * weatherGain;
+    // 软压缩高光峰值, 避免金属高光把泛光目标打爆成大片白斑。
+    vec3 result = sum * weatherGain;
+    // 眩光叠加贴图颜色: 保持亮度、只取色相, 避免深色枪身把眩光完全压没。
+    vec3 tint = albedo / max(dot(albedo, vec3(0.299, 0.587, 0.114)), 0.1);
+    result *= mix(vec3(1.0), clamp(tint, vec3(0.0), vec3(3.0)), 0.6);
+    return result / (1.0 + result * 0.35);
 }
 
 void main() {
@@ -139,7 +144,7 @@ void main() {
         vec3 sunView = safeNormalize(transpose(IViewRotMat) * CelestialDirection);
         float sunBehind = smoothstep(0.05, 0.75, sunView.z);
         float backDim = mix(1.0, 0.2, sunBehind);
-        vec3 glare = glareHighlight(n, v, roughness, f0) * GlareStrength * backDim;
+        vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength * backDim;
         vec3 total = (glow + glare) * fog;
         if (emission <= 0.0 && dot(total, total) < 1.0e-6) discard;
         // Emission target may be smaller than the main target; sample scene depth by screen UV.
@@ -220,6 +225,9 @@ void main() {
     // 太阳/月亮在玩家身后(背向日月)时整体反光压暗: 与视线方向相关, 转身即可察觉
     float sunBehind = smoothstep(0.05, 0.75, l.z);
     reflection *= mix(1.0, 0.15, sunBehind);
+    // 主通道额外叠加一份清晰眩光核心; 泛光链路只负责外圈光晕, 避免眩光本体被模糊。
+    reflection += glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength
+            * mix(1.0, 0.2, sunBehind) * 0.35;
     reflection = reflection / (1.0 + reflection);
     vec3 color = wetBase * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;
     // Keep vanilla's lit albedo as the baseline. This renderer has no captured

@@ -28,7 +28,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  */
 public class ScopeFovTransitionHandler {
 
-    private static final long HOLD_MS = 200L;
+    private static final long HOLD_MS = 50L;
     private static final long EASE_MS = 300L;
     private static final double EASE_TARGET_EPSILON = 2.0;
     private static final long SETTLE_TIMEOUT_MS = 1500L;
@@ -48,7 +48,7 @@ public class ScopeFovTransitionHandler {
     private static long lastLiveChangeAt;
     private static double lastOutput = -1.0;
 
-    private enum Phase { NONE, HOLD, EASE, EASE_FIXED, SETTLE }
+    private enum Phase { NONE, HOLD, EASE, EASE_LIVE, EASE_FIXED, SETTLE }
 
     /** 由 GameRenderer#renderLevel 开头调用: 标记接下来那次 configured-FOV 调用是真正的世界层调用。 */
     public static void markWorldFovCall() {
@@ -109,14 +109,17 @@ public class ScopeFovTransitionHandler {
             lastMagnified = magnified;
             transitionFrom = lastOutput > 0.0 ? lastOutput : live;
             if (magnified) {
-                phase = Phase.HOLD;
-                phaseStart = now;
-                easeTo = -1.0;
-            } else {
+                // 目标就是基础 FOV, 切换当帧即可算出; 不再先保持旧 FOV。
                 double target = destinationFov(player, rawBaseFov);
                 transitionTarget = target > 0.0 ? target : live;
                 phase = Phase.EASE_FIXED;
                 phaseStart = now;
+            } else {
+                // 直接低通跟随游戏自身的实时 FOV: 固定目标若由旧/新倍率算错, 会压着过小的 FOV 数秒。
+                transitionTarget = -1.0;
+                phase = Phase.EASE_LIVE;
+                phaseStart = now;
+                easeTo = -1.0;
             }
         }
         if (phase == Phase.HOLD) {
@@ -138,6 +141,17 @@ public class ScopeFovTransitionHandler {
             float eased = 1.0f - (float) Math.exp(-5.0f * progress);
             double out = transitionFrom + (easeTo - transitionFrom) * eased;
             if (progress >= 1.0f) {
+                phase = Phase.NONE;
+            }
+            event.setFOV(out);
+            lastOutput = out;
+            return;
+        }
+        if (phase == Phase.EASE_LIVE) {
+            double alpha = 0.25;
+            double out = lastOutput <= 0.0 ? live : lastOutput + (live - lastOutput) * alpha;
+            if (Math.abs(live - out) < 0.1 || now - phaseStart >= SETTLE_TIMEOUT_MS) {
+                out = live;
                 phase = Phase.NONE;
             }
             event.setFOV(out);
@@ -170,6 +184,16 @@ public class ScopeFovTransitionHandler {
             }
             prevLive = live;
             boolean stable = now - lastLiveChangeAt >= SETTLE_STABLE_MS;
+            // 目标算小了而游戏实际 FOV 更宽: 不要一直压着过小的 FOV, 改为缓动到实际值。
+            if (stable && live > transitionTarget + 0.5) {
+                transitionFrom = transitionTarget;
+                transitionTarget = live;
+                phase = Phase.EASE_FIXED;
+                phaseStart = now;
+                event.setFOV(transitionFrom);
+                lastOutput = transitionFrom;
+                return;
+            }
             if (stable && Math.abs(live - transitionTarget) < 0.5) {
                 phase = Phase.NONE;
                 lastOutput = live;
@@ -199,7 +223,15 @@ public class ScopeFovTransitionHandler {
         if (ArcanaMagnificationState.active()) {
             return baseFov;
         }
-        float zoom = iGun.getAimingZoom(gun);
+        ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
+        CompoundTag tag = ScopeSwitchState.attachmentTag(iGun, gun, AttachmentType.SCOPE);
+        ClientAttachmentIndex index = id == null ? null
+                : TimelessAPI.getClientAttachmentIndex(id).orElse(null);
+        // sight 视图不做世界层缩放; 否则会把“无镜内放大”的 sight 当成带倍率的 scope, 目标 FOV 过小。
+        if (index != null && ScopeViewHelper.isSightView(index, tag)) {
+            return baseFov;
+        }
+        float zoom = ScopeSwitchState.aimingZoom(iGun, gun);
         if (zoom <= 1.0001f) {
             return baseFov;
         }

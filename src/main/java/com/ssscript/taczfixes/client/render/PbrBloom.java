@@ -4,6 +4,16 @@ import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.tacz.guns.api.DefaultAssets;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.ShaderInstance;
@@ -99,6 +109,9 @@ public final class PbrBloom {
         boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
         boolean stencil = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
+        int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
+        int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
+        int stencilMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
         boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
         int srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB), dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
         int srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA), dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
@@ -111,7 +124,14 @@ public final class PbrBloom {
             RenderSystem.depthMask(false);
             RenderSystem.disableCull();
             RenderSystem.disableBlend();
-            GL11.glDisable(GL11.GL_STENCIL_TEST);
+            // 纯 scope 瞄具: 泛光合成也要遵守镜内遮挡模板, 否则被剔除的枪械/配件自发光仍会泛光到镜内。
+            if (pureScopeAiming()) {
+                GL11.glEnable(GL11.GL_STENCIL_TEST);
+                GL11.glStencilFunc(GL11.GL_EQUAL, 0, 255);
+                GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+            } else {
+                GL11.glDisable(GL11.GL_STENCIL_TEST);
+            }
             ensureQuad();
             float radius = Config.PBR_BLOOM_RADIUS.get().floatValue();
             // Resolve per-pixel occlusion once, then blur color only.
@@ -148,7 +168,12 @@ public final class PbrBloom {
             // its opaque black/grey texture over the entire world.
             PbrBlendCache.restore();
             RenderSystem.depthMask(depthMask);
-            if (stencil) GL11.glEnable(GL11.GL_STENCIL_TEST);
+            if (stencil) {
+                GL11.glEnable(GL11.GL_STENCIL_TEST);
+                GL11.glStencilFunc(stencilFunc, stencilRef, stencilMask);
+            } else {
+                GL11.glDisable(GL11.GL_STENCIL_TEST);
+            }
         }
     }
 
@@ -204,5 +229,19 @@ public final class PbrBloom {
         if (quad != null) { quad.close(); quad = null; }
     }
 
+    private static boolean pureScopeAiming() {
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || !player.isAlive()) return false;
+        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
+        if (operator == null || operator.getClientAimingProgress(mc.getFrameTime()) < 0.01f) return false;
+        ItemStack gun = player.getMainHandItem();
+        IGun iGun = IGun.getIGunOrNull(gun);
+        if (iGun == null) return false;
+        ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
+        ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(id).orElse(null);
+        return index != null && index.isScope() && !index.isSight();
+    }
     private PbrBloom() {}
 }
