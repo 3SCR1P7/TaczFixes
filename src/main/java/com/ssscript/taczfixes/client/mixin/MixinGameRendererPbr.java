@@ -28,5 +28,6 @@ public abstract class MixinGameRendererPbr {
     private void taczfixes$pbrEnd(float tick, long time, PoseStack pose, CallbackInfo ci) {
         PbrBloom.endFrame();
         com.ssscript.taczfixes.client.render.AimBlur.composite();
+        com.ssscript.taczfixes.client.render.SuppressionEffect.composite();
     }
 }

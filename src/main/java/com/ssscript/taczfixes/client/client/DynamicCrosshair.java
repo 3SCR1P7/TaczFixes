@@ -49,6 +49,8 @@ public final class DynamicCrosshair {
     private static float fireImpulse;
     private static float jumpFactor = 1.0f;
     private static long lastFrameNanos = System.nanoTime();
+    /** 带迟滞的移动状态: TaCZ 的 MOVE/STAND 判定依赖瞬时速度采样, 采样抖动会让准星在移动/静止间抽搐。 */
+    private static boolean movingState;
 
     private DynamicCrosshair() {
     }
@@ -101,6 +103,7 @@ public final class DynamicCrosshair {
         fireImpulse *= (float) Math.exp(-dt * 3.0f / recover);
         LocalPlayer player = Minecraft.getInstance().player;
         updateJumpFactor(player, dt);
+        updateMovingState(player);
         float targetRatio = 0.0f;
         if (player != null) {
             targetRatio = spreadRatio(player, player.getMainHandItem());
@@ -112,6 +115,24 @@ public final class DynamicCrosshair {
         // 开火扩散 = 当前散布宽度 + (倍率-1) * 基准值, 而不是把当前大小乘以倍率
         float impulse = fireImpulse * factor * BASE_OFFSET_PIXELS;
         return base + impulse;
+    }
+
+    /**
+     * 用实际水平位移(带迟滞)判定移动状态: 起步阈值 0.06, 停下阈值 0.03。
+     * TaCZ 的 MOVE/STAND 依据瞬时速度采样, 采样抖动时会反复切换, 导致准星抽搐。
+     */
+    private static void updateMovingState(LocalPlayer player) {
+        if (player == null) {
+            return;
+        }
+        double speed = Math.sqrt(Mth.square(player.getX() - player.xo) + Mth.square(player.getZ() - player.zo));
+        if (movingState) {
+            if (speed < 0.03) {
+                movingState = false;
+            }
+        } else if (speed > 0.06) {
+            movingState = true;
+        }
     }
 
     /** 滞空散布倍率平滑过渡, 避免落地/起跳和 onGround 抖动造成准星抽搐。 */
@@ -167,10 +188,11 @@ public final class DynamicCrosshair {
         if (table == null || table.isEmpty()) {
             return 1.0f;
         }
-        // 滞空时统一按移动散布处理: 跳跃顶点速度会短暂低于判定阈值,
-        // 否则会在 MOVE/STAND 间反复切换导致准星抽搐。
-        if (type == InaccuracyType.STAND && !player.onGround() && table.get(InaccuracyType.MOVE) != null) {
-            type = InaccuracyType.MOVE;
+        // 移动/静止改用带迟滞的稳定判定(迟滞值来自实际位移), 并统一把滞空按移动处理:
+        // 跳跃顶点速度会短暂低于判定阈值, 否则会在 MOVE/STAND 间反复切换导致准星抽搐。
+        if (type == InaccuracyType.MOVE || type == InaccuracyType.STAND) {
+            boolean moving = movingState || (!player.onGround() && table.get(InaccuracyType.MOVE) != null);
+            type = moving ? InaccuracyType.MOVE : InaccuracyType.STAND;
         }
         Float current = table.get(type);
         Float aim = table.get(InaccuracyType.AIM);

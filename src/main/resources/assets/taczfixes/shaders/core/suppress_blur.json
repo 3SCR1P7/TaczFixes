@@ -1,0 +1,86 @@
+{
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "fragment": "taczfixes:suppress_blur",
+  "vertex": "taczfixes:pbr_screen",
+  "uniforms": [
+    {
+      "type": "float",
+      "count": 1,
+      "name": "MaskStart",
+      "values": [
+        0.75
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "MaskStartWeak",
+      "values": [
+        0.5
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "BlurOpacity",
+      "values": [
+        1.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "AbOpacity",
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "Darken",
+      "values": [
+        0.6
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "DarkenMaskStart",
+      "values": [
+        0.75
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "DarkenOpacity",
+      "values": [
+        0.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 2,
+      "name": "Aberration",
+      "values": [
+        0.0,
+        0.0
+      ]
+    }
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    },
+    {
+      "name": "Sampler2"
+    }
+  ]
+}

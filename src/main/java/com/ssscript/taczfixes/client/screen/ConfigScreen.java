@@ -19,7 +19,7 @@ public class ConfigScreen {
                 .setTitle(Component.translatable("config.taczfixes.title"))
                 .setSavingRunnable(Config::saveAll);
         ConfigEntryBuilder entry = builder.entryBuilder();
-        buildPbr(builder.getOrCreateCategory(cat("pbr")), entry);
+        buildVisualEffect(builder.getOrCreateCategory(cat("visual_effect")), entry);
 
         buildGunLevel(builder.getOrCreateCategory(cat("gun_level")), entry);
         buildLimbDamage(builder.getOrCreateCategory(cat("limb_damage")), entry);
@@ -42,16 +42,52 @@ public class ConfigScreen {
         return builder.build();
     }
 
-    private static void buildPbr(ConfigCategory cat, ConfigEntryBuilder entry) {
-        bool_(cat, entry, "pbr.enabled", Config.PBR_ENABLED);
-        dbl_(cat, entry, "pbr.reflection_strength", Config.PBR_REFLECTION);
-        dbl_(cat, entry, "pbr.emission_strength", Config.PBR_EMISSION);
-        bool_(cat, entry, "pbr.bloom", Config.PBR_BLOOM);
-        dbl_(cat, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);
-        dbl_(cat, entry, "pbr.bloom_radius", Config.PBR_BLOOM_RADIUS);
-        dbl_(cat, entry, "pbr.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
-        bool_(cat, entry, "pbr.bloom_tracer", Config.PBR_BLOOM_TRACER);
-        bool_(cat, entry, "pbr.bloom_laser", Config.PBR_BLOOM_LASER);
+    private static void buildVisualEffect(ConfigCategory cat, ConfigEntryBuilder entry) {
+        sub(cat, entry, "pbr", e -> {
+            bool_(e, entry, "pbr.enabled", Config.PBR_ENABLED);
+            dbl_(e, entry, "pbr.reflection_strength", Config.PBR_REFLECTION);
+            dbl_(e, entry, "pbr.emission_strength", Config.PBR_EMISSION);
+            bool_(e, entry, "pbr.bloom", Config.PBR_BLOOM);
+            dbl_(e, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);
+            dbl_(e, entry, "pbr.bloom_radius", Config.PBR_BLOOM_RADIUS);
+            dbl_(e, entry, "pbr.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
+            bool_(e, entry, "pbr.bloom_tracer", Config.PBR_BLOOM_TRACER);
+            bool_(e, entry, "pbr.bloom_laser", Config.PBR_BLOOM_LASER);
+        });
+        sub(cat, entry, "aim_blur", e -> {
+            bool_(e, entry, "aim_blur.enabled", Config.AIM_BLUR_ENABLED);
+            dbl_(e, entry, "aim_blur.range", Config.AIM_BLUR_RANGE);
+            dbl_(e, entry, "aim_blur.strength", Config.AIM_BLUR_STRENGTH);
+            dbl_(e, entry, "aim_blur.far_distance", Config.AIM_BLUR_FAR_DISTANCE);
+            dbl_(e, entry, "aim_blur.min_factor", Config.AIM_BLUR_MIN_FACTOR);
+        });
+        sub(cat, entry, "suppression", e -> {
+            bool_(e, entry, "suppression.enabled", Config.SUPPRESSION_ENABLED);
+            dbl_(e, entry, "suppression.detection_range", Config.SUPPRESSION_DETECTION_RANGE);
+            bool_(e, entry, "suppression.include_own_bullets", Config.SUPPRESSION_INCLUDE_OWN_BULLETS);
+            dbl_(e, entry, "suppression.exposure_strength", Config.SUPPRESSION_EXPOSURE_STRENGTH);
+            int_(e, entry, "suppression.exposure_duration_ms", Config.SUPPRESSION_EXPOSURE_DURATION_MS);
+            dbl_(e, entry, "suppression.blur_strength", Config.SUPPRESSION_BLUR_STRENGTH);
+            dbl_(e, entry, "suppression.blur_range", Config.SUPPRESSION_BLUR_RANGE);
+            int_(e, entry, "suppression.blur_duration_ms", Config.SUPPRESSION_BLUR_DURATION_MS);
+            dbl_(e, entry, "suppression.darken_strength", Config.SUPPRESSION_DARKEN_STRENGTH);
+            dbl_(e, entry, "suppression.darken_range", Config.SUPPRESSION_DARKEN_RANGE);
+            int_(e, entry, "suppression.darken_duration_ms", Config.SUPPRESSION_DARKEN_DURATION_MS);
+            dbl_(e, entry, "suppression.sniper_rpg_exposure_strength_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_exposure_duration_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_blur_strength_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_blur_duration_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_darken_strength_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_darken_duration_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_detection_range_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER);
+        });
     }
 
     private static void buildDualWield(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -263,11 +299,6 @@ public class ConfigScreen {
         dbl_(cat, entry, "stepless_zoom.alt_multiplier", Config.STEPLESS_ZOOM_ALT_MULTIPLIER);
         bool_(cat, entry, "stepless_zoom.global_enabled", Config.STEPLESS_ZOOM_GLOBAL_ENABLED);
         dbl_(cat, entry, "stepless_zoom.global_speed", Config.STEPLESS_ZOOM_GLOBAL_SPEED);
-        bool_(cat, entry, "stepless_zoom.aim_blur_enabled", Config.STEPLESS_ZOOM_AIM_BLUR_ENABLED);
-        dbl_(cat, entry, "stepless_zoom.aim_blur_range", Config.STEPLESS_ZOOM_AIM_BLUR_RANGE);
-        dbl_(cat, entry, "stepless_zoom.aim_blur_strength", Config.STEPLESS_ZOOM_AIM_BLUR_STRENGTH);
-        dbl_(cat, entry, "stepless_zoom.aim_blur_far_distance", Config.STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE);
-        dbl_(cat, entry, "stepless_zoom.aim_blur_min_factor", Config.STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR);
     }
 
     private static void buildDynamicCrosshair(ConfigCategory cat, ConfigEntryBuilder entry) {

@@ -143,19 +143,19 @@ public final class AimBlur {
         AimingBlurConfig cfg = resolveDisplayConfig(player);
         boolean enabled = cfg != null && cfg.aim_blur_enabled != null
                 ? cfg.aim_blur_enabled.booleanValue()
-                : Config.STEPLESS_ZOOM_AIM_BLUR_ENABLED.get();
+                : Config.AIM_BLUR_ENABLED.get();
         float range = cfg != null && cfg.aim_blur_range != null
                 ? cfg.aim_blur_range.floatValue()
-                : Config.STEPLESS_ZOOM_AIM_BLUR_RANGE.get().floatValue();
+                : Config.AIM_BLUR_RANGE.get().floatValue();
         float strength = cfg != null && cfg.aim_blur_strength != null
                 ? cfg.aim_blur_strength.floatValue()
-                : Config.STEPLESS_ZOOM_AIM_BLUR_STRENGTH.get().floatValue();
+                : Config.AIM_BLUR_STRENGTH.get().floatValue();
         double far = cfg != null && cfg.aim_blur_far_distance != null
                 ? cfg.aim_blur_far_distance.doubleValue()
-                : Config.STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE.get();
+                : Config.AIM_BLUR_FAR_DISTANCE.get();
         float min = cfg != null && cfg.aim_blur_min_factor != null
                 ? cfg.aim_blur_min_factor.floatValue()
-                : Config.STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR.get().floatValue();
+                : Config.AIM_BLUR_MIN_FACTOR.get().floatValue();
         return new AimingParams(enabled, range, strength, far, min);
     }
 

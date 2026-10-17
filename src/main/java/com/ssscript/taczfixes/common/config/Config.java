@@ -300,11 +300,29 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_ALT_MULTIPLIER;
     public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_GLOBAL_ENABLED;
     public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_GLOBAL_SPEED;
-    public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_AIM_BLUR_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_RANGE;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR;
+    public static final ForgeConfigSpec.BooleanValue AIM_BLUR_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_RANGE;
+    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_FAR_DISTANCE;
+    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_MIN_FACTOR;
+    public static final ForgeConfigSpec.BooleanValue SUPPRESSION_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DETECTION_RANGE;
+    public static final ForgeConfigSpec.BooleanValue SUPPRESSION_INCLUDE_OWN_BULLETS;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_EXPOSURE_STRENGTH;
+    public static final ForgeConfigSpec.IntValue SUPPRESSION_EXPOSURE_DURATION_MS;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_BLUR_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_BLUR_RANGE;
+    public static final ForgeConfigSpec.IntValue SUPPRESSION_BLUR_DURATION_MS;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DARKEN_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DARKEN_RANGE;
+    public static final ForgeConfigSpec.IntValue SUPPRESSION_DARKEN_DURATION_MS;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER;
+    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER;
 
     public static final ForgeConfigSpec.BooleanValue DUAL_WIELD_ALLOW_OTHER_GUN_TYPES;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_TYPES;
@@ -611,21 +629,6 @@ public class Config {
         STEPLESS_ZOOM_GLOBAL_SPEED = BUILDER
                 .comment("全局无极变倍的倍率调整速度。默认值：0.5")
                 .defineInRange("global_speed", 0.5, 0.01, 10.0);
-        STEPLESS_ZOOM_AIM_BLUR_ENABLED = BUILDER
-                .comment("是否启用开镜模糊。默认值：false")
-                .define("aim_blur_enabled", false);
-        STEPLESS_ZOOM_AIM_BLUR_RANGE = BUILDER
-                .comment("开镜模糊范围。默认值：1.0")
-                .defineInRange("aim_blur_range", 1.0, 0.0, 2.0);
-        STEPLESS_ZOOM_AIM_BLUR_STRENGTH = BUILDER
-                .comment("开镜模糊强度。默认值：4.0")
-                .defineInRange("aim_blur_strength", 4.0, 0.0, 20.0);
-        STEPLESS_ZOOM_AIM_BLUR_FAR_DISTANCE = BUILDER
-                .comment("开镜模糊范围达到最大值的距离。默认值：32.0")
-                .defineInRange("aim_blur_far_distance", 32.0, 0.0, 256.0);
-        STEPLESS_ZOOM_AIM_BLUR_MIN_FACTOR = BUILDER
-                .comment("开镜模糊最小范围倍率。默认值：0.3")
-                .defineInRange("aim_blur_min_factor", 0.3, 0.0, 1.0);
 
         BUILDER.pop();
         SPECS.put("stepless_zoom", BUILDER.build());
@@ -1496,7 +1499,80 @@ public class Config {
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
         BUILDER.pop();
-        SPECS.put("pbr", BUILDER.build());
+        BUILDER.push("aim_blur");
+        AIM_BLUR_ENABLED = BUILDER
+                .comment("是否启用开镜模糊。默认值：false")
+                .define("enabled", false);
+        AIM_BLUR_RANGE = BUILDER
+                .comment("开镜模糊范围。默认值：1.0")
+                .defineInRange("range", 1.0, 0.0, 2.0);
+        AIM_BLUR_STRENGTH = BUILDER
+                .comment("开镜模糊强度。默认值：4.0")
+                .defineInRange("strength", 4.0, 0.0, 20.0);
+        AIM_BLUR_FAR_DISTANCE = BUILDER
+                .comment("开镜模糊范围达到最大值的距离。默认值：32.0")
+                .defineInRange("far_distance", 32.0, 0.0, 256.0);
+        AIM_BLUR_MIN_FACTOR = BUILDER
+                .comment("开镜模糊最小范围倍率。默认值：0.3")
+                .defineInRange("min_factor", 0.3, 0.0, 1.0);
+        BUILDER.pop();
+        BUILDER.push("suppression");
+        SUPPRESSION_ENABLED = BUILDER
+                .comment("是否启用压制效果（子弹从身边飞过时的屏幕边缘模糊与色散）。默认值：true")
+                .define("enabled", true);
+        SUPPRESSION_DETECTION_RANGE = BUILDER
+                .comment("检测子弹范围。默认值：1.5")
+                .defineInRange("detection_range", 1.5, 0.0, 16.0);
+        SUPPRESSION_INCLUDE_OWN_BULLETS = BUILDER
+                .comment("是否会压制自己。默认值：false")
+                .define("include_own_bullets", false);
+        SUPPRESSION_EXPOSURE_STRENGTH = BUILDER
+                .comment("色散强度。默认值：25.0")
+                .defineInRange("exposure_strength", 25.0, 0.0, 100.0);
+        SUPPRESSION_EXPOSURE_DURATION_MS = BUILDER
+                .comment("色散持续时长。默认值：450")
+                .defineInRange("exposure_duration_ms", 450, 0, 10000);
+        SUPPRESSION_BLUR_STRENGTH = BUILDER
+                .comment("模糊强度。默认值：4.0")
+                .defineInRange("blur_strength", 4.0, 0.0, 20.0);
+        SUPPRESSION_BLUR_RANGE = BUILDER
+                .comment("模糊范围。默认值：1.5")
+                .defineInRange("blur_range", 1.5, 0.0, 2.0);
+        SUPPRESSION_BLUR_DURATION_MS = BUILDER
+                .comment("模糊持续时长。默认值：600")
+                .defineInRange("blur_duration_ms", 600, 0, 10000);
+        SUPPRESSION_DARKEN_STRENGTH = BUILDER
+                .comment("屏幕边缘变暗强度。默认值：0.6")
+                .defineInRange("darken_strength", 0.6, 0.0, 2.0);
+        SUPPRESSION_DARKEN_RANGE = BUILDER
+                .comment("变暗范围。默认值：1.0")
+                .defineInRange("darken_range", 1.0, 0.0, 2.0);
+        SUPPRESSION_DARKEN_DURATION_MS = BUILDER
+                .comment("变暗持续时长。默认值：750")
+                .defineInRange("darken_duration_ms", 750, 0, 10000);
+        SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的色散强度倍率。默认值：2.0")
+                .defineInRange("sniper_rpg_exposure_strength_multiplier", 2.0, 0.0, 10.0);
+        SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的色散持续时长倍率。默认值：2.0")
+                .defineInRange("sniper_rpg_exposure_duration_multiplier", 2.0, 0.0, 10.0);
+        SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的模糊强度倍率。默认值：1.65")
+                .defineInRange("sniper_rpg_blur_strength_multiplier", 1.65, 0.0, 10.0);
+        SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的模糊持续时长倍率。默认值：1.65")
+                .defineInRange("sniper_rpg_blur_duration_multiplier", 1.65, 0.0, 10.0);
+        SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的变暗强度倍率。默认值：1.44")
+                .defineInRange("sniper_rpg_darken_strength_multiplier", 1.44, 0.0, 10.0);
+        SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的变暗持续时长倍率。默认值：1.44")
+                .defineInRange("sniper_rpg_darken_duration_multiplier", 1.44, 0.0, 10.0);
+        SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER = BUILDER
+                .comment("sniper/rpg 类型武器子弹的检测子弹范围倍率。默认值：2.0")
+                .defineInRange("sniper_rpg_detection_range_multiplier", 2.0, 0.0, 10.0);
+        BUILDER.pop();
+        SPECS.put("visual_effect", BUILDER.build());
     }
 
     /** 某种枪械类型的全局光照值(data 中未配置 light 的该类型枪械使用; time 为 0 表示该类不发光)。 */

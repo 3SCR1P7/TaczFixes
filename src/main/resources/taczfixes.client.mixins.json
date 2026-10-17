@@ -110,6 +110,8 @@
         "MixinBedrockGunModelInspect",
         "MixinBedrockGunModelScope",
         "MixinEntityBulletRenderer",
+        "MixinEntityBulletSuppression",
+        "MixinEntityKineticBulletSpawnData",
         "MixinBlockLightEngineEmission",
         "MixinEntityKineticBulletClientLight",
         "MixinGunDisplayInstanceAccessor",
