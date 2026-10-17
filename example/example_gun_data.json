@@ -1,15 +1,34 @@
 {
   "taczfixes": {
     "custom_hud": "tacz:custom_hud_1",
-	"enchantment_ability": 100,
-	"allow_shooting_underwater": true,
-	"durability": {
+    "enchantment_ability": 100,
+    "allow_shooting_underwater": true,
+    "suppression": {
+      "enable": true,
+      "detection_range": 1.5,
+      "exposure": {
+        "strength": 25.0,
+        "duration": 450
+      },
+      "blur": {
+        "strength": 4.0,
+        "duration": 600,
+        "range": 1.5
+      },
+      "darken": {
+        "strength": 0.6,
+        "duration": 750,
+        "range": 1.0
+      }
+    },
+    "durability": {
       // 耐久值上限
       "durability": 1000,
       // 开火时消耗的耐久值
       "fire_consumption": 1,
       // 无耐久时的动作，可选remove，disable，none
       // remove为直接消失，disable为无法开火，none为无
+      // disable的阻拦开火复用电量不足的
       "damage_action": "disable",
       // 在铁砧修复时支持的材料，为空则无法在铁砧修复
       "repair_material": ["minecraft:iron_ingot","#c:ingots"],
@@ -74,7 +93,8 @@
         "level_max": 10,
         // 光照持续时间结束时的光照等级
         // 持续时间内会在level_max和level_min间线性插值
-        "level_min": 5
+        "level_min": 5,
+        "color": "#33e1f1"
       },
       "explosion": {
         // 光照持续时间，单位ms
@@ -83,7 +103,8 @@
         "level_max": 15,
         // 光照持续时间结束时的光照等级
         // 持续时间内会在level_max和level_min间线性插值
-        "level_min": 5
+        "level_min": 5,
+        "color": "#33e1f1"
       },
       "bullet": {
         // 光照持续时间，单位ms
@@ -92,10 +113,27 @@
         "level_max": 5,
         // 光照持续时间结束时的光照等级
         // 持续时间内会在level_max和level_min间线性插值
-        "level_min": 5
+        "level_min": 5,
+        "color": "#33e1f1"
       }
     },
-	"dual_wield": {
+    "aiming_stamina": {
+      // 耐力消耗倍率
+      "consumption_multiplier": 2.0,
+      // 耐力恢复倍率
+      "recovery_multiplier": 2.0,
+
+      // 这些会取代配置文件中的值
+      "recovery_delay": 100,
+      "min_stamina_to_aim": 20,
+      "hold_breath_consumption_multiplier": 3.0,
+      "weight_consumption": 0.05,
+      "sway_amplitude": 0.32,
+      "sway_speed": 0.08,
+      "sway_low_stamina_multiplier": 5.0,
+      "sway_hold_breath_calm": 200
+    },
+    "dual_wield": {
       "enable": true,
       "recoil_multiplier": 1.5,
       "inaccuracy_multiplier": 1.5,
@@ -103,10 +141,11 @@
       "focus_aim_inaccuracy_multiplier": 1.25,
       "left_offset": -0.58,
       "right_offset": 0.18,
+      "reload_animation": true,
       "hand_pos": {
         //在左手时使用的手臂定位组以及是否镜像
         "on_left": {
-          //使用的手臂定位组，可选left、right、none、both
+          //使用的手臂定位组，可选left、right、none
           "pos": "left",
           "mirror": true,
           "offset": [1,2,3]
@@ -118,26 +157,6 @@
           "offset": [3,4,5]
         }
       }
-	},
-    "aiming_stamina": {
-      // 耐力消耗倍率
-      "consumption_multiplier": 2.0,
-      // 耐力恢复倍率
-      "recovery_multiplier": 2.0,
-      // 这些会取代配置文件中的值
-      "recovery_delay": 100,
-      "min_stamina_to_aim": 20,
-      "hold_breath_consumption_multiplier": 3.0,
-      "weight_consumption": 0.05,
-      "sway_amplitude": 0.32,
-      "sway_speed": 0.08,
-      "sway_low_stamina_multiplier": 5.0,
-      "sway_hold_breath_calm": 200,
-	  "shoot_cost": 1,
-	  "melee_cost": 10,
-	  "sway_hold_breath_low_multiplier": 2.0,
-	  "sway_sneak_multiplier": 0.8,
-	  "sway_crawl_multiplier": 0.4
     },
     "stamina": {
       // 耐力消耗倍率
@@ -261,34 +280,36 @@
       "auto": {
         // 宽容时间，单位毫秒。
         "window": 200,
-        // 修饰器名称，必须为modifier_*。不可重复。
-        "modifier_1": {
-          // 在第count发触发此倍率。
-          "count": 1,
-          // 竖直后坐力倍率。
-          "pitch_multiplier": 3.0,
-          // 水平后坐力倍率。
-          "yaw_multiplier": 2.0
-          // 宽容时间，单位毫秒。
-        },
-        "modifier_2": {
-          // 可以是区间
-          "count": [2,3],
-          "pitch_multiplier": 1.5,
-          "yaw_multiplier": 1.5
-        },
-        "modifier_3": {
-          // 如果区间只有一项n，那么视为[n,+∞)
-          "count": [4],
-          "pitch_multiplier": 0.5,
-          "yaw_multiplier": 0.5
-        },
-        "modifier_4": {
-          // 第三项为步长
-          "count": [5,"infinite",5],
-          "pitch_multiplier": 3,
-          "yaw_multiplier": 0.2
-        }
+        // 修饰器
+        "modifiers": [
+          {
+            // 在第count发触发此倍率。
+            "count": 1,
+            // 竖直后坐力倍率。
+            "pitch_multiplier": 3.0,
+            // 水平后坐力倍率。
+            "yaw_multiplier": 2.0
+            // 宽容时间，单位毫秒。
+          },
+          {
+            // 可以是区间
+            "count": [2,3],
+            "pitch_multiplier": 1.5,
+            "yaw_multiplier": 1.5
+          },
+          {
+            // 如果区间只有一项n，那么视为[n,+∞)
+            "count": [4],
+            "pitch_multiplier": 0.5,
+            "yaw_multiplier": 0.5
+          },
+          {
+            // 第三项为步长
+            "count": [5,"infinite",5],
+            "pitch_multiplier": 3,
+            "yaw_multiplier": 0.2
+          }
+        ]
       }
     },
     "fire_knockback": {
@@ -326,6 +347,17 @@
           "handguard": [
             "#tacz:handguard"
           ]
+        },
+        // 此槽位内置的配件
+        "builtin_attachments": {
+          // 可选的原厂配件
+          "attachments": [
+            "emx_re:am_push_1",
+            "emx_re:am_push_2",
+            "emx_re:am_push_3"
+          ],
+          // 默认具有的原厂配件
+          "default_attached": "emx_re:am_push_1"
         }
       },
       "handguard": {
@@ -338,6 +370,14 @@
         "allow_attachments": [
           "#tacz:handguard",
           "tacz:laser_compact"
+        ],
+        // 黑名单
+        "blacklist": [
+          "#tacz:blacklisted"
+        ],
+        // 白名单
+        "whitelist": [
+          "#tacz:whitelisted"
         ]
       },
       "scope2": {
