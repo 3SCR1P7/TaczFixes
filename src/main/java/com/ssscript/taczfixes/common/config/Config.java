@@ -12,6 +12,8 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue PBR_ENABLED;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM;
     public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION;
+    public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION_AREA;
+    public static final ForgeConfigSpec.DoubleValue PBR_GLARE_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_EMISSION;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
@@ -19,7 +21,6 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
     private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    /** 每个顶层段落一个配置文件, 值为该段落的 spec。 */
     public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_STANDING;
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_SNEAKING;
@@ -1477,6 +1478,12 @@ public class Config {
         PBR_REFLECTION = BUILDER
                 .comment("枪械材质反光强度。默认值：0.5")
                 .defineInRange("reflection_strength", 0.5, 0.0, 4.0);
+        PBR_REFLECTION_AREA = BUILDER
+                .comment("光源直射时枪身反光的面积倍率。默认值：2.0")
+                .defineInRange("reflection_area", 2.0, 0.5, 10.0);
+        PBR_GLARE_STRENGTH = BUILDER
+                .comment("枪身高光的眩光强度。默认值：2.0")
+                .defineInRange("glare_strength", 2.0, 0.0, 10.0);
         PBR_EMISSION = BUILDER
                 .comment("枪械自发光强度。默认值：1.0")
                 .defineInRange("emission_strength", 1.0, 0.0, 4.0);
@@ -1487,7 +1494,7 @@ public class Config {
                 .comment("枪械泛光强度。默认值：0.8")
                 .defineInRange("bloom_strength", 0.8, 0.0, 2.0);
         PBR_BLOOM_RADIUS = BUILDER
-                .comment("泛光半径（屏幕像素），越大开销越高。默认值：8.0")
+                .comment("泛光半径，越大开销越高。默认值：8.0")
                 .defineInRange("bloom_radius", 8.0, 1.0, 40.0);
         PBR_BLOOM_RESOLUTION = BUILDER
                 .comment("泛光渲染分辨率倍率，越高效果越好，但开销更大。默认值：1.0")

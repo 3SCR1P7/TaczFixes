@@ -1034,9 +1034,6 @@ public final class DualWieldClient {
         OffhandDisplayManager.triggerNative("shoot");
         DualMuzzleFlashState.record(DualRenderContext.HandPhase.OFFHAND);
         markThirdPersonFlashHand(DualRenderContext.HandPhase.OFFHAND);
-        // 副手开火是服务端权威的, TaCZ 的 ServerMessageGunFire 只发给追踪该实体的其他玩家(TRACKING_ENTITY 不含自己),
-        // 本地玩家的副手拿不到 GunFireEvent, ThirdPersonMuzzleParticleManager 永远没有这副手的开火记录, 第三人称自然没有火光。
-        // 这里在副手开火瞬间自己补一条记录。
         com.tacz.guns.client.particle.ThirdPersonMuzzleParticleManager.onShoot(player, stack);
         boolean aiming = IGunOperator.fromLivingEntity(player).getSynAimingProgress() > 0.0f;
         playOffhandThirdPersonPlayerAnimation(player, stack,

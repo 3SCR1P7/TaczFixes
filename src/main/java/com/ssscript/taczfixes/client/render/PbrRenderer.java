@@ -321,13 +321,16 @@ public final class PbrRenderer {
                 shader.safeGetUniform("HasSpecular").set(material.specular() == null ? 0 : 1);
                 shader.safeGetUniform("HasNormal").set(material.normal() == null ? 0 : 1);
                 shader.safeGetUniform("ReflectionStrength").set(material.specular() == null ? 0f : Config.PBR_REFLECTION.get().floatValue());
+                shader.safeGetUniform("ReflectionArea").set(Config.PBR_REFLECTION_AREA.get().floatValue());
+                shader.safeGetUniform("GlareStrength").set(material.specular() == null ? 0f : Config.PBR_GLARE_STRENGTH.get().floatValue());
                 shader.safeGetUniform("EmissionStrength").set(Config.PBR_EMISSION.get().floatValue());
                 shader.safeGetUniform("EmissionPass").set(0);
                 RenderSystem.setShader(() -> shader);
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
 
+                boolean glare = material.specular() != null && Config.PBR_GLARE_STRENGTH.get().floatValue() > 0.0f;
                 if (PbrBloom.canCapture() && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
-                        && (material.emissive() || PbrBloom.hasEmissiveContent())
+                        && (material.emissive() || PbrBloom.hasEmissiveContent() || glare)
                         && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
                         == Minecraft.getInstance().getMainRenderTarget().frameBufferId) {
                     boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);

@@ -417,6 +417,8 @@
     "config.taczfixes.category.pbr": "PBR Reflections",
     "config.taczfixes.entry.pbr.enabled": "Enable PBR",
     "config.taczfixes.entry.pbr.reflection_strength": "Reflection Strength",
+    "config.taczfixes.entry.pbr.reflection_area": "Reflection Area",
+    "config.taczfixes.entry.pbr.glare_strength": "Glare Strength",
     "config.taczfixes.entry.pbr.emission_strength": "Emission Strength",
     "config.taczfixes.entry.pbr.bloom": "Enable Bloom",
     "config.taczfixes.entry.pbr.bloom_strength": "Bloom Strength",

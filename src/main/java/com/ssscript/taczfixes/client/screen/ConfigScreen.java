@@ -46,6 +46,8 @@ public class ConfigScreen {
         sub(cat, entry, "pbr", e -> {
             bool_(e, entry, "pbr.enabled", Config.PBR_ENABLED);
             dbl_(e, entry, "pbr.reflection_strength", Config.PBR_REFLECTION);
+            dbl_(e, entry, "pbr.reflection_area", Config.PBR_REFLECTION_AREA);
+            dbl_(e, entry, "pbr.glare_strength", Config.PBR_GLARE_STRENGTH);
             dbl_(e, entry, "pbr.emission_strength", Config.PBR_EMISSION);
             bool_(e, entry, "pbr.bloom", Config.PBR_BLOOM);
             dbl_(e, entry, "pbr.bloom_strength", Config.PBR_BLOOM_STRENGTH);

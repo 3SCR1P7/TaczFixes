@@ -207,6 +207,22 @@
     {
       "type": "float",
       "count": 1,
+      "name": "ReflectionArea",
+      "values": [
+        2.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "GlareStrength",
+      "values": [
+        1.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
       "name": "EmissionStrength",
       "values": [
         1.0

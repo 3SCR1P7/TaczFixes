@@ -22,9 +22,11 @@ vec3 chromatic(sampler2D tex, vec2 uv, vec2 offset) {
 }
 
 void main() {
-    // 距屏幕边缘的距离(0 中心, 1 边缘), 取两轴较大值形成方形遮罩
+    // 距屏幕边缘的距离(0 中心, 1 边缘)。用平滑的 p-范数近似方形遮罩:
+    // max(|x|,|y|) 在四条对角线上梯度突变, 会形成可见的对角线亮带。
     vec2 d = (texCoord - 0.5) * 2.0;
-    float edge = max(abs(d.x), abs(d.y));
+    vec2 ad = abs(d);
+    float edge = pow(pow(ad.x, 6.0) + pow(ad.y, 6.0), 1.0 / 6.0);
     vec2 offset = d * Aberration * AbOpacity;
     // 原始画面先加色散, 再按遮罩叠加上两层模糊(越靠屏幕中心模糊越弱)
     vec3 color = chromatic(Sampler2, texCoord, offset);
