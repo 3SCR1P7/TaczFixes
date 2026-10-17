@@ -97,12 +97,16 @@ public final class PbrRenderer {
                 ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
         shader.safeGetUniform("CelestialVisibility").set(visible ? 1f : 0f);
         shader.safeGetUniform("LocalSkyExposure").set(level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
-        // 淋雨打湿: 仅在露天淋雨时生效, 强度跟随雨量
+        // 淋雨打湿: 仅主世界、露天且头顶无遮挡时生效, 强度跟随雨量。
+        // 用玩家位置而不是相机位置: 第三人称相机可能在屋檐外, 但枪和玩家在遮挡下不应打湿。
         float wetness = 0f;
-        if (level.isRaining()) {
-            float rain = level.getRainLevel(partialTick);
-            if (level.isRainingAt(BlockPos.containing(origin))) {
-                wetness = rain;
+        var wetnessAnchor = Minecraft.getInstance().player != null
+                ? Minecraft.getInstance().player.position() : origin;
+        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && level.isRaining()) {
+            BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
+            // isRainingAt 已包含 canSeeSky/高度图/群系降雨检查; canSeeSky 再显式确认头顶无方块遮挡。
+            if (level.canSeeSky(wetPos) && level.isRainingAt(wetPos)) {
+                wetness = level.getRainLevel(partialTick);
             }
         }
         shader.safeGetUniform("Wetness").set(wetness);

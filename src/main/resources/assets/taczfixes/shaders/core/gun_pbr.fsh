@@ -68,7 +68,12 @@ vec3 metalF0(float code, vec3 albedo) {
 vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0) {
     float nv = max(dot(n, v), 0.001);
     float area = clamp(ReflectionArea, 0.1, 8.0);
-    float gr = clamp(roughness * (0.75 + area), 0.05, 1.0);
+    // 雨天打湿会大幅降低粗糙度, GGX 峰值按四次方暴涨导致眩光过强: 给眩光单独设粗糙度下限。
+    float glareRoughness = max(roughness, 0.12);
+    // 眩光与天气平衡: 晴天(含室内局部光)整体增强, 下雨时衰减, 避免雨天过曝/晴天过暗。
+    float wet = clamp(Wetness, 0.0, 1.0);
+    float weatherGain = mix(1.6, 0.45, wet);
+    float gr = clamp(glareRoughness * (0.75 + area), 0.05, 1.0);
     float a2 = pow(gr, 4.0);
     float k = pow(gr + 1.0, 2.0) / 8.0;
     float exposure = min(skyExposure, LocalSkyExposure);
@@ -95,7 +100,7 @@ vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0) {
     vec3 lf = f0 + (1.0 - f0) * pow(1.0 - lvh, 5.0);
     sum += lf * ld * lg / max(4.0 * nv, 0.001) * mix(0.5, 1.0, 1.0 - gr)
             * LocalLightColor * LocalLightStrength * 0.22;
-    return sum;
+    return sum * weatherGain;
 }
 
 void main() {
