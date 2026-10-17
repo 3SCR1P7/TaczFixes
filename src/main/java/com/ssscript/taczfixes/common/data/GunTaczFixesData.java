@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.data;
 
+import java.util.List;
 import java.util.Map;
 
 public class GunTaczFixesData {
@@ -201,7 +202,8 @@ public class GunTaczFixesData {
         public Double pitch_multiplier;
         public Double yaw_multiplier;
         public Integer window;
-        public Map<String, RecoilModifierConfig> modifiers;
+        /** 新格式: 按顺序匹配 count, 后匹配的条目覆盖前面的倍率。transient 由 RecoilConfigJsonParser 手动解析。 */
+        public transient List<RecoilModifierConfig> modifiers;
     }
 
     public static class RecoilModifierConfig {

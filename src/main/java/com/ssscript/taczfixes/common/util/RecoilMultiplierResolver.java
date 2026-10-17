@@ -68,11 +68,11 @@ public class RecoilMultiplierResolver {
         Double pitch = null;
         Double yaw = null;
         if (config.modifiers != null && !config.modifiers.isEmpty()) {
-            for (GunTaczFixesData.RecoilModifierConfig mod : config.modifiers.values()) {
+            for (GunTaczFixesData.RecoilModifierConfig mod : config.modifiers) {
                 if (mod != null && shotInRange(mod, count)) {
-                    pitch = mod.pitch_multiplier;
-                    yaw = mod.yaw_multiplier;
-                    break;
+                    // 新格式: 后面的条目覆盖前面的条目, 便于用步长条目覆盖区间条目。
+                    if (mod.pitch_multiplier != null) pitch = mod.pitch_multiplier;
+                    if (mod.yaw_multiplier != null) yaw = mod.yaw_multiplier;
                 }
             }
         } else if (count == 1) {

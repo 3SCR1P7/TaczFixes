@@ -6,7 +6,6 @@ import com.google.gson.JsonObject;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class RecoilConfigJsonParser {
@@ -21,25 +20,29 @@ public class RecoilConfigJsonParser {
             GunTaczFixesData.RecoilConfig config = recoilMap.get(modeEntry.getKey());
             if (config == null || !modeEntry.getValue().isJsonObject()) continue;
             JsonObject modeObj = modeEntry.getValue().getAsJsonObject();
-            Map<String, GunTaczFixesData.RecoilModifierConfig> mods = new LinkedHashMap<>();
-            for (Map.Entry<String, JsonElement> modEntry : modeObj.entrySet()) {
-                String key = modEntry.getKey();
-                if ("window".equals(key) || "pitch_multiplier".equals(key)
-                        || "yaw_multiplier".equals(key) || "modifiers".equals(key)) continue;
-                if (!modEntry.getValue().isJsonObject()) continue;
-                GunTaczFixesData.RecoilModifierConfig mod =
-                        parseRecoilModifier(modEntry.getValue().getAsJsonObject());
-                if (mod != null) {
-                    mods.put(key, mod);
-                } else {
-                    LOGGER.warn("taczfixes: recoil modifier {} of mode {} ignored, invalid count", key, modeEntry.getKey());
+            JsonElement modifiersEl = modeObj.get("modifiers");
+            if (modifiersEl != null && modifiersEl.isJsonArray()) {
+                java.util.List<GunTaczFixesData.RecoilModifierConfig> mods = new java.util.ArrayList<>();
+                JsonArray array = modifiersEl.getAsJsonArray();
+                for (int i = 0; i < array.size(); i++) {
+                    JsonElement element = array.get(i);
+                    if (element == null || !element.isJsonObject()) continue;
+                    GunTaczFixesData.RecoilModifierConfig mod =
+                            parseRecoilModifier(element.getAsJsonObject());
+                    if (mod != null) {
+                        mods.add(mod);
+                    } else {
+                        LOGGER.warn("taczfixes: recoil modifiers[{}] of mode {} ignored, invalid count",
+                                i, modeEntry.getKey());
+                    }
                 }
+                config.modifiers = mods.isEmpty() ? null : mods;
             }
-            if (mods.isEmpty()) continue;
-            if (config.modifiers == null) {
-                config.modifiers = mods;
-            } else {
-                config.modifiers.putAll(mods);
+            for (String key : modeObj.keySet()) {
+                if (key.startsWith("modifier_")) {
+                    LOGGER.warn("taczfixes: recoil_multiplier.{} of mode {} uses the removed {}=... format, "
+                            + "convert it to the modifiers array", key, modeEntry.getKey(), key);
+                }
             }
         }
     }
