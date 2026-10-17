@@ -359,6 +359,11 @@ public class ConfigScreen {
         bool_(cat, entry, "compat.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
         bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);
+        sub(cat, entry, "gun_pack", e -> {
+            int_(e, entry, "compat.gun_pack.button_offset_x", Config.GUN_PACK_BUTTON_OFFSET_X);
+            int_(e, entry, "compat.gun_pack.button_offset_y", Config.GUN_PACK_BUTTON_OFFSET_Y);
+            int_(e, entry, "compat.gun_pack.button_size", Config.GUN_PACK_BUTTON_SIZE);
+        });
     }
 
     private static void buildEnchantment(ConfigCategory cat, ConfigEntryBuilder entry) {

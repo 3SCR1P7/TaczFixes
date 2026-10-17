@@ -7,6 +7,7 @@ import com.ssscript.taczfixes.common.data.GunPackSettings;
 import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
@@ -26,6 +27,11 @@ public final class GunPackScreen {
     }
 
     public static Screen create() {
+        return create(null);
+    }
+
+    /** parent 用于从主菜单/暂停界面进入时返回; 已有世界时沿用原有行为(关闭界面回到游戏)。 */
+    public static Screen create(Screen parent) {
         Path taczDir = FMLPaths.GAMEDIR.get().resolve("tacz");
         int format = SharedConstants.getCurrentVersion().getPackVersion(PackType.CLIENT_RESOURCES);
         // 每次 reload 都重新扫描, 这样拖入界面的新枪包(原版会复制进 tacz 目录)也能出现。
@@ -37,6 +43,8 @@ public final class GunPackScreen {
         });
         repository.reload();
         repository.setSelected(GunPackSettings.arrange(new ArrayList<>(repository.getAvailableIds())));
+        Minecraft minecraft = Minecraft.getInstance();
+        boolean inWorld = minecraft.level != null;
         return new PackSelectionScreen(repository, repo -> {
             List<String> selected = new ArrayList<>(repo.getSelectedIds());
             List<String> disabled = new ArrayList<>();
@@ -47,10 +55,20 @@ public final class GunPackScreen {
             // 无改动则不写设置、不重载(避免仅点击"完成"也触发资源重载)。
             boolean changed = !GunPackSettings.order().equals(selected)
                     || !GunPackSettings.disabledNames().equals(disabled);
-            Minecraft.getInstance().setScreen(null);
             if (changed) {
                 GunPackSettings.update(selected, disabled);
-                PendingResourceReload.request();
+            }
+            if (inWorld) {
+                minecraft.setScreen(null);
+                if (changed) {
+                    PendingResourceReload.request();
+                }
+            } else {
+                // 主菜单没有世界: 立即重载客户端资源(数据包会在下次进入世界时由枪包设置生效)
+                minecraft.setScreen(parent != null ? parent : new TitleScreen());
+                if (changed) {
+                    minecraft.reloadResourcePacks();
+                }
             }
         }, taczDir, Component.translatable("gui.taczfixes.gun_packs.title"));
     }

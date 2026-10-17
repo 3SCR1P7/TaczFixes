@@ -128,6 +128,9 @@ public class Config {
     public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
     public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
+    public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_X;
+    public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_Y;
+    public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_SIZE;
     public static final ForgeConfigSpec.BooleanValue DYNAMIC_CROSSHAIR_ENABLED;
     public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FACTOR;
     public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FIRE_EXPANSION;
@@ -811,6 +814,17 @@ public class Config {
         DISABLE_THIRD_PERSON = BUILDER
                 .comment("禁用切换第三人称视角。默认值：false")
                 .define("disable_third_person", false);
+        BUILDER.pop();
+        BUILDER.push("gun_pack");
+        GUN_PACK_BUTTON_OFFSET_X = BUILDER
+                .comment("主菜单/暂停界面枪包管理按钮的水平偏移（像素）。默认值：0")
+                .defineInRange("button_offset_x", 0, -400, 400);
+        GUN_PACK_BUTTON_OFFSET_Y = BUILDER
+                .comment("主菜单/暂停界面枪包管理按钮的垂直偏移（像素）。默认值：0")
+                .defineInRange("button_offset_y", 0, -400, 400);
+        GUN_PACK_BUTTON_SIZE = BUILDER
+                .comment("主菜单/暂停界面枪包管理按钮的尺寸（像素）。默认值：20")
+                .defineInRange("button_size", 20, 8, 40);
         BUILDER.pop();
         SPECS.put("compat", BUILDER.build());
 
