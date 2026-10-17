@@ -1485,7 +1485,6 @@ public class Config {
         SPECS.put("dual_wield", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
-        BUILDER.push("pbr");
         PBR_ENABLED = BUILDER
                 .comment("是否启用 PBR 反光和自发光效果，仅影响客户端画面。默认值：true")
                 .define("enabled", true);
@@ -1519,7 +1518,9 @@ public class Config {
         PBR_BLOOM_TRACER = BUILDER
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
-        BUILDER.pop();
+        SPECS.put("visual_effect", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("aim_blur");
         AIM_BLUR_ENABLED = BUILDER
                 .comment("是否启用开镜模糊。默认值：false")
@@ -1548,8 +1549,8 @@ public class Config {
                 .comment("是否会压制自己。默认值：false")
                 .define("include_own_bullets", false);
         SUPPRESSION_EXPOSURE_STRENGTH = BUILDER
-                .comment("色散强度。默认值：25.0")
-                .defineInRange("exposure_strength", 25.0, 0.0, 100.0);
+                .comment("色散强度。默认值：16.0")
+                .defineInRange("exposure_strength", 16.0, 0.0, 100.0);
         SUPPRESSION_EXPOSURE_DURATION_MS = BUILDER
                 .comment("色散持续时长。默认值：450")
                 .defineInRange("exposure_duration_ms", 450, 0, 10000);
@@ -1593,7 +1594,7 @@ public class Config {
                 .comment("sniper/rpg 类型武器子弹的检测子弹范围倍率。默认值：2.0")
                 .defineInRange("sniper_rpg_detection_range_multiplier", 2.0, 0.0, 10.0);
         BUILDER.pop();
-        SPECS.put("visual_effect", BUILDER.build());
+        SPECS.put("suppression", BUILDER.build());
     }
 
     /** 某种枪械类型的全局光照值(data 中未配置 light 的该类型枪械使用; time 为 0 表示该类不发光)。 */
