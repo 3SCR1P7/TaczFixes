@@ -240,7 +240,9 @@ void main() {
     color += reflection * (1.0 - color);
     // 太阳漫反射: 不依赖视线方向, 太阳照到的面从任何视角都能看到被照亮。
     float sunDiffuse = max(nl, 0.0) * exposure * CelestialVisibility;
-    color += CelestialColor * sunDiffuse * wetBase * 0.40;
+    color += CelestialColor * sunDiffuse * wetBase * 0.30;
+    // 天空环境漫反射: 垂直视角时可见面通常不朝向太阳, 给一点与视线无关的环境补光。
+    color += CelestialColor * wetBase * SkyAmbient * exposure * 0.12;
     color = mix(overlayColor.rgb, color, overlayColor.a);
     color = mix(color, base.rgb * rawVertexColor.rgb * ColorModulator.rgb, clamp(emission * EmissionStrength, 0.0, 1.0));
     color += glow * 0.25;
