@@ -116,6 +116,10 @@ public final class GunPackInfoScanner {
         Map<String, String> lang = readLang(path, namespace, language);
         displayName = text(nameKey, namespace, lang);
         description = text(descKey, "", lang);
+        if (description.getString().isEmpty()) {
+            String fileName = path.getFileName() == null ? namespace : path.getFileName().toString();
+            description = Component.literal(fileName);
+        }
         // 有自带 logo 就用自身枪包, 否则使用默认枪包的 logo。
         Path iconPath = path;
         if (logo == null) {
