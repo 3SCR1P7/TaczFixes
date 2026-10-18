@@ -64,6 +64,26 @@ public final class GunPackInfoScanner {
             }
         } catch (Throwable ignored) {
         }
+        return decorateDuplicateNames(result);
+    }
+
+    /** 同名命名空间有多个枪包时, 在显示名后追加文件名以便区分。 */
+    private static List<PackInfoData> decorateDuplicateNames(List<PackInfoData> packs) {
+        Map<String, Integer> counts = new HashMap<>();
+        for (PackInfoData info : packs) {
+            counts.merge(info.name(), 1, Integer::sum);
+        }
+        List<PackInfoData> result = new ArrayList<>(packs.size());
+        for (PackInfoData info : packs) {
+            if (counts.getOrDefault(info.name(), 0) <= 1) {
+                result.add(info);
+                continue;
+            }
+            String fileName = info.path().getFileName() == null ? info.name() : info.path().getFileName().toString();
+            Component displayName = Component.literal(info.displayName().getString() + " (" + fileName + ")");
+            result.add(new PackInfoData(info.id(), info.name(), info.path(), info.iconPath(),
+                    displayName, info.description(), info.logo()));
+        }
         return result;
     }
 
