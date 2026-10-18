@@ -125,6 +125,8 @@ void main() {
     if (HasNormal != 0) {
         vec3 normalMap = texture(Sampler4, texCoord0).rgb;
         n = mappedNormal(n, normalMap.rg * 2.0 - 1.0);
+        // LabPBR 的 AO 在部分贴图里写 0 会把所有常规反射乘没, 只留下泛光眩光; 给一个下限。
+
         ao = normalMap.b;
     }
     vec3 v = safeNormalize(-viewPosition);
@@ -209,12 +211,14 @@ void main() {
     vec3 envFresnel = f0 + (1.0 - f0) * pow(1.0 - nv, 5.0);
     // 反射整体按底色亮度缩放(含金属): 黑/灰枪即使被 _s 图标成金属也不会被天空反射洗白/偏蓝
     float baseLuma = clamp(dot(linearBase, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
+    // 金属环境反射按 F0 着色, 不能再乘底色亮度, 否则深色金属只有正对日月时才看得到反射。
     vec3 envTint = mix(min(linearBase * 1.3, vec3(0.8)), min(f0 * 2.0, vec3(0.9)), metallic)
             * (0.15 + 0.85 * baseLuma);
     float envVisibility = (0.25 + 0.75 * SkyAmbient) * (0.30 + 0.70 * exposure)
             * (1.0 - roughness * 0.6);
     // 背向日月/局部光源时环境反射也大幅压暗(背面只留 8% 底光)
     float litFacing = max(nl * CelestialVisibility, lnl * LocalLightStrength);
+    // 金属环境反射不应随日月方向消失; 只有非金属才按受光面压暗。
     float envFace = mix(0.08, 1.0, smoothstep(0.0, 0.4, litFacing));
     // 局部光反光不受 _s 贴图有无限制(没有反射强度配置时也能看到)
     vec3 reflection = (direct + environment * envTint * envFresnel * envVisibility * envFace)
@@ -234,6 +238,9 @@ void main() {
     // environment to replace the diffuse energy removed by a full metal BRDF.
     // Darkening all metal here made it black indoors or away from the highlight.
     color += reflection * (1.0 - color);
+    // 太阳漫反射: 不依赖视线方向, 太阳照到的面从任何视角都能看到被照亮。
+    float sunDiffuse = max(nl, 0.0) * exposure * CelestialVisibility;
+    color += CelestialColor * sunDiffuse * wetBase * 0.40;
     color = mix(overlayColor.rgb, color, overlayColor.a);
     color = mix(color, base.rgb * rawVertexColor.rgb * ColorModulator.rgb, clamp(emission * EmissionStrength, 0.0, 1.0));
     color += glow * 0.25;
