@@ -23,7 +23,6 @@ import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /** 枪包管理: 直接复用原版资源包界面(PackSelectionScreen), 只把枪包作为包列表传入。 */
 public final class GunPackScreen {
@@ -40,27 +39,24 @@ public final class GunPackScreen {
         int format = SharedConstants.getCurrentVersion().getPackVersion(PackType.CLIENT_RESOURCES);
         // 每次 reload 都重新扫描, 这样拖入界面的新枪包(原版会复制进 tacz 目录)也能出现。
         String language = Minecraft.getInstance().getLanguageManager().getSelected();
-        List<GunPackInfoScanner.PackInfoData> infos = GunPackInfoScanner.scan(taczDir, language);
         Map<String, String> idToName = new LinkedHashMap<>();
-        Set<String> names = new LinkedHashSet<>();
-        for (GunPackInfoScanner.PackInfoData info : infos) {
-            idToName.put(info.id(), info.name());
-            names.add(info.name());
-        }
-        // 同命名空间可能有多个枪包, PackRepository 的 id 必须唯一。
+        // 每次 reload 都重新扫描, 否则拖入新枪包后 PackRepository 仍使用旧的扫描结果。
         PackRepository repository = new PackRepository(consumer -> {
+            List<GunPackInfoScanner.PackInfoData> infos = GunPackInfoScanner.scan(taczDir, language);
+            idToName.clear();
             for (GunPackInfoScanner.PackInfoData info : infos) {
+                idToName.put(info.id(), info.name());
                 consumer.accept(createPack(info, format));
             }
         });
         repository.reload();
-        List<String> arrangedNames = GunPackSettings.arrange(new ArrayList<>(names));
+        List<String> arrangedNames = GunPackSettings.arrange(
+                new ArrayList<>(new LinkedHashSet<>(idToName.values())));
         List<String> selected = new ArrayList<>();
-        for (String name : arrangedNames) {
-            for (GunPackInfoScanner.PackInfoData info : infos) {
-                if (name.equals(info.name())) {
-                    selected.add(info.id());
-                }
+        for (String id : repository.getAvailableIds()) {
+            String name = idToName.get(id);
+            if (name != null && arrangedNames.contains(name)) {
+                selected.add(id);
             }
         }
         repository.setSelected(selected);
