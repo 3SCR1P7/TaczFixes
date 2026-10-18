@@ -99,16 +99,11 @@ public final class DualReloadCoordinator {
         if (main == null || offhand == null) {
             return false;
         }
-        if (main.loadedAmmo() == offhand.loadedAmmo()) {
-            startBoth(player, main, offhand);
-            return true;
+        // 剩余比例相同: 只换主手。
+        if (Double.compare(main.fillRatio(), offhand.fillRatio()) == 0) {
+            return routeManualCandidate(player, main);
         }
-        if (main.empty()) {
-            return routeManualCandidate(player, main.canRequest() ? main : offhand);
-        }
-        if (offhand.empty()) {
-            return routeManualCandidate(player, offhand.canRequest() ? offhand : main);
-        }
+        // 优先换剩余比例更低的那把。
         ReloadCandidate selected = selectLowerFill(main, offhand);
         return routeManualCandidate(player, selected);
     }
