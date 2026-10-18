@@ -107,7 +107,7 @@ public final class PbrRenderer {
             setUniform(uSkyAmbient, 0f);
             setUniform(uCelestialVisibility, 0f);
             setUniform(uLocalSkyExposure, 0f);
-            setUniform(uWetness, 0f);
+            setUniform(uWetness, updateWetness(0f));
             return;
         }
         var light = CelestialLight.sample(level.getTimeOfDay(partialTick), level.getRainLevel(partialTick),
@@ -136,6 +136,26 @@ public final class PbrRenderer {
         setUniform(uWetness, wetness);
     }
 
+    private static float smoothedWetness = 0f;
+    private static long wetnessLastNanos;
+    private static final float WET_SECONDS = 5.0f;
+    private static final float DRY_SECONDS = 8.0f;
+
+    /** 淋湿/晾干都按时间渐变, 避免进出室内时瞬间跳变。 */
+    private static float updateWetness(float target) {
+        long now = System.nanoTime();
+        if (wetnessLastNanos == 0L) {
+            wetnessLastNanos = now;
+        }
+        float dt = Math.min((now - wetnessLastNanos) / 1.0e9f, 0.25f);
+        wetnessLastNanos = now;
+        if (target > smoothedWetness) {
+            smoothedWetness = Math.min(target, smoothedWetness + dt / WET_SECONDS);
+        } else if (target < smoothedWetness) {
+            smoothedWetness = Math.max(target, smoothedWetness - dt / DRY_SECONDS);
+        }
+        return smoothedWetness;
+    }
     private static float localLightX = 0f;
     private static float localLightY = 1f;
     private static float localLightZ = 0f;
