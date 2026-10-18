@@ -19,8 +19,10 @@ import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.api.distmarker.Dist;
@@ -170,6 +172,9 @@ public final class PbrRenderer {
 
     /** 扫描附近发光方块(节流); 方向/强度每帧按当前位置重算, 移动时高光平滑跟随不卡顿。 */
     private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin) {
+        Minecraft minecraft = Minecraft.getInstance();
+        var player = minecraft.player;
+        Vec3 visibilityAnchor = player != null ? player.getEyePosition(1.0F) : origin;
         long now = System.currentTimeMillis();
         if (now >= localLightNextScan) {
             localLightNextScan = now + 250L;
@@ -181,13 +186,15 @@ public final class PbrRenderer {
                 net.minecraft.world.level.block.state.BlockState state = level.getBlockState(pos);
                 int emission = state.getLightEmission(level, pos);
                 if (emission <= 0) continue;
+                BlockPos immutable = pos.immutable();
+                if (!isLightVisible(level, visibilityAnchor, immutable, player)) continue;
                 double dx = pos.getX() + 0.5D - origin.x;
                 double dy = pos.getY() + 0.5D - origin.y;
                 double dz = pos.getZ() + 0.5D - origin.z;
                 double score = emission / (1.0D + (dx * dx + dy * dy + dz * dz) * 0.35D);
                 if (score > bestScore) {
                     bestScore = score;
-                    best = pos.immutable();
+                    best = immutable;
                     bestEmission = emission;
                 }
             }
@@ -212,7 +219,7 @@ public final class PbrRenderer {
         float targetX = localLightX;
         float targetY = localLightY;
         float targetZ = localLightZ;
-        if (localLightBlock != null) {
+        if (localLightBlock != null && isLightVisible(level, visibilityAnchor, localLightBlock, player)) {
             double dx = localLightBlock.getX() + 0.5D - origin.x;
             double dy = localLightBlock.getY() + 0.5D - origin.y;
             double dz = localLightBlock.getZ() + 0.5D - origin.z;
@@ -230,6 +237,35 @@ public final class PbrRenderer {
         localLightStrength += (targetStrength - localLightStrength) * 0.35f;
     }
 
+    /** 光源到玩家眼睛之间是否有遮挡方块; 玻璃等不遮挡的方块会穿过。 */
+    private static boolean isLightVisible(net.minecraft.world.level.Level level, Vec3 from, BlockPos lightPos,
+                                           Entity entity) {
+        Vec3 target = new Vec3(lightPos.getX() + 0.5D, lightPos.getY() + 0.5D, lightPos.getZ() + 0.5D);
+        Vec3 start = from;
+        Vec3 direction = target.subtract(start);
+        if (direction.lengthSqr() < 1.0E-6D) {
+            return true;
+        }
+        Vec3 step = direction.normalize().scale(0.01D);
+        for (int i = 0; i < 8; i++) {
+            BlockHitResult hit = level.clip(new ClipContext(start, target, ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE, entity));
+            if (hit.getType() == HitResult.Type.MISS) {
+                return true;
+            }
+            if (hit.getBlockPos().equals(lightPos)) {
+                return true;
+            }
+            if (level.getBlockState(hit.getBlockPos()).canOcclude()) {
+                return false;
+            }
+            start = hit.getLocation().add(step);
+            if (start.distanceToSqr(target) < 1.0E-6D) {
+                return true;
+            }
+        }
+        return false;
+    }
     private static Method findOptifine() {
         if (!OptifineCompat.isOptifineInstalled()) return null;
         try {
