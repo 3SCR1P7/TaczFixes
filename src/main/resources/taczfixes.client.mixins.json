@@ -61,6 +61,8 @@
         "MixinGunRefitScreenCustomSlot",
         "MixinRefitTransformPendingReset",
         "MixinGunItemRendererWrapperMuzzleShift",
+        "MixinGunMovementRoll",
+        "MixinGunRotationInertia",
         "MixinGunRefitScreenSlotAdapter",
         "MixinBedrockGunModelRefitView",
         "MixinGunRefitScreenAttachmentList",

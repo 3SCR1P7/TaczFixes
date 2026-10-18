@@ -20,9 +20,7 @@ public class ConfigScreen {
                 .setSavingRunnable(Config::saveAll);
         ConfigEntryBuilder entry = builder.entryBuilder();
         buildVisualEffect(builder.getOrCreateCategory(cat("visual_effect")), entry);
-        buildAimBlur(builder.getOrCreateCategory(cat("aim_blur")), entry);
         buildSuppression(builder.getOrCreateCategory(cat("suppression")), entry);
-
         buildGunLevel(builder.getOrCreateCategory(cat("gun_level")), entry);
         buildLimbDamage(builder.getOrCreateCategory(cat("limb_damage")), entry);
         buildRecoilModifier(builder.getOrCreateCategory(cat("recoil_modifier")), entry);
@@ -40,11 +38,16 @@ public class ConfigScreen {
         buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
         buildStamina(builder.getOrCreateCategory(cat("stamina")), entry);
         buildDualWield(builder.getOrCreateCategory(cat("dual_wield")), entry);
-
+        buildAimBlur(builder.getOrCreateCategory(cat("aim_blur")), entry);
         return builder.build();
     }
 
     private static void buildVisualEffect(ConfigCategory cat, ConfigEntryBuilder entry) {
+        dbl_(cat, entry, "visual_effect.max_movement_roll_angle", Config.MOVEMENT_ROLL_MAX_ANGLE);
+        dbl_(cat, entry, "visual_effect.movement_roll_full_speed", Config.MOVEMENT_ROLL_FULL_SPEED);
+        dbl_(cat, entry, "visual_effect.rotation_inertia_max_angle", Config.ROTATION_INERTIA_MAX_ANGLE);
+        dbl_(cat, entry, "visual_effect.rotation_inertia_follow_speed", Config.ROTATION_INERTIA_FOLLOW_SPEED);
+        dbl_(cat, entry, "visual_effect.rotation_inertia_aim_multiplier", Config.ROTATION_INERTIA_AIM_MULTIPLIER);
         bool_(cat, entry, "visual_effect.enabled", Config.PBR_ENABLED);
         dbl_(cat, entry, "visual_effect.reflection_strength", Config.PBR_REFLECTION);
         dbl_(cat, entry, "visual_effect.glare_strength", Config.PBR_GLARE_STRENGTH);
@@ -56,14 +59,6 @@ public class ConfigScreen {
         dbl_(cat, entry, "visual_effect.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
         bool_(cat, entry, "visual_effect.bloom_tracer", Config.PBR_BLOOM_TRACER);
         bool_(cat, entry, "visual_effect.bloom_laser", Config.PBR_BLOOM_LASER);
-    }
-
-    private static void buildAimBlur(ConfigCategory cat, ConfigEntryBuilder entry) {
-        bool_(cat, entry, "aim_blur.enabled", Config.AIM_BLUR_ENABLED);
-        dbl_(cat, entry, "aim_blur.range", Config.AIM_BLUR_RANGE);
-        dbl_(cat, entry, "aim_blur.strength", Config.AIM_BLUR_STRENGTH);
-        dbl_(cat, entry, "aim_blur.far_distance", Config.AIM_BLUR_FAR_DISTANCE);
-        dbl_(cat, entry, "aim_blur.min_factor", Config.AIM_BLUR_MIN_FACTOR);
     }
 
     private static void buildSuppression(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -181,6 +176,7 @@ public class ConfigScreen {
         int_(cat, entry, "gun_level.bottle_exp_per_bottle", Config.GUN_BOTTLE_EXP_PER_BOTTLE);
         int_(cat, entry, "gun_level.bottle_cost", Config.GUN_BOTTLE_COST);
     }
+    
 
     private static void buildLimbDamage(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "limb_damage.enabled", Config.LIMB_DAMAGE_ENABLED);
@@ -367,6 +363,15 @@ public class ConfigScreen {
             int_(e, entry, "compat.gun_pack.button_size", Config.GUN_PACK_BUTTON_SIZE);
         });
     }
+
+    private static void buildAimBlur(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "aim_blur.enabled", Config.AIM_BLUR_ENABLED);
+        dbl_(cat, entry, "aim_blur.range", Config.AIM_BLUR_RANGE);
+        dbl_(cat, entry, "aim_blur.strength", Config.AIM_BLUR_STRENGTH);
+        dbl_(cat, entry, "aim_blur.far_distance", Config.AIM_BLUR_FAR_DISTANCE);
+        dbl_(cat, entry, "aim_blur.min_factor", Config.AIM_BLUR_MIN_FACTOR);
+    }
+
 
     private static void buildEnchantment(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "enchantment.enabled", Config.GUN_ENCHANTMENT_ENABLED);

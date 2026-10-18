@@ -20,6 +20,11 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
+    public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
+    public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_FULL_SPEED;
+    public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_MAX_ANGLE;
+    public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_FOLLOW_SPEED;
+    public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_AIM_MULTIPLIER;
     private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
     public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_STANDING;
@@ -1485,6 +1490,21 @@ public class Config {
         SPECS.put("dual_wield", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
+        MOVEMENT_ROLL_MAX_ANGLE = BUILDER
+                .comment("左右移动时枪械桶滚的最大角度。默认值：22.5")
+                .defineInRange("max_movement_roll_angle", 22.5, 0.0, 90.0);
+        MOVEMENT_ROLL_FULL_SPEED = BUILDER
+                .comment("达到最大桶滚角度所需的横向移动速度。默认值：5.0")
+                .defineInRange("movement_roll_full_speed", 5.0, 0.0, 50.0);
+        ROTATION_INERTIA_MAX_ANGLE = BUILDER
+                .comment("视角旋转时枪械惯性的最大滞后角度。默认值：2.0")
+                .defineInRange("rotation_inertia_max_angle", 2.0, 0.0, 15.0);
+        ROTATION_INERTIA_FOLLOW_SPEED = BUILDER
+                .comment("视角旋转后枪械惯性恢复速度。默认值：2.0")
+                .defineInRange("rotation_inertia_follow_speed", 2.0, 0.0, 15.0);
+        ROTATION_INERTIA_AIM_MULTIPLIER = BUILDER
+                .comment("开镜时保留的旋转惯性比例。默认值：0.2")
+                .defineInRange("rotation_inertia_aim_multiplier", 0.2, 0.0, 1.0);
         PBR_ENABLED = BUILDER
                 .comment("是否启用 PBR 反光和自发光效果，仅影响客户端画面。默认值：true")
                 .define("enabled", true);
@@ -1504,11 +1524,11 @@ public class Config {
                 .comment("是否启用枪械自发光区域的泛光效果。默认值：true")
                 .define("bloom", true);
         PBR_BLOOM_STRENGTH = BUILDER
-                .comment("枪械泛光强度。默认值：0.8")
-                .defineInRange("bloom_strength", 0.8, 0.0, 2.0);
+                .comment("枪械泛光强度。默认值：0.7")
+                .defineInRange("bloom_strength", 0.7, 0.0, 2.0);
         PBR_BLOOM_RADIUS = BUILDER
-                .comment("泛光半径，越大开销越高。默认值：8.0")
-                .defineInRange("bloom_radius", 8.0, 1.0, 40.0);
+                .comment("泛光半径，越大开销越高。默认值：7.0")
+                .defineInRange("bloom_radius", 7.0, 1.0, 40.0);
         PBR_BLOOM_RESOLUTION = BUILDER
                 .comment("泛光渲染分辨率倍率，越高效果越好，但开销更大。默认值：1.0")
                 .defineInRange("bloom_resolution", 1.0, 0.25, 1.0);
