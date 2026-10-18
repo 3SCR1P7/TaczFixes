@@ -14,17 +14,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 第一人称主手枪械的左右移动桶滚。 */
 @Mixin(BedrockGunModel.class)
 public abstract class MixinGunMovementRoll {
     @Unique
     private boolean taczfixes$movementRollPushed;
+    @Unique
+    private int taczfixes$movementRollDepth;
 
     @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("HEAD"), remap = false)
     private void taczfixes$movementRollHead(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                             RenderType type, int light, int overlay, float red, float green,
                                             float blue, float alpha, MultiBufferSource buffers, CallbackInfo ci) {
+        if (taczfixes$movementRollDepth++ != 0) {
+            return;
+        }
         taczfixes$movementRollPushed = false;
         if (context != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND) {
@@ -38,7 +42,7 @@ public abstract class MixinGunMovementRoll {
     private void taczfixes$movementRollTail(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                             RenderType type, int light, int overlay, float red, float green,
                                             float blue, float alpha, MultiBufferSource buffers, CallbackInfo ci) {
-        if (taczfixes$movementRollPushed) {
+        if (--taczfixes$movementRollDepth == 0 && taczfixes$movementRollPushed) {
             pose.popPose();
             taczfixes$movementRollPushed = false;
         }
@@ -48,6 +52,9 @@ public abstract class MixinGunMovementRoll {
             at = @At("HEAD"), remap = false)
     private void taczfixes$movementRollHeadFp(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                               RenderType type, int light, int overlay, CallbackInfo ci) {
+        if (taczfixes$movementRollDepth++ != 0) {
+            return;
+        }
         taczfixes$movementRollPushed = false;
         if (context != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND) {
@@ -60,7 +67,7 @@ public abstract class MixinGunMovementRoll {
             at = @At("TAIL"), remap = false)
     private void taczfixes$movementRollTailFp(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                               RenderType type, int light, int overlay, CallbackInfo ci) {
-        if (taczfixes$movementRollPushed) {
+        if (--taczfixes$movementRollDepth == 0 && taczfixes$movementRollPushed) {
             pose.popPose();
             taczfixes$movementRollPushed = false;
         }

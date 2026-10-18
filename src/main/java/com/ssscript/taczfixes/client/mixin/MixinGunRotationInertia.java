@@ -14,17 +14,21 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 第一人称主手枪械的视角旋转惯性。 */
 @Mixin(BedrockGunModel.class)
 public abstract class MixinGunRotationInertia {
     @Unique
     private boolean taczfixes$rotationInertiaPushed;
+    @Unique
+    private int taczfixes$rotationInertiaDepth;
 
     @Inject(method = "render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFFFFLnet/minecraft/client/renderer/MultiBufferSource;)V",
             at = @At("HEAD"), remap = false)
     private void taczfixes$rotationInertiaHead(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                                RenderType type, int light, int overlay, float red, float green,
                                                float blue, float alpha, MultiBufferSource buffers, CallbackInfo ci) {
+        if (taczfixes$rotationInertiaDepth++ != 0) {
+            return;
+        }
         taczfixes$rotationInertiaPushed = false;
         if (context != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND) {
@@ -39,7 +43,7 @@ public abstract class MixinGunRotationInertia {
     private void taczfixes$rotationInertiaTail(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                                RenderType type, int light, int overlay, float red, float green,
                                                float blue, float alpha, MultiBufferSource buffers, CallbackInfo ci) {
-        if (taczfixes$rotationInertiaPushed) {
+        if (--taczfixes$rotationInertiaDepth == 0 && taczfixes$rotationInertiaPushed) {
             pose.popPose();
             taczfixes$rotationInertiaPushed = false;
         }
@@ -49,6 +53,9 @@ public abstract class MixinGunRotationInertia {
             at = @At("HEAD"), remap = false)
     private void taczfixes$rotationInertiaHeadFp(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                                  RenderType type, int light, int overlay, CallbackInfo ci) {
+        if (taczfixes$rotationInertiaDepth++ != 0) {
+            return;
+        }
         taczfixes$rotationInertiaPushed = false;
         if (context != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND
                 || DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND) {
@@ -62,7 +69,7 @@ public abstract class MixinGunRotationInertia {
             at = @At("TAIL"), remap = false)
     private void taczfixes$rotationInertiaTailFp(PoseStack pose, ItemStack stack, ItemDisplayContext context,
                                                  RenderType type, int light, int overlay, CallbackInfo ci) {
-        if (taczfixes$rotationInertiaPushed) {
+        if (--taczfixes$rotationInertiaDepth == 0 && taczfixes$rotationInertiaPushed) {
             pose.popPose();
             taczfixes$rotationInertiaPushed = false;
         }

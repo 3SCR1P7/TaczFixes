@@ -41,6 +41,13 @@ public final class GunModelPivot {
         return new float[]{ground[0], mat.m31(), ground[1]};
     }
 
+    public static float[] centerStable(BedrockGunModel model, ItemStack stack) {
+        if (model == null || stack == null) return null;
+        BedrockPart root = model.getRootNode();
+        if (root == null) return null;
+        float[] ground = groundXZ(stack);
+        return new float[]{ground[0], root.y / 16f, ground[1]};
+    }
     private static float[] groundXZ(ItemStack stack) {
         if (stack.getItem() instanceof IGun gun) {
             ResourceLocation gunId = gun.getGunId(stack);

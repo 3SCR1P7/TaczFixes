@@ -58,7 +58,7 @@ public final class MovementRollTransform {
 
         Matrix4f base = new Matrix4f(pose.last().pose());
         Vector3f centerPivot = new Vector3f();
-        float[] center = GunModelPivot.center(model, stack);
+        float[] center = GunModelPivot.centerStable(model, stack);
         if (center != null) {
             base.transformPosition(center[0], center[1], center[2], centerPivot);
         }
