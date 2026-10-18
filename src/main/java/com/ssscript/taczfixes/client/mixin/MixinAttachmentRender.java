@@ -40,7 +40,13 @@ public abstract class MixinAttachmentRender {
             ItemStack attachmentStack, ItemStack gunStack, AttachmentType type, ResourceLocation location,
             PoseStack poseStack, ItemDisplayContext transformType, int light, int overlay,
             MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) {
-        if (transformType == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND || transformType == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+        if (transformType == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || transformType == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+            return null;
+        }
+        // 副手第一人称瞄具也强制使用完整模型: LOD 模型可能没有 ocular/ocular_* 骨。
+        if (dualWield$isOffhandFirstPerson(transformType) && invokedIndex != null
+                && (invokedIndex.isScope() || invokedIndex.isSight())) {
             return null;
         }
         return invokedIndex.getLodModel();
@@ -62,7 +68,7 @@ public abstract class MixinAttachmentRender {
         Map<BedrockPart, Boolean> ocularRestore = taczfixes$showOcularParts(model);
         ArcanaScopeStateBridge.Snapshot previousArcanaScope = ArcanaScopeStateBridge.capture();
         try {
-            original.call(new Object[]{model, attachmentStack, gunStack, poseStack, ItemDisplayContext.THIRD_PERSON_LEFT_HAND, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
+            original.call(new Object[]{model, attachmentStack, gunStack, poseStack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
             ArcanaScopeStateBridge.restore(previousArcanaScope);
         } catch (Throwable th) {
             ArcanaScopeStateBridge.restore(previousArcanaScope);
@@ -85,6 +91,8 @@ public abstract class MixinAttachmentRender {
                 return restore;
             }
             List<Boolean> scopeFlags = accessor.taczfixes$isScopeOcular();
+            boolean pureScope = model.isScope() && !model.isSight();
+            boolean pureSight = model.isSight() && !model.isScope();
             for (int i = 0; i < oculars.size(); i++) {
                 List<BedrockPart> path = oculars.get(i);
                 if (path == null) {
@@ -92,17 +100,19 @@ public abstract class MixinAttachmentRender {
                 }
                 boolean scopeOcular = scopeFlags != null && i < scopeFlags.size()
                         && Boolean.TRUE.equals(scopeFlags.get(i));
+                boolean wantVisible = pureScope || (!pureSight && scopeOcular);
                 for (BedrockPart part : path) {
                     if (!restore.containsKey(part)) {
                         restore.put(part, Boolean.valueOf(part.visible));
                     }
-                    part.visible = scopeOcular;
+                    part.visible = wantVisible;
                 }
             }
         } catch (Throwable ignored) {
         }
         return restore;
     }
+
 
     private static boolean dualWield$isOffhandFirstPerson(ItemDisplayContext transformType) {
         boolean firstPerson = transformType == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || transformType == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;

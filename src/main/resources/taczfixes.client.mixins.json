@@ -107,6 +107,7 @@
         "MixinAnimationController",
         "MixinAttachmentRender",
         "MixinBedrockAttachmentModel",
+        "MixinBedrockAttachmentModelOcular",
         "MixinBedrockGunModelInspect",
         "MixinBedrockGunModelScope",
         "MixinEntityBulletRenderer",

@@ -48,7 +48,14 @@ public final class PbrRenderer {
     private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness;
     private static AbstractUniform uBlurDirection, uCompositeStrength;
     private static VertexBuffer mesh;
-    private static final Map<ResourceLocation, Optional<Material>> MATERIALS = new HashMap<>();
+    private static final int MATERIALS_MAX = 256;
+    private static final Map<ResourceLocation, Optional<Material>> MATERIALS =
+            new java.util.LinkedHashMap<>(MATERIALS_MAX, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<ResourceLocation, Optional<Material>> eldest) {
+                    return size() > MATERIALS_MAX;
+                }
+            };
     private static final int TYPES_MAX = 512;
     // RenderType 未覆写 equals/hashCode(默认标识语义), 用访问序 LRU 避免战斗/改装中整体清空重建。
     private static final Map<RenderType, RenderType> TYPES =
@@ -86,7 +93,10 @@ public final class PbrRenderer {
         var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         var origin = camera.getPosition();
         // 局部光源(火把/灯笼等): 非天空维度也有
-        updateLocalLight(level, origin);
+        // 只在最近实际绘制过 PBR 时扫描局部光, 避免无枪/无 PBR 时白扫方块。
+        if (System.currentTimeMillis() - lastPbrDrawAt <= 500L) {
+            updateLocalLight(level, origin);
+        }
         setUniform(uLocalLightDirection, localLightX, localLightY, localLightZ);
         setUniform(uLocalLightColor, localLightR, localLightG, localLightB);
         setUniform(uLocalLightStrength, localLightStrength);
@@ -136,6 +146,7 @@ public final class PbrRenderer {
     private static long localLightNextScan = 0L;
     private static BlockPos localLightBlock = null;
     private static int localLightEmission = 0;
+    private static long lastPbrDrawAt = 0L;
 
     /** 扫描附近发光方块(节流); 方向/强度每帧按当前位置重算, 移动时高光平滑跟随不卡顿。 */
     private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin) {
@@ -395,6 +406,7 @@ public final class PbrRenderer {
                     mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), previous);
                     return;
                 }
+                lastPbrDrawAt = System.currentTimeMillis();
                 if (material.specular() != null) RenderSystem.setShaderTexture(3, material.specular());
                 if (material.normal() != null) RenderSystem.setShaderTexture(4, material.normal());
                 setUniform(uHasSpecular, material.specular() == null ? 0 : 1);
@@ -408,18 +420,40 @@ public final class PbrRenderer {
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
 
                 boolean glare = material.specular() != null && Config.PBR_GLARE_STRENGTH.get().floatValue() > 0.0f;
-                if (PbrBloom.canCapture() && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
+                if (PbrBloom.canCapture()
+                        && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
                         && (material.emissive() || PbrBloom.hasEmissiveContent() || glare)
                         && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
                         == Minecraft.getInstance().getMainRenderTarget().frameBufferId) {
                     boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+                    boolean scopeMask = PbrBloom.pureScopeAiming();
+                    boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
+                    int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
+                    int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
+                    int stencilValueMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
+                    int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
+                    int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
+                    int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
                     try {
                         RenderSystem.depthMask(true);
                         PbrBloom.bindCapture();
+                        if (scopeMask) {
+                            // 只剔除镜内被遮挡部分的发光, 镜外模型仍保留泛光。
+                            GL11.glEnable(GL11.GL_STENCIL_TEST);
+                            GL11.glStencilFunc(GL11.GL_EQUAL, 0, 255);
+                            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+                        }
                         setUniform(uEmissionPass, 1);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                     } finally {
                         setUniform(uEmissionPass, 0);
+                        if (stencilWas) {
+                            GL11.glEnable(GL11.GL_STENCIL_TEST);
+                            GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
+                            GL11.glStencilOp(stencilFail, stencilDepthFail, stencilDepthPass);
+                        } else {
+                            GL11.glDisable(GL11.GL_STENCIL_TEST);
+                        }
                         RenderSystem.depthMask(depthMask);
                         Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
                     }

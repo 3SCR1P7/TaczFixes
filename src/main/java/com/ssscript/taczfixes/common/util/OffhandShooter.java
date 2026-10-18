@@ -138,14 +138,21 @@ final class OffhandShooter {
             ItemStack stack = this.player.getOffhandItem();
             IGun gun = IGun.getIGunOrNull(stack);
             ResourceLocation gunId = gun == null ? null : gun.getGunId(stack);
-            UUID stackId = gunId == null ? null : DualWieldStackId.getOrCreate(stack);
+            UUID existingId = gunId == null ? null : DualWieldStackId.get(stack);
+            UUID stackId = existingId != null ? existingId
+                    : (gunId == null ? null : DualWieldStackId.getOrCreate(stack));
             if (gunId == null || stackId == null || gun == null) {
                 return;
             }
-            boolean duplicatesMainId = (stack == mainStack || mainStackId == null || !mainStackId.equals(stackId)) ? false : true;
-            boolean duplicatesInventoryId = hasDuplicateInventoryStackId(stack, stackId);
-            if (duplicatesMainId || duplicatesInventoryId) {
-                stackId = DualWieldStackId.regenerate(stack);
+            // 只有新 ID 或绑定目标变化时才扫描背包查重复, 避免每 tick / 每次副手动作全背包扫描。
+            boolean rebind = existingId == null || this.boundStackId == null
+                    || !stackId.equals(this.boundStackId) || !gunId.equals(this.boundGunId);
+            if (rebind) {
+                boolean duplicatesMainId = (stack == mainStack || mainStackId == null || !mainStackId.equals(stackId)) ? false : true;
+                boolean duplicatesInventoryId = hasDuplicateInventoryStackId(stack, stackId);
+                if (duplicatesMainId || duplicatesInventoryId) {
+                    stackId = DualWieldStackId.regenerate(stack);
+                }
             }
             synchronizeShootBaseTimestamp();
             boolean identityChanged = (gunId.equals(this.boundGunId) && stackId.equals(this.boundStackId)) ? false : true;

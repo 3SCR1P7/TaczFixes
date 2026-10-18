@@ -245,7 +245,7 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
             cachedGunId = gunId;
             checkAmmoTimestamp = -1L;
         }
-        if (now - checkAmmoTimestamp <= 50) {
+        if (now - checkAmmoTimestamp <= 200) {
             return;
         }
         checkAmmoTimestamp = now;

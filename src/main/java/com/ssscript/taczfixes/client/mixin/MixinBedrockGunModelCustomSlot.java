@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.CustomSlotMount;
+import com.ssscript.taczfixes.client.util.StandbySlotBuffer;
 import com.ssscript.taczfixes.client.util.LensDepthWriter;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.TimelessAPI;
@@ -130,7 +131,7 @@ public abstract class MixinBedrockGunModelCustomSlot {
             }
         }
 
-        List<Object[]> standby = new ArrayList<>();
+        List<StandbySlotBuffer.PendingSlot> standby = new ArrayList<>();
         for (Map.Entry<String, CustomSlotManager.SlotEntry> entry : slots.entrySet()) {
             String slotId = entry.getKey();
             if (slotId.equals(active)) continue;
@@ -139,9 +140,9 @@ public abstract class MixinBedrockGunModelCustomSlot {
             com.tacz.guns.client.model.bedrock.BedrockPart node =
                     CustomSlotMount.nodeFor(self, entry.getValue(), slotId);
             if (node == null) continue;
-            standby.add(new Object[]{item, node, slotId,
+            standby.add(new StandbySlotBuffer.PendingSlot(item, node, slotId,
                     CustomSlotMount.sourceChain(self, gun, entry.getValue()),
-                    !entry.getValue().source().isEmpty()});
+                    !entry.getValue().source().isEmpty()));
         }
         com.ssscript.taczfixes.client.util.StandbySlotBuffer.setPending(standby);
     }

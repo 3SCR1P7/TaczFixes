@@ -182,14 +182,14 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
 
 
     @Unique
-    private void renderStandbySlotsWithFallback(ItemStack gun, List<Object[]> pending,
+    private void renderStandbySlotsWithFallback(ItemStack gun, List<StandbySlotBuffer.PendingSlot> pending,
                                                 PoseStack pose, ItemDisplayContext displayContext, int light, int overlay) {
         String activeSlot = ScopeSwitchState.getActiveSlot(gun);
         java.util.Set<String> rendered = new java.util.HashSet<>();
-        for (Object[] slot : pending) {
-            rendered.add((String) slot[2]);
-            renderStandbySlot((ItemStack) slot[0], gun, (BedrockPart) slot[1], (String) slot[2],
-                    taczfixes$isAttachmentNode(slot), taczfixes$chain(slot), pose, displayContext, light, overlay);
+        for (StandbySlotBuffer.PendingSlot slot : pending) {
+            rendered.add(slot.slotId());
+            renderStandbySlot(slot.item(), gun, slot.node(), slot.slotId(),
+                    slot.attachmentNode(), slot.chain(), pose, displayContext, light, overlay);
         }
         BedrockAnimatedModel self = (BedrockAnimatedModel) (Object) this;
         for (java.util.Map.Entry<String, CustomSlotManager.SlotEntry> entry : CustomSlotManager.getEntries(gun).entrySet()) {
@@ -262,7 +262,18 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                     ResourceLocation actTexture = index.getModelTexture();
                     if (actModel != null && actTexture != null) {
                         RenderType renderType = RenderType.entityCutout(actTexture);
-                        actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
+                        java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> ocularRestore =
+                                new java.util.IdentityHashMap<>();
+                        StandbySlotBuffer.ensureScopeOcularVisible(actModel, ocularRestore);
+                        java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> plain =
+                                taczfixes$showPlainOcular(actModel, index);
+                        try {
+                            actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
+                            StandbySlotBuffer.renderPlainOcular(actModel, pose, displayContext, renderType, light, overlay);
+                        } finally {
+                            taczfixes$restorePlainOcular(plain);
+                            StandbySlotBuffer.restoreOcularVisibility(ocularRestore);
+                        }
                     }
                 });
             } finally {
@@ -406,10 +417,15 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                 acc.taczfixes$setIsScope(false);
                 // 不再清除 isSight: 备用槽的 sight 在标准 scope 存在时会走不到模型渲染。
 
+                java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> plain =
+                        taczfixes$showPlainOcular(model, idx.get());
                 try {
                     model.render(item, gun, pose, displayContext,
                             RenderType.entityCutout(texture), light, overlay);
+                    StandbySlotBuffer.renderPlainOcular(model, pose, displayContext,
+                            RenderType.entityCutout(texture), light, overlay);
                 } finally {
+                    taczfixes$restorePlainOcular(plain);
                     acc.taczfixes$setIsScope(oldScope);
                     acc.taczfixes$setIsSight(oldSight);
                 }
@@ -490,4 +506,41 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         }
         return ItemStack.EMPTY;
     }
-}
+
+    @Unique
+    private static java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> taczfixes$showPlainOcular(
+            com.tacz.guns.client.model.BedrockAttachmentModel model,
+            com.tacz.guns.client.resource.index.ClientAttachmentIndex index) {
+        if (index == null || !index.isScope() || index.isSight()) return null;
+        com.tacz.guns.client.model.bedrock.BedrockPart root = model.getRootNode();
+        if (root == null) return null;
+        java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore =
+                new java.util.IdentityHashMap<>();
+        taczfixes$showPlainOcular(root, false, restore);
+        return restore.isEmpty() ? null : restore;
+    }
+
+    @Unique
+    private static void taczfixes$showPlainOcular(com.tacz.guns.client.model.bedrock.BedrockPart part,
+                                                  boolean inOcular,
+                                                  java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore) {
+        if (part == null) return;
+        boolean ocular = inOcular || (part.name != null
+                && part.name.toLowerCase(java.util.Locale.ROOT).contains("ocular"));
+        if (ocular && !part.visible) {
+            restore.put(part, Boolean.FALSE);
+            part.visible = true;
+        }
+        for (com.tacz.guns.client.model.bedrock.BedrockPart child : part.children) {
+            taczfixes$showPlainOcular(child, ocular, restore);
+        }
+    }
+
+    @Unique
+    private static void taczfixes$restorePlainOcular(
+            java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> restore) {
+        if (restore == null) return;
+        for (java.util.Map.Entry<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> entry : restore.entrySet()) {
+            entry.getKey().visible = entry.getValue();
+        }
+    }}

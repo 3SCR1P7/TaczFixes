@@ -17,6 +17,12 @@ public class LimbDamageHelper {
         return HIT_POSITIONS.remove(bulletId);
     }
 
+    /** 子弹消失/未命中时清理, 避免 int id 复用后串数据或长期累积。 */
+    public static void clearBullet(int bulletId) {
+        HIT_POSITIONS.remove(bulletId);
+        CRAWL_ZONES.remove(bulletId);
+    }
+
     public static void storeCrawlZone(int bulletId, int entityId, CrawlHitboxHelper.Zone zone) {
         CRAWL_ZONES.put(bulletId, new CrawlZoneHit(entityId, zone));
     }

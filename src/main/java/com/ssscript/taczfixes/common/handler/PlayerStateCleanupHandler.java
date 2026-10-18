@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.common.handler;
 import com.ssscript.taczfixes.common.util.DecapitationHelper;
 import com.ssscript.taczfixes.common.util.GunBlocking;
 import com.ssscript.taczfixes.common.util.GunShieldHelper;
+import com.ssscript.taczfixes.common.util.LimbDamageHelper;
 import com.ssscript.taczfixes.common.util.PatienceHelper;
 import com.ssscript.taczfixes.common.util.ReloadExtraTracker;
 import com.ssscript.taczfixes.common.util.SpreadState;
@@ -23,6 +24,12 @@ public class PlayerStateCleanupHandler {
         GunBlocking.tick(event.player);
     }
 
+    @SubscribeEvent
+    public void onEntityLeave(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+        if (event.getEntity() instanceof com.tacz.guns.entity.EntityKineticBullet bullet) {
+            LimbDamageHelper.clearBullet(bullet.getId());
+        }
+    }
     @SubscribeEvent
     public void onPlayerLoggedOut(PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();

@@ -47,8 +47,8 @@ public class ConfigScreen {
     private static void buildVisualEffect(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "visual_effect.enabled", Config.PBR_ENABLED);
         dbl_(cat, entry, "visual_effect.reflection_strength", Config.PBR_REFLECTION);
-        dbl_(cat, entry, "visual_effect.reflection_area", Config.PBR_REFLECTION_AREA);
         dbl_(cat, entry, "visual_effect.glare_strength", Config.PBR_GLARE_STRENGTH);
+        dbl_(cat, entry, "visual_effect.reflection_area", Config.PBR_REFLECTION_AREA);
         dbl_(cat, entry, "visual_effect.emission_strength", Config.PBR_EMISSION);
         bool_(cat, entry, "visual_effect.bloom", Config.PBR_BLOOM);
         dbl_(cat, entry, "visual_effect.bloom_strength", Config.PBR_BLOOM_STRENGTH);

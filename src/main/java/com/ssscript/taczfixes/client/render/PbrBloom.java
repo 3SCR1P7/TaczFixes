@@ -26,13 +26,14 @@ import org.lwjgl.opengl.GL30;
 public final class PbrBloom {
     private static RenderTarget emission, horizontal, vertical;
     private static VertexBuffer quad;
-    private static boolean active, dirty;
+    private static boolean active, dirty, stencilCopied;
     private static boolean emissiveThisFrame;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
     public static void beginFrame() {
         active = true;
         dirty = false;
+        stencilCopied = false;
         emissiveThisFrame = false;
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
             release();
@@ -81,11 +82,13 @@ public final class PbrBloom {
             emission.clear(Minecraft.ON_OSX);
             dirty = true;
         }
-        if (main.isStencilEnabled()) {
+        if (main.isStencilEnabled() && (!stencilCopied || pureScopeAiming())) {
+            // 全屏 stencil 拷贝每帧只做一次; 之前每个 PBR mesh 都拷贝一次。
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, emission.frameBufferId);
             GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, emission.width, emission.height,
                     GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
+            stencilCopied = true;
         }
         emission.bindWrite(true);
         RenderSystem.setShaderTexture(5, main.getDepthTextureId());
@@ -154,6 +157,7 @@ public final class PbrBloom {
             compositeToMain(horizontal, PbrRenderer.compositeShader);
         } finally {
             dirty = false;
+            stencilCopied = false;
             VertexBuffer.unbind();
             main.bindWrite(true);
             for (int i = 0; i < textures.length; i++) RenderSystem.setShaderTexture(i, textures[i]);
@@ -222,6 +226,7 @@ public final class PbrBloom {
         if (vertical != null) vertical.destroyBuffers();
         emission = horizontal = vertical = null;
         dirty = false;
+        stencilCopied = false;
     }
 
     public static void release() {
@@ -229,7 +234,7 @@ public final class PbrBloom {
         if (quad != null) { quad.close(); quad = null; }
     }
 
-    private static boolean pureScopeAiming() {
+    public static boolean pureScopeAiming() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null || !player.isAlive()) return false;

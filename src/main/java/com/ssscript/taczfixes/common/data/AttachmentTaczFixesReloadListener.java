@@ -28,7 +28,7 @@ public class AttachmentTaczFixesReloadListener implements PreparableReloadListen
                                           Executor gameExecutor) {
         return CompletableFuture.supplyAsync(() -> scan(resourceManager), backgroundExecutor)
                 .thenCompose(barrier::wait)
-                .thenAcceptAsync(AttachmentTaczFixesManager::putAll, gameExecutor);
+                .thenAcceptAsync(map -> { AttachmentTaczFixesManager.putAll(map); CustomSlotManager.bumpDataStamp(); }, gameExecutor);
     }
 
     private static Map<ResourceLocation, AttachmentTaczFixesData> scan(ResourceManager resourceManager) {

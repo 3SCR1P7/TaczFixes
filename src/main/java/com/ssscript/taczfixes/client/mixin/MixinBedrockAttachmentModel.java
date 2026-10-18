@@ -54,7 +54,6 @@ public abstract class MixinBedrockAttachmentModel {
             }
         }
     }
-
     @Inject(method = TACZFIXES_RENDER_DESC, at = @At("RETURN"), remap = false)
     private void taczfixes$restorePhysicalOcular(ItemStack attachmentItem, ItemStack currentGunItem, PoseStack poseStack,
                                                  ItemDisplayContext transformType, RenderType renderType,

@@ -41,6 +41,10 @@ public final class CustomScopeViewShift {
     private static float smoothAngle = 0f;
     private static float smoothOffset = 0f;
     private static boolean pushed = false;
+    private static final java.util.Map<ResourceLocation, java.util.Optional<org.joml.Vector3f>> ADAPTER_OFFSET_CACHE = new java.util.HashMap<>();
+    private static ItemStack stdScopeCacheGun;
+    private static int stdScopeCacheHash;
+    private static ItemStack stdScopeCache;
 
     private CustomScopeViewShift() {
     }
@@ -124,7 +128,7 @@ public final class CustomScopeViewShift {
                 Vec3 stdPos = slotCenterWorld(stdNode, stdItem, gun, stdAdapterOffset);
                 actPos = slotCenterWorld(actNode, actItem, gun, adapterOffset,
                         activeEntry == null ? null : CustomSlotMount.sourceChain(model, gun, activeEntry),
-                        activeEntry != null && !activeEntry.source().isEmpty());
+                        activeEntry != null && !activeEntry.source().isEmpty(), -1);
                 if (stdItem.isEmpty()) {
                     List<com.tacz.guns.client.model.bedrock.BedrockPart> ironPath = model.getIronSightPath();
                     if (ironPath != null && !ironPath.isEmpty()) {
@@ -144,7 +148,8 @@ public final class CustomScopeViewShift {
         float targetO = actPos != null ? slotOffset : 0f;
 
         String slotKey = active == null ? "" : active;
-        if (!slotKey.equals(prevSlot)) {
+        boolean viewChanged = actPos != null && smoothPivot.distanceToSqr(actPos) > 1.0E-4;
+        if (!slotKey.equals(prevSlot) || viewChanged) {
             // pivot 固定为当前目标瞄具的 pivot, 用 shift/angle 表示当前变换。
             // 这样 angle=0 -> angle!=0 时不会绕旧 pivot 产生错误的弧线, 同时切换瞬间仍连续。
             Vec3 gCur = oldG(smoothPivot, smoothShift, smoothAngle, smoothOffset);
@@ -222,15 +227,24 @@ public final class CustomScopeViewShift {
 
 
     public static ItemStack readStandardScope(ItemStack gun) {
+        if (gun == null) return ItemStack.EMPTY;
         CompoundTag tag = gun.getTag();
+        int hash = tag == null ? 0 : tag.hashCode();
+        if (gun == stdScopeCacheGun && hash == stdScopeCacheHash) {
+            return stdScopeCache;
+        }
+        ItemStack result = ItemStack.EMPTY;
         if (tag != null) {
             String key = com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + AttachmentType.SCOPE.name();
             if (tag.contains(key, 10)) {
                 ItemStack scope = ItemStack.of(tag.getCompound(key));
-                if (!scope.isEmpty()) return scope;
+                if (!scope.isEmpty()) result = scope;
             }
         }
-        return ItemStack.EMPTY;
+        stdScopeCacheGun = gun;
+        stdScopeCacheHash = hash;
+        stdScopeCache = result;
+        return result;
     }
 
     private static Vec3 slotCenterWorld(com.tacz.guns.client.model.bedrock.BedrockPart slotNode,
@@ -241,6 +255,13 @@ public final class CustomScopeViewShift {
     private static Vec3 slotCenterWorld(com.tacz.guns.client.model.bedrock.BedrockPart slotNode,
                                         ItemStack attachmentItem, ItemStack gun, Vector3f adapterOffset,
                                         List<CustomSlotMount.Step> mountChain, boolean attachmentNode) {
+        return slotCenterWorld(slotNode, attachmentItem, gun, adapterOffset, mountChain, attachmentNode, -1);
+    }
+
+    private static Vec3 slotCenterWorld(com.tacz.guns.client.model.bedrock.BedrockPart slotNode,
+                                        ItemStack attachmentItem, ItemStack gun, Vector3f adapterOffset,
+                                        List<CustomSlotMount.Step> mountChain, boolean attachmentNode,
+                                        int viewIndexOverride) {
         List<com.tacz.guns.client.model.bedrock.BedrockPart> chain = new ArrayList<>();
         com.tacz.guns.client.model.bedrock.BedrockPart cur = slotNode;
         while (cur != null) {
@@ -266,7 +287,7 @@ public final class CustomScopeViewShift {
                     ClientAttachmentIndex index = indexOpt.get();
                     com.tacz.guns.client.model.BedrockAttachmentModel attachmentModel = index.getAttachmentModel();
                     if (attachmentModel != null) {
-                        applyViewPath(index, attachmentModel, ps, attachmentItem);
+                        applyViewPath(index, attachmentModel, ps, attachmentItem, viewIndexOverride);
                     }
                 }
             }
@@ -274,6 +295,7 @@ public final class CustomScopeViewShift {
         Vector3f v = ps.last().pose().transformPosition(0f, 0f, 0f, new Vector3f());
         return new Vec3(v.x(), v.y(), v.z());
     }
+
 
     private static Vector3f getActiveSlotAdapterOffset(ItemStack gun, ItemStack actItem, String activeSlot) {
         if (actItem == null || actItem.isEmpty()) return null;
@@ -286,8 +308,9 @@ public final class CustomScopeViewShift {
                 .map(idx -> idx.allowsAttachment(attachmentId)).orElse(false)) {
             return null;
         }
-        return TimelessAPI.getClientSlotAdapterIndex(adapterId)
-                .map(com.tacz.guns.client.resource.index.ClientSlotAdapterIndex::getMountOffset)
+        return ADAPTER_OFFSET_CACHE.computeIfAbsent(adapterId, id ->
+                TimelessAPI.getClientSlotAdapterIndex(id)
+                        .map(com.tacz.guns.client.resource.index.ClientSlotAdapterIndex::getMountOffset))
                 .orElse(null);
     }
 
@@ -300,23 +323,32 @@ public final class CustomScopeViewShift {
         if (attachmentId == null) return null;
         ResourceLocation adapterId = com.tacz.guns.util.SlotAdapterHelper.getEffectiveSlotAdapter(gun, AttachmentType.SCOPE, attachmentId);
         if (adapterId == null) return null;
-        return TimelessAPI.getClientSlotAdapterIndex(adapterId)
-                .map(com.tacz.guns.client.resource.index.ClientSlotAdapterIndex::getMountOffset)
+        return ADAPTER_OFFSET_CACHE.computeIfAbsent(adapterId, id ->
+                TimelessAPI.getClientSlotAdapterIndex(id)
+                        .map(com.tacz.guns.client.resource.index.ClientSlotAdapterIndex::getMountOffset))
                 .orElse(null);
     }
 
     private static void applyViewPath(ClientAttachmentIndex index, com.tacz.guns.client.model.BedrockAttachmentModel attachmentModel,
                                       PoseStack ps, ItemStack attachmentItem) {
+        applyViewPath(index, attachmentModel, ps, attachmentItem, -1);
+    }
+
+    private static void applyViewPath(ClientAttachmentIndex index, com.tacz.guns.client.model.BedrockAttachmentModel attachmentModel,
+                                      PoseStack ps, ItemStack attachmentItem, int viewIndexOverride) {
         if (attachmentModel == null) return;
         ps.translate(0f, -1.5f, 0f);
         com.tacz.guns.client.model.bedrock.BedrockPart root = attachmentModel.getRootNode();
         if (root != null) root.translateAndRotateAndScale(ps);
-        int[] views = index.getViews();
-        int viewIndex = 0;
-        if (views != null && views.length > 0 && attachmentItem.getTag() != null) {
-            int zoom = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor.getZoomNumberFromTag(attachmentItem.getTag());
-            viewIndex = views[zoom % views.length] - 1;
-            if (viewIndex < 0) viewIndex = 0;
+        int viewIndex = viewIndexOverride;
+        if (viewIndex < 0) {
+            viewIndex = 0;
+            int[] views = index.getViews();
+            if (views != null && views.length > 0 && attachmentItem.getTag() != null) {
+                int zoom = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor.getZoomNumberFromTag(attachmentItem.getTag());
+                viewIndex = views[zoom % views.length] - 1;
+                if (viewIndex < 0) viewIndex = 0;
+            }
         }
         List<com.tacz.guns.client.model.bedrock.BedrockPart> view = attachmentModel.getScopeViewPath(viewIndex);
         if (view == null) return;

@@ -27,6 +27,10 @@ public class AimSwayHandler {
     private static float prevPitch;
     private static float curYaw;
     private static float curPitch;
+    private static ItemStack cachedScopeGun;
+    private static int cachedScopeHash;
+    private static String cachedScopeSlot;
+    private static boolean cachedScopeActive;
 
     /** 是否处于可屏息状态: 开镜中且当前瞄具为 scope 类型。 */
     public static boolean canHoldBreath(LocalPlayer player) {
@@ -39,22 +43,36 @@ public class AimSwayHandler {
     /** 当前安装并激活的瞄具是否为 scope 类型(而非 sight; 组合瞄具按当前视图判定); 无配件时回退到枪械内置瞄具。 */
     public static boolean isScopeActive(LocalPlayer player) {
         ItemStack gun = player.getMainHandItem();
-        IGun iGun = IGun.getIGunOrNull(gun);
-        if (iGun == null) return false;
-        ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
-        CompoundTag tag = ScopeSwitchState.attachmentTag(iGun, gun, AttachmentType.SCOPE);
-        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
-            id = iGun.getBuiltInAttachmentId(gun, AttachmentType.SCOPE);
-            tag = null;
+        String activeSlot = ScopeSwitchState.getActiveSlot(gun);
+        int tagHash = gun.getTag() == null ? 0 : gun.getTag().hashCode();
+        if (gun == cachedScopeGun && tagHash == cachedScopeHash
+                && java.util.Objects.equals(activeSlot, cachedScopeSlot)) {
+            return cachedScopeActive;
         }
-        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
-        CompoundTag scopeTag = tag;
-        return TimelessAPI.getClientAttachmentIndex(id).map(index -> {
-            if (ScopeViewHelper.isCombinedSight(index)) {
-                return ScopeViewHelper.isScopeView(index, scopeTag);
+        boolean result = false;
+        IGun iGun = IGun.getIGunOrNull(gun);
+        if (iGun != null) {
+            ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
+            CompoundTag tag = ScopeSwitchState.attachmentTag(iGun, gun, AttachmentType.SCOPE);
+            if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
+                id = iGun.getBuiltInAttachmentId(gun, AttachmentType.SCOPE);
+                tag = null;
             }
-            return index.isScope();
-        }).orElse(false);
+            if (id != null && !DefaultAssets.isEmptyAttachmentId(id)) {
+                CompoundTag scopeTag = tag;
+                result = TimelessAPI.getClientAttachmentIndex(id).map(index -> {
+                    if (ScopeViewHelper.isCombinedSight(index)) {
+                        return ScopeViewHelper.isScopeView(index, scopeTag);
+                    }
+                    return index.isScope();
+                }).orElse(false);
+            }
+        }
+        cachedScopeGun = gun;
+        cachedScopeHash = tagHash;
+        cachedScopeSlot = activeSlot;
+        cachedScopeActive = result;
+        return result;
     }
 
     @SubscribeEvent

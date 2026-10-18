@@ -228,9 +228,10 @@ public class GunEnchantmentHandler {
         if (level <= 0) {
             return;
         }
-        long otherCount = EnchantmentHelper.getEnchantments(gun).keySet().stream()
-                .filter(enchantment -> enchantment != TaczFixesMod.COLLECTOR_ENCHANTMENT.get())
-                .count();
+        long otherCount = 0L;
+        for (var enchantment : EnchantmentHelper.getEnchantments(gun).keySet()) {
+            if (enchantment != TaczFixesMod.COLLECTOR_ENCHANTMENT.get()) otherCount++;
+        }
         if (otherCount <= 0) {
             return;
         }
@@ -708,6 +709,10 @@ public class GunEnchantmentHandler {
             return;
         }
         double distance = Config.ENCH_SMART_SCOPE_MAX_DISTANCE.get();
+        // 只在准星附近有实体时才做射线/实体查询, 避免每 tick 全量查询。
+        if (!(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) {
+            return;
+        }
         Vec3 start = player.getEyePosition(1.0F);
         Vec3 look = player.getViewVector(1.0F);
         Vec3 end = start.add(look.scale(distance));

@@ -17,17 +17,21 @@ import java.util.Collections;
 import java.util.List;
 
 public final class StandbySlotBuffer {
-    private static List<Object[]> pending = Collections.emptyList();
+    public record PendingSlot(ItemStack item, BedrockPart node, String slotId,
+                              List<CustomSlotMount.Step> chain, boolean attachmentNode) {
+    }
+
+    private static List<PendingSlot> pending = Collections.emptyList();
 
     private StandbySlotBuffer() {
     }
 
-    public static void setPending(List<Object[]> standby) {
+    public static void setPending(List<PendingSlot> standby) {
         pending = standby;
     }
 
-    public static List<Object[]> takePending() {
-        List<Object[]> list = pending;
+    public static List<PendingSlot> takePending() {
+        List<PendingSlot> list = pending;
         pending = Collections.emptyList();
         return list;
     }
@@ -80,11 +84,13 @@ public final class StandbySlotBuffer {
             List<List<BedrockPart>> ocular = acc.taczfixes$ocularNodePaths();
             List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
             if (ocular == null) return;
+            boolean pureScope = model.isScope() && !model.isSight();
+            boolean pureSight = model.isSight() && !model.isScope();
             for (int i = 0; i < ocular.size(); i++) {
                 boolean scopeType = isScopeOcular != null && i < isScopeOcular.size() && isScopeOcular.get(i);
                 List<BedrockPart> path = ocular.get(i);
                 if (path == null || path.isEmpty()) continue;
-                boolean wantVisible = scopeType;
+                boolean wantVisible = pureScope || (!pureSight && scopeType);
                 for (BedrockPart p : path) {
                     if (p.visible != wantVisible) {
                         restore.putIfAbsent(p, p.visible);
@@ -104,6 +110,36 @@ public final class StandbySlotBuffer {
         restore.clear();
     }
 
+    /** 兼容只有普通 ocular 骨的 scope 模型: 在模型自身渲染后补画非 scope 目镜路径。 */
+    public static void renderPlainOcular(BedrockAttachmentModel model, PoseStack poseStack,
+                                         ItemDisplayContext displayContext, RenderType renderType,
+                                         int light, int overlay) {
+        if (model == null) return;
+        com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
+                (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
+        if (!acc.taczfixes$isScope() || acc.taczfixes$isSight()) return;
+        List<List<BedrockPart>> paths = acc.taczfixes$ocularNodePaths();
+        List<Boolean> flags = acc.taczfixes$isScopeOcular();
+        if (paths == null || paths.isEmpty()) return;
+        boolean stencil = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+        int func = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_STENCIL_FUNC);
+        int ref = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_STENCIL_REF);
+        int mask = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_STENCIL_VALUE_MASK);
+        if (stencil) org.lwjgl.opengl.GL11.glDisable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+        try {
+            for (int i = 0; i < paths.size(); i++) {
+                boolean scopeOcular = flags != null && i < flags.size() && Boolean.TRUE.equals(flags.get(i));
+                if (!scopeOcular) {
+                    acc.taczfixes$renderTempPart(poseStack, displayContext, renderType, light, overlay, paths.get(i));
+                }
+            }
+        } finally {
+            if (stencil) {
+                org.lwjgl.opengl.GL11.glEnable(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
+                org.lwjgl.opengl.GL11.glStencilFunc(func, ref, mask);
+            }
+        }
+    }
     public static void applySlotAdapterOffset(ItemStack item, ItemStack gun, String slotId,
                                               PoseStack poseStack, ItemDisplayContext displayContext,
                                               int light, int overlay) {

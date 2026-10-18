@@ -34,6 +34,7 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                 .thenAcceptAsync(result -> {
                     AttachmentGroupOffsetManager.putAll(result);
                     TaczFixesDataManager.putAll(TaczFixesDataReloadListener.scanFileSystemGunData());
+                    com.ssscript.taczfixes.common.data.CustomSlotManager.bumpDataStamp();
                     TaczFixesDataManager.syncPosAlterRanges();
                     com.ssscript.taczfixes.client.hud.CustomHudManager.clear();
                     com.ssscript.taczfixes.client.util.GunPackIconLoader.clear();

@@ -5,14 +5,18 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 
 /**
- * 激光束换用 NEW_ENTITY 渲染类型后, 部分光束实现只写 pos/color/uv 的子集。
- * 本包装器补齐缺失的 color/uv/overlay/light/normal, 避免 BufferBuilder 报
- * "Not filled all elements of the vertex"。
+ * 激光束换用 NEW_ENTITY 渲染类型后补齐缺失元素。
+ * NEW_ENTITY 的元素顺序是 pos -> color -> uv -> overlay -> light -> normal,
+ * 光束只写 pos/color/uv/light, 因此 overlay 必须在 light 之前补, normal 在最后补。
  */
 public final class BeamEntityVertexConsumer implements VertexConsumer {
     private final VertexConsumer delegate;
     private boolean colorSet;
     private boolean hasDefaultColor;
+    private int defaultR = 255;
+    private int defaultG = 255;
+    private int defaultB = 255;
+    private int defaultA = 255;
     private boolean uvSet;
     private boolean overlaySet;
     private boolean lightSet;
@@ -58,6 +62,7 @@ public final class BeamEntityVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer uv2(int u, int v) {
+        ensureBeforeLight();
         this.lightSet = true;
         delegate.uv2(u | 1, v);
         return this;
@@ -65,6 +70,7 @@ public final class BeamEntityVertexConsumer implements VertexConsumer {
 
     @Override
     public VertexConsumer uv2(int packedLight) {
+        ensureBeforeLight();
         this.lightSet = true;
         delegate.uv2(packedLight | 1);
         return this;
@@ -79,15 +85,7 @@ public final class BeamEntityVertexConsumer implements VertexConsumer {
 
     @Override
     public void endVertex() {
-        if (!this.colorSet && !this.hasDefaultColor) {
-            delegate.color(255, 255, 255, 255);
-        }
-        if (!this.uvSet) {
-            delegate.uv(0.0f, 0.0f);
-        }
-        if (!this.overlaySet) {
-            delegate.overlayCoords(OverlayTexture.NO_OVERLAY & 0xFFFF, (OverlayTexture.NO_OVERLAY >> 16) & 0xFFFF);
-        }
+        ensureBeforeLight();
         if (!this.lightSet) {
             delegate.uv2(LightTexture.FULL_BRIGHT);
         }
@@ -102,9 +100,33 @@ public final class BeamEntityVertexConsumer implements VertexConsumer {
         delegate.endVertex();
     }
 
+    /** 必须在写 light 之前补齐 color/uv/overlay, 否则 BufferBuilder 的元素顺序会错位。 */
+    private void ensureBeforeLight() {
+        if (!this.colorSet) {
+            this.colorSet = true;
+            if (this.hasDefaultColor) {
+                delegate.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
+            } else {
+                delegate.color(255, 255, 255, 255);
+            }
+        }
+        if (!this.uvSet) {
+            this.uvSet = true;
+            delegate.uv(0.0f, 0.0f);
+        }
+        if (!this.overlaySet) {
+            this.overlaySet = true;
+            delegate.overlayCoords(OverlayTexture.NO_OVERLAY & 0xFFFF, (OverlayTexture.NO_OVERLAY >> 16) & 0xFFFF);
+        }
+    }
+
     @Override
     public void defaultColor(int r, int g, int b, int a) {
         this.hasDefaultColor = true;
+        this.defaultR = r;
+        this.defaultG = g;
+        this.defaultB = b;
+        this.defaultA = a;
         delegate.defaultColor(r, g, b, a);
     }
 

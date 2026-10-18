@@ -23,6 +23,20 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class CustomSlotManager {
     private static final Map<ResourceLocation, Set<ResourceLocation>> ALLOW_TAGS = new ConcurrentHashMap<>();
+    private static ItemStack cachedEntriesStack;
+    private static int cachedEntriesTagHash;
+    private static int cachedEntriesStamp;
+    private static Map<String, SlotEntry> cachedEntries;
+    private static Map<String, CustomSlotDefinition> cachedSlots;
+    private static int dataStamp;
+
+    /** 配置/数据重载后使槽位合并缓存失效。 */
+    public static void bumpDataStamp() {
+        dataStamp++;
+        cachedEntriesStack = null;
+        cachedEntries = null;
+        cachedSlots = null;
+    }
 
     private CustomSlotManager() {
     }
@@ -30,6 +44,7 @@ public class CustomSlotManager {
     public static void putAllTags(Map<ResourceLocation, Set<ResourceLocation>> tags) {
         ALLOW_TAGS.clear();
         ALLOW_TAGS.putAll(tags);
+        bumpDataStamp();
     }
 
     public static Map<String, CustomSlotDefinition> getSlots(ResourceLocation gunId) {
@@ -77,8 +92,13 @@ public class CustomSlotManager {
 
     /** 枪械 data + 已安装配件定义的槽位合并视图(槽 id 冲突时按安装位去重, 配件递归展开并去环)。 */
     public static Map<String, SlotEntry> getEntries(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return Collections.emptyMap();
+        int tagHash = gunStack.getTag() == null ? 0 : gunStack.getTag().hashCode();
+        if (gunStack == cachedEntriesStack && tagHash == cachedEntriesTagHash
+                && cachedEntriesStamp == dataStamp && cachedEntries != null) {
+            return cachedEntries;
+        }
         Map<String, SlotEntry> result = new LinkedHashMap<>();
-        if (gunStack == null || gunStack.isEmpty()) return result;
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) return result;
         for (Map.Entry<String, CustomSlotDefinition> entry : getSlots(gun.getGunId(gunStack)).entrySet()) {
@@ -126,6 +146,11 @@ public class CustomSlotManager {
                 }
             }
         }
+        cachedEntriesStack = gunStack;
+        cachedEntriesTagHash = tagHash;
+        cachedEntriesStamp = dataStamp;
+        cachedEntries = result;
+        cachedSlots = null;
         return result;
     }
 
@@ -147,10 +172,16 @@ public class CustomSlotManager {
     }
 
     public static Map<String, CustomSlotDefinition> getSlots(ItemStack gunStack) {
+        Map<String, SlotEntry> entries = getEntries(gunStack);
+        if (gunStack == cachedEntriesStack && cachedSlots != null
+                && cachedEntriesStamp == dataStamp) {
+            return cachedSlots;
+        }
         Map<String, CustomSlotDefinition> result = new LinkedHashMap<>();
-        for (Map.Entry<String, SlotEntry> entry : getEntries(gunStack).entrySet()) {
+        for (Map.Entry<String, SlotEntry> entry : entries.entrySet()) {
             result.put(entry.getKey(), entry.getValue().def());
         }
+        cachedSlots = result;
         return result;
     }
 

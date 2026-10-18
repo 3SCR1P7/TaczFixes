@@ -21,6 +21,9 @@ public interface MixinBedrockAttachmentModelScopeSuppress {
     @Accessor("isScopeOcular")
     List<Boolean> taczfixes$isScopeOcular();
 
+    @Accessor("isScopeOcular")
+    void taczfixes$setIsScopeOcular(List<Boolean> flags);
+
     @Accessor("divisionNodePaths")
     List<List<BedrockPart>> taczfixes$divisionNodePaths();
 
