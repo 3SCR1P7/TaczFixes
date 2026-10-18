@@ -80,7 +80,7 @@ public final class GunPackInfoScanner {
                 continue;
             }
             String fileName = info.path().getFileName() == null ? info.name() : info.path().getFileName().toString();
-            Component displayName = Component.literal(info.displayName().getString() + " (" + fileName + ")");
+            Component displayName = Component.literal(info.displayName().getString() + " " + fileName);
             result.add(new PackInfoData(info.id(), info.name(), info.path(), info.iconPath(),
                     displayName, info.description(), info.logo()));
         }
