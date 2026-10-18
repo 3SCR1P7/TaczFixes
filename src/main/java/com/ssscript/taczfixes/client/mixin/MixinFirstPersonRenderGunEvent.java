@@ -37,7 +37,6 @@ public class MixinFirstPersonRenderGunEvent {
     }
 
 
-
     @Inject(method = {"onGunFire"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/client/player/LocalPlayer;getMainHandItem()Lnet/minecraft/world/item/ItemStack;", shift = At.Shift.BEFORE, remap = true)}, cancellable = true, remap = false)
     private static void dualWield$skipMainHandMuzzleForOffhandFire(GunFireEvent event, CallbackInfo callback) {
         LocalPlayer player = Minecraft.getInstance().player;

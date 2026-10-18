@@ -1497,8 +1497,8 @@ public class Config {
                 .comment("达到最大桶滚角度所需的横向移动速度。默认值：5.0")
                 .defineInRange("movement_roll_full_speed", 5.0, 0.0, 50.0);
         ROTATION_INERTIA_MAX_ANGLE = BUILDER
-                .comment("视角旋转时枪械惯性的最大滞后角度。默认值：2.0")
-                .defineInRange("rotation_inertia_max_angle", 2.0, 0.0, 15.0);
+                .comment("视角旋转时枪械惯性的最大滞后角度。默认值：5.0")
+                .defineInRange("rotation_inertia_max_angle", 5.0, 0.0, 15.0);
         ROTATION_INERTIA_FOLLOW_SPEED = BUILDER
                 .comment("视角旋转后枪械惯性恢复速度。默认值：2.0")
                 .defineInRange("rotation_inertia_follow_speed", 2.0, 0.0, 15.0);

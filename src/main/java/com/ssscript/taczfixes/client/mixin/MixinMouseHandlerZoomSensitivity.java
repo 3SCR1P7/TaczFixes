@@ -3,7 +3,6 @@ package com.ssscript.taczfixes.client.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.ssscript.taczfixes.client.handler.SteplessZoomHandler;
-import com.ssscript.taczfixes.client.util.GunRotationInertiaTransform;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
@@ -42,10 +41,11 @@ public abstract class MixinMouseHandlerZoomSensitivity {
         float stdZoom = standardScopeZoom(iGun, gun);
         float corrZoom = correctedZoom(iGun, gun);
         double ratio = sensitivityRatio(player, stdZoom, corrZoom);
-        double usedYaw = ratio == 1.0d ? yaw : yaw * ratio;
-        double usedPitch = ratio == 1.0d ? pitch : pitch * ratio;
-        GunRotationInertiaTransform.addLookDelta(usedYaw, usedPitch);
-        original.call(player, usedYaw, usedPitch);
+        if (ratio == 1.0d) {
+            original.call(player, yaw, pitch);
+            return;
+        }
+        original.call(player, yaw * ratio, pitch * ratio);
     }
 
     private static float standardScopeZoom(IGun iGun, ItemStack gun) {

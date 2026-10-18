@@ -4,6 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
+import com.tacz.guns.client.model.BedrockGunModel;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
@@ -11,11 +12,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
 
-/**
- * 左右移动时的枪身桶滚。
- * 仅对支持战术据枪(can_slide)的枪械生效, 双持时不生效;
- * 开镜时绕视点/屏幕中心旋转, 保证瞄具中心仍与准星对齐。
- */
 public final class MovementRollTransform {
     private static float smoothedAngle;
     private static long lastNanos;
@@ -23,7 +19,7 @@ public final class MovementRollTransform {
     private MovementRollTransform() {
     }
 
-    public static boolean apply(PoseStack pose, com.tacz.guns.client.model.BedrockGunModel model, ItemStack stack) {
+    public static boolean apply(PoseStack pose, BedrockGunModel model, ItemStack stack) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || stack == null || stack.isEmpty()) {
             return false;
@@ -62,7 +58,6 @@ public final class MovementRollTransform {
         if (center != null) {
             base.transformPosition(center[0], center[1], center[2], centerPivot);
         }
-        // 开镜过程中在枪身中心与准星轴之间平滑移动轴心, 避免瞬间换轴造成抽搐。
         Vector3f pivot = new Vector3f(centerPivot).lerp(new Vector3f(0f, 0f, 0f), aimProgress);
         Matrix4f screen = new Matrix4f()
                 .translate(pivot.x, pivot.y, pivot.z)
