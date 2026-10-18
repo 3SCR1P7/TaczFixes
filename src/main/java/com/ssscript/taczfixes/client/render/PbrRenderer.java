@@ -123,17 +123,17 @@ public final class PbrRenderer {
         setUniform(uLocalSkyExposure, level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
         // 淋雨打湿: 仅主世界、露天且头顶无遮挡时生效, 强度跟随雨量。
         // 用玩家位置而不是相机位置: 第三人称相机可能在屋檐外, 但枪和玩家在遮挡下不应打湿。
-        float wetness = 0f;
+        float targetWetness = 0f;
         var wetnessAnchor = Minecraft.getInstance().player != null
                 ? Minecraft.getInstance().player.position() : origin;
         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && level.isRaining()) {
             BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
             // isRainingAt 已包含 canSeeSky/高度图/群系降雨检查; canSeeSky 再显式确认头顶无方块遮挡。
             if (level.canSeeSky(wetPos) && level.isRainingAt(wetPos)) {
-                wetness = level.getRainLevel(partialTick);
+                targetWetness = level.getRainLevel(partialTick);
             }
         }
-        setUniform(uWetness, wetness);
+        setUniform(uWetness, updateWetness(targetWetness));
     }
 
     private static float smoothedWetness = 0f;
