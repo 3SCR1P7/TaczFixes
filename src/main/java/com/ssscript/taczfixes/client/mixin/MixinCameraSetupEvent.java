@@ -47,7 +47,10 @@ public class MixinCameraSetupEvent {
         LivingEntity shooter = event.getShooter();
         if (!(shooter instanceof LocalPlayer player)) return;
         
-        int stability = GunEnchantmentHelper.getLevel(player.getMainHandItem(), TaczFixesMod.STABILITY_ENCHANTMENT.get());
+        // 双持副手开火时事件携带的是副手枪, 稳定附魔必须从实际开火的枪读取。
+        ItemStack firedStack = event.getGunItemStack();
+        ItemStack stabilityStack = firedStack == null || firedStack.isEmpty() ? player.getMainHandItem() : firedStack;
+        int stability = GunEnchantmentHelper.getLevel(stabilityStack, TaczFixesMod.STABILITY_ENCHANTMENT.get());
         float stabilityFactor = 1.0f;
         if (stability > 0) {
             stabilityFactor = Math.max(1.0f - (float) (Config.ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL.get() / 100.0 * stability), 0.0f);
