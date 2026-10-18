@@ -27,7 +27,7 @@ public final class GunPackInfoScanner {
     private static final String DEFAULT_PACK_NAMESPACE = "tacz";
     private static final ResourceLocation FALLBACK_LOGO = new ResourceLocation("tacz", "textures/pack.png");
 
-    public record PackInfoData(String name, Path path, Path iconPath, Component displayName,
+    public record PackInfoData(String id, String name, Path path, Path iconPath, Component displayName,
                                Component description, ResourceLocation logo) {
     }
 
@@ -102,9 +102,13 @@ public final class GunPackInfoScanner {
             logo = defaultLogo.logo();
             iconPath = defaultLogo.path();
         }
-        return new PackInfoData(namespace, path, iconPath, displayName, description, logo);
+        return new PackInfoData(uniqueId(namespace, path), namespace, path, iconPath, displayName, description, logo);
     }
 
+    private static String uniqueId(String namespace, Path path) {
+        String fileName = path.getFileName() == null ? "pack" : path.getFileName().toString();
+        return namespace + "@" + fileName;
+    }
     private static String string(JsonObject root, String key) {
         if (!root.has(key) || !root.get(key).isJsonPrimitive()) return null;
         String value = root.get(key).getAsString();

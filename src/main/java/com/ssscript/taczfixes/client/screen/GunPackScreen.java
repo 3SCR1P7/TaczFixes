@@ -19,7 +19,11 @@ import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /** 枪包管理: 直接复用原版资源包界面(PackSelectionScreen), 只把枪包作为包列表传入。 */
 public final class GunPackScreen {
@@ -36,27 +40,57 @@ public final class GunPackScreen {
         int format = SharedConstants.getCurrentVersion().getPackVersion(PackType.CLIENT_RESOURCES);
         // 每次 reload 都重新扫描, 这样拖入界面的新枪包(原版会复制进 tacz 目录)也能出现。
         String language = Minecraft.getInstance().getLanguageManager().getSelected();
+        List<GunPackInfoScanner.PackInfoData> infos = GunPackInfoScanner.scan(taczDir, language);
+        Map<String, String> idToName = new LinkedHashMap<>();
+        Set<String> names = new LinkedHashSet<>();
+        for (GunPackInfoScanner.PackInfoData info : infos) {
+            idToName.put(info.id(), info.name());
+            names.add(info.name());
+        }
+        // 同命名空间可能有多个枪包, PackRepository 的 id 必须唯一。
         PackRepository repository = new PackRepository(consumer -> {
-            for (GunPackInfoScanner.PackInfoData info : GunPackInfoScanner.scan(taczDir, language)) {
+            for (GunPackInfoScanner.PackInfoData info : infos) {
                 consumer.accept(createPack(info, format));
             }
         });
         repository.reload();
-        repository.setSelected(GunPackSettings.arrange(new ArrayList<>(repository.getAvailableIds())));
+        List<String> arrangedNames = GunPackSettings.arrange(new ArrayList<>(names));
+        List<String> selected = new ArrayList<>();
+        for (String name : arrangedNames) {
+            for (GunPackInfoScanner.PackInfoData info : infos) {
+                if (name.equals(info.name())) {
+                    selected.add(info.id());
+                }
+            }
+        }
+        repository.setSelected(selected);
         Minecraft minecraft = Minecraft.getInstance();
         boolean inWorld = minecraft.level != null;
         return new PackSelectionScreen(repository, repo -> {
-            List<String> selected = new ArrayList<>(repo.getSelectedIds());
-            List<String> disabled = new ArrayList<>();
-            for (String id : repo.getAvailableIds()) {
-                if (!selected.contains(id)) disabled.add(id);
+            List<String> selectedIds = new ArrayList<>(repo.getSelectedIds());
+            List<String> selectedNames = new ArrayList<>();
+            for (String id : selectedIds) {
+                String name = idToName.get(id);
+                if (name != null && !selectedNames.contains(name)) {
+                    selectedNames.add(name);
+                }
             }
-            disabled.sort(String.CASE_INSENSITIVE_ORDER);
-            // 无改动则不写设置、不重载(避免仅点击"完成"也触发资源重载)。
-            boolean changed = !GunPackSettings.order().equals(selected)
-                    || !GunPackSettings.disabledNames().equals(disabled);
+            List<String> disabledNames = new ArrayList<>();
+            for (String id : repo.getAvailableIds()) {
+                if (selectedIds.contains(id)) {
+                    continue;
+                }
+                String name = idToName.get(id);
+                if (name != null && !selectedNames.contains(name) && !disabledNames.contains(name)) {
+                    disabledNames.add(name);
+                }
+            }
+            disabledNames.sort(String.CASE_INSENSITIVE_ORDER);
+            // 设置文件仍按命名空间记录, 同命名空间的多个枪包会一起启用/禁用。
+            boolean changed = !GunPackSettings.order().equals(selectedNames)
+                    || !GunPackSettings.disabledNames().equals(disabledNames);
             if (changed) {
-                GunPackSettings.update(selected, disabled);
+                GunPackSettings.update(selectedNames, disabledNames);
             }
             if (inWorld) {
                 minecraft.setScreen(null);
@@ -75,8 +109,8 @@ public final class GunPackScreen {
 
     private static Pack createPack(GunPackInfoScanner.PackInfoData info, int format) {
         Pack.Info packInfo = new Pack.Info(info.description(), format, FeatureFlags.DEFAULT_FLAGS);
-        return Pack.create(info.name(), info.displayName(), false,
-                id -> new GunPackResources(info.name(), info.path(), info.iconPath(), info.logo()),
+        return Pack.create(info.id(), info.displayName(), false,
+                id -> new GunPackResources(info.id(), info.path(), info.iconPath(), info.logo()),
                 packInfo, PackType.CLIENT_RESOURCES, Pack.Position.TOP, false, PackSource.DEFAULT);
     }
 }

@@ -27,8 +27,8 @@ public class GunPackResources implements PackResources {
     private final Path iconPath;
     private final ResourceLocation logo;
 
-    public GunPackResources(String namespace, Path path, Path iconPath, ResourceLocation logo) {
-        this.packId = "taczfixes_gunpack_" + namespace;
+    public GunPackResources(String packId, Path path, Path iconPath, ResourceLocation logo) {
+        this.packId = "taczfixes_gunpack_" + packId;
         this.delegate = Files.isDirectory(path)
                 ? new PathPackResources(packId, path, false)
                 : new FilePackResources(packId, path.toFile(), false);

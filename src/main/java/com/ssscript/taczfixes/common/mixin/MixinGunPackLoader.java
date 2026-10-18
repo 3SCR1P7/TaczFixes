@@ -24,16 +24,18 @@ public abstract class MixinGunPackLoader {
         if (Boolean.TRUE.equals(GunPackHooks.RAW_SCAN.get())) return;
         List<?> packList = cir.getReturnValue();
         if (packList == null || packList.isEmpty()) return;
-        Map<String, Object> byName = new LinkedHashMap<>();
+        Map<String, List<Object>> byName = new LinkedHashMap<>();
         for (Object pack : packList) {
             String name = GunPackHooks.nameOf(pack);
-            if (name != null) byName.put(name, pack);
+            if (name != null) {
+                byName.computeIfAbsent(name, key -> new ArrayList<>()).add(pack);
+            }
         }
         List<String> arranged = GunPackSettings.arrange(new ArrayList<>(byName.keySet()));
-        List<Object> result = new ArrayList<>(arranged.size());
+        List<Object> result = new ArrayList<>();
         for (String name : arranged) {
-            Object pack = byName.get(name);
-            if (pack != null) result.add(pack);
+            List<Object> packs = byName.get(name);
+            if (packs != null) result.addAll(packs);
         }
         cir.setReturnValue(result);
     }
