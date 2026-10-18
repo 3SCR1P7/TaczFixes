@@ -19,10 +19,7 @@ import net.minecraftforge.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.LinkedHashSet;
 import java.util.List;
-import java.util.Map;
 
 /** 枪包管理: 直接复用原版资源包界面(PackSelectionScreen), 只把枪包作为包列表传入。 */
 public final class GunPackScreen {
@@ -39,54 +36,29 @@ public final class GunPackScreen {
         int format = SharedConstants.getCurrentVersion().getPackVersion(PackType.CLIENT_RESOURCES);
         // 每次 reload 都重新扫描, 这样拖入界面的新枪包(原版会复制进 tacz 目录)也能出现。
         String language = Minecraft.getInstance().getLanguageManager().getSelected();
-        Map<String, String> idToName = new LinkedHashMap<>();
         // 每次 reload 都重新扫描, 否则拖入新枪包后 PackRepository 仍使用旧的扫描结果。
         PackRepository repository = new PackRepository(consumer -> {
-            List<GunPackInfoScanner.PackInfoData> infos = GunPackInfoScanner.scan(taczDir, language);
-            idToName.clear();
-            for (GunPackInfoScanner.PackInfoData info : infos) {
-                idToName.put(info.id(), info.name());
+            for (GunPackInfoScanner.PackInfoData info : GunPackInfoScanner.scan(taczDir, language)) {
                 consumer.accept(createPack(info, format));
             }
         });
         repository.reload();
-        List<String> arrangedNames = GunPackSettings.arrange(
-                new ArrayList<>(new LinkedHashSet<>(idToName.values())));
-        List<String> selected = new ArrayList<>();
-        for (String id : repository.getAvailableIds()) {
-            String name = idToName.get(id);
-            if (name != null && arrangedNames.contains(name)) {
-                selected.add(id);
-            }
-        }
-        repository.setSelected(selected);
+        repository.setSelected(GunPackSettings.arrange(new ArrayList<>(repository.getAvailableIds())));
         Minecraft minecraft = Minecraft.getInstance();
         boolean inWorld = minecraft.level != null;
         return new PackSelectionScreen(repository, repo -> {
-            List<String> selectedIds = new ArrayList<>(repo.getSelectedIds());
-            List<String> selectedNames = new ArrayList<>();
-            for (String id : selectedIds) {
-                String name = idToName.get(id);
-                if (name != null && !selectedNames.contains(name)) {
-                    selectedNames.add(name);
-                }
-            }
-            List<String> disabledNames = new ArrayList<>();
+            List<String> selected = new ArrayList<>(repo.getSelectedIds());
+            List<String> disabled = new ArrayList<>();
             for (String id : repo.getAvailableIds()) {
-                if (selectedIds.contains(id)) {
-                    continue;
-                }
-                String name = idToName.get(id);
-                if (name != null && !selectedNames.contains(name) && !disabledNames.contains(name)) {
-                    disabledNames.add(name);
+                if (!selected.contains(id)) {
+                    disabled.add(id);
                 }
             }
-            disabledNames.sort(String.CASE_INSENSITIVE_ORDER);
-            // 设置文件仍按命名空间记录, 同命名空间的多个枪包会一起启用/禁用。
-            boolean changed = !GunPackSettings.order().equals(selectedNames)
-                    || !GunPackSettings.disabledNames().equals(disabledNames);
+            disabled.sort(String.CASE_INSENSITIVE_ORDER);
+            boolean changed = !GunPackSettings.order().equals(selected)
+                    || !GunPackSettings.disabledNames().equals(disabled);
             if (changed) {
-                GunPackSettings.update(selectedNames, disabledNames);
+                GunPackSettings.update(selected, disabled);
             }
             if (inWorld) {
                 minecraft.setScreen(null);

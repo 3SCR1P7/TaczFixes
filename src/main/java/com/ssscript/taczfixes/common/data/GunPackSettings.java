@@ -18,8 +18,8 @@ import java.util.Set;
 
 /**
  * 枪包启用/优先级设置, 持久化于 config/taczfixes_gunpacks.json。
- * order: 命名空间列表, 越靠前优先级越高(在同名资源冲突时覆盖后面的枪包)。
- * disabled: 被禁用的枪包命名空间。
+ * order: 枪包 ID(namespace@文件名)列表, 越靠前优先级越高; 兼容旧的命名空间条目。
+ * disabled: 被禁用的枪包 ID; 兼容旧的命名空间条目。
  */
 public final class GunPackSettings {
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
@@ -81,9 +81,12 @@ public final class GunPackSettings {
         return new ArrayList<>(disabled);
     }
 
-    public static synchronized boolean isDisabled(String name) {
+    public static synchronized boolean isDisabled(String packId) {
         ensureLoaded();
-        return name != null && disabled.contains(name);
+        if (packId == null) return false;
+        if (disabled.contains(packId)) return true;
+        // 兼容旧配置: 只写命名空间时禁用该命名空间下的所有枪包。
+        return disabled.contains(GunPackIds.namespaceOf(packId));
     }
 
     /** 保存当前启用顺序与禁用列表。 */
@@ -95,21 +98,30 @@ public final class GunPackSettings {
         save();
     }
 
-    /** 按设置排列发现到的枪包: 已配置的高优先级在前, 新枪包按名称追加在后; 过滤掉禁用的。 */
+    /**
+     * 按设置排列发现到的枪包 ID: 已配置的高优先级在前, 新枪包按名称追加在后; 过滤掉禁用的。
+     * 旧配置里的命名空间条目会匹配该命名空间下的所有枪包。
+     */
     public static synchronized List<String> arrange(List<String> discovered) {
         ensureLoaded();
         LinkedHashSet<String> known = new LinkedHashSet<>();
-        for (String name : order) {
-            if (name != null && discovered.contains(name)) known.add(name);
+        for (String entry : order) {
+            if (entry == null) continue;
+            for (String id : discovered) {
+                if (id.equals(entry) || (GunPackIds.isNamespaceEntry(entry)
+                        && GunPackIds.namespaceOf(id).equals(entry))) {
+                    known.add(id);
+                }
+            }
         }
         List<String> rest = new ArrayList<>();
-        for (String name : discovered) {
-            if (!known.contains(name)) rest.add(name);
+        for (String id : discovered) {
+            if (!known.contains(id)) rest.add(id);
         }
         rest.sort(String.CASE_INSENSITIVE_ORDER);
         List<String> result = new ArrayList<>(known);
         result.addAll(rest);
-        result.removeIf(disabled::contains);
+        result.removeIf(GunPackSettings::isDisabled);
         return result;
     }
 }

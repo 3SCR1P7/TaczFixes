@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.data.GunPackHooks;
+import com.ssscript.taczfixes.common.data.GunPackIds;
 import com.ssscript.taczfixes.common.data.GunPackSettings;
 import com.tacz.guns.resource.GunPackLoader;
 import org.spongepowered.asm.mixin.Mixin;
@@ -24,17 +25,19 @@ public abstract class MixinGunPackLoader {
         if (Boolean.TRUE.equals(GunPackHooks.RAW_SCAN.get())) return;
         List<?> packList = cir.getReturnValue();
         if (packList == null || packList.isEmpty()) return;
-        Map<String, List<Object>> byName = new LinkedHashMap<>();
+        Map<String, List<Object>> byId = new LinkedHashMap<>();
         for (Object pack : packList) {
             String name = GunPackHooks.nameOf(pack);
-            if (name != null) {
-                byName.computeIfAbsent(name, key -> new ArrayList<>()).add(pack);
+            Path packPath = GunPackHooks.pathOf(pack);
+            if (name != null && packPath != null) {
+                String id = GunPackIds.of(name, packPath);
+                byId.computeIfAbsent(id, key -> new ArrayList<>()).add(pack);
             }
         }
-        List<String> arranged = GunPackSettings.arrange(new ArrayList<>(byName.keySet()));
+        List<String> arranged = GunPackSettings.arrange(new ArrayList<>(byId.keySet()));
         List<Object> result = new ArrayList<>();
-        for (String name : arranged) {
-            List<Object> packs = byName.get(name);
+        for (String id : arranged) {
+            List<Object> packs = byId.get(id);
             if (packs != null) result.addAll(packs);
         }
         cir.setReturnValue(result);
