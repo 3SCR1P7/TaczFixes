@@ -40,13 +40,16 @@ import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
+import com.ssscript.taczfixes.common.util.OffhandItemCombat;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandBolt;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandCancelReload;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandFireSelect;
+import com.ssscript.taczfixes.common.network.ClientMessageOffhandItemAttack;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandMelee;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandReload;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandShoot;
+
 import it.unimi.dsi.fastutil.Pair;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
@@ -77,6 +80,10 @@ import net.minecraft.world.item.Item;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
 public final class DualWieldClient {
     private static boolean lastLeftDown;
+    private static boolean lastOffhandItemUseDown;
+    private static boolean lastMainItemUseDown;
+    private static long lastOffhandItemAttackMs;
+
     private static boolean lastRightDown;
     private static boolean lastLeftShootSuccess;
     private static boolean lastRightShootSuccess;
@@ -93,6 +100,9 @@ public final class DualWieldClient {
     private static boolean dualWasActive;
     private static volatile boolean offhandShotPending;
     private static volatile long offhandShotToken;
+    private static float offhandSprintTimeS;
+    private static long offhandSprintTimestamp = -1L;
+    private static UUID offhandSprintStackId;
     /** 第三人称枪口火焰归属的手: 由本地预测开火记录(不受 OtherHand 的 clear 影响)。 */
     private static volatile DualRenderContext.HandPhase thirdPersonFlashHand = DualRenderContext.HandPhase.NONE;
     private static volatile long thirdPersonFlashTimestamp = -1L;
@@ -109,8 +119,17 @@ public final class DualWieldClient {
         return offhandShotPending;
     }
 
+    public static boolean isOffhandGunMode(LocalPlayer player) {
+        return player != null && IGun.getIGunOrNull(player.getOffhandItem()) != null;
+    }
     public static boolean isDualMode(LocalPlayer player) {
-        return player != null && !player.isSpectator() && !player.isDeadOrDying() && DualWieldEligibility.isDualWielding(player) && hasClientDisplay(player.getMainHandItem()) && hasClientDisplay(player.getOffhandItem());
+        if (player == null || player.isSpectator() || player.isDeadOrDying()) {
+            return false;
+        }
+        if (IGun.getIGunOrNull(player.getOffhandItem()) != null) {
+            return true;
+        }
+        return IGun.getIGunOrNull(player.getMainHandItem()) != null && !player.getOffhandItem().isEmpty();
     }
 
     static boolean isDualMovementActive(LocalPlayer player) {
@@ -146,7 +165,7 @@ public final class DualWieldClient {
         LocalPlayer player = minecraft.player;
         OffhandCameraController.applyPendingRecoil(player);
         boolean dual = isDualMode(player);
-        if (minecraft.screen != null && dualWasActive && !OffhandDisplayManager.isPuttingAway() && player != null && !player.isSpectator() && !player.isDeadOrDying()) {
+        if (minecraft.screen != null && !(dual && minecraft.mouseHandler.isMouseGrabbed()) && dualWasActive && !OffhandDisplayManager.isPuttingAway() && player != null && !player.isSpectator() && !player.isDeadOrDying()) {
             cancelPendingOffhandShot();
             waitLeftReleaseAfterScreen = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
             waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
@@ -204,15 +223,20 @@ public final class DualWieldClient {
         }
         boolean dualStarted = !dualWasActive;
         if (dualStarted) {
-            OffhandDisplayManager.cancelPutAway(player, player.getMainHandItem(), player.getOffhandItem());
+            if (IGun.getIGunOrNull(player.getOffhandItem()) == null) {
+                OffhandDisplayManager.clear();
+            } else {
+                OffhandDisplayManager.cancelPutAway(player, player.getMainHandItem(), player.getOffhandItem());
+            }
             resetFocusAimImmediately(player);
             MainhandMovementAnimation.resetMovementBoundary(player.getMainHandItem());
         }
         dualWasActive = true;
         ItemStack currentMainStack = player.getMainHandItem();
         ItemStack currentOffhandStack = player.getOffhandItem();
+        boolean currentOffhandGun = IGun.getIGunOrNull(currentOffhandStack) != null;
         boolean stackPairChanged = (dualStarted || (sameLogicalStack(lastDualMainStack, currentMainStack) && sameLogicalStack(lastDualOffhandStack, currentOffhandStack))) ? false : true;
-        if (stackPairChanged && !OffhandDisplayManager.isPuttingAway()) {
+        if (stackPairChanged && currentOffhandGun && !OffhandDisplayManager.isPuttingAway()) {
             DualWieldMelee.reset();
             DualReloadAnimationManager.clear();
             MainhandMovementAnimation.resetMovementBoundary(lastDualMainStack);
@@ -227,12 +251,12 @@ public final class DualWieldClient {
                 OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack, true);
             }
         }
-        if (OffhandDisplayManager.isPuttingAway()) {
+        if (currentOffhandGun && OffhandDisplayManager.isPuttingAway()) {
             OffhandDisplayManager.updatePutAwayTarget(currentMainStack, currentOffhandStack, true);
             OffhandDisplayManager.tickPutAway(player);
             lastDualMainStack = currentMainStack.copy();
             lastDualOffhandStack = currentOffhandStack.copy();
-            if (OffhandDisplayManager.isPuttingAway()) {
+            if (currentOffhandGun && OffhandDisplayManager.isPuttingAway()) {
                 lastLeftDown = false;
                 lastRightDown = false;
                 lastLeftShootSuccess = false;
@@ -247,7 +271,7 @@ public final class DualWieldClient {
         DualReloadAnimationManager.tick(player);
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         ClientOffhandState leftState = OffhandDisplayManager.getClientState();
-        if (minecraft.screen != null) {
+        if (minecraft.screen != null && !(dual && minecraft.mouseHandler.isMouseGrabbed())) {
             cancelPendingOffhandShot();
             waitLeftReleaseAfterScreen = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
             waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
@@ -270,28 +294,39 @@ public final class DualWieldClient {
         }
         boolean physicalShootDown = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
         boolean physicalAimDown = AimKey.AIM_KEY.isDown() || controllerAimDown;
-        if (waitLeftReleaseAfterScreen) {
-            if (!physicalShootDown) {
-                waitLeftReleaseAfterScreen = false;
-            }
-            physicalShootDown = false;
-        }
-        if (waitRightReleaseAfterScreen) {
-            if (!physicalAimDown) {
-                waitRightReleaseAfterScreen = false;
-            }
-            physicalAimDown = false;
-        }
+        waitLeftReleaseAfterScreen = false;
+        waitRightReleaseAfterScreen = false;
         ItemStack leftGun = player.getOffhandItem();
         ItemStack rightGun = player.getMainHandItem();
+        boolean hasOffhandGun = IGun.getIGunOrNull(leftGun) != null;
+        boolean hasMainGun = IGun.getIGunOrNull(rightGun) != null;
+        boolean mainGunWithItem = hasMainGun && !hasOffhandGun;
+        if (hasOffhandGun) {
+            updateOffhandSprint(player, leftGun);
+        } else {
+            offhandSprintTimeS = 0.0f;
+            offhandSprintTimestamp = -1L;
+            offhandSprintStackId = null;
+        }
+        if (!DualFocusAimKey.FOCUS_AIM_KEY.isDown() && hasMainGun && !hasOffhandGun && !leftGun.isEmpty()) {
+            if (physicalShootDown && !lastOffhandItemUseDown) {
+                useItemOrAttack(player, InteractionHand.OFF_HAND, "tick-offhand");
+            }
+            lastOffhandItemUseDown = physicalShootDown;
+        } else {
+            lastOffhandItemUseDown = false;
+        }
+        lastMainItemUseDown = false;
         updateThirdPersonGunAnimations(minecraft, leftGun, rightGun);
-        leftState.tickManualShotChamberSync(leftGun);
-        leftState.tickBoltCompletion(player, leftGun);
+        if (hasOffhandGun) {
+            leftState.tickManualShotChamberSync(leftGun);
+            leftState.tickBoltCompletion(player, leftGun);
+        }
         OffhandDisplayManager.synchronizeManualActionCaptureState();
         boolean focusRequested = DualFocusAimKey.FOCUS_AIM_KEY.isDown() && !InteractKey.INTERACT_KEY.isDown();
         focusInputChangedThisTick = focusRequested != lastFocusRequested;
         lastFocusRequested = focusRequested;
-        boolean focusTarget = focusRequested && canUseFocusAim(player, operator, leftState, leftGun, rightGun, DualFocusAimState.isActive());
+        boolean focusTarget = focusRequested && hasMainGun && canUseFocusAim(player, operator, leftState, leftGun, rightGun, DualFocusAimState.isActive());
         boolean focusChanged = DualFocusAimState.tick(focusTarget);
         if (focusChanged) {
             handleFocusAimBoundary(player, operator, leftState, rightGun, physicalShootDown, physicalAimDown);
@@ -312,15 +347,16 @@ public final class DualWieldClient {
             }
             physicalAimDown = false;
         }
-        boolean desiredAim = updateFocusAimLatch(focusTarget, physicalAimDown);
-        if (operator.isAim() != desiredAim) {
+        boolean focusAimLatch = updateFocusAimLatch(focusTarget, physicalAimDown);
+        boolean desiredAim = hasMainGun && focusTarget && (mainGunWithItem ? physicalAimDown : focusAimLatch);
+        if (hasMainGun && operator.isAim() != desiredAim) {
             operator.aim(desiredAim);
             if (!desiredAim) {
                 DualFocusAimState.releasePreservedMainAimAfterInputExit();
             }
         }
-        boolean leftDown = focusTarget ? false : physicalShootDown;
-        boolean rightDown = focusTarget ? physicalShootDown : physicalAimDown;
+        boolean leftDown = hasOffhandGun && !focusTarget && physicalShootDown;
+        boolean rightDown = hasMainGun && (focusTarget ? physicalShootDown : physicalAimDown);
         if (InteractKey.INTERACT_KEY.isDown()) {
             LocalPlayerSprint.stopSprint = false;
             LocalPlayerDataHolder mainData2 = operator.getDataHolder();
@@ -337,22 +373,22 @@ public final class DualWieldClient {
             return;
         }
         LocalPlayerSprint.stopSprint = focusTarget || desiredAim || leftDown || rightDown || leftState.isReloading() || leftState.isBolting();
-        if (!focusTarget) {
+        if (hasOffhandGun && !focusTarget) {
             tryStartOffhandBolt(player, leftGun, leftState);
         }
-        boolean cancelingLeftReload = requestOffhandReloadCancel(leftGun, leftState, leftDown);
-        boolean leftContinuous = canContinuouslyShoot(leftGun);
-        boolean leftShouldCharge = !cancelingLeftReload && leftDown && (leftContinuous || !lastLeftShootSuccess);
-        boolean leftChargeReady = !cancelingLeftReload && leftState.chargeShoot(player, leftGun, leftShouldCharge);
+        boolean cancelingLeftReload = hasOffhandGun && requestOffhandReloadCancel(leftGun, leftState, leftDown);
+        boolean leftContinuous = hasOffhandGun && canContinuouslyShoot(leftGun);
+        boolean leftShouldCharge = hasOffhandGun && !cancelingLeftReload && leftDown && (leftContinuous || !lastLeftShootSuccess);
+        boolean leftChargeReady = hasOffhandGun && !cancelingLeftReload && leftState.chargeShoot(player, leftGun, leftShouldCharge);
         if (cancelingLeftReload) {
             leftState.resetCharge();
         }
-        if (leftChargeReady && ((leftContinuous || !lastLeftShootSuccess) && shootOffhand(player, leftGun, leftState.getChargeProgress()))) {
+        if (hasOffhandGun && leftChargeReady && ((leftContinuous || !lastLeftShootSuccess) && shootOffhand(player, leftGun, leftState.getChargeProgress()))) {
             lastLeftShootSuccess = true;
         }
-        boolean rightContinuous = canContinuouslyShoot(rightGun);
-        boolean rightShouldCharge = rightDown && (rightContinuous || !lastRightShootSuccess);
-        boolean rightChargeReady = operator.chargeShoot(rightShouldCharge);
+        boolean rightContinuous = hasMainGun && canContinuouslyShoot(rightGun);
+        boolean rightShouldCharge = hasMainGun && rightDown && (rightContinuous || !lastRightShootSuccess);
+        boolean rightChargeReady = hasMainGun && operator.chargeShoot(rightShouldCharge);
         if (rightChargeReady && (rightContinuous || !lastRightShootSuccess)) {
             ShootResult result = operator.shoot();
             if (result == ShootResult.SUCCESS) {
@@ -420,6 +456,9 @@ public final class DualWieldClient {
     }
 
     private static boolean isInspectActive(ItemStack stack, boolean offhand) {
+        if (IGun.getIGunOrNull(stack) == null) {
+            return false;
+        }
         GunDisplayInstance orCreate;
         if (offhand) {
             orCreate = OffhandDisplayManager.getOrCreate(stack);
@@ -572,20 +611,127 @@ public final class DualWieldClient {
         if (renderStack.isEmpty()) {
             return;
         }
+        if (!(renderStack.getItem() instanceof IGun)) {
+            event.setCanceled(false);
+            return;
+        }
         boolean rendered = DualFirstPersonRenderer.renderOffhand(player, renderStack, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
         if (rendered) {
             event.setCanceled(true);
         }
     }
 
+    @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
+    public static void taczfixes$dualItemMouse(InputEvent.MouseButton.Post event) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !isDualMode(player) || InteractKey.INTERACT_KEY.isDown()
+                || DualFocusAimKey.FOCUS_AIM_KEY.isDown()
+                || !Minecraft.getInstance().mouseHandler.isMouseGrabbed()) {
+            return;
+        }
+        if (event.getAction() == 0) {
+            if (event.getButton() == 0) {
+                lastOffhandItemUseDown = false;
+            } else if (event.getButton() == 1) {
+                lastMainItemUseDown = false;
+            }
+            return;
+        }
+        if (event.getAction() != 1) {
+            return;
+        }
+        ItemStack main = player.getMainHandItem();
+        ItemStack off = player.getOffhandItem();
+        boolean mainGun = IGun.getIGunOrNull(main) != null;
+        boolean offGun = IGun.getIGunOrNull(off) != null;
+        if (event.getButton() == 1 && offGun && !mainGun && isAttackOnly(main)) {
+            net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
+            if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+                Minecraft.getInstance().gameMode.attack(player, entityHit.getEntity());
+            } else {
+                player.swing(InteractionHand.MAIN_HAND, true);
+            }
+            return;
+        }
+        if (event.getButton() == 0 && mainGun && !offGun && !off.isEmpty() && !lastOffhandItemUseDown) {
+            lastOffhandItemUseDown = true;
+            useItemOrAttack(player, InteractionHand.OFF_HAND, "mouse-offhand");
+        }
+    }
+
+    public static boolean shouldKeepOffhandUse(LocalPlayer player) {
+        if (player == null || !player.isUsingItem()
+                || player.getUsedItemHand() != InteractionHand.OFF_HAND
+                || !isDualMode(player)) {
+            return false;
+        }
+        if (IGun.getIGunOrNull(player.getMainHandItem()) == null
+                || IGun.getIGunOrNull(player.getOffhandItem()) != null
+                || player.getOffhandItem().isEmpty()
+                || DualFocusAimKey.FOCUS_AIM_KEY.isDown()) {
+            return false;
+        }
+        if (!ShootKey.SHOOT_KEY.isDown() || player.getUseItemRemainingTicks() <= 1) {
+            return false;
+        }
+        return true;
+    }
+    private static boolean isAttackOnly(ItemStack stack) {
+        if (stack.isEmpty() || stack.getUseDuration() > 0 || stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
+            return false;
+        }
+        return stack.getItem() instanceof net.minecraft.world.item.SwordItem
+                || stack.getItem() instanceof net.minecraft.world.item.DiggerItem
+                || stack.getItem() instanceof me.xjqsh.lrtactical.api.item.IMeleeWeapon;
+    }
+    private static void useItemOrAttack(LocalPlayer player, InteractionHand hand, String source) {
+        if (Minecraft.getInstance().gameMode == null) {
+            return;
+        }
+        ItemStack stack = player.getItemInHand(hand);
+        net.minecraft.world.InteractionResult result =
+                Minecraft.getInstance().gameMode.useItem(player, hand);
+        boolean consume = result.consumesAction();
+        boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
+                && stack.getUseDuration() > 0;
+        if (consume || overridden) {
+            if (stack.getUseDuration() > 0 && !player.isUsingItem()) {
+                player.startUsingItem(hand);
+            }
+            return;
+        }
+        net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
+        if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+            if (hand == InteractionHand.OFF_HAND) {
+                long now = System.currentTimeMillis();
+                long cooldown = OffhandItemCombat.getAttackCooldownMillis(player, stack);
+                if (now - lastOffhandItemAttackMs >= cooldown) {
+                    lastOffhandItemAttackMs = now;
+                    NetworkHandler.CHANNEL.sendToServer(
+                            new ClientMessageOffhandItemAttack(entityHit.getEntity().getId()));
+                }
+                player.swing(InteractionHand.OFF_HAND, true);
+            } else {
+                Minecraft.getInstance().gameMode.attack(player, entityHit.getEntity());
+            }
+        } else {
+            player.swing(hand);
+        }
+    }
+
     @SubscribeEvent(priority = EventPriority.HIGHEST)
     public static void blockVanillaInteraction(InputEvent.InteractionKeyMappingTriggered event) {
         LocalPlayer player = Minecraft.getInstance().player;
-        if (Minecraft.getInstance().screen != null || !isDualMode(player) || InteractKey.INTERACT_KEY.isDown()) {
+        if (!isDualMode(player) || InteractKey.INTERACT_KEY.isDown()) {
             return;
         }
-        event.setSwingHand(false);
-        event.setCanceled(true);
+        if (Minecraft.getInstance().screen != null && !Minecraft.getInstance().mouseHandler.isMouseGrabbed()) {
+            return;
+        }
+        if (event.isAttack()) {
+            event.setSwingHand(false);
+            event.setCanceled(true);
+        }
     }
 
     @SubscribeEvent(priority = EventPriority.HIGHEST)
@@ -682,8 +828,11 @@ public final class DualWieldClient {
     }
 
     private static boolean sameLogicalStack(ItemStack first, ItemStack second) {
-        if (first == null || second == null || first.isEmpty() || second.isEmpty()) {
-            return first != null && second != null && first.isEmpty() && second.isEmpty();
+        if (first == null || second == null) {
+            return false;
+        }
+        if (first.isEmpty() || second.isEmpty()) {
+            return first.isEmpty() && second.isEmpty();
         }
         UUID firstId = DualWieldStackId.get(first);
         UUID secondId = DualWieldStackId.get(second);
@@ -692,7 +841,11 @@ public final class DualWieldClient {
         }
         IGun firstGun = IGun.getIGunOrNull(first);
         IGun secondGun = IGun.getIGunOrNull(second);
-        return firstGun != null && secondGun != null && first.getItem() == second.getItem() && firstGun.getGunId(first).equals(secondGun.getGunId(second));
+        if (firstGun != null || secondGun != null) {
+            return firstGun != null && secondGun != null && first.getItem() == second.getItem()
+                    && firstGun.getGunId(first).equals(secondGun.getGunId(second));
+        }
+        return ItemStack.isSameItemSameTags(first, second);
     }
 
     /** 是否为主副手互换(上一帧的主/副手正好是这一帧的副/主手)。 */
@@ -701,6 +854,32 @@ public final class DualWieldClient {
         return sameLogicalStack(previousMain, currentOffhand)
                 && sameLogicalStack(previousOffhand, currentMain)
                 && !sameLogicalStack(previousMain, previousOffhand);
+    }
+
+    private static void updateOffhandSprint(LocalPlayer player, ItemStack stack) {
+        IGun gun = IGun.getIGunOrNull(stack);
+        GunData gunData = gun == null ? null
+                : (GunData) TimelessAPI.getClientGunIndex(gun.getGunId(stack))
+                        .map(index -> index.getGunData()).orElse(null);
+        UUID stackId = DualWieldStackId.get(stack);
+        long now = System.currentTimeMillis();
+        if (gunData == null || stackId == null || !stackId.equals(offhandSprintStackId)) {
+            offhandSprintTimeS = 0.0f;
+            offhandSprintTimestamp = now;
+            offhandSprintStackId = stackId;
+            return;
+        }
+        if (offhandSprintTimestamp < 0L || now < offhandSprintTimestamp) {
+            offhandSprintTimestamp = now;
+        }
+        float elapsed = (now - offhandSprintTimestamp) / 1000.0f;
+        offhandSprintTimestamp = now;
+        float maxSprintTime = Math.max(0.0f, gunData.getSprintTime());
+        if (player.isSprinting() && !player.isVisuallySwimming()) {
+            offhandSprintTimeS = Math.min(maxSprintTime, offhandSprintTimeS + elapsed);
+        } else {
+            offhandSprintTimeS = Math.max(0.0f, offhandSprintTimeS - elapsed);
+        }
     }
 
     private static boolean canContinuouslyShoot(ItemStack stack) {
@@ -748,7 +927,7 @@ public final class DualWieldClient {
         }
         ClientOffhandState state = OffhandDisplayManager.getClientState();
         long coolDown = state.getShootCoolDown(player, stack);
-        if (state.isDrawing() || state.isReloading() || state.isBolting() || state.isManualShotAwaitingChamberSync() || state.isServerManualActionBoltReady() || !state.canBeginBoltCycle() || coolDown >= 50 || isGlobalShootInputBlocked(player) || IGunOperator.fromLivingEntity(player).getSynSprintTime() > 0.0f || (gunData = gunIndex.getGunData()) == null) {
+        if (state.isDrawing() || state.isReloading() || state.isBolting() || state.isManualShotAwaitingChamberSync() || state.isServerManualActionBoltReady() || !state.canBeginBoltCycle() || coolDown >= 50 || isGlobalShootInputBlocked(player) || IGunOperator.fromLivingEntity(player).getSynSprintTime() > 0.0f || offhandSprintTimeS > 0.0f || (gunData = gunIndex.getGunData()) == null) {
             return false;
         }
         Bolt bolt = gunData.getBolt();

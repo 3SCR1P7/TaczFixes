@@ -13,6 +13,8 @@ import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.util.RenderHelper;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.RenderStateShard;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -48,17 +50,18 @@ public final class LensDepthWriter {
             if ((division == null || division.isEmpty()) && (ocular == null || ocular.isEmpty())) {
                 return;
             }
+            MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
             RenderHelper.enableItemEntityStencilTest();
             RenderSystem.stencilFunc(519, 0, 255);
             RenderSystem.stencilOp(7680, 7680, 7680);
             if (division != null) {
                 for (List<BedrockPart> path : division) {
-                    accessor.taczfixes$renderTempPart(poseStack, displayContext, LENS_DEPTH_RENDER_TYPE, light, overlay, path);
+                    accessor.taczfixes$renderTempPart(poseStack, displayContext, LENS_DEPTH_RENDER_TYPE, light, overlay, path, bufferSource);
                 }
             }
             if (ocular != null) {
                 for (List<BedrockPart> path : ocular) {
-                    accessor.taczfixes$renderTempPart(poseStack, displayContext, LENS_DEPTH_RENDER_TYPE, light, overlay, path);
+                    accessor.taczfixes$renderTempPart(poseStack, displayContext, LENS_DEPTH_RENDER_TYPE, light, overlay, path, bufferSource);
                 }
             }
             RenderSystem.stencilFunc(519, 0, 255);

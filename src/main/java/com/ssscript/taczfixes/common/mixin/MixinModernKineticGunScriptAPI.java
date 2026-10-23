@@ -260,7 +260,7 @@ public abstract class MixinModernKineticGunScriptAPI {
     }
 
     /** burst 连发中途入水/被方块阻挡: 终止本轮连发的后续子弹(不再消耗弹药/生成子弹/播第三人称枪声)。 */
-    @Inject(method = "lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
+    @Inject(method = "lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
             at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$blockBurstPerBullet(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
                                                GunData gunData, BulletData bulletData, IGunOperator operator,
@@ -295,7 +295,7 @@ public abstract class MixinModernKineticGunScriptAPI {
     }
 
     /** 每发实际开火(含 burst 连发的每一发)消耗一次电量; 中途电量不足且 blocking_fire 时终止本轮连发。 */
-    @Inject(method = "lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
+    @Inject(method = "lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
             at = @At(value = "NEW", target = "com/tacz/guns/network/message/event/ServerMessageGunFire"),
             cancellable = true, remap = false)
     private void taczfixes$consumeChargePerShot(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
@@ -349,7 +349,7 @@ public abstract class MixinModernKineticGunScriptAPI {
     }
 
     /** 每发实际开火消耗一次耐久; 归零时按 damage_action 移除枪械(disable 由开火前检查拦截)。 */
-    @Inject(method = "lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
+    @Inject(method = "lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
             at = @At(value = "NEW", target = "com/tacz/guns/network/message/event/ServerMessageGunFire"),
             cancellable = true, remap = false)
     private void taczfixes$consumeDurabilityPerShot(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
@@ -530,7 +530,7 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
-    @Redirect(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = @At(value = "INVOKE", target = "Ljava/lang/Object;equals(Ljava/lang/Object;)Z"), require = 0)
+    @Redirect(method = {"lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = @At(value = "INVOKE", target = "Ljava/lang/Object;equals(Ljava/lang/Object;)Z"), require = 0)
     private boolean dualWield$matchesBurstGun(Object resolvedMainGun, Object expectedGun) {
         ItemStack itemStack;
         if (!OffhandShooterManager.isOffhandData(this.dataHolder)) {
@@ -550,14 +550,14 @@ public abstract class MixinModernKineticGunScriptAPI {
         return match;
     }
 
-    @Inject(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At("RETURN")}, require = 0)
+    @Inject(method = {"lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At("RETURN")}, require = 0)
     private void dualWield$finishBulletAttempt(boolean consumeAmmo, AttachmentCacheProperty cacheProperty, int bulletAmount, GunData gunData, BulletData bulletData, IGunOperator operator, float damageMultiplier, float projectileSpeed, float inaccuracy, int soundDistance, boolean silence, CallbackInfoReturnable<Boolean> callback) {
         if (OffhandShooterManager.isOffhandData(this.dataHolder)) {
             OffhandShooterManager.finishBulletAttempt(this.dataHolder, this.itemStack);
         }
     }
 
-    @Redirect(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;nextBulletIsTracer(I)Z"))
+    @Redirect(method = {"lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/entity/IGunOperator;nextBulletIsTracer(I)Z"))
     private boolean dualWield$nextTracer(IGunOperator operator, int interval) {
         if (!OffhandShooterManager.isOffhandData(this.dataHolder)) {
             return operator.nextBulletIsTracer(interval);
@@ -566,7 +566,7 @@ public abstract class MixinModernKineticGunScriptAPI {
         return interval != -1 && this.dataHolder.shootCount % (interval + 1) == 0;
     }
 
-    @WrapOperation(method = {"lambda$shootOnce$2(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z", remap = true)}, require = 0)
+    @WrapOperation(method = {"lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/world/level/Level;addFreshEntity(Lnet/minecraft/world/entity/Entity;)Z", remap = true)}, require = 0)
     private boolean dualWield$recordAcceptedBullet(Level level, Entity entity, Operation<Boolean> original) {
         boolean added = original.call(new Object[]{level, entity}).booleanValue();
         if (OffhandShooterManager.isOffhandData(this.dataHolder)) {

@@ -16,34 +16,41 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "com.tacz.guns.client.input.ZoomKey", remap = false)
 public class MixinZoomKey {
 
-    @Inject(method = "doZoomLogic", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void taczfixes$customSlotZoom(CallbackInfo ci) {
+    @Inject(method = "onZoomPress", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void taczfixes$onZoomPress(CallbackInfoReturnable<Boolean> callback) {
+        if (taczfixes$customSlotZoom()) {
+            callback.setReturnValue(true);
+            return;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+    }
+
+    private static boolean taczfixes$customSlotZoom() {
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (player == null || player.isDeadOrDying()) return;
+        if (player == null || player.isDeadOrDying()) return false;
         ItemStack gun = player.getMainHandItem();
-        if (IGun.getIGunOrNull(gun) == null) return;
+        if (IGun.getIGunOrNull(gun) == null) return false;
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
-        if (operator == null) return;
+        if (operator == null) return false;
         String active = ScopeSwitchState.getActiveSlot(gun);
-        if (active == null) return;
+        if (active == null) return false;
         ItemStack scope = CustomSlotStorage.get(gun, active);
-        if (scope.isEmpty()) return;
+        if (scope.isEmpty()) return false;
         IAttachment attachment = IAttachment.getIAttachmentOrNull(scope);
-        if (attachment == null) return;
+        if (attachment == null) return false;
         ResourceLocation id = attachment.getAttachmentId(scope);
-        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return;
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
         if (TimelessAPI.getClientAttachmentIndex(id).map(ClientAttachmentIndex::getZoom).orElse(null) == null) {
-            return;
+            return false;
         }
         CompoundTag tag = scope.getOrCreateTag();
         int number = AttachmentItemDataAccessor.getZoomNumberFromTag(tag);
@@ -54,14 +61,6 @@ public class MixinZoomKey {
         gunTag.put(CustomSlotStorage.TAG_KEY, slots);
         com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.sendToServer(
                 new com.ssscript.taczfixes.common.network.ClientMessageCustomSlotZoom(active));
-        ci.cancel();
-    }
-
-    @Inject(method = {"onZoomKeyPress"}, at = {@At("HEAD")}, cancellable = true)
-    private static void dualWield$reserveFocusAimKey(InputEvent.Key event, CallbackInfo callback) {
-        Minecraft minecraft = Minecraft.getInstance();
-        if (minecraft.screen == null && DualWieldClient.isDualMode(minecraft.player) && DualFocusAimKey.matches(event)) {
-            callback.cancel();
-        }
+        return true;
     }
 }

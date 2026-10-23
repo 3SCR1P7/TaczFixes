@@ -116,10 +116,10 @@ public class ScopeFovTransitionHandler {
                 phaseStart = now;
             } else {
                 // 直接低通跟随游戏自身的实时 FOV: 固定目标若由旧/新倍率算错, 会压着过小的 FOV 数秒。
-                transitionTarget = -1.0;
-                phase = Phase.EASE_LIVE;
+                double target = destinationFov(player, rawBaseFov);
+                transitionTarget = target > 0.0 ? target : live;
+                phase = Phase.EASE_FIXED;
                 phaseStart = now;
-                easeTo = -1.0;
             }
         }
         if (phase == Phase.HOLD) {
@@ -228,9 +228,6 @@ public class ScopeFovTransitionHandler {
         ClientAttachmentIndex index = id == null ? null
                 : TimelessAPI.getClientAttachmentIndex(id).orElse(null);
         // sight 视图不做世界层缩放; 否则会把“无镜内放大”的 sight 当成带倍率的 scope, 目标 FOV 过小。
-        if (index != null && ScopeViewHelper.isSightView(index, tag)) {
-            return baseFov;
-        }
         float zoom = ScopeSwitchState.aimingZoom(iGun, gun);
         if (zoom <= 1.0001f) {
             return baseFov;

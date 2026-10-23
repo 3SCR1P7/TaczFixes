@@ -6,6 +6,8 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -121,6 +123,7 @@ public final class StandbySlotBuffer {
         List<List<BedrockPart>> paths = acc.taczfixes$ocularNodePaths();
         List<Boolean> flags = acc.taczfixes$isScopeOcular();
         if (paths == null || paths.isEmpty()) return;
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         boolean stencil = org.lwjgl.opengl.GL11.glIsEnabled(org.lwjgl.opengl.GL11.GL_STENCIL_TEST);
         int func = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_STENCIL_FUNC);
         int ref = org.lwjgl.opengl.GL11.glGetInteger(org.lwjgl.opengl.GL11.GL_STENCIL_REF);
@@ -130,7 +133,7 @@ public final class StandbySlotBuffer {
             for (int i = 0; i < paths.size(); i++) {
                 boolean scopeOcular = flags != null && i < flags.size() && Boolean.TRUE.equals(flags.get(i));
                 if (!scopeOcular) {
-                    acc.taczfixes$renderTempPart(poseStack, displayContext, renderType, light, overlay, paths.get(i));
+                    acc.taczfixes$renderTempPart(poseStack, displayContext, renderType, light, overlay, paths.get(i), bufferSource);
                 }
             }
         } finally {

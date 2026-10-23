@@ -43,9 +43,9 @@ public class MixinLocalPlayerCrawl {
      * isVisuallyCrawling() 判定为真, 导致松开爬行键也无法停止爬行。
      * 爬行姿势由 ParCool 自身每 tick 设置, TaCZ 动画仍可正常工作。
      */
-    @Inject(method = "setCrawlPose", at = @At("HEAD"), cancellable = true, remap = false)
-    private void onSetCrawlPose(CallbackInfo ci) {
-        if (ParCoolHelper.isCrawling(player) && taczfixes$canTaCzCrawl(player)) {
+    @Inject(method = "setCrawling", at = @At("HEAD"), cancellable = true, remap = false)
+    private void onSetCrawling(boolean crawling, CallbackInfo ci) {
+        if (crawling && ParCoolHelper.isCrawling(player) && taczfixes$canTaCzCrawl(player)) {
             ci.cancel();
         }
     }

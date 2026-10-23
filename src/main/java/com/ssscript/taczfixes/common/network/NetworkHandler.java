@@ -178,5 +178,11 @@ public class NetworkHandler {
                 ClientMessageGunColor::decode,
                 ClientMessageGunColor::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(32, ClientMessageOffhandItemAttack.class,
+                ClientMessageOffhandItemAttack::encode,
+                ClientMessageOffhandItemAttack::decode,
+                ClientMessageOffhandItemAttack::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+
     }
 }

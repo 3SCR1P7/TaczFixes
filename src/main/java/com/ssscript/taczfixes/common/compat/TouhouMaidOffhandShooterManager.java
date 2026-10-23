@@ -195,7 +195,7 @@ public final class TouhouMaidOffhandShooterManager {
                 ShooterDataHolder shooterDataHolder = this.data;
                 Mob mob = this.entity;
                 Objects.requireNonNull(mob);
-                shooterDataHolder.currentGunItem = mob::getOffhandItem;
+                shooterDataHolder.setCurrentGunItem(mob::getOffhandItem);
                 long now = GunTime.nowMillis();
                 this.data.drawTimestamp = now;
                 this.data.lastShootTimestamp = -1L;

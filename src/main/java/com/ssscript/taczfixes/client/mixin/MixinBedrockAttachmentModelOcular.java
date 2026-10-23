@@ -80,7 +80,7 @@ public abstract class MixinBedrockAttachmentModelOcular {
             for (int i = 0; i < paths.size(); i++) {
                 boolean scopeOcular = flags != null && i < flags.size() && Boolean.TRUE.equals(flags.get(i));
                 if (!scopeOcular) {
-                    accessor.taczfixes$renderTempPart(poseStack, displayContext, renderType, light, overlay, paths.get(i));
+                    accessor.taczfixes$renderTempPart(poseStack, displayContext, renderType, light, overlay, paths.get(i), bufferSource);
                 }
             }
         } finally {

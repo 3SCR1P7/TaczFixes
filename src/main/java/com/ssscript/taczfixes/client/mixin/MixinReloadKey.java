@@ -13,9 +13,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = {ReloadKey.class}, remap = false)
 public abstract class MixinReloadKey {
     @Inject(method = {"onReloadPress"}, at = {@At("HEAD")}, cancellable = true)
-    private static void dualWield$selectReloadHand(InputEvent.Key event, CallbackInfo callback) {
-        if (DualReloadCoordinator.interceptKeyboardReload(event)) {
-            callback.cancel();
+    private static void dualWield$selectReloadHand(CallbackInfoReturnable<Boolean> callback) {
+        if (DualReloadCoordinator.interceptKeyboardReload()) {
+            callback.setReturnValue(true);
         }
     }
 

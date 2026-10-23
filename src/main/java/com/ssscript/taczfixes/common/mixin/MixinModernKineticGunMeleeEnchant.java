@@ -15,7 +15,7 @@ import java.util.List;
 
 @Mixin(targets = "com.tacz.guns.item.ModernKineticGunItem", remap = false)
 public class MixinModernKineticGunMeleeEnchant {
-    @ModifyArg(method = "lambda$melee$17", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 1)
+    @ModifyArg(method = "lambda$melee$20", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 1)
     private float taczfixes$applyMeleeEnchantsGunDistance(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
         ItemStack gun = GunEnchantmentHelper.getGunStack(user);
         if (gun.isEmpty()) {
@@ -29,7 +29,7 @@ public class MixinModernKineticGunMeleeEnchant {
         return gunDistance;
     }
 
-    @ModifyArg(method = "lambda$melee$17", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 2)
+    @ModifyArg(method = "lambda$melee$20", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 2)
     private float taczfixes$applyMeleeEnchantsMeleeDistance(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
         ItemStack gun = GunEnchantmentHelper.getGunStack(user);
         if (gun.isEmpty()) {
@@ -43,7 +43,7 @@ public class MixinModernKineticGunMeleeEnchant {
         return meleeDistance;
     }
 
-    @ModifyArg(method = "lambda$melee$17", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 4)
+    @ModifyArg(method = "lambda$melee$20", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 4)
     private float taczfixes$applyMeleeEnchantsKnockback(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
         ItemStack gun = GunEnchantmentHelper.getGunStack(user);
         if (gun.isEmpty()) {
@@ -58,7 +58,7 @@ public class MixinModernKineticGunMeleeEnchant {
         return knockback;
     }
 
-    @ModifyArg(method = "lambda$melee$17", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 5)
+    @ModifyArg(method = "lambda$melee$20", at = @At(value = "INVOKE", target = "Lcom/tacz/guns/item/ModernKineticGunItem;doMelee(Lnet/minecraft/world/entity/LivingEntity;FFFFFLjava/util/List;)V"), index = 5)
     private float taczfixes$applyMeleeEnchantsDamage(LivingEntity user, float gunDistance, float meleeDistance, float rangeAngle, float knockback, float damage, List<?> effects) {
         ItemStack gun = GunEnchantmentHelper.getGunStack(user);
         if (gun.isEmpty()) {

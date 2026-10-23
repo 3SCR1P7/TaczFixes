@@ -23,6 +23,7 @@ import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.modifier.custom.ExtraMovementModifier;
 import com.tacz.guns.resource.modifier.custom.WeightModifier;
 import com.tacz.guns.resource.pojo.data.gun.Bolt;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.MoveSpeed;
 import com.tacz.guns.util.time.GunTime;
 import com.ssscript.taczfixes.TaczFixesMod;
@@ -168,7 +169,7 @@ final class OffhandShooter {
                 ShooterDataHolder shooterDataHolder = this.data;
                 ServerPlayer serverPlayer = this.player;
                 Objects.requireNonNull(serverPlayer);
-                shooterDataHolder.currentGunItem = serverPlayer::getOffhandItem;
+                shooterDataHolder.setCurrentGunItem(serverPlayer::getOffhandItem);
                 long now = GunTime.nowMillis();
                 this.data.drawTimestamp = now;
                 this.data.lastShootTimestamp = -1L;
@@ -232,8 +233,7 @@ final class OffhandShooter {
         }
 
         boolean matchesBoundStack(UUID expectedStackId) {
-            UUID liveStackId = DualWieldStackId.get(this.player.getOffhandItem());
-            return expectedStackId != null && expectedStackId.equals(this.boundStackId) && expectedStackId.equals(liveStackId);
+            return expectedStackId != null && IGun.getIGunOrNull(this.player.getOffhandItem()) != null;
         }
 
         void interruptReloadBeforeRemoval() {
@@ -242,24 +242,24 @@ final class OffhandShooter {
             }
             ItemStack interruptedStack = this.boundStack;
             Supplier<ItemStack> currentSupplier = this.data.currentGunItem;
-            this.data.currentGunItem = () -> {
+            this.data.setCurrentGunItem(() -> {
                 return interruptedStack;
-            };
+            });
             OffhandShooterManager.pushActiveData(this.data);
             try {
                 try {
                     this.reload.cancelReload();
                     this.reload.tickReloadState();
                     OffhandShooterManager.popActiveData();
-                    this.data.currentGunItem = currentSupplier;
+                    this.data.setCurrentGunItem(currentSupplier);
                 } catch (RuntimeException exception) {
                     TaczFixesMod.LOGGER.error("Failed to interrupt offhand reload for {}", this.boundGunId, exception);
                     OffhandShooterManager.popActiveData();
-                    this.data.currentGunItem = currentSupplier;
+                    this.data.setCurrentGunItem(currentSupplier);
                 }
             } catch (Throwable th) {
                 OffhandShooterManager.popActiveData();
-                this.data.currentGunItem = currentSupplier;
+                this.data.setCurrentGunItem(currentSupplier);
                 throw th;
             }
         }
@@ -300,6 +300,7 @@ final class OffhandShooter {
                 }
                 ItemStack stack = this.player.getOffhandItem();
                 IGun gun = IGun.getIGunOrNull(stack);
+                updateSprintState(gun, stack);
                 beginInitialManualActionEpisodeIfNeeded(stack, gun);
                 updateManualActionBoltReadyTransition();
                 Item abstractGunItemM_41720_ = stack.getItem();
@@ -341,7 +342,29 @@ final class OffhandShooter {
         }
 
         void syncPlayerGlobalState() {
-            this.data.sprintTimeS = IGunOperator.fromLivingEntity(this.player).getDataHolder().sprintTimeS;
+        }
+
+        void updateSprintState(IGun gun, ItemStack stack) {
+            GunData gunData = gun == null ? null
+                    : TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
+                            .map(index -> index.getGunData()).orElse(null);
+            long now = GunTime.nowMillis();
+            if (gunData == null) {
+                this.data.sprintTimeS = 0.0f;
+                this.data.sprintTimestamp = now;
+                return;
+            }
+            if (this.data.sprintTimestamp < 0L || now < this.data.sprintTimestamp) {
+                this.data.sprintTimestamp = now;
+            }
+            float elapsed = (now - this.data.sprintTimestamp) / 1000.0f;
+            this.data.sprintTimestamp = now;
+            float maxSprintTime = Math.max(0.0f, gunData.getSprintTime());
+            if (this.player.isSprinting() && !this.player.isVisuallySwimming()) {
+                this.data.sprintTimeS = Math.min(maxSprintTime, this.data.sprintTimeS + elapsed);
+            } else {
+                this.data.sprintTimeS = Math.max(0.0f, this.data.sprintTimeS - elapsed);
+            }
         }
 
         void updateManualActionBoltReadyTransition() {

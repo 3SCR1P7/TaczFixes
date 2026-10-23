@@ -14,9 +14,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(value = {AimKey.class}, remap = false)
 public abstract class MixinAimKey {
     @Inject(method = {"onAimPress"}, at = {@At("HEAD")}, cancellable = true)
-    private static void dualWield$useRightClickForMainGun(InputEvent.MouseButton.Post event, CallbackInfo callback) {
+    private static void dualWield$useRightClickForMainGun(CallbackInfoReturnable<Boolean> callback) {
         if (DualWieldClient.isDualMode(Minecraft.getInstance().player)) {
-            callback.cancel();
+            callback.setReturnValue(true);
         }
     }
 

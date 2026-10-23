@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -54,5 +55,5 @@ public interface MixinBedrockAttachmentModelScopeSuppress {
     @Invoker("renderTempPart")
     void taczfixes$renderTempPart(PoseStack poseStack, ItemDisplayContext displayContext,
                                   RenderType renderType, int light, int overlay,
-                                  List<BedrockPart> path);
+                                  List<BedrockPart> path, MultiBufferSource bufferSource);
 }

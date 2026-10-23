@@ -14,6 +14,10 @@ public final class DualThirdPersonArmPose {
     }
 
     public static boolean mirrorRightArm(LivingEntity entity, ModelPart head, ModelPart rightArm, ModelPart leftArm) {
+        if (entity.getMainHandItem().getItem() instanceof net.minecraft.world.item.ShieldItem
+                || entity.getUseItem().getItem() instanceof net.minecraft.world.item.ShieldItem) {
+            return false;
+        }
         if (!DualWieldEligibility.isDualWielding(entity) || entity.getPose() == Pose.SLEEPING || entity.onClimbable() || entity.isSwimming() || entity.getPose() == Pose.FALL_FLYING) {
             return false;
         }

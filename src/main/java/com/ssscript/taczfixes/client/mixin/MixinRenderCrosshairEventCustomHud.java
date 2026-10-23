@@ -5,11 +5,15 @@ import com.mojang.blaze3d.platform.Window;
 import com.ssscript.taczfixes.client.hud.CustomHudManager;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.event.RenderCrosshairEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraftforge.client.event.RenderGuiOverlayEvent;
+import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
@@ -20,6 +24,36 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(RenderCrosshairEvent.class)
 public class MixinRenderCrosshairEventCustomHud {
+
+    @Shadow(remap = false)
+    private static void renderCrosshair(GuiGraphics graphics, Window window) {
+        throw new AssertionError();
+    }
+
+    /**
+     * TACZ only replaces the crosshair when the main hand holds a gun. When the
+     * gun is in the offhand, draw the same TACZ crosshair instead of vanilla's.
+     */
+    @Inject(method = "onRenderOverlay", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void taczfixes$renderOffhandGunCrosshair(RenderGuiOverlayEvent.Pre event, CallbackInfo ci) {
+        if (!event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
+            return;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || player.isSpectator() || Minecraft.getInstance().screen != null) {
+            return;
+        }
+        if (IGun.getIGunOrNull(player.getMainHandItem()) != null
+                || IGun.getIGunOrNull(player.getOffhandItem()) == null) {
+            return;
+        }
+        if (CustomHudManager.activeHud() != null || OffhandDisplayManager.getClientState().isReloading()) {
+            return;
+        }
+        event.setCanceled(true);
+        renderCrosshair(event.getGuiGraphics(), event.getWindow());
+        ci.cancel();
+    }
 
     @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczfixes$hideTaczCrosshair(GuiGraphics graphics, Window window, CallbackInfo ci) {

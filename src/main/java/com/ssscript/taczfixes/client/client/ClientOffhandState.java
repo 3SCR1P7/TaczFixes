@@ -174,9 +174,9 @@ public final class ClientOffhandState {
         if (gunChanged) {
             this.propertyData.initialData();
         }
-        this.propertyData.currentGunItem = () -> {
+        this.propertyData.setCurrentGunItem(() -> {
             return stack;
-        };
+        });
         AttachmentCacheProperty cache = OffhandGunPropertyResolver.rebuild(player, stack, gun, this.propertyData);
         for (AttachmentType type : AttachmentType.values()) {
             if (type != AttachmentType.NONE) {

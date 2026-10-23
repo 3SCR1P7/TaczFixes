@@ -318,8 +318,12 @@ public final class OffhandShooterManager {
         return false;
     }
 
+    private static boolean isOffhandGunContext(LivingEntity entity) {
+        return entity != null && IGun.getIGunOrNull(entity.getOffhandItem()) != null;
+    }
+
     public static boolean isCurrentOffhandContext(LivingEntity entity, ShooterDataHolder dataHolder) {
-        if (entity == null || !isOffhandData(dataHolder) || entity.isSpectator() || entity.isDeadOrDying() || !DualWieldEligibility.isDualWielding(entity)) {
+        if (entity == null || !isOffhandData(dataHolder) || entity.isSpectator() || entity.isDeadOrDying() || !isOffhandGunContext(entity)) {
             return false;
         }
         if (!(entity instanceof ServerPlayer)) {
@@ -374,7 +378,7 @@ public final class OffhandShooterManager {
             remove(player.getUUID());
             shooter = null;
         }
-        if (DualWieldEligibility.isDualWielding(player)) {
+        if (isOffhandGunContext(player)) {
             if (shooter == null) {
                 shooter = create(player);
             }
@@ -533,7 +537,7 @@ public final class OffhandShooterManager {
     }
 
     private static OffhandShooter getValidated(ServerPlayer player) {
-        if (player == null || player.isSpectator() || player.isDeadOrDying() || !DualWieldEligibility.isDualWielding(player)) {
+        if (player == null || player.isSpectator() || player.isDeadOrDying() || !isOffhandGunContext(player)) {
             return null;
         }
         OffhandShooter shooter = SHOOTERS.get(player.getUUID());

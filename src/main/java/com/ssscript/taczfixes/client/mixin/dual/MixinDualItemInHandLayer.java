@@ -39,9 +39,13 @@ public abstract class MixinDualItemInHandLayer<T extends LivingEntity, M extends
         if (!DualThirdPersonRenderer.isDualMode(entity)) {
             return;
         }
+        ItemStack handStack = arm == HumanoidArm.LEFT ? entity.getOffhandItem() : entity.getMainHandItem();
+        boolean handGun = com.tacz.guns.api.item.IGun.getIGunOrNull(handStack) != null;
         if (arm == HumanoidArm.LEFT) {
-            callback.cancel();
-        } else {
+            if (handGun) {
+                callback.cancel();
+            }
+        } else if (handGun) {
             renderAtHand(entity, entity.getMainHandItem(), HumanoidArm.RIGHT, poseStack, buffer, packedLight, false);
             callback.cancel();
         }

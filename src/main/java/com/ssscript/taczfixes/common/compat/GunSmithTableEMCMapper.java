@@ -10,6 +10,9 @@ import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.init.ModRecipe;
+import me.xjqsh.lrtactical.api.item.IConsumable;
+import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
+import me.xjqsh.lrtactical.api.item.IThrowable;
 import moze_intel.projecte.api.mapper.collector.IMappingCollector;
 import moze_intel.projecte.api.mapper.recipe.INSSFakeGroupManager;
 import moze_intel.projecte.api.mapper.recipe.IRecipeTypeMapper;
@@ -66,8 +69,11 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
         if (inputs == null) {
             return false;
         }
-        // 给基础物品一个占位 EMC, 让 ProjectE 的 NBTProcessor 能处理带 NBT 的实际枪械。
         mapper.setValueBefore(NSSItem.createItem(ModItems.MODERN_KINETIC_GUN.get()), 1L);
+        boolean lrtacticalSubtype = isLrtacticalSubtype(output);
+        if (lrtacticalSubtype) {
+            mapper.setValueBefore(NSSItem.createItem(output.getItem()), 1L);
+        }
         Map<NormalizedSimpleStack, Integer> ingredients = new LinkedHashMap<>();
         for (GunSmithTableIngredient tableIngredient : inputs) {
             Ingredient ingredient = tableIngredient.getIngredient();
@@ -97,13 +103,19 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
                 return false;
             }
         }
+        NormalizedSimpleStack canonicalOutput = canonicalNss(output);
+        if (lrtacticalSubtype) {
+            if (canonicalOutput == null) {
+                return false;
+            }
+            mapper.addConversion(output.getCount(), canonicalOutput, ingredients);
+            return true;
+        }
         NormalizedSimpleStack outputStack = fullNss(output);
         if (outputStack == null) {
             return false;
         }
         mapper.addConversion(output.getCount(), outputStack, ingredients);
-        // 同时给去除易变 NBT 的规范化形式赋值, 让 partial_nbt 材料也能引用到 EMC。
-        NormalizedSimpleStack canonicalOutput = canonicalNss(output);
         if (canonicalOutput != null && !canonicalOutput.equals(outputStack)) {
             mapper.addConversion(output.getCount(), canonicalOutput, ingredients);
         }
@@ -179,6 +191,18 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
                 ResourceLocation id = ammo.getAmmoId(stack);
                 if (id == null) return null;
                 tag.putString(AmmoItemDataAccessor.AMMO_ID_TAG, id.toString());
+            } else if (item instanceof IConsumable consumable) {
+                ResourceLocation id = consumable.getId(stack);
+                if (id == null || IConsumable.EMPTY.equals(id)) return null;
+                tag.putString(IConsumable.ID_TAG, id.toString());
+            } else if (item instanceof IThrowable throwable) {
+                ResourceLocation id = throwable.getId(stack);
+                if (id == null || IThrowable.EMPTY.equals(id)) return null;
+                tag.putString(IThrowable.ID_TAG, id.toString());
+            } else if (item instanceof IMeleeWeapon melee) {
+                ResourceLocation id = melee.getId(stack);
+                if (id == null || IMeleeWeapon.EMPTY.equals(id)) return null;
+                tag.putString(IMeleeWeapon.ID_TAG, id.toString());
             } else {
                 return null;
             }
@@ -186,5 +210,13 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
         } catch (RuntimeException ignored) {
             return null;
         }
+    }
+
+    private static boolean isLrtacticalSubtype(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        Item item = stack.getItem();
+        return item instanceof IConsumable || item instanceof IThrowable || item instanceof IMeleeWeapon;
     }
 }

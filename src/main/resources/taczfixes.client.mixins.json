@@ -90,6 +90,7 @@
         "MixinInventoryAttachmentSlotPreview",
         "MixinGunRefitScreenScrollPage",
         "MixinZoomKey",
+        "MixinLocalPlayerKeepOffhandUse",
         "MixinScreenRefitReject",
         "MixinClientTrackingSync",
         "parcool.MixinParCoolStaminaHud",

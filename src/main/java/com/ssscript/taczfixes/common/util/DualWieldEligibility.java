@@ -22,8 +22,29 @@ public final class DualWieldEligibility {
         if (entity == null) {
             return false;
         }
-        Rules rules = entity.level().isClientSide() ? clientRules : getServerRules();
-        return rules != null && isEligibleGun(entity.getMainHandItem(), rules) && isEligibleGun(entity.getOffhandItem(), rules);
+        boolean clientSide = entity.level().isClientSide();
+        Rules rules = clientSide && clientRules != null ? clientRules : getServerRules();
+        if (rules == null) {
+            return false;
+        }
+        ItemStack main = entity.getMainHandItem();
+        ItemStack off = entity.getOffhandItem();
+        boolean mainGun = IGun.getIGunOrNull(main) != null;
+        boolean offGun = IGun.getIGunOrNull(off) != null;
+        boolean mainEligible = mainGun && isEligibleGun(main, rules);
+        boolean offEligible = offGun && isEligibleGun(off, rules);
+        if (mainEligible && offEligible) {
+            return true;
+        }
+        if (offEligible) {
+            // 副手枪械：主手可为空或任意非枪械物品
+            return IGun.getIGunOrNull(main) == null;
+        }
+        if (mainEligible) {
+            // 主手枪械：副手必须是非空非枪械物品；空手仍视为普通单枪
+            return !off.isEmpty() && IGun.getIGunOrNull(off) == null;
+        }
+        return false;
     }
 
     public static boolean isEligibleGun(ItemStack stack) {

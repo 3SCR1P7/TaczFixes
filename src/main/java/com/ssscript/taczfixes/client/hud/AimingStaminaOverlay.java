@@ -96,7 +96,11 @@ public class AimingStaminaOverlay implements IGuiOverlay {
 
     /** 手持 tacz 枪械或 lrtactical 近战武器时显示耐力条。 */
     private static boolean taczfixes$holdsStaminaWeapon(LocalPlayer player) {
-        ItemStack stack = player.getMainHandItem();
+        if (taczfixes$isStaminaWeapon(player.getMainHandItem())) return true;
+        return taczfixes$isStaminaWeapon(player.getOffhandItem());
+    }
+
+    private static boolean taczfixes$isStaminaWeapon(ItemStack stack) {
         if (IGun.getIGunOrNull(stack) != null) return true;
         if (!net.minecraftforge.fml.ModList.get().isLoaded("lrtactical")) return false;
         try {

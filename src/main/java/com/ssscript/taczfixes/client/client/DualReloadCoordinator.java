@@ -35,6 +35,10 @@ public final class DualReloadCoordinator {
         if (event.getAction() != 1 || !ReloadKey.RELOAD_KEY.matches(event.getKey(), event.getScanCode())) {
             return false;
         }
+        return interceptKeyboardReload();
+    }
+
+    public static boolean interceptKeyboardReload() {
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (minecraft.screen != null || !DualWieldClient.isDualMode(player)) {

@@ -11,12 +11,12 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 
 @Mixin(value = {BedrockGunModel.class}, remap = false)
 public abstract class MixinBedrockGunModelScope {
-    @Redirect(method = {"lambda$render$30"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;isScope()Z"), require = ServerMessageOffhandActionResult.ACTION_BOLT)
+    @Redirect(method = {"lambda$render$29"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;isScope()Z"), require = ServerMessageOffhandActionResult.ACTION_BOLT)
     private static boolean dualWield$disableOffhandScopeStencil(ClientAttachmentIndex attachment) {
         return DualRenderContext.getPhase() != DualRenderContext.HandPhase.OFFHAND && attachment.isScope();
     }
 
-    @Redirect(method = {"lambda$renderAccelerated$31"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;isScope()Z"), require = ServerMessageOffhandActionResult.ACTION_BOLT)
+    @Redirect(method = {"lambda$renderAccelerated$30"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;isScope()Z"), require = ServerMessageOffhandActionResult.ACTION_BOLT)
     private static boolean dualWield$disableAcceleratedOffhandScopeStencil(ClientAttachmentIndex attachment) {
         return DualRenderContext.getPhase() != DualRenderContext.HandPhase.OFFHAND && attachment.isScope();
     }
