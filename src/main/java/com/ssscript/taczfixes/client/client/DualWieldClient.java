@@ -704,8 +704,7 @@ public final class DualWieldClient {
         if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
             if (hand == InteractionHand.OFF_HAND) {
                 long now = System.currentTimeMillis();
-                long cooldown = OffhandItemCombat.getAttackCooldownMillis(player, stack);
-                if (now - lastOffhandItemAttackMs >= cooldown) {
+                if (now - lastOffhandItemAttackMs >= 50L) {
                     lastOffhandItemAttackMs = now;
                     NetworkHandler.CHANNEL.sendToServer(
                             new ClientMessageOffhandItemAttack(entityHit.getEntity().getId()));

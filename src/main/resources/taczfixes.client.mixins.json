@@ -135,6 +135,7 @@
         "MixinMuzzleParticleManager",
         "dual.MixinDualFirstPersonRendererParticles",
         "MixinFirstPersonRenderHandlerParticles",
+        "MixinFirstPersonRenderHandlerOffhand",
         "MixinMeleeKey",
         "MixinObjectAnimationAccessor",
         "MixinSoundPlayManager",

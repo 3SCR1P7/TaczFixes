@@ -53,13 +53,15 @@ public final class OffhandItemCombat {
         }
         long now = System.currentTimeMillis();
         Long previous = LAST_ATTACK.get(player.getUUID());
-        if (previous != null && now - previous < getAttackCooldownMillis(player, offhand)) {
+        if (previous != null && now - previous < 50L) {
             return;
         }
         LAST_ATTACK.put(player.getUUID(), now);
 
+        float attackStrength = player.getAttackStrengthScale(0.5f);
         float damage = computeDamage(player, main, offhand, target);
-        boolean critical = player.fallDistance > 0.0f && !player.onGround() && !player.onClimbable()
+        damage *= 0.2f + attackStrength * attackStrength * 0.8f;
+        boolean critical = attackStrength > 0.9f && player.fallDistance > 0.0f && !player.onGround() && !player.onClimbable()
                 && !player.isInWater() && !player.hasEffect(MobEffects.BLINDNESS)
                 && !player.isPassenger();
         CriticalHitEvent criticalEvent = ForgeHooks.getCriticalHit(
@@ -68,8 +70,7 @@ public final class OffhandItemCombat {
             damage *= criticalEvent.getDamageModifier();
             critical = true;
         }
-        boolean sweeping = !critical && !player.isSprinting()
-                && player.getAttackStrengthScale(0.5f) > 0.9f
+        boolean sweeping = !critical && !player.isSprinting() && attackStrength > 0.9f
                 && (EnchantmentHelper.getItemEnchantmentLevel(Enchantments.SWEEPING_EDGE, offhand) > 0
                         || offhand.getItem() instanceof IMeleeWeapon);
         net.minecraft.world.damagesource.DamageSource source = player.damageSources().playerAttack(player);
