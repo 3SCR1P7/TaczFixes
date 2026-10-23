@@ -703,12 +703,8 @@ public final class DualWieldClient {
         net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
         if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
             if (hand == InteractionHand.OFF_HAND) {
-                long now = System.currentTimeMillis();
-                if (now - lastOffhandItemAttackMs >= 50L) {
-                    lastOffhandItemAttackMs = now;
-                    NetworkHandler.CHANNEL.sendToServer(
-                            new ClientMessageOffhandItemAttack(entityHit.getEntity().getId()));
-                }
+                NetworkHandler.CHANNEL.sendToServer(
+                        new ClientMessageOffhandItemAttack(entityHit.getEntity().getId()));
                 player.swing(InteractionHand.OFF_HAND, true);
             } else {
                 Minecraft.getInstance().gameMode.attack(player, entityHit.getEntity());

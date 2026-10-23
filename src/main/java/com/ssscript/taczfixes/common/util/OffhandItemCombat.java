@@ -7,10 +7,10 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import java.util.HashSet;
-import java.util.Map;
+
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
+
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.EquipmentSlot;
@@ -28,7 +28,6 @@ import net.minecraftforge.event.entity.player.CriticalHitEvent;
 
 public final class OffhandItemCombat {
 
-    private static final Map<UUID, Long> LAST_ATTACK = new ConcurrentHashMap<>();
 
     private OffhandItemCombat() {
     }
@@ -51,12 +50,6 @@ public final class OffhandItemCombat {
         if (player.distanceToSqr(target) > reach * reach || !player.hasLineOfSight(target)) {
             return;
         }
-        long now = System.currentTimeMillis();
-        Long previous = LAST_ATTACK.get(player.getUUID());
-        if (previous != null && now - previous < 50L) {
-            return;
-        }
-        LAST_ATTACK.put(player.getUUID(), now);
 
         float attackStrength = player.getAttackStrengthScale(0.5f);
         float damage = computeDamage(player, main, offhand, target);
