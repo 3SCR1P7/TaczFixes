@@ -14,7 +14,9 @@ public final class DualThirdPersonArmPose {
     }
 
     public static boolean mirrorRightArm(LivingEntity entity, ModelPart head, ModelPart rightArm, ModelPart leftArm) {
-        if (entity.getMainHandItem().getItem() instanceof net.minecraft.world.item.ShieldItem
+        if (com.tacz.guns.api.item.IGun.getIGunOrNull(entity.getOffhandItem()) == null
+                || entity.getMainHandItem().getItem() instanceof net.minecraft.world.item.ShieldItem
+                || entity.getOffhandItem().getItem() instanceof net.minecraft.world.item.ShieldItem
                 || entity.getUseItem().getItem() instanceof net.minecraft.world.item.ShieldItem) {
             return false;
         }
