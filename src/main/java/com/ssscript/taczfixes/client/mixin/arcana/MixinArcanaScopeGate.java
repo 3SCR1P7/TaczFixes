@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.arcana;
 
+import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.ScopeViewHelper;
 import com.ssscript.taczfixes.common.config.Config;
@@ -10,6 +11,9 @@ import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.item.ModernKineticGunItem;
+import group.taczexpands.common.accessor.IAccessorAttachmentData;
+import group.taczexpands.dist.YKThsud9;
+import group.taczexpands.dist.oARXeJn4;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -17,23 +21,18 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = "group/taczexpands/dist/WFkyOIm9", remap = false)
 public class MixinArcanaScopeGate {
 
-    @Inject(method = "VR4u5uBF", at = @At("HEAD"), cancellable = true)
-    private void taczfixes$onIwtki3eC(CallbackInfoReturnable<Boolean> cir) {
-        if (!Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT.get()) return;
-
+    @ModifyReturnValue(method = "VR4u5uBF", at = @At("RETURN"), remap = false)
+    private boolean taczfixes$customScopeMagnification(boolean original) {
         Minecraft mc = Minecraft.getInstance();
         Player player = mc.player;
-        if (player == null) return;
+        if (player == null) return original;
 
         ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) return;
-        if (!(stack.getItem() instanceof ModernKineticGunItem gun)) return;
+        if (stack.isEmpty() || !(stack.getItem() instanceof ModernKineticGunItem gun)) return original;
 
         String active = ScopeSwitchState.getActiveSlot(stack);
         if (active != null) {
@@ -42,32 +41,47 @@ public class MixinArcanaScopeGate {
                 IAttachment attachment = IAttachment.getIAttachmentOrNull(activeItem);
                 ResourceLocation actId = attachment == null ? null : attachment.getAttachmentId(activeItem);
                 if (actId != null && !DefaultAssets.isEmptyAttachmentId(actId)) {
-                    CompoundTag tag = ScopeSwitchState.attachmentTag(gun, stack, AttachmentType.SCOPE);
-                    TimelessAPI.getClientAttachmentIndex(actId).ifPresent(index -> {
-                        if (taczfixes$disablesMagnification(index, tag)) {
-                            cir.setReturnValue(false);
+                    ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(actId).orElse(null);
+                    if (index != null && index.isScope()) {
+                        // 与标准槽一致: 组合瞄具切到 sight 视图时按配置关闭镜内放大。
+                        CompoundTag customTag = activeItem.getTag();
+                        if (Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT.get()
+                                && taczfixes$disablesMagnification(index, customTag)) {
+                            return false;
                         }
-                    });
-                    return;
+                        // 镜内放大状态跟随当前瞄具自身的 advanced_rendering 设置;
+                        // 未配置时沿用全局默认值。
+                        if (!oARXeJn4.vvsWkp6U.wsK63xlE().get()) {
+                            return false;
+                        }
+                        YKThsud9 data = IAccessorAttachmentData.Iauo30Fz(actId);
+                        if (data != null) {
+                            return data.aInPX54D != null
+                                    ? data.aInPX54D
+                                    : oARXeJn4.vvsWkp6U.OfFXaRZm().get();
+                        }
+                        return true;
+                    }
                 }
             }
         }
+
+        if (!Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT.get()) return original;
 
         ResourceLocation id = gun.getAttachmentId(stack, AttachmentType.SCOPE);
         if (id == null || id.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
             id = gun.getBuiltInAttachmentId(stack, AttachmentType.SCOPE);
         }
         if (id == null || id.equals(DefaultAssets.EMPTY_ATTACHMENT_ID)) {
-            cir.setReturnValue(false);
-            return;
+            return false;
         }
 
         CompoundTag tag = gun.getAttachmentTag(stack, AttachmentType.SCOPE);
-        TimelessAPI.getClientAttachmentIndex(id).ifPresent(index -> {
-            if (taczfixes$disablesMagnification(index, tag)) {
-                cir.setReturnValue(false);
-            }
-        });
+        ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(id).orElse(null);
+        if (index != null && taczfixes$disablesMagnification(index, tag)) {
+            return false;
+        }
+        return original;
     }
 
     /** 是否禁用镜内放大: 组合瞄具仅在使用 sight 视图时禁用, 单视图瞄具在非 scope 类型时禁用。 */

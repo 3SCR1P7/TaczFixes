@@ -28,6 +28,7 @@
         "MixinInnerThirdPersonManager",
         "arcana.MixinArcanaScopeGate",
         "arcana.MixinArcanaAttachmentData",
+        "arcana.MixinArcanaLensLayerGate",
         "arcana.MixinArcanaLaserToggle",
         "arcana.MixinArcanaFlashlightWorld",
         "arcana.MixinArcanaFlashlightLamp",

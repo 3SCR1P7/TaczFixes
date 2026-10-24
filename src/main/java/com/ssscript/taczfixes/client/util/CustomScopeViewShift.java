@@ -123,13 +123,17 @@ public final class CustomScopeViewShift {
                     }
                 }
                 ItemStack actItem = CustomSlotStorage.get(gun, active);
+                // 相机视图已经切换到自定义槽瞄具, 标准挂载点的目标也要按该瞄具的视图路径计算。
+                boolean actScope = isScopeAttachment(actItem);
                 Vector3f adapterOffset = getActiveSlotAdapterOffset(gun, actItem, active);
                 Vector3f stdAdapterOffset = getStandardScopeAdapterOffset(gun, stdItem);
-                Vec3 stdPos = slotCenterWorld(stdNode, stdItem, gun, stdAdapterOffset);
+                Vec3 stdPos = slotCenterWorld(stdNode, actScope ? actItem : stdItem, gun, stdAdapterOffset);
                 actPos = slotCenterWorld(actNode, actItem, gun, adapterOffset,
                         activeEntry == null ? null : CustomSlotMount.sourceChain(model, gun, activeEntry),
                         activeEntry != null && !activeEntry.source().isEmpty(), -1);
-                if (stdItem.isEmpty()) {
+                if (actScope) {
+                    target = stdPos.subtract(actPos);
+                } else if (stdItem.isEmpty()) {
                     List<com.tacz.guns.client.model.bedrock.BedrockPart> ironPath = model.getIronSightPath();
                     if (ironPath != null && !ironPath.isEmpty()) {
                         Vec3 ironPos = slotCenterWorld(ironPath.get(ironPath.size() - 1), ItemStack.EMPTY, gun, null);

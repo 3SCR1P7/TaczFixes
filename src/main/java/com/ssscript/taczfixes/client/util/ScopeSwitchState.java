@@ -53,11 +53,23 @@ public final class ScopeSwitchState {
         return active;
     }
 
-    /** 该槽位是否仍是有效的自定义瞄具槽(定义存在、为 scope 类型且仍装有效果配件)。 */
+    /** 槽位里是否装有可用的瞄具(不限制槽位定义类型, 兼容 type=custom 的自定义槽)。 */
     private static boolean isCandidateInstalled(ItemStack gun, String slotId) {
+        return isScopeLikeInstalled(gun, slotId);
+    }
+
+    private static boolean isScopeLikeInstalled(ItemStack gun, String slotId) {
         CustomSlotDefinition def = CustomSlotManager.getSlots(gun).get(slotId);
-        if (def == null || def.isCustom() || !"scope".equalsIgnoreCase(def.type)) return false;
-        return !CustomSlotStorage.get(gun, slotId).isEmpty();
+        if (def == null) return false;
+        ItemStack item = CustomSlotStorage.get(gun, slotId);
+        if (item.isEmpty()) return false;
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return false;
+        ResourceLocation id = attachment.getAttachmentId(item);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
+        return TimelessAPI.getClientAttachmentIndex(id)
+                .map(index -> index.isScope() || index.isSight())
+                .orElse(false);
     }
 
     public static void cycle(ItemStack gun) {
@@ -88,6 +100,7 @@ public final class ScopeSwitchState {
 
     public static float aimingZoom(IGun iGun, ItemStack gun) {
         String active = getActiveSlot(gun);
+        Float custom = null;
         if (active != null) {
             ItemStack scope = CustomSlotStorage.get(gun, active);
             if (!scope.isEmpty()) {
@@ -97,23 +110,36 @@ public final class ScopeSwitchState {
                     float[] zooms = TimelessAPI.getClientAttachmentIndex(id).map(ClientAttachmentIndex::getZoom).orElse(null);
                     if (zooms != null) {
                         int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scope.getTag());
-                        return zooms[zoomNumber % zooms.length];
+                        custom = zooms[zoomNumber % zooms.length];
                     }
                 }
             }
         }
-        return iGun.getAimingZoom(gun);
+        return custom != null ? custom : iGun.getAimingZoom(gun);
     }
 
     public static boolean isCustomScopeSlotActive(ItemStack gun) {
         String active = getActiveSlot(gun);
         if (active == null) return false;
-        ResourceLocation gunId = gunId(gun);
-        if (gunId == null) return false;
-        Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gun);
-        CustomSlotDefinition def = slots.get(active);
-        return def != null && !def.isCustom() && "scope".equalsIgnoreCase(def.type);
+        return isScopeLikeInstalled(gun, active);
     }
+
+    /** 当前自定义槽瞄具的 id, 仅当其类型是 scope(不是 sight)时返回。 */
+    public static ResourceLocation activeCustomScopeId(ItemStack gun) {
+        String active = getActiveSlot(gun);
+        if (active == null) return null;
+        ItemStack item = CustomSlotStorage.get(gun, active);
+        if (item.isEmpty()) return null;
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return null;
+        ResourceLocation id = attachment.getAttachmentId(item);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return null;
+        return TimelessAPI.getClientAttachmentIndex(id)
+                .map(index -> index.isScope() ? id : null)
+                .orElse(null);
+    }
+
+
 
     public static Optional<Float> customScopeAimTime(ItemStack gun) {
         return customScopeAimTime(gun, -1.0F);
@@ -183,8 +209,8 @@ public final class ScopeSwitchState {
         Map<String, CustomSlotDefinition> slots = CustomSlotManager.getSlots(gun);
         for (Map.Entry<String, CustomSlotDefinition> entry : slots.entrySet()) {
             CustomSlotDefinition def = entry.getValue();
-            if (def == null || def.isCustom() || !"scope".equalsIgnoreCase(def.type)) continue;
-            if (CustomSlotStorage.get(gun, entry.getKey()).isEmpty()) continue;
+            if (def == null) continue;
+            if (!isScopeLikeInstalled(gun, entry.getKey())) continue;
             if (!CustomSlotManager.isDependenceMet(gunId, gun, def)) continue;
             list.add(entry.getKey());
         }

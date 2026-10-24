@@ -1,6 +1,9 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.util.ArcanaMagnificationState;
+import com.ssscript.taczfixes.common.compat.ArcanaScopeViewState;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.client.util.CustomSlotMount;
@@ -8,6 +11,7 @@ import com.ssscript.taczfixes.client.util.CustomSlotRenderBridge;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.StandbySlotBuffer;
 import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -17,6 +21,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -77,11 +82,41 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                                                  int light, int overlay, float red, float green, float blue, float alpha,
                                                  net.minecraft.client.renderer.MultiBufferSource bufferSource,
                                                  CallbackInfo ci) {
+        taczfixes$syncArcanaActiveScope(displayContext);
         if (taczfixes$standbyRendered) {
             return;
         }
         StandbySlotBuffer.takePending();
         taczfixes$renderCustomSlots(pose, displayContext, light, overlay);
+    }
+
+    /** 原生槽/备用槽模型可能在本帧后渲染并覆盖 Arcana 的瞄具状态, 帧末重新指回当前自定义槽瞄具。 */
+    @Unique
+    private void taczfixes$syncArcanaActiveScope(ItemDisplayContext displayContext) {
+        if (!displayContext.firstPerson()) return;
+        if (DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND) return;
+        ItemStack gun = this.currentGunItem;
+        if (gun == null || gun.isEmpty()) return;
+        String active = ScopeSwitchState.getActiveSlot(gun);
+        if (active == null || active.isEmpty()) {
+            return;
+        }
+        ItemStack item = CustomSlotStorage.get(gun, active);
+        if (item == null || item.isEmpty()) {
+            return;
+        }
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return;
+        ResourceLocation id = attachment.getAttachmentId(item);
+        if (id == null) return;
+        TimelessAPI.getClientAttachmentIndex(id).ifPresent(index -> {
+            if (!index.isScope()) return;
+            com.tacz.guns.client.model.BedrockAttachmentModel model = index.getAttachmentModel();
+            if (model == null) return;
+            int zoomNumber = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor
+                    .getZoomNumberFromTag(item.getTag());
+            ArcanaScopeViewState.set(model, zoomNumber);
+        });
     }
 
     /** 外部渲染路径(第三人称 SBM 外部网格)用: 不经过 BedrockGunModel.render, 直接补画自定义槽配件。 */
@@ -229,6 +264,17 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
     }
 
     @Unique
+    private static boolean taczfixes$arcanaLensMagnified() {
+        if (DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND) return false;
+        Minecraft mc = Minecraft.getInstance();
+        LocalPlayer player = mc.player;
+        if (player == null || !player.isAlive()) return false;
+        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
+        if (operator == null || operator.getClientAimingProgress(mc.getFrameTime()) <= 0.01f) return false;
+        return ArcanaMagnificationState.active();
+    }
+
+    @Unique
     private void renderActiveSlot(PoseStack pose, ItemDisplayContext displayContext,
                                   int light, int overlay) {
         ItemStack gun = this.currentGunItem;
@@ -265,11 +311,20 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                         java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> ocularRestore =
                                 new java.util.IdentityHashMap<>();
                         StandbySlotBuffer.ensureScopeOcularVisible(actModel, ocularRestore);
+                        // Arcana 镜内放大自行处理目镜遮挡; 再补画普通目镜会盖住镜内画面。
+                        boolean arcanaLens = taczfixes$arcanaLensMagnified();
                         java.util.Map<com.tacz.guns.client.model.bedrock.BedrockPart, Boolean> plain =
-                                taczfixes$showPlainOcular(actModel, index);
+                                arcanaLens ? null : taczfixes$showPlainOcular(actModel, index);
                         try {
+                            if (index.isScope()) {
+                                int zoomNumber = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor
+                                        .getZoomNumberFromTag(actItem.getTag());
+                                ArcanaScopeViewState.set(actModel, zoomNumber);
+                            }
                             actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
-                            StandbySlotBuffer.renderPlainOcular(actModel, pose, displayContext, renderType, light, overlay);
+                            if (!arcanaLens) {
+                                StandbySlotBuffer.renderPlainOcular(actModel, pose, displayContext, renderType, light, overlay);
+                            }
                         } finally {
                             taczfixes$restorePlainOcular(plain);
                             StandbySlotBuffer.restoreOcularVisibility(ocularRestore);
@@ -422,13 +477,14 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                 try {
                     model.render(item, gun, pose, displayContext,
                             RenderType.entityCutout(texture), light, overlay);
-                    StandbySlotBuffer.renderPlainOcular(model, pose, displayContext,
-                            RenderType.entityCutout(texture), light, overlay);
                 } finally {
-                    taczfixes$restorePlainOcular(plain);
                     acc.taczfixes$setIsScope(oldScope);
                     acc.taczfixes$setIsSight(oldSight);
                 }
+                // 备用槽按物理模型渲染: renderPlainOcular 需要模型恢复 scope 标志后才会补画普通 ocular。
+                StandbySlotBuffer.renderPlainOcular(model, pose, displayContext,
+                        RenderType.entityCutout(texture), light, overlay);
+                taczfixes$restorePlainOcular(plain);
             } finally {
                 StandbySlotBuffer.restoreOcularVisibility(restore);
             }

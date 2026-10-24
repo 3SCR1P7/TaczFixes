@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /** Arcana 手电灯具: 查找手电配置时兜底自定义槽位。 */
-@Mixin(targets = "group/taczexpands/dist/R131009", remap = false)
+@Mixin(targets = "group/taczexpands/dist/uZKtCWou", remap = false)
 public class MixinArcanaFlashlightLamp {
 
     @Redirect(method = "*", at = @At(value = "INVOKE",

@@ -3,11 +3,13 @@ package com.ssscript.taczfixes.client.mixin;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
+import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
@@ -23,6 +25,28 @@ import java.util.Optional;
 /** group_offset 平移了瞄具的渲染位置, 必须同步计入开镜瞄准定位(否则镜片中心与瞄准点错位)。 */
 @Mixin(targets = "com.tacz.guns.client.event.FirstPersonRenderGunEvent", remap = false)
 public class MixinFirstPersonRenderGunEventAimScope {
+
+    /** 镜内视图模型/缩放使用当前自定义槽瞄具, 挂载偏移保持原生槽。 */
+    @WrapOperation(method = "applyFirstPersonPositioningTransform",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/TimelessAPI;getClientAttachmentIndex(Lnet/minecraft/resources/ResourceLocation;)Ljava/util/Optional;"),
+            remap = false)
+    private static Optional<com.tacz.guns.client.resource.index.ClientAttachmentIndex> taczfixes$activeScopeIndex(
+            ResourceLocation id, Operation<Optional<com.tacz.guns.client.resource.index.ClientAttachmentIndex>> original,
+            @Local(argsOnly = true) ItemStack gunStack) {
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null || ScopeSwitchState.getActiveSlot(gunStack) == null) return original.call(id);
+        ResourceLocation activeId = ScopeSwitchState.attachmentId(gun, gunStack, AttachmentType.SCOPE);
+        if (activeId == null || com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(activeId)) return original.call(id);
+        return com.tacz.guns.api.TimelessAPI.getClientAttachmentIndex(activeId);
+    }
+
+    @WrapOperation(method = "applyFirstPersonPositioningTransform",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/item/IGun;getAttachmentTag(Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/api/item/attachment/AttachmentType;)Lnet/minecraft/nbt/CompoundTag;"),
+            remap = false)
+    private static CompoundTag taczfixes$activeScopeTag(IGun gun, ItemStack stack, AttachmentType type,
+                                                        Operation<CompoundTag> original) {
+        return type == AttachmentType.SCOPE ? ScopeSwitchState.attachmentTag(gun, stack, type) : original.call(gun, stack, type);
+    }
 
     /** 瞄准定位矩阵由 getScopeMountOffset(...)->getPositioningNodeInverse(path, mountOffset, view) 生成;
      *  mountOffset 以 (-x/16, y/16, -z/16) 平移写入矩阵, 故补入渲染端等值位移需要 (gx, -gy, gz)。 */
