@@ -53,6 +53,11 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
     public static final ForgeConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
+    public static final ForgeConfigSpec.BooleanValue AUTO_CRAFT_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_BASE_SECONDS;
+    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_TYPE;
+    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_ITEM;
+    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_COOLDOWN_SECONDS;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_RECOLOR_BUTTON;
@@ -730,6 +735,26 @@ public class Config {
 
         BUILDER.pop();
         SPECS.put("refit", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER.push("auto_craft");
+        AUTO_CRAFT_ENABLED = BUILDER
+                .comment("是否开启工作台自动合成功能。默认值：true")
+                .define("enabled", true);
+        AUTO_CRAFT_BASE_SECONDS = BUILDER
+                .comment("每次自动合成的基础时长（秒）。默认值：0.0")
+                .defineInRange("base_seconds", 0.0, 0.0, 60.0);
+        AUTO_CRAFT_SECONDS_PER_TYPE = BUILDER
+                .comment("配方每有 1 种所需材料，合成时长增加的秒数。默认值：0.25")
+                .defineInRange("seconds_per_type", 0.25, 0.0, 10.0);
+        AUTO_CRAFT_SECONDS_PER_ITEM = BUILDER
+                .comment("配方所需材料总数每有 1 个，合成时长增加的秒数。默认值：0.05")
+                .defineInRange("seconds_per_item", 0.05, 0.0, 10.0);
+        AUTO_CRAFT_COOLDOWN_SECONDS = BUILDER
+                .comment("每次合成结束后的冷却时长（秒）。默认值：0.1")
+                .defineInRange("cooldown_seconds", 0.1, 0.0, 60.0);
+        BUILDER.pop();
+        SPECS.put("auto_craft", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("blocking");

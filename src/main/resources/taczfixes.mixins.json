@@ -91,6 +91,8 @@
         "MixinRepairItemRecipeGunMerge",
         "MixinAttachmentDataUtilsAdapter",
         "MixinAttachmentCachePropertyAdapter",
-        "MixinGunPackLoader"
+        "MixinGunPackLoader",
+        "MixinGunSmithTableMenu",
+        "MixinGunSmithTableBlockEntity"
     ]
 }

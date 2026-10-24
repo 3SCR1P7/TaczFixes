@@ -193,6 +193,21 @@ public class NetworkHandler {
                 ClientMessageOffhandUseState::decode,
                 ClientMessageOffhandUseState::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(35, ClientMessageAutoCraft.class,
+                ClientMessageAutoCraft::encode,
+                ClientMessageAutoCraft::decode,
+                ClientMessageAutoCraft::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(36, ClientMessageAutoCraftStateRequest.class,
+                ClientMessageAutoCraftStateRequest::encode,
+                ClientMessageAutoCraftStateRequest::decode,
+                ClientMessageAutoCraftStateRequest::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(37, ServerMessageAutoCraftState.class,
+                ServerMessageAutoCraftState::encode,
+                ServerMessageAutoCraftState::decode,
+                ServerMessageAutoCraftState::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
     }
 }

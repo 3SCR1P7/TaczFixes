@@ -462,5 +462,13 @@
     "config.taczfixes.entry.suppression.sniper_rpg_darken_duration_multiplier": "重型武器变暗时长倍率",
     "key.taczfixes.focus_aim":  "单手瞄准",
     "key.taczfixes.offhand_fire_select":  "副手开火模式",
-    "taczfixes.hud.left":  "副手持枪"
+    "taczfixes.hud.left":  "副手持枪",
+    "taczfixes.gun_smith_table.auto_craft":  "自动制造",
+    "taczfixes.gun_smith_table.auto_crafting":  "正在自动制造 %s %s",
+    "config.taczfixes.category.auto_craft":  "自动合成",
+    "config.taczfixes.entry.auto_craft.enabled":  "启用自动合成",
+    "config.taczfixes.entry.auto_craft.base_seconds":  "基础合成时长",
+    "config.taczfixes.entry.auto_craft.seconds_per_type":  "每种材料增加时长",
+    "config.taczfixes.entry.auto_craft.seconds_per_item":  "每个材料增加时长",
+    "config.taczfixes.entry.auto_craft.cooldown_seconds":  "合成冷却时长"
 }

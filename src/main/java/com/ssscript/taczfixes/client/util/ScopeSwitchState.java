@@ -124,6 +124,21 @@ public final class ScopeSwitchState {
         return isScopeLikeInstalled(gun, active);
     }
 
+    /** 当前自定义槽瞄具处于 scope 视图时返回 id; 组合瞄具的 sight 视图返回 null。 */
+    public static ResourceLocation activeCustomScopeViewId(ItemStack gun) {
+        String active = getActiveSlot(gun);
+        if (active == null) return null;
+        ItemStack item = CustomSlotStorage.get(gun, active);
+        if (item.isEmpty()) return null;
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return null;
+        ResourceLocation id = attachment.getAttachmentId(item);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return null;
+        return TimelessAPI.getClientAttachmentIndex(id)
+                .map(index -> index.isScope() && ScopeViewHelper.isScopeView(index, item.getTag()) ? id : null)
+                .orElse(null);
+    }
+
     /** 当前自定义槽瞄具的 id, 仅当其类型是 scope(不是 sight)时返回。 */
     public static ResourceLocation activeCustomScopeId(ItemStack gun) {
         String active = getActiveSlot(gun);

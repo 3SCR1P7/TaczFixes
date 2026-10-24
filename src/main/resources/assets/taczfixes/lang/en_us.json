@@ -462,5 +462,13 @@
     "config.taczfixes.entry.suppression.sniper_rpg_darken_duration_multiplier": "Sniper/RPG Darkening Duration Multiplier",
     "key.taczfixes.focus_aim":  "Focus Aim",
     "key.taczfixes.offhand_fire_select":  "Offhand Fire Mode",
-    "taczfixes.hud.left":  "Left"
+    "taczfixes.hud.left":  "Left",
+    "taczfixes.gun_smith_table.auto_craft":  "Auto-craft",
+    "taczfixes.gun_smith_table.auto_crafting":  "Auto-crafting %s %s",
+    "config.taczfixes.category.auto_craft":  "Auto Craft",
+    "config.taczfixes.entry.auto_craft.enabled":  "Enable Auto Craft",
+    "config.taczfixes.entry.auto_craft.base_seconds":  "Base Craft Time (seconds)",
+    "config.taczfixes.entry.auto_craft.seconds_per_type":  "Seconds per Material Type",
+    "config.taczfixes.entry.auto_craft.seconds_per_item":  "Seconds per Material Item",
+    "config.taczfixes.entry.auto_craft.cooldown_seconds":  "Craft Cooldown (seconds)"
 }

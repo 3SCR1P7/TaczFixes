@@ -103,7 +103,7 @@ dependencies {
     compileOnly files('libs/embeddium-0.3.31+mc1.20.1.jar')
 compileOnly files('libs/simplebedrockmodel-2.5.6-forge-mc1.20.1.jar')
 
-    compileOnly files('libs/gunsmithlib-forge-1.20.1-tacz1.1.8-6.4.2.jar')
+    compileOnly files('libs/gunsmithlib-forge-1.20.1-tacz1.2.0_1021-7.0.0-alpha.10.jar')
 
     compileOnly files('libs/kuroutils2-2001.2.5.0.jar')
 

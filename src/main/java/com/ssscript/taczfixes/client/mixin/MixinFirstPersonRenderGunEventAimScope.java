@@ -16,6 +16,7 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -38,6 +39,22 @@ public class MixinFirstPersonRenderGunEventAimScope {
         ResourceLocation activeId = ScopeSwitchState.attachmentId(gun, gunStack, AttachmentType.SCOPE);
         if (activeId == null || com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(activeId)) return original.call(id);
         return com.tacz.guns.api.TimelessAPI.getClientAttachmentIndex(activeId);
+    }
+
+    /** 原生槽为空时, 开镜定位仍要走 scope 挂载路径, 而不是机瞄路径。 */
+    @Redirect(method = "applyFirstPersonPositioningTransform",
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/item/IGun;getAttachmentId(Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/api/item/attachment/AttachmentType;)Lnet/minecraft/resources/ResourceLocation;"),
+            remap = false)
+    private static ResourceLocation taczfixes$emptyNativeScopeId(IGun gun, ItemStack stack, AttachmentType type) {
+        ResourceLocation original = gun.getAttachmentId(stack, type);
+        if (type == AttachmentType.SCOPE
+                && com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(original)) {
+            ResourceLocation custom = ScopeSwitchState.activeCustomScopeViewId(stack);
+            if (custom != null) {
+                return custom;
+            }
+        }
+        return original;
     }
 
     @WrapOperation(method = "applyFirstPersonPositioningTransform",

@@ -42,7 +42,7 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
-    // 缓存 Uniform 引用, 避免每帧/每次枪械绘制都按字符串查找。
+    // 缂傚倹鎸搁悺?Uniform 鐎殿喗娲滈弫? 闂侇剙鐏濋崢銈呅掕箛鎾村/婵絽绻戦濂稿几椤忓拋娼剧紓浣姑崺妤呮焾閼恒儱鐦婚悗娑欘殘椤戜焦绋夐崣澶屽弨闁瑰吀鍕橀埀?
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
     private static AbstractUniform uReflectionStrength, uReflectionArea, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uLocalLightDirection, uLocalLightColor, uLocalLightStrength;
@@ -50,7 +50,24 @@ public final class PbrRenderer {
     private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness;
     private static AbstractUniform uBlurDirection, uCompositeStrength, uHasScopeMask;
     private static VertexBuffer mesh;
+    private static int emissionBlendOverride;
     private static final int MATERIALS_MAX = 256;
+
+    public static void applyEmissionBlendOverride() {
+        if (emissionBlendOverride > 0) {
+            RenderSystem.disableBlend();
+        }
+    }
+
+    private static void pushEmissionBlendOverride() {
+        emissionBlendOverride++;
+    }
+
+    private static void popEmissionBlendOverride() {
+        if (emissionBlendOverride > 0) {
+            emissionBlendOverride--;
+        }
+    }
     private static final Map<ResourceLocation, Optional<Material>> MATERIALS =
             new java.util.LinkedHashMap<>(MATERIALS_MAX, 0.75f, true) {
                 @Override
@@ -59,7 +76,7 @@ public final class PbrRenderer {
                 }
             };
     private static final int TYPES_MAX = 512;
-    // RenderType 未覆写 equals/hashCode(默认标识语义), 用访问序 LRU 避免战斗/改装中整体清空重建。
+    // RenderType 闁哄牜浜ｉ々顐﹀礃?equals/hashCode(濮掓稒顭堥濠氬冀閸ヮ亞妲曢悹鍥跺幒缁?, 闁活潿鍔忛鏍⒒椤旇偐纰?LRU 闂侇剙鐏濋崢銈夊箣濡粯鐏?闁衡偓绾拋妫呭☉鎿冨幗閺嗭絾鎷呴幘瀵割伕缂佸本妞介崳绋款嚈閹巻鍋?
     private static final Map<RenderType, RenderType> TYPES =
             new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
                 @Override
@@ -73,7 +90,7 @@ public final class PbrRenderer {
 
     private static int tracerBloomSuppression;
 
-    /** 曳光弹渲染期间抑制自发光泛光捕获(是否最终生效由 Config.PBR_BLOOM_TRACER 决定)。 */
+    /** 闁哄洤鍟块崢婊冾嚕鐟欏嫯顩柡灞炬尰濠€锟犳⒒鐎涙ê顫囬柛鎺撳劶閸ゆ粓宕ｉ幋婵嗗辅婵炲绋戦崢婊堝箲閺団€崇(闁哄嫷鍨伴幆渚€寮甸埀顒傜磼閸垺鏅搁柡浣哥墢閺?Config.PBR_BLOOM_TRACER 闁告劕鍟块悾?闁?*/
     public static void pushTracerBloomSuppression() {
         tracerBloomSuppression++;
     }
@@ -129,8 +146,8 @@ public final class PbrRenderer {
         if (level == null) return;
         var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         var origin = camera.getPosition();
-        // 局部光源(火把/灯笼等): 非天空维度也有
-        // 只在最近实际绘制过 PBR 时扫描局部光, 避免无枪/无 PBR 时白扫方块。
+        // 閻忕偐鍋撻梺顔哄妼閸樻粌鈹?闁诲浚鍋呮俊?闁诲浚鍨抽妤冪驳?: 闂傚牏鍋涢妵澶岀矚閾忚妯婇幖杈剧細缁″啴寮?
+        // 闁告瑯浜滃﹢顏堝嫉閳ь剚娼婚幋婵堟澖闂傚嫬鎳愮划顖炲礆閹壆绠?PBR 闁哄啳鍩栨竟鍌炲箵韫囨挾婀伴梺顔哄妼閸? 闂侇剙鐏濋崢銈夊籍閻樺磭浠?闁?PBR 闁哄啫澧庡▍褔骞嶉锝嗙厵闁秆勩仠閳?
         if (System.currentTimeMillis() - lastPbrDrawAt <= 500L) {
             updateLocalLight(level, origin);
         }
@@ -158,14 +175,14 @@ public final class PbrRenderer {
                 ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
         setUniform(uCelestialVisibility, visible ? 1f : 0f);
         setUniform(uLocalSkyExposure, level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
-        // 淋雨打湿: 仅主世界、露天且头顶无遮挡时生效, 强度跟随雨量。
-        // 用玩家位置而不是相机位置: 第三人称相机可能在屋檐外, 但枪和玩家在遮挡下不应打湿。
+        // 婵烇絽顑夊ú锕傚箥閹惧鐣? 濞寸姴鎳嶇€靛本绋夐弽顐ｆ珪闁靛棔绶氬﹢鑸靛緞閳衡偓缁楁牗寰勯幘顔衡偓濠囧籍閻樿绱曢柟绯曞墲濡炲倿鎮介悢鍛婃珡, 鐎殿喖鎼€瑰磭鎹勯悢鍏碱吂闂傚棎鍔戦崳娲Υ?
+        // 闁活潿鍔庣敮铏光偓瑙勬构缂嶅懐绱旈搴撳亾鐏炶偐鐟濋柡鍕靛灣濞村寮垫潪鎵Т缂? 缂佹鍏涚粭浣圭閾忓墣鐐烘儎閸涘﹥绨氶柛娆樺灥閸忔﹢宕烽妸銉ф簣婵＄偓鍔曢ˇ? 濞达絽妫欓悘娆撳椽瀹€鈧敮铏光偓纭呮硾濠€顏堟焼椤旇棄鐨″☉鎾愁儎缁楀鎯旈弮鈧晶锕€锕㈢憗銈傚亾?
         float targetWetness = 0f;
         var wetnessAnchor = Minecraft.getInstance().player != null
                 ? Minecraft.getInstance().player.position() : origin;
         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && level.isRaining()) {
             BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
-            // isRainingAt 已包含 canSeeSky/高度图/群系降雨检查; canSeeSky 再显式确认头顶无方块遮挡。
+            // isRainingAt 鐎瑰憡褰冪€垫﹢宕?canSeeSky/濡ゅ倹锚鐎规娊宕?缂傚洢鍊楅柈鎾⒔瀹ュ澶勬俊顐熷亾闁? canSeeSky 闁告劕绉靛Ο澶婎嚕韫囨洍鈧鎷嬮妶鍛粓濡炪倛鍩栧Λ銈夊棘閻熺増鍋ラ梺顒夊枟鐏忓懘濡?
             if (level.canSeeSky(wetPos) && level.isRainingAt(wetPos)) {
                 targetWetness = level.getRainLevel(partialTick);
             }
@@ -178,7 +195,7 @@ public final class PbrRenderer {
     private static final float WET_SECONDS = 5.0f;
     private static final float DRY_SECONDS = 8.0f;
 
-    /** 淋湿/晾干都按时间渐变, 避免进出室内时瞬间跳变。 */
+    /** 婵烇絽顑嗙粻?闁哄懏鍎抽崗閬嶆焾閼恒儱鐦婚柡鍐ㄧ埣濡灝銆掗幇顒€缍? 闂侇剙鐏濋崢銈嗘交濞戞ê姣夐悗骞垮€曢崬鎾籍閸撲胶浠滈梻鍌滎棎閻戯箓宕ｅΟ绯曞亾?*/
     private static float updateWetness(float target) {
         long now = System.nanoTime();
         if (wetnessLastNanos == 0L) {
@@ -205,7 +222,7 @@ public final class PbrRenderer {
     private static int localLightEmission = 0;
     private static long lastPbrDrawAt = 0L;
 
-    /** 扫描附近发光方块(节流); 方向/强度每帧按当前位置重算, 移动时高光平滑跟随不卡顿。 */
+    /** 闁规鍋呭鍧楁⒔閸曨喚绠柛娆愬灥閸樻粓寮悷鐗堝仴(闁煎搫鍊圭粊?; 闁哄倻鎳撻幃?鐎殿喖鎼€瑰啿袙韫囨挻濮庨柟绋款槸缂嶅宕滃鍕Т缂傚喚鍣ｉ崳鍝ョ不? 缂佸顕ф慨鈺呭籍閸洜褰柛蹇擃槸闁解晛顭ㄩ幋锝囶€€闂傚懎绻嬬粭澶愬础閿熺姰鈧垿濡?*/
     private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin) {
         Minecraft minecraft = Minecraft.getInstance();
         var player = minecraft.player;
@@ -265,14 +282,14 @@ public final class PbrRenderer {
             double score = localLightEmission / (1.0D + len * len * 0.35D);
             targetStrength = (float) Math.max(0.0D, Math.min(1.0D, score / 7.0D));
         }
-        // 方向每帧更新(连续), 强度轻微平滑避免切换光源跳变
+        // 闁哄倻鎳撻幃婊冃掕箛鎾村闁哄洤鐡ㄩ弻?閺夆晝鍋熼悽?, 鐎殿喖鎼€硅櫕娼拠韫俺妤犵偠娅曠划锕傛焼閸喖甯抽柛鎺戞处瀹曟煡宕楁径瀣埍閻犲搫鍟胯ぐ?
         localLightX = targetX;
         localLightY = targetY;
         localLightZ = targetZ;
         localLightStrength += (targetStrength - localLightStrength) * 0.35f;
     }
 
-    /** 光源到玩家眼睛之间是否有遮挡方块; 玻璃等不遮挡的方块会穿过。 */
+    /** 闁稿繐顦扮花顕€宕氶幍顔艰礋閻庣懓澧庡┃鍌炴儓濞戞顓洪梻鍌氱摠濡叉悂宕ラ敂鑺ョ畳闂侇剦鍠楃亸鍛村棘閻熺増鍋? 闁绘粏宕甸幏鎴犵驳婢跺鐟濋梺顒夊枟鐏忓懘鎯冮崟顒佺厵闁秆勩仦缁辨壆绮氶懗顖滅畺闁?*/
     private static boolean isLightVisible(net.minecraft.world.level.Level level, Vec3 from, BlockPos lightPos,
                                            Entity entity) {
         Vec3 target = new Vec3(lightPos.getX() + 0.5D, lightPos.getY() + 0.5D, lightPos.getZ() + 0.5D);
@@ -382,7 +399,7 @@ public final class PbrRenderer {
         uWetness = s.safeGetUniform("Wetness");
     }
 
-    /** 缓存为空(资源重载/着色器缺失)时跳过写入。 */
+    /** 缂傚倹鎸搁悺銊︾▔閾忓厜鏁?閻犙冨缁噣鏌屽鍫熺グ/闁活偀鍋撻柤瑙勫絻濞呮帞绱撻崫鍕╀杭)闁哄啯鍎奸悜锔芥交閸パ冩櫢闁稿繈鍎埀?*/
     static void setUniform(AbstractUniform uniform, int value) {
         if (uniform != null) uniform.set(value);
     }
@@ -399,12 +416,12 @@ public final class PbrRenderer {
         if (uniform != null) uniform.set(x, y, z);
     }
 
-    /** 共享模糊着色器的方向(UV 单位)。 */
+    /** 闁稿繐褰夐棅鈺佄熼敍鍕囬柣顐熷亾闁艰褰冨▍鎺楁儍閸曨剚鐓欓柛?UV 闁告娲戠紞?闁?*/
     static void setBlurDirection(float x, float y) {
         if (uBlurDirection != null) uBlurDirection.set(x, y);
     }
 
-    /** 共享泛光合成着色器的强度。 */
+    /** 闁稿繐褰夐棅鈺佲枖濞戞ê甯ㄩ柛姘墛閸ㄦ岸鎯堥埀顒勬嚌閹绘帗鐝ら柣銊ュ瀹歌鲸鎯旈敂琛″亾?*/
     static void setBloomStrength(float value) {
         if (uCompositeStrength != null) uCompositeStrength.set(value);
     }
@@ -452,7 +469,7 @@ public final class PbrRenderer {
                 resources.getResource(normal).isPresent() ? normal : null, emissive));
     }
 
-    /** LabPBR alpha 255 为非自发光哨兵值、0 为无自发光, 其余 alpha 代表发光强度。 */
+    /** LabPBR alpha 255 濞戞挻妞藉顏堟嚊椤忓嫬绲洪柛蹇擃槸閹界娀宕楅棃娑掑亾缁楄　鍋? 濞戞挾鍎ゅΛ銈夋嚊椤忓嫬绲洪柛? 闁稿繑婀圭紞?alpha 濞寸媴缍€閵嗗啴宕ｉ幋婵嗗辅鐎殿喖鎼€规娊濡?*/
     private static boolean hasEmissiveAlpha(ResourceManager resources, ResourceLocation location) {
         var resource = resources.getResource(location);
         if (resource.isEmpty()) return false;
@@ -529,6 +546,18 @@ public final class PbrRenderer {
                     int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
                     int[] viewport = new int[4];
                     GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
+                    boolean replaceEmission = !isScopeDivision();
+                    boolean blendWas = GL11.glIsEnabled(GL11.GL_BLEND);
+                    boolean depthTestWas = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+                    int depthFuncWas = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
+                    if (replaceEmission) {
+                        // The emission target must keep the nearest surface, not add every
+                        // PBR draw. Additive blending made bloom from a rear workbench leak
+                        // through a workbench rendered in front of it.
+                        pushEmissionBlendOverride();
+                        RenderSystem.enableDepthTest();
+                        RenderSystem.depthFunc(GL11.GL_LEQUAL);
+                    }
                     try {
                         RenderSystem.depthMask(true);
                         PbrBloom.bindCapture();
@@ -545,6 +574,20 @@ public final class PbrRenderer {
                         setUniform(uScopeDivisionPass, isScopeDivision() ? 1 : 0);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                     } finally {
+                        if (replaceEmission) {
+                            popEmissionBlendOverride();
+                            if (blendWas) {
+                                RenderSystem.enableBlend();
+                            } else {
+                                RenderSystem.disableBlend();
+                            }
+                            if (depthTestWas) {
+                                RenderSystem.enableDepthTest();
+                            } else {
+                                RenderSystem.disableDepthTest();
+                            }
+                            RenderSystem.depthFunc(depthFuncWas);
+                        }
                         setUniform(uEmissionPass, 0);
                         setUniform(uScopeDivisionPass, 0);
                         if (stencilWas) {

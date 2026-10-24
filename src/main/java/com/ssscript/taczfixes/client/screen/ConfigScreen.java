@@ -33,6 +33,7 @@ public class ConfigScreen {
         buildDynamicCrosshair(builder.getOrCreateCategory(cat("dynamic_crosshair")), entry);
         buildBlocking(builder.getOrCreateCategory(cat("blocking")), entry);
         buildRefit(builder.getOrCreateCategory(cat("refit")), entry);
+        buildAutoCraft(builder.getOrCreateCategory(cat("auto_craft")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
         buildEnchantment(builder.getOrCreateCategory(cat("enchantment")), entry);
         buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
@@ -345,6 +346,14 @@ public class ConfigScreen {
         dbl_(cat, entry, "refit.recolor_hue_weight", Config.RECOLOR_HUE_WEIGHT);
         dbl_(cat, entry, "refit.recolor_saturation_weight", Config.RECOLOR_SATURATION_WEIGHT);
         dbl_(cat, entry, "refit.recolor_lightness_weight", Config.RECOLOR_LIGHTNESS_WEIGHT);
+    }
+
+    private static void buildAutoCraft(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "auto_craft.enabled", Config.AUTO_CRAFT_ENABLED);
+        dbl_(cat, entry, "auto_craft.base_seconds", Config.AUTO_CRAFT_BASE_SECONDS);
+        dbl_(cat, entry, "auto_craft.seconds_per_type", Config.AUTO_CRAFT_SECONDS_PER_TYPE);
+        dbl_(cat, entry, "auto_craft.seconds_per_item", Config.AUTO_CRAFT_SECONDS_PER_ITEM);
+        dbl_(cat, entry, "auto_craft.cooldown_seconds", Config.AUTO_CRAFT_COOLDOWN_SECONDS);
     }
 
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {
