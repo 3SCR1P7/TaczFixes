@@ -68,6 +68,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.Pose;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
 import com.tacz.guns.compat.playeranimator.AnimationName;
 import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
 import com.tacz.guns.compat.playeranimator.animation.AnimationManager;
@@ -395,7 +396,8 @@ public final class DualWieldClient {
         boolean leftDown = hasOffhandGun && !focusTarget && physicalShootDown;
         boolean rightDown = hasMainGun && (focusTarget ? physicalShootDown : physicalAimDown);
         boolean offhandShield = hasMainGun && !hasOffhandGun && leftGun.getItem() instanceof ShieldItem;
-        boolean shieldRaised = offhandShield && !focusTarget && physicalLeftDown;
+        boolean shieldRaised = offhandShield && !focusTarget && physicalLeftDown
+                && !player.getCooldowns().isOnCooldown(Items.SHIELD);
         if (shieldRaised != lastOffhandShieldRaised) {
             lastOffhandShieldRaised = shieldRaised;
             if (shieldRaised) {
@@ -759,6 +761,10 @@ public final class DualWieldClient {
                 || IGun.getIGunOrNull(player.getOffhandItem()) != null
                 || player.getOffhandItem().isEmpty()
                 || DualFocusAimKey.FOCUS_AIM_KEY.isDown()) {
+            return false;
+        }
+        if (player.getOffhandItem().is(Items.SHIELD)
+                && player.getCooldowns().isOnCooldown(Items.SHIELD)) {
             return false;
         }
         if ((!ShootKey.SHOOT_KEY.isDown() && !Minecraft.getInstance().mouseHandler.isLeftPressed())

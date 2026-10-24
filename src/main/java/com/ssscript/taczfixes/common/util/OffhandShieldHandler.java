@@ -48,6 +48,7 @@ public final class OffhandShieldHandler {
         ItemStack offhand = player.getOffhandItem();
         return !offhand.isEmpty()
                 && offhand.getItem() instanceof ShieldItem
+                && !player.getCooldowns().isOnCooldown(Items.SHIELD)
                 && IGun.getIGunOrNull(player.getMainHandItem()) != null
                 && IGun.getIGunOrNull(offhand) == null;
     }
