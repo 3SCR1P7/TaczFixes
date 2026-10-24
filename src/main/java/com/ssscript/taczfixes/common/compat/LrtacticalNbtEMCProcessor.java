@@ -70,7 +70,6 @@ public class LrtacticalNbtEMCProcessor implements INBTProcessor {
         if (tag == null) {
             return currentEMC;
         }
-        long canonical = EMCMappingHandler.getStoredEmcValue(ItemInfo.fromItem(info.getItem(), tag));
-        return canonical > 0L ? canonical : currentEMC;
+        return EMCMappingHandler.getStoredEmcValue(ItemInfo.fromItem(info.getItem(), tag));
     }
 }

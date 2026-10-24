@@ -1,11 +1,15 @@
 package com.ssscript.taczfixes.common.compat;
 
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.DurabilityStorage;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.nbt.AmmoBoxItemDataAccessor;
 import com.tacz.guns.api.item.nbt.AmmoItemDataAccessor;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
@@ -54,6 +58,16 @@ public class GunNbtEMCProcessor implements INBTProcessor {
         ItemStack stack = new ItemStack(info.getItem());
         stack.setTag(nbt.copy());
         try {
+            if (info.getItem() instanceof IAmmoBox ammoBox) {
+                CompoundTag result = new CompoundTag();
+                result.putInt(AmmoBoxItemDataAccessor.LEVEL_TAG, ammoBox.getAmmoLevel(stack));
+                if (ammoBox.isAllTypeCreative(stack)) {
+                    result.putBoolean(AmmoBoxItemDataAccessor.ALL_TYPE_CREATIVE_TAG, true);
+                } else if (ammoBox.isCreative(stack)) {
+                    result.putBoolean(AmmoBoxItemDataAccessor.CREATIVE_TAG, true);
+                }
+                return result;
+            }
             if (info.getItem() instanceof IGun gun) {
                 ResourceLocation id = gun.getGunId(stack);
                 if (id == null) return null;
@@ -84,11 +98,16 @@ public class GunNbtEMCProcessor implements INBTProcessor {
     public long recalculateEMC(ItemInfo info, long currentEMC) {
         Item item = info.getItem();
         CompoundTag nbt = info.getNBT();
+        ItemStack stack = new ItemStack(item);
+        if (nbt != null) {
+            stack.setTag(nbt.copy());
+        }
+        if (item instanceof IAmmoBox ammoBox) {
+            return ammoBoxEmc(ammoBox, stack);
+        }
         if (!(item instanceof IGun gun) || nbt == null) {
             return currentEMC;
         }
-        ItemStack stack = new ItemStack(item);
-        stack.setTag(nbt.copy());
         ResourceLocation gunId = gun.getGunId(stack);
         if (gunId == null) {
             return 0;
@@ -140,6 +159,36 @@ public class GunNbtEMCProcessor implements INBTProcessor {
         return Math.max(0, total);
     }
 
+    private static long ammoBoxEmc(IAmmoBox ammoBox, ItemStack stack) {
+        if (ammoBox.isCreative(stack) || ammoBox.isAllTypeCreative(stack)) {
+            return 0L;
+        }
+        CompoundTag baseTag = new CompoundTag();
+        baseTag.putInt(AmmoBoxItemDataAccessor.LEVEL_TAG, ammoBox.getAmmoLevel(stack));
+        long total = EMCMappingHandler.getStoredEmcValue(
+                ItemInfo.fromItem(ModItems.AMMO_BOX.get(), baseTag));
+        if (total <= 0L) {
+            return 0L;
+        }
+        ResourceLocation ammoId = ammoBox.getAmmoId(stack);
+        int count = ammoBox.getAmmoCount(stack);
+        if (ammoId == null || DefaultAssets.EMPTY_AMMO_ID.equals(ammoId) || count <= 0) {
+            return total;
+        }
+        CompoundTag ammoTag = new CompoundTag();
+        ammoTag.putString(AmmoItemDataAccessor.AMMO_ID_TAG, ammoId.toString());
+        long ammoEmc = EMCMappingHandler.getStoredEmcValue(
+                ItemInfo.fromItem(ModItems.AMMO.get(), ammoTag));
+        if (ammoEmc <= 0L) {
+            return total;
+        }
+        try {
+            return Math.addExact(total, Math.multiplyExact(ammoEmc, (long) count));
+        } catch (ArithmeticException e) {
+            return Long.MAX_VALUE;
+        }
+    }
+
     private static long storedGun(ResourceLocation gunId) {
         CompoundTag tag = new CompoundTag();
         tag.putString(GunItemDataAccessor.GUN_ID_TAG, gunId.toString());
@@ -170,7 +219,7 @@ public class GunNbtEMCProcessor implements INBTProcessor {
         return TimelessAPI.getCommonGunIndex(gunId).map(index -> {
             GunData gunData = index.getGunData();
             ResourceLocation ammoId = gunData.getAmmoId();
-            if (ammoId == null) {
+            if (ammoId == null || Config.AMMO_EMC_BLACKLIST.get().contains(ammoId.toString())) {
                 return 0L;
             }
             int current = Math.max(0, gun.getCurrentAmmoCount(stack));

@@ -366,6 +366,7 @@ public class ConfigScreen {
         bool_(cat, entry, "compat.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
         bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);
+        lst_(cat, entry, "compat.ammo_emc_blacklist", Config.AMMO_EMC_BLACKLIST);
         sub(cat, entry, "gun_pack", e -> {
             int_(e, entry, "compat.gun_pack.button_offset_x", Config.GUN_PACK_BUTTON_OFFSET_X);
             int_(e, entry, "compat.gun_pack.button_offset_y", Config.GUN_PACK_BUTTON_OFFSET_Y);

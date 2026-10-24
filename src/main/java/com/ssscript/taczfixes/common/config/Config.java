@@ -138,6 +138,7 @@ public class Config {
     public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
     public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
+    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> AMMO_EMC_BLACKLIST;
     public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_X;
     public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_Y;
     public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_SIZE;
@@ -844,6 +845,10 @@ public class Config {
         DISABLE_THIRD_PERSON = BUILDER
                 .comment("禁用切换第三人称视角。默认值：false")
                 .define("disable_third_person", false);
+        AMMO_EMC_BLACKLIST = BUILDER
+                .comment("不计入枪械弹匣 EMC 的弹药 ID 列表。默认值：[\"ts:battery_us\"]")
+                .defineListAllowEmpty("ammo_emc_blacklist", List.of("ts:battery_us"),
+                        o -> o instanceof String);
         BUILDER.pop();
         BUILDER.push("gun_pack");
         GUN_PACK_BUTTON_OFFSET_X = BUILDER
@@ -1516,11 +1521,11 @@ public class Config {
 
         BUILDER = new ForgeConfigSpec.Builder();
         MOVEMENT_ROLL_MAX_ANGLE = BUILDER
-                .comment("左右移动时枪械桶滚的最大角度。默认值：22.5")
-                .defineInRange("max_movement_roll_angle", 22.5, 0.0, 90.0);
+                .comment("左右移动时枪械桶滚的最大角度。默认值：15.0")
+                .defineInRange("max_movement_roll_angle", 15.0, 0.0, 45.0);
         MOVEMENT_ROLL_FULL_SPEED = BUILDER
-                .comment("达到最大桶滚角度所需的横向移动速度。默认值：5.0")
-                .defineInRange("movement_roll_full_speed", 5.0, 0.0, 50.0);
+                .comment("达到最大桶滚角度所需的横向移动速度。默认值：3.0")
+                .defineInRange("movement_roll_full_speed", 3.0, 0.0, 15.0);
         ROTATION_INERTIA_MAX_ANGLE = BUILDER
                 .comment("视角旋转时枪械惯性的最大滞后角度。默认值：2.5")
                 .defineInRange("rotation_inertia_max_angle", 2.5, 0.0, 15.0);

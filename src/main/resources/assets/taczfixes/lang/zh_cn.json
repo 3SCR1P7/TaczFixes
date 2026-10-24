@@ -316,6 +316,7 @@
     "config.taczfixes.entry.compat.auto_aim_when_peeking":  "探头自动开镜",
     "config.taczfixes.entry.compat.disable_hitboxes":  "禁用实体碰撞箱显示",
     "config.taczfixes.entry.compat.disable_third_person":  "禁用切换第三人称视角",
+    "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",
     "config.taczfixes.category.gun_pack":  "枪包管理",
     "config.taczfixes.entry.compat.gun_pack.button_offset_x":  "按钮水平偏移（像素）",
     "config.taczfixes.entry.compat.gun_pack.button_offset_y":  "按钮垂直偏移（像素）",

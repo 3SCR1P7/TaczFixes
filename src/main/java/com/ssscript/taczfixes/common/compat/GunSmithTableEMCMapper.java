@@ -1,8 +1,10 @@
 package com.ssscript.taczfixes.common.compat;
 
 import com.tacz.guns.api.item.IAmmo;
+import com.tacz.guns.api.item.IAmmoBox;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.nbt.AmmoBoxItemDataAccessor;
 import com.tacz.guns.api.item.nbt.AmmoItemDataAccessor;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.item.nbt.GunItemDataAccessor;
@@ -70,10 +72,8 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
             return false;
         }
         mapper.setValueBefore(NSSItem.createItem(ModItems.MODERN_KINETIC_GUN.get()), 1L);
+        mapper.setValueBefore(NSSItem.createItem(ModItems.AMMO_BOX.get()), 1L);
         boolean lrtacticalSubtype = isLrtacticalSubtype(output);
-        if (lrtacticalSubtype) {
-            mapper.setValueBefore(NSSItem.createItem(output.getItem()), 1L);
-        }
         Map<NormalizedSimpleStack, Integer> ingredients = new LinkedHashMap<>();
         for (GunSmithTableIngredient tableIngredient : inputs) {
             Ingredient ingredient = tableIngredient.getIngredient();
@@ -104,10 +104,7 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
             }
         }
         NormalizedSimpleStack canonicalOutput = canonicalNss(output);
-        if (lrtacticalSubtype) {
-            if (canonicalOutput == null) {
-                return false;
-            }
+        if (lrtacticalSubtype && canonicalOutput != null) {
             mapper.addConversion(output.getCount(), canonicalOutput, ingredients);
             return true;
         }
@@ -191,6 +188,13 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
                 ResourceLocation id = ammo.getAmmoId(stack);
                 if (id == null) return null;
                 tag.putString(AmmoItemDataAccessor.AMMO_ID_TAG, id.toString());
+            } else if (item instanceof IAmmoBox ammoBox) {
+                tag.putInt(AmmoBoxItemDataAccessor.LEVEL_TAG, ammoBox.getAmmoLevel(stack));
+                if (ammoBox.isAllTypeCreative(stack)) {
+                    tag.putBoolean(AmmoBoxItemDataAccessor.ALL_TYPE_CREATIVE_TAG, true);
+                } else if (ammoBox.isCreative(stack)) {
+                    tag.putBoolean(AmmoBoxItemDataAccessor.CREATIVE_TAG, true);
+                }
             } else if (item instanceof IConsumable consumable) {
                 ResourceLocation id = consumable.getId(stack);
                 if (id == null || IConsumable.EMPTY.equals(id)) return null;
