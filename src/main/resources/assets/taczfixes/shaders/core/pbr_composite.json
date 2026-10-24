@@ -3,6 +3,9 @@
   "samplers": [
     {
       "name": "Sampler0"
+    },
+    {
+      "name": "ScopeMask"
     }
   ],
   "uniforms": [
@@ -12,6 +15,14 @@
       "name": "Strength",
       "values": [
         0.6
+      ]
+    },
+    {
+      "type": "int",
+      "count": 1,
+      "name": "HasScopeMask",
+      "values": [
+        0
       ]
     }
   ],

@@ -17,13 +17,6 @@ public abstract class MixinGameRendererPbr {
         PbrBloom.beginFrame();
     }
 
-    // World and hands use different depth/projection spaces. Composite before the hand depth clear.
-    @Inject(method = "renderLevel", at = @At(value = "INVOKE",
-            target = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(IZ)V", remap = false))
-    private void taczfixes$pbrWorld(float tick, long time, PoseStack pose, CallbackInfo ci) {
-        PbrBloom.composite();
-    }
-
     @Inject(method = "renderLevel", at = @At("RETURN"))
     private void taczfixes$pbrEnd(float tick, long time, PoseStack pose, CallbackInfo ci) {
         PbrBloom.endFrame();

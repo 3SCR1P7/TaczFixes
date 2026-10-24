@@ -197,6 +197,14 @@
       ]
     },
     {
+      "type": "int",
+      "count": 1,
+      "name": "ScopeDivisionPass",
+      "values": [
+        0
+      ]
+    },
+    {
       "type": "float",
       "count": 1,
       "name": "ReflectionStrength",

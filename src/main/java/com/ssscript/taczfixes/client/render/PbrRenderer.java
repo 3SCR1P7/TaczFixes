@@ -30,7 +30,6 @@ import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
 import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
@@ -44,12 +43,12 @@ import java.util.Optional;
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
     // 缓存 Uniform 引用, 避免每帧/每次枪械绘制都按字符串查找。
-    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass;
+    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
     private static AbstractUniform uReflectionStrength, uReflectionArea, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uLocalLightDirection, uLocalLightColor, uLocalLightStrength;
     private static AbstractUniform uCelestialDirection, uCelestialColor, uSkyAmbient;
     private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness;
-    private static AbstractUniform uBlurDirection, uCompositeStrength;
+    private static AbstractUniform uBlurDirection, uCompositeStrength, uHasScopeMask;
     private static VertexBuffer mesh;
     private static final int MATERIALS_MAX = 256;
     private static final Map<ResourceLocation, Optional<Material>> MATERIALS =
@@ -62,13 +61,6 @@ public final class PbrRenderer {
     private static final int TYPES_MAX = 512;
     // RenderType 未覆写 equals/hashCode(默认标识语义), 用访问序 LRU 避免战斗/改装中整体清空重建。
     private static final Map<RenderType, RenderType> TYPES =
-            new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
-                @Override
-                protected boolean removeEldestEntry(Map.Entry<RenderType, RenderType> eldest) {
-                    return size() > TYPES_MAX;
-                }
-            };
-    private static final Map<RenderType, RenderType> DIVISION_TYPES =
             new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
                 @Override
                 protected boolean removeEldestEntry(Map.Entry<RenderType, RenderType> eldest) {
@@ -96,24 +88,22 @@ public final class PbrRenderer {
         return tracerBloomSuppression > 0;
     }
 
-    private static int scopeDivisionDepth;
+    private static final java.util.ArrayDeque<Boolean> DIVISION_RENDER_STACK = new java.util.ArrayDeque<>();
 
-    public static void pushScopeDivision() {
-        scopeDivisionDepth++;
+    public static void pushScopeDivision(boolean division) {
+        DIVISION_RENDER_STACK.push(division);
     }
 
     public static void popScopeDivision() {
-        if (scopeDivisionDepth > 0) {
-            scopeDivisionDepth--;
-        }
+        DIVISION_RENDER_STACK.poll();
     }
 
     public static boolean isScopeDivision() {
-        return scopeDivisionDepth > 0;
+        return Boolean.TRUE.equals(DIVISION_RENDER_STACK.peek());
     }
 
     public static void resetScopeDivision() {
-        scopeDivisionDepth = 0;
+        DIVISION_RENDER_STACK.clear();
         scopeAttachmentDepth = 0;
     }
 
@@ -359,22 +349,24 @@ public final class PbrRenderer {
                 new ResourceLocation("taczfixes", "pbr_composite"), DefaultVertexFormat.POSITION_TEX), s -> {
                     compositeShader = s;
                     uCompositeStrength = s.safeGetUniform("Strength");
+                    uHasScopeMask = s.safeGetUniform("HasScopeMask");
                 });
     }
 
     private static void clearUniformCache() {
-        uHasSpecular = uHasNormal = uEmissionPass = null;
+        uHasSpecular = uHasNormal = uEmissionPass = uScopeDivisionPass = null;
         uReflectionStrength = uReflectionArea = uGlareStrength = uEmissionStrength = null;
         uLocalLightDirection = uLocalLightColor = uLocalLightStrength = null;
         uCelestialDirection = uCelestialColor = uSkyAmbient = null;
         uCelestialVisibility = uLocalSkyExposure = uWetness = null;
-        uBlurDirection = uCompositeStrength = null;
+        uBlurDirection = uCompositeStrength = uHasScopeMask = null;
     }
 
     private static void cacheGunUniforms(ShaderInstance s) {
         uHasSpecular = s.safeGetUniform("HasSpecular");
         uHasNormal = s.safeGetUniform("HasNormal");
         uEmissionPass = s.safeGetUniform("EmissionPass");
+        uScopeDivisionPass = s.safeGetUniform("ScopeDivisionPass");
         uReflectionStrength = s.safeGetUniform("ReflectionStrength");
         uReflectionArea = s.safeGetUniform("ReflectionArea");
         uGlareStrength = s.safeGetUniform("GlareStrength");
@@ -417,15 +409,14 @@ public final class PbrRenderer {
         if (uCompositeStrength != null) uCompositeStrength.set(value);
     }
 
-    public static RenderType resolve(RenderType original) {
-        return resolve(original, false);
+    static void setHasScopeMask(int value) {
+        if (uHasScopeMask != null) uHasScopeMask.set(value);
     }
 
-    public static RenderType resolve(RenderType original, boolean scopeDivision) {
+    public static RenderType resolve(RenderType original) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
-        Map<RenderType, RenderType> cache = scopeDivision ? DIVISION_TYPES : TYPES;
-        return cache.computeIfAbsent(original, key -> {
+        return TYPES.computeIfAbsent(original, key -> {
             var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
             var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
             if (texture.isEmpty()) return original;
@@ -440,7 +431,7 @@ public final class PbrRenderer {
                     }
                 }
             }
-            return material == null ? original : new PbrType(original, material, scopeDivision);
+            return material == null ? original : new PbrType(original, material);
         });
     }
 
@@ -480,14 +471,12 @@ public final class PbrRenderer {
     private static final class PbrType extends RenderType {
         private final RenderType original;
         private final Material material;
-        private final boolean scopeDivision;
 
-        PbrType(RenderType original, Material material, boolean scopeDivision) {
+        PbrType(RenderType original, Material material) {
             super("taczfixes_pbr", original.format(), original.mode(), original.bufferSize(),
                     original.affectsCrumbling(), true, original::setupRenderState, original::clearRenderState);
             this.original = original;
             this.material = material;
-            this.scopeDivision = scopeDivision;
         }
 
         @Override public Optional<RenderType> outline() { return original.outline(); }
@@ -524,14 +513,12 @@ public final class PbrRenderer {
                 setUniform(uEmissionPass, 0);
                 RenderSystem.setShader(() -> shader);
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
-                boolean scopeMask = false;
-
-                boolean glare = material.specular() != null && Config.PBR_GLARE_STRENGTH.get().floatValue() > 0.0f;
+                int previousFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+                int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
+                boolean lensDivision = previousFbo != mainFbo && isScopeDivision() && PbrBloom.pureScopeAiming();
                 if (PbrBloom.canCapture()
                         && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
-                        && (material.emissive() || PbrBloom.hasEmissiveContent() || glare)
-                        && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
-                        == Minecraft.getInstance().getMainRenderTarget().frameBufferId) {
+                        && (previousFbo == mainFbo || lensDivision)) {
                     boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
                     boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
                     int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
@@ -540,26 +527,26 @@ public final class PbrRenderer {
                     int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
                     int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
                     int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
+                    int[] viewport = new int[4];
+                    GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
                     try {
                         RenderSystem.depthMask(true);
                         PbrBloom.bindCapture();
-                        if (scopeMask) {
-                            PbrBloom.copyScopeStencil();
-                        }
-                        if (scopeMask && !this.scopeDivision) {
-                            // Cull everything else inside the ocular.
+                        // The emission target carries a fresh copy of the main stencil,
+                        // so the draw's own stencil test keeps sight divisions visible.
+                        // Scope lens suppression only needs to cull everything outside
+                        // the division.
+                        if (PbrBloom.pureScopeAiming() && PbrBloom.scopeStencilAvailable() && !isScopeDivision()) {
                             GL11.glEnable(GL11.GL_STENCIL_TEST);
                             GL11.glStencilFunc(GL11.GL_EQUAL, 0, 255);
                             GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-                        } else if (scopeMask) {
-                            // Division is explicitly marked as stencil 0 below and
-                            // must contribute its bloom.
-                            GL11.glDisable(GL11.GL_STENCIL_TEST);
                         }
                         setUniform(uEmissionPass, 1);
+                        setUniform(uScopeDivisionPass, isScopeDivision() ? 1 : 0);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                     } finally {
                         setUniform(uEmissionPass, 0);
+                        setUniform(uScopeDivisionPass, 0);
                         if (stencilWas) {
                             GL11.glEnable(GL11.GL_STENCIL_TEST);
                             GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
@@ -568,7 +555,8 @@ public final class PbrRenderer {
                             GL11.glDisable(GL11.GL_STENCIL_TEST);
                         }
                         RenderSystem.depthMask(depthMask);
-                        Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
+                        com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
+                        GL11.glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
                     }
                 }
             } finally {
@@ -578,46 +566,6 @@ public final class PbrRenderer {
                 RenderSystem.setShaderTexture(5, depthSlot);
                 RenderSystem.setShader(() -> previous);
                 clearRenderState();
-            }
-        }
-    }
-
-    private static void markDivisionStencil(VertexBuffer mesh, ShaderInstance shader) {
-        boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
-        int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
-        int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
-        int stencilValueMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
-        int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
-        int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
-        int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
-        int stencilWriteMask = GL11.glGetInteger(GL11.GL_STENCIL_WRITEMASK);
-        boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            java.nio.ByteBuffer colorMask = stack.malloc(4);
-            GL11.glGetBooleanv(GL11.GL_COLOR_WRITEMASK, colorMask);
-            boolean red = colorMask.get(0) != 0;
-            boolean green = colorMask.get(1) != 0;
-            boolean blue = colorMask.get(2) != 0;
-            boolean alpha = colorMask.get(3) != 0;
-            try {
-                GL11.glEnable(GL11.GL_STENCIL_TEST);
-                GL11.glStencilFunc(GL11.GL_ALWAYS, 0, 255);
-                GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
-                GL11.glStencilMask(255);
-                GL11.glColorMask(false, false, false, false);
-                GL11.glDepthMask(false);
-                mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
-            } finally {
-                GL11.glColorMask(red, green, blue, alpha);
-                GL11.glDepthMask(depthMask);
-                GL11.glStencilMask(stencilWriteMask);
-                if (stencilWas) {
-                    GL11.glEnable(GL11.GL_STENCIL_TEST);
-                    GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
-                    GL11.glStencilOp(stencilFail, stencilDepthFail, stencilDepthPass);
-                } else {
-                    GL11.glDisable(GL11.GL_STENCIL_TEST);
-                }
             }
         }
     }

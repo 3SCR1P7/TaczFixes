@@ -13,6 +13,7 @@ uniform mat3 IViewRotMat;
 uniform int HasNormal;
 uniform int HasSpecular;
 uniform int EmissionPass;
+uniform int ScopeDivisionPass;
 uniform float ReflectionStrength;
 uniform float EmissionStrength;
 uniform vec3 CelestialDirection;
@@ -149,10 +150,16 @@ void main() {
         vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength * backDim;
         vec3 total = (glow + glare) * fog;
         if (emission <= 0.0 && dot(total, total) < 1.0e-6) discard;
-        // Emission target may be smaller than the main target; sample scene depth by screen UV.
-        float sceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
-        if (gl_FragCoord.z > sceneDepth + 0.000001) discard;
-        fragColor = vec4(total, alpha);
+        // Sight divisions are drawn without depth test so they stay visible over the
+        // sight body; their bloom must not be rejected by the scene depth check.
+        if (ScopeDivisionPass == 0) {
+            // Emission target may be smaller than the main target; sample scene depth by screen UV.
+            float sceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
+            if (gl_FragCoord.z > sceneDepth + 0.000001) discard;
+        }
+        // Alpha 0 tags division pixels: the mask pass must not depth-cull them
+        // (TaCZ draws sight divisions with depth test disabled).
+        fragColor = vec4(total, ScopeDivisionPass != 0 ? 0.0 : alpha);
         return;
     }
     // IViewRotMat is inverse camera rotation, independent of gun/hand model transforms.

@@ -7,8 +7,11 @@ out vec4 fragColor;
 void main() {
     // Occlusion is resolved once at bloom resolution instead of on every blur tap,
     // so the separable blur passes only fetch color.
+    vec4 emission = texture(Sampler0, texCoord);
     float emissionDepth = texture(Sampler1, texCoord).r;
     float sceneDepth = texture(Sampler2, texCoord).r;
-    vec3 color = texture(Sampler0, texCoord).rgb;
-    fragColor = vec4(emissionDepth > sceneDepth + 0.000001 ? vec3(0.0) : color, 1.0);
+    // Division pixels carry alpha 0 and bypass the scene depth check because
+    // TaCZ renders sight divisions without writing depth.
+    bool visible = emission.a <= 0.0 || emissionDepth <= sceneDepth + 0.000001;
+    fragColor = vec4(visible ? emission.rgb : vec3(0.0), 1.0);
 }

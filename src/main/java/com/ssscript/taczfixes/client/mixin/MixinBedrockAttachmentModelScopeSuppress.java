@@ -32,6 +32,9 @@ public interface MixinBedrockAttachmentModelScopeSuppress {
     void taczfixes$setCurrentGunItem(ItemStack gun);
 
     @Accessor("attachmentItem")
+    ItemStack taczfixes$attachmentItem();
+
+    @Accessor("attachmentItem")
     void taczfixes$setAttachmentItem(ItemStack item);
 
     @Accessor("scopeBodyPath")

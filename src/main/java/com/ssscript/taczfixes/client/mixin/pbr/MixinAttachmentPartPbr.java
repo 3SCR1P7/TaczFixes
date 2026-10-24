@@ -25,6 +25,7 @@ public abstract class MixinAttachmentPartPbr {
         }
         // Replace the argument, not only getBuffer(): endBatch must receive the
         // same PBR render type so the part is flushed before stencil changes.
-        return PbrRenderer.resolve(original, PbrRenderer.isScopeDivision());
+        return PbrRenderer.resolve(original);
     }
+
 }
