@@ -3,6 +3,9 @@ package com.ssscript.taczfixes.common.util;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.ssscript.taczfixes.common.config.Config;
+import me.xjqsh.lrtactical.api.item.IConsumable;
+import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
+import me.xjqsh.lrtactical.api.item.IThrowable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -29,6 +32,9 @@ public final class DualWieldEligibility {
         }
         ItemStack main = entity.getMainHandItem();
         ItemStack off = entity.getOffhandItem();
+        if (isForbiddenDualItem(main) || isForbiddenDualItem(off)) {
+            return false;
+        }
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
         boolean mainEligible = mainGun && isEligibleGun(main, rules);
@@ -45,6 +51,13 @@ public final class DualWieldEligibility {
             return !off.isEmpty() && IGun.getIGunOrNull(off) == null;
         }
         return false;
+    }
+
+    public static boolean isForbiddenDualItem(ItemStack stack) {
+        return stack != null && !stack.isEmpty()
+                && (stack.getItem() instanceof IConsumable
+                || stack.getItem() instanceof IThrowable
+                || IMeleeWeapon.of(stack) != null);
     }
 
     public static boolean isEligibleGun(ItemStack stack) {

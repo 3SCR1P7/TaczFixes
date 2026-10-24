@@ -134,10 +134,16 @@ public final class DualWieldClient {
     }
 
     public static boolean isOffhandGunMode(LocalPlayer player) {
-        return player != null && IGun.getIGunOrNull(player.getOffhandItem()) != null;
+        return player != null
+                && IGun.getIGunOrNull(player.getOffhandItem()) != null
+                && !DualWieldEligibility.isForbiddenDualItem(player.getMainHandItem());
     }
     public static boolean isDualMode(LocalPlayer player) {
         if (player == null || player.isSpectator() || player.isDeadOrDying()) {
+            return false;
+        }
+        if (DualWieldEligibility.isForbiddenDualItem(player.getMainHandItem())
+                || DualWieldEligibility.isForbiddenDualItem(player.getOffhandItem())) {
             return false;
         }
         if (IGun.getIGunOrNull(player.getOffhandItem()) != null) {
