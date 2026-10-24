@@ -22,7 +22,7 @@ import java.util.Map;
 @OnlyIn(Dist.CLIENT)
 public final class CrosshairPartLayout {
     private static final Map<ResourceLocation, CrosshairPartLayout> CACHE = new HashMap<>();
-    private static final CrosshairPartLayout EMPTY = new CrosshairPartLayout(0, 0, List.of());
+    private static final CrosshairPartLayout EMPTY = new CrosshairPartLayout(0, 0, List.of(), new int[0]);
 
     /** 贴图中一个 1 至多像素高的连续横条。 */
     public record Strip(int x, int y, int width, int height) {
@@ -36,10 +36,20 @@ public final class CrosshairPartLayout {
     private final int height;
     private final List<Part> parts;
 
-    private CrosshairPartLayout(int width, int height, List<Part> parts) {
+    private final int[] alpha;
+
+    private CrosshairPartLayout(int width, int height, List<Part> parts, int[] alpha) {
         this.width = width;
         this.height = height;
         this.parts = parts;
+        this.alpha = alpha;
+    }
+
+    public int alphaAt(int x, int y) {
+        if (x < 0 || y < 0 || x >= this.width || y >= this.height) {
+            return 0;
+        }
+        return this.alpha[y * this.width + x];
     }
 
     public int width() {
@@ -96,9 +106,13 @@ public final class CrosshairPartLayout {
             return EMPTY;
         }
         boolean[] opaque = new boolean[w * h];
+        int[] alpha = new int[w * h];
         for (int y = 0; y < h; y++) {
             for (int x = 0; x < w; x++) {
-                opaque[y * w + x] = (image.getPixelRGBA(x, y) >>> 24) != 0;
+                int pixel = image.getPixelRGBA(x, y);
+                int pixelAlpha = pixel >>> 24;
+                alpha[y * w + x] = pixelAlpha;
+                opaque[y * w + x] = pixelAlpha != 0;
             }
         }
         int[] labels = new int[w * h];
@@ -168,7 +182,7 @@ public final class CrosshairPartLayout {
             boolean centered = !ringLike && (containsCenter || length < Math.max(2.5f, w * 0.05f));
             parts.add(new Part(buildStrips(rowPixels), dirX, dirY, ringLike, centered));
         }
-        return new CrosshairPartLayout(w, h, parts);
+        return new CrosshairPartLayout(w, h, parts, alpha);
     }
 
     private static List<Strip> buildStrips(Map<Integer, List<Integer>> rowPixels) {

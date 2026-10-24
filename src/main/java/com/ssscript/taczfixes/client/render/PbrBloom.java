@@ -5,6 +5,7 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.ssscript.taczfixes.client.handler.AimSwayHandler;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
@@ -16,6 +17,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import com.mojang.blaze3d.vertex.*;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.ShaderInstance;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
@@ -25,8 +27,10 @@ import org.lwjgl.opengl.GL30;
 /** Separate world/hand phases prevent the hand depth clear from invalidating world bloom. */
 public final class PbrBloom {
     private static RenderTarget emission, horizontal, vertical;
+    private static RenderTarget scopeMaskTarget;
     private static VertexBuffer quad;
-    private static boolean active, dirty, stencilCopied;
+    private static VertexBuffer maskQuad;
+    private static boolean active, dirty, stencilCopied, scopeMaskValid;
     private static boolean emissiveThisFrame;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
@@ -34,14 +38,16 @@ public final class PbrBloom {
         active = true;
         dirty = false;
         stencilCopied = false;
+        scopeMaskValid = false;
         emissiveThisFrame = false;
+        PbrRenderer.resetScopeDivision();
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
             release();
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
     }
 
-    /** 本帧写入了可能发光的顶点(illuminated 组、镭射光束等)。 */
+    /** 閺堫剙鎶氶崘娆忓弳娴滃棗褰查懗钘夊絺閸忓娈戞い鍓佸仯(illuminated 缂佸嫨鈧線鏆涚亸鍕帨閺夌喓鐡?閵?*/
     public static void markEmissive() {
         emissiveThisFrame = true;
     }
@@ -83,8 +89,7 @@ public final class PbrBloom {
             dirty = true;
         }
         if (main.isStencilEnabled() && (!stencilCopied || pureScopeAiming())) {
-            // 全屏 stencil 拷贝每帧只做一次; 之前每个 PBR mesh 都拷贝一次。
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
+            // 閸忋劌鐫?stencil 閹风柉绀夊В蹇撴姎閸欘亜浠涙稉鈧▎? 娑斿澧犲В蹇庨嚋 PBR mesh 闁姤瀚圭拹婵呯濞喡扳偓?            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, emission.frameBufferId);
             GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, emission.width, emission.height,
                     GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
@@ -92,6 +97,21 @@ public final class PbrBloom {
         }
         emission.bindWrite(true);
         RenderSystem.setShaderTexture(5, main.getDepthTextureId());
+    }
+
+    public static void copyScopeStencil() {
+        if (!pureScopeAiming() || emission == null) {
+            return;
+        }
+        var main = Minecraft.getInstance().getMainRenderTarget();
+        if (!main.isStencilEnabled()) {
+            return;
+        }
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, emission.frameBufferId);
+        GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, emission.width, emission.height,
+                GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
+        emission.bindWrite(true);
     }
 
     private static int scaledSize(int mainSize) {
@@ -127,14 +147,7 @@ public final class PbrBloom {
             RenderSystem.depthMask(false);
             RenderSystem.disableCull();
             RenderSystem.disableBlend();
-            // 纯 scope 瞄具: 泛光合成也要遵守镜内遮挡模板, 否则被剔除的枪械/配件自发光仍会泛光到镜内。
-            if (pureScopeAiming()) {
-                GL11.glEnable(GL11.GL_STENCIL_TEST);
-                GL11.glStencilFunc(GL11.GL_EQUAL, 0, 255);
-                GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-            } else {
-                GL11.glDisable(GL11.GL_STENCIL_TEST);
-            }
+            GL11.glDisable(GL11.GL_STENCIL_TEST);
             ensureQuad();
             float radius = Config.PBR_BLOOM_RADIUS.get().floatValue();
             // Resolve per-pixel occlusion once, then blur color only.
@@ -181,6 +194,90 @@ public final class PbrBloom {
         }
     }
 
+    public static void captureScopeMask() {
+        if (!pureScopeAiming()) {
+            scopeMaskValid = false;
+            return;
+        }
+        var main = Minecraft.getInstance().getMainRenderTarget();
+        if (!main.isStencilEnabled()) {
+            scopeMaskValid = false;
+            return;
+        }
+        if (scopeMaskTarget == null || scopeMaskTarget.width != main.width || scopeMaskTarget.height != main.height) {
+            releaseScopeMask();
+            scopeMaskTarget = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
+            scopeMaskTarget.enableStencil();
+            scopeMaskTarget.setClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
+        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, scopeMaskTarget.frameBufferId);
+        GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, scopeMaskTarget.width, scopeMaskTarget.height,
+                GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
+        scopeMaskTarget.bindWrite(true);
+        GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
+        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
+        boolean depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean stencil = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
+        int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
+        int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
+        int stencilValueMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
+        int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
+        int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
+        int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
+        ShaderInstance previous = RenderSystem.getShader();
+        try {
+            RenderSystem.disableDepthTest();
+            RenderSystem.disableCull();
+            RenderSystem.disableBlend();
+            GL11.glEnable(GL11.GL_STENCIL_TEST);
+            GL11.glStencilFunc(GL11.GL_NOTEQUAL, 0, 255);
+            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+            ensureMaskQuad();
+            RenderSystem.setShader(GameRenderer::getPositionColorShader);
+            ShaderInstance shader = RenderSystem.getShader();
+            maskQuad.bind();
+            maskQuad.drawWithShader(IDENTITY, IDENTITY, shader);
+        } finally {
+            main.bindWrite(true);
+            RenderSystem.setShader(() -> previous);
+            if (depth) RenderSystem.enableDepthTest(); else RenderSystem.disableDepthTest();
+            if (cull) RenderSystem.enableCull(); else RenderSystem.disableCull();
+            if (blend) RenderSystem.enableBlend(); else RenderSystem.disableBlend();
+            if (stencil) {
+                GL11.glEnable(GL11.GL_STENCIL_TEST);
+                GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
+                GL11.glStencilOp(stencilFail, stencilDepthFail, stencilDepthPass);
+            } else {
+                GL11.glDisable(GL11.GL_STENCIL_TEST);
+            }
+        }
+        scopeMaskValid = true;
+    }
+
+    private static void ensureMaskQuad() {
+        if (maskQuad != null) return;
+        BufferBuilder b = new BufferBuilder(128);
+        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        b.vertex(-1, -1, 0).color(255, 255, 255, 255).endVertex();
+        b.vertex(1, -1, 0).color(255, 255, 255, 255).endVertex();
+        b.vertex(1, 1, 0).color(255, 255, 255, 255).endVertex();
+        b.vertex(-1, 1, 0).color(255, 255, 255, 255).endVertex();
+        maskQuad = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        maskQuad.bind();
+        maskQuad.upload(b.end());
+    }
+
+    private static void releaseScopeMask() {
+        if (scopeMaskTarget != null) {
+            scopeMaskTarget.destroyBuffers();
+            scopeMaskTarget = null;
+        }
+        scopeMaskValid = false;
+    }
+
     private static void compositeToMain(RenderTarget input, ShaderInstance shader) {
         // Apply the shader first, then establish the actual draw state. ShaderInstance
         // and third-party hooks may otherwise replace factors set before apply().
@@ -225,6 +322,7 @@ public final class PbrBloom {
         if (horizontal != null) horizontal.destroyBuffers();
         if (vertical != null) vertical.destroyBuffers();
         emission = horizontal = vertical = null;
+        releaseScopeMask();
         dirty = false;
         stencilCopied = false;
     }
@@ -232,6 +330,7 @@ public final class PbrBloom {
     public static void release() {
         releaseTargets();
         if (quad != null) { quad.close(); quad = null; }
+        if (maskQuad != null) { maskQuad.close(); maskQuad = null; }
     }
 
     public static boolean pureScopeAiming() {
@@ -240,13 +339,16 @@ public final class PbrBloom {
         if (player == null || !player.isAlive()) return false;
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
         if (operator == null || operator.getClientAimingProgress(mc.getFrameTime()) < 0.01f) return false;
+        // Only the currently active scope view occludes bloom.  A sight (or the
+        // sight view of a combined optic) must keep its own bloom.
+        if (!AimSwayHandler.isScopeActive(player)) return false;
         ItemStack gun = player.getMainHandItem();
         IGun iGun = IGun.getIGunOrNull(gun);
         if (iGun == null) return false;
         ResourceLocation id = ScopeSwitchState.attachmentId(iGun, gun, AttachmentType.SCOPE);
         if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return false;
         ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(id).orElse(null);
-        return index != null && index.isScope() && !index.isSight();
+        return index != null && !index.isSight();
     }
     private PbrBloom() {}
 }

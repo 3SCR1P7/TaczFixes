@@ -23,6 +23,7 @@ public class AimSwayHandler {
 
     private static float phase;
     private static float breathFactor = 1f;
+    private static float holdBreathProgress;
     private static float prevYaw;
     private static float prevPitch;
     private static float curYaw;
@@ -92,6 +93,7 @@ public class AimSwayHandler {
             curYaw = 0f;
             curPitch = 0f;
             breathFactor = 1f;
+            holdBreathProgress = 0f;
             return;
         }
 
@@ -99,12 +101,9 @@ public class AimSwayHandler {
         com.ssscript.taczfixes.common.data.GunTaczFixesData.AimingStaminaConfig aimCfg =
                 com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager.resolveAimingStamina(player.getMainHandItem());
         int calmMs = aimCfg.sway_hold_breath_calm;
-        float rate = calmMs <= 0 ? 1f : 50f / calmMs;
-        if (holding) {
-            breathFactor = Math.max(0f, breathFactor - rate);
-        } else {
-            breathFactor = Math.min(1f, breathFactor + rate);
-        }
+        float step = calmMs <= 0 ? 1f : 50f / calmMs;
+        holdBreathProgress = Math.max(0f, Math.min(1f, holdBreathProgress + (holding ? step : -step)));
+        breathFactor = 0.5f + 0.5f * (float) Math.cos(holdBreathProgress * Math.PI);
 
         float threshold = aimCfg.min_stamina_to_aim.floatValue();
         float lowMultiplier = aimCfg.sway_low_stamina_multiplier.floatValue();

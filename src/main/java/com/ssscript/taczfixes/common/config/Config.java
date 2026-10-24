@@ -1387,8 +1387,8 @@ public class Config {
                         "需要LesRaisins Tactical Equipments模组。")
                 .defineInRange("lr_melee_heavy_cost", 16.0, 0.0, 100000.0);
         AIMING_STAMINA_SWAY_CALM_MS = BUILDER
-                .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：500")
-                .defineInRange("sway_hold_breath_calm_ms", 500, 0, 60000);
+                .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：1000")
+                .defineInRange("sway_hold_breath_calm_ms", 1000, 0, 60000);
         AIMING_STAMINA_BAR_MODE = BUILDER
                 .comment("上肢耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
@@ -1497,11 +1497,11 @@ public class Config {
                 .comment("达到最大桶滚角度所需的横向移动速度。默认值：5.0")
                 .defineInRange("movement_roll_full_speed", 5.0, 0.0, 50.0);
         ROTATION_INERTIA_MAX_ANGLE = BUILDER
-                .comment("视角旋转时枪械惯性的最大滞后角度。默认值：5.0")
-                .defineInRange("rotation_inertia_max_angle", 5.0, 0.0, 15.0);
+                .comment("视角旋转时枪械惯性的最大滞后角度。默认值：2.5")
+                .defineInRange("rotation_inertia_max_angle", 2.5, 0.0, 15.0);
         ROTATION_INERTIA_FOLLOW_SPEED = BUILDER
-                .comment("视角旋转后枪械惯性恢复速度。默认值：2.0")
-                .defineInRange("rotation_inertia_follow_speed", 2.0, 0.0, 15.0);
+                .comment("视角旋转后枪械惯性恢复速度。默认值：2.5")
+                .defineInRange("rotation_inertia_follow_speed", 2.5, 0.0, 15.0);
         ROTATION_INERTIA_AIM_MULTIPLIER = BUILDER
                 .comment("开镜时保留的旋转惯性比例。默认值：0.2")
                 .defineInRange("rotation_inertia_aim_multiplier", 0.2, 0.0, 1.0);

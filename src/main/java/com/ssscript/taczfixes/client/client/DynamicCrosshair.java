@@ -4,6 +4,11 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.BufferUploader;
+import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
+import com.mojang.blaze3d.vertex.VertexFormat;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
@@ -22,6 +27,7 @@ import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
@@ -89,6 +95,19 @@ public final class DynamicCrosshair {
         RenderSystem.enableBlend();
         RenderSystem.blendFunc(GlStateManager.SourceFactor.SRC_ALPHA, GlStateManager.DestFactor.ONE_MINUS_SRC_ALPHA);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 0.9f);
+        if (type == CrosshairType.CIRCLE_1 || type == CrosshairType.CIRCLE_2 || type == CrosshairType.CIRCLE_3) {
+            CrosshairPartLayout layout = CrosshairPartLayout.get(texture);
+            if (layout.width() > 0 && !layout.parts().isEmpty()) {
+                ResourceLocation expanded = ExpandedCircleCrosshair.get(layout, offset);
+                int centerX = Math.round(window.getGuiScaledWidth() / 2.0f);
+                int centerY = Math.round(window.getGuiScaledHeight() / 2.0f);
+                graphics.blit(expanded, centerX - 32, centerY - 32, 64, 64,
+                        0.0f, 0.0f, 256, 256, 256, 256);
+                RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
+                RenderSystem.disableBlend();
+                return true;
+            }
+        }
         drawExpandingParts(graphics, pose, texture, x, y, offset);
         RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
         RenderSystem.disableBlend();
@@ -227,18 +246,25 @@ public final class DynamicCrosshair {
         float scaleX = 16.0f / layout.width();
         float scaleY = 16.0f / layout.height();
         for (CrosshairPartLayout.Part part : layout.parts()) {
-            float dx = 0.0f;
-            float dy = 0.0f;
-            float zoom = 1.0f;
             if (part.ringLike()) {
-                zoom = 1.0f + Math.min(offset, 8.0f) / 8.0f;
-            } else if (!part.centered()) {
-                dx = part.dirX() * offset;
-                dy = part.dirY() * offset;
+                float zoom = 1.0f + Math.min(offset, 8.0f) / 8.0f;
+                pose.pushPose();
+                pose.translate(x + 8.0f, y + 8.0f, 0.0f);
+                pose.scale(scaleX * zoom, scaleY * zoom, 1.0f);
+                pose.translate(-layout.width() / 2.0f, -layout.height() / 2.0f, 0.0f);
+                for (CrosshairPartLayout.Strip strip : part.strips()) {
+                    graphics.blit(texture, strip.x(), strip.y(), strip.width(), strip.height(),
+                            strip.x(), strip.y(), strip.width(), strip.height(),
+                            layout.width(), layout.height());
+                }
+                pose.popPose();
+                continue;
             }
+            float dx = part.centered() ? 0.0f : part.dirX() * offset;
+            float dy = part.centered() ? 0.0f : part.dirY() * offset;
             pose.pushPose();
             pose.translate(x + 8.0f, y + 8.0f, 0.0f);
-            pose.scale(scaleX * zoom, scaleY * zoom, 1.0f);
+            pose.scale(scaleX, scaleY, 1.0f);
             pose.translate(-layout.width() / 2.0f + dx / scaleX, -layout.height() / 2.0f + dy / scaleY, 0.0f);
             for (CrosshairPartLayout.Strip strip : part.strips()) {
                 graphics.blit(texture, strip.x(), strip.y(), strip.width(), strip.height(),
@@ -246,6 +272,38 @@ public final class DynamicCrosshair {
                         layout.width(), layout.height());
             }
             pose.popPose();
+        }
+    }
+
+    private static void drawRadialRing(GuiGraphics graphics, PoseStack pose, ResourceLocation texture,
+                                       float x, float y, CrosshairPartLayout layout,
+                                       CrosshairPartLayout.Part part, float offset,
+                                       float scaleX, float scaleY) {
+        int centerX = Math.round(x + 8.0f);
+        int centerY = Math.round(y + 8.0f);
+        int range = (int) Math.ceil(offset + Math.max(layout.width() * scaleX, layout.height() * scaleY) * 0.5f + 2.0f);
+        float halfWidth = layout.width() * 0.5f;
+        float halfHeight = layout.height() * 0.5f;
+        for (int dy = -range; dy <= range; dy++) {
+            for (int dx = -range; dx <= range; dx++) {
+                float distance = Mth.sqrt((float) (dx * dx + dy * dy));
+                if (distance <= 0.001f) {
+                    continue;
+                }
+                float sourceDistance = distance - offset;
+                if (sourceDistance < 0.0f) {
+                    continue;
+                }
+                float ratio = sourceDistance / distance;
+                int sourceX = Math.round(halfWidth + dx * ratio / scaleX);
+                int sourceY = Math.round(halfHeight + dy * ratio / scaleY);
+                int alpha = layout.alphaAt(sourceX, sourceY);
+                if (alpha == 0) {
+                    continue;
+                }
+                int color = (Math.min(255, alpha) * 9 / 10) << 24 | 0xFFFFFF;
+                graphics.fill(centerX + dx, centerY + dy, centerX + dx + 1, centerY + dy + 1, color);
+            }
         }
     }
 }

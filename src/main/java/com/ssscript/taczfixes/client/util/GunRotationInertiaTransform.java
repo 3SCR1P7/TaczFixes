@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import net.minecraft.client.Minecraft;
@@ -19,6 +20,55 @@ public final class GunRotationInertiaTransform {
     private static boolean initialized;
 
     private GunRotationInertiaTransform() {
+    }
+
+    public static boolean applyToPose(PoseStack pose) {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return false;
+        }
+        float maxAngle = Config.ROTATION_INERTIA_MAX_ANGLE.get().floatValue();
+        if (maxAngle <= 0f) {
+            return false;
+        }
+        float partial = Minecraft.getInstance().getFrameTime();
+        float yaw = player.getViewYRot(partial);
+        float pitch = player.getViewXRot(partial);
+        if (!initialized) {
+            initialized = true;
+            lastYaw = yaw;
+            lastPitch = pitch;
+        }
+        long now = System.nanoTime();
+        if (lastNanos == 0L) {
+            lastNanos = now;
+        }
+        float dt = Math.min((now - lastNanos) / 1.0e9f, 0.1f);
+        lastNanos = now;
+        if (dt <= 0f) {
+            return false;
+        }
+        float yawVelocity = Mth.clamp(Mth.wrapDegrees(yaw - lastYaw) / dt, -1440f, 1440f);
+        float pitchVelocity = Mth.clamp((pitch - lastPitch) / dt, -1440f, 1440f);
+        lastYaw = yaw;
+        lastPitch = pitch;
+        float speed = Math.max(0.1f, Config.ROTATION_INERTIA_FOLLOW_SPEED.get().floatValue());
+        float alpha = 1.0f - (float) Math.exp(-speed * dt);
+        float targetYaw = Mth.clamp(-yawVelocity * 0.05f, -maxAngle, maxAngle);
+        float targetPitch = Mth.clamp(-pitchVelocity * 0.04f, -maxAngle, maxAngle);
+        lagYaw += (targetYaw - lagYaw) * alpha;
+        lagPitch += (targetPitch - lagPitch) * alpha;
+        float aimMultiplier = Config.ROTATION_INERTIA_AIM_MULTIPLIER.get().floatValue();
+        float aimFactor = Mth.lerp(aimProgress(player), 1.0f, aimMultiplier);
+        float appliedYaw = lagYaw * aimFactor;
+        float appliedPitch = lagPitch * aimFactor;
+        if (Math.abs(appliedYaw) < 0.01f && Math.abs(appliedPitch) < 0.01f) {
+            return false;
+        }
+        pose.pushPose();
+        pose.mulPose(Axis.YP.rotationDegrees(appliedYaw));
+        pose.mulPose(Axis.XP.rotationDegrees(appliedPitch));
+        return true;
     }
 
     public static boolean apply(PoseStack pose, com.tacz.guns.client.model.BedrockGunModel model, ItemStack stack) {
@@ -54,8 +104,15 @@ public final class GunRotationInertiaTransform {
 
         float speed = Math.max(0.1f, Config.ROTATION_INERTIA_FOLLOW_SPEED.get().floatValue());
         float alpha = 1.0f - (float) Math.exp(-speed * dt);
-        float targetYaw = Mth.clamp(-yawVelocity * 0.05f, -maxAngle, maxAngle);
-        float targetPitch = Mth.clamp(-pitchVelocity * 0.04f, -maxAngle, maxAngle);
+        // Recoil mutates the player's view pitch for roughly a fifth of a second.
+        // Feeding that into inertia lifts the whole gun and then snaps it back.
+        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
+        boolean firing = operator != null && operator.getClientShootCoolDown() > 0L;
+        float targetYaw = firing ? 0.0f : Mth.clamp(-yawVelocity * 0.05f, -maxAngle, maxAngle);
+        float targetPitch = firing ? 0.0f : Mth.clamp(-pitchVelocity * 0.04f, -maxAngle, maxAngle);
+        if (firing) {
+            lagPitch = 0.0f;
+        }
         lagYaw += (targetYaw - lagYaw) * alpha;
         lagPitch += (targetPitch - lagPitch) * alpha;
 

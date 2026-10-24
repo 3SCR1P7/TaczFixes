@@ -30,6 +30,7 @@ import net.minecraftforge.client.event.RegisterShadersEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.system.MemoryStack;
 import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
@@ -67,6 +68,13 @@ public final class PbrRenderer {
                     return size() > TYPES_MAX;
                 }
             };
+    private static final Map<RenderType, RenderType> DIVISION_TYPES =
+            new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<RenderType, RenderType> eldest) {
+                    return size() > TYPES_MAX;
+                }
+            };
     private static final Method OPTIFINE_SHADERS = findOptifine();
 
     private record Material(ResourceLocation specular, ResourceLocation normal, boolean emissive) {}
@@ -86,6 +94,43 @@ public final class PbrRenderer {
 
     public static boolean isTracerBloomSuppressed() {
         return tracerBloomSuppression > 0;
+    }
+
+    private static int scopeDivisionDepth;
+
+    public static void pushScopeDivision() {
+        scopeDivisionDepth++;
+    }
+
+    public static void popScopeDivision() {
+        if (scopeDivisionDepth > 0) {
+            scopeDivisionDepth--;
+        }
+    }
+
+    public static boolean isScopeDivision() {
+        return scopeDivisionDepth > 0;
+    }
+
+    public static void resetScopeDivision() {
+        scopeDivisionDepth = 0;
+        scopeAttachmentDepth = 0;
+    }
+
+    private static int scopeAttachmentDepth;
+
+    public static void pushScopeAttachment() {
+        scopeAttachmentDepth++;
+    }
+
+    public static void popScopeAttachment() {
+        if (scopeAttachmentDepth > 0) {
+            scopeAttachmentDepth--;
+        }
+    }
+
+    public static boolean isRenderingScopeAttachment() {
+        return scopeAttachmentDepth > 0;
     }
 
     public static void updateCelestialLight(float partialTick) {
@@ -373,17 +418,20 @@ public final class PbrRenderer {
     }
 
     public static RenderType resolve(RenderType original) {
+        return resolve(original, false);
+    }
+
+    public static RenderType resolve(RenderType original, boolean scopeDivision) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
-        return TYPES.computeIfAbsent(original, key -> {
+        Map<RenderType, RenderType> cache = scopeDivision ? DIVISION_TYPES : TYPES;
+        return cache.computeIfAbsent(original, key -> {
             var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
             var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
             if (texture.isEmpty()) return original;
-            // 重着色贴图沿用原始贴图的 _s/_n 材质
             ResourceLocation base = com.ssscript.taczfixes.client.util.GunRecolorManager.sourceOf(texture.get());
             Material material = material(base);
             if (material == null || material.specular() == null && material.normal() == null) {
-                // 第三方(arcana 涂装等)运行期生成的贴图不带 _s/_n: 回退到当前物品基础贴图的材质
                 ResourceLocation own = com.ssscript.taczfixes.client.util.GunRecolorManager.currentBaseTexture();
                 if (own != null && !own.equals(base)) {
                     Material ownMaterial = material(own);
@@ -392,7 +440,7 @@ public final class PbrRenderer {
                     }
                 }
             }
-            return material == null ? original : new PbrType(original, material);
+            return material == null ? original : new PbrType(original, material, scopeDivision);
         });
     }
 
@@ -432,12 +480,14 @@ public final class PbrRenderer {
     private static final class PbrType extends RenderType {
         private final RenderType original;
         private final Material material;
+        private final boolean scopeDivision;
 
-        PbrType(RenderType original, Material material) {
+        PbrType(RenderType original, Material material, boolean scopeDivision) {
             super("taczfixes_pbr", original.format(), original.mode(), original.bufferSize(),
                     original.affectsCrumbling(), true, original::setupRenderState, original::clearRenderState);
             this.original = original;
             this.material = material;
+            this.scopeDivision = scopeDivision;
         }
 
         @Override public Optional<RenderType> outline() { return original.outline(); }
@@ -474,6 +524,7 @@ public final class PbrRenderer {
                 setUniform(uEmissionPass, 0);
                 RenderSystem.setShader(() -> shader);
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
+                boolean scopeMask = false;
 
                 boolean glare = material.specular() != null && Config.PBR_GLARE_STRENGTH.get().floatValue() > 0.0f;
                 if (PbrBloom.canCapture()
@@ -482,7 +533,6 @@ public final class PbrRenderer {
                         && GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING)
                         == Minecraft.getInstance().getMainRenderTarget().frameBufferId) {
                     boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-                    boolean scopeMask = PbrBloom.pureScopeAiming();
                     boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
                     int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
                     int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
@@ -494,10 +544,17 @@ public final class PbrRenderer {
                         RenderSystem.depthMask(true);
                         PbrBloom.bindCapture();
                         if (scopeMask) {
-                            // 只剔除镜内被遮挡部分的发光, 镜外模型仍保留泛光。
+                            PbrBloom.copyScopeStencil();
+                        }
+                        if (scopeMask && !this.scopeDivision) {
+                            // Cull everything else inside the ocular.
                             GL11.glEnable(GL11.GL_STENCIL_TEST);
                             GL11.glStencilFunc(GL11.GL_EQUAL, 0, 255);
                             GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
+                        } else if (scopeMask) {
+                            // Division is explicitly marked as stencil 0 below and
+                            // must contribute its bloom.
+                            GL11.glDisable(GL11.GL_STENCIL_TEST);
                         }
                         setUniform(uEmissionPass, 1);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
@@ -521,6 +578,46 @@ public final class PbrRenderer {
                 RenderSystem.setShaderTexture(5, depthSlot);
                 RenderSystem.setShader(() -> previous);
                 clearRenderState();
+            }
+        }
+    }
+
+    private static void markDivisionStencil(VertexBuffer mesh, ShaderInstance shader) {
+        boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
+        int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
+        int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
+        int stencilValueMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
+        int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
+        int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
+        int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
+        int stencilWriteMask = GL11.glGetInteger(GL11.GL_STENCIL_WRITEMASK);
+        boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+        try (MemoryStack stack = MemoryStack.stackPush()) {
+            java.nio.ByteBuffer colorMask = stack.malloc(4);
+            GL11.glGetBooleanv(GL11.GL_COLOR_WRITEMASK, colorMask);
+            boolean red = colorMask.get(0) != 0;
+            boolean green = colorMask.get(1) != 0;
+            boolean blue = colorMask.get(2) != 0;
+            boolean alpha = colorMask.get(3) != 0;
+            try {
+                GL11.glEnable(GL11.GL_STENCIL_TEST);
+                GL11.glStencilFunc(GL11.GL_ALWAYS, 0, 255);
+                GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_REPLACE);
+                GL11.glStencilMask(255);
+                GL11.glColorMask(false, false, false, false);
+                GL11.glDepthMask(false);
+                mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
+            } finally {
+                GL11.glColorMask(red, green, blue, alpha);
+                GL11.glDepthMask(depthMask);
+                GL11.glStencilMask(stencilWriteMask);
+                if (stencilWas) {
+                    GL11.glEnable(GL11.GL_STENCIL_TEST);
+                    GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
+                    GL11.glStencilOp(stencilFail, stencilDepthFail, stencilDepthPass);
+                } else {
+                    GL11.glDisable(GL11.GL_STENCIL_TEST);
+                }
             }
         }
     }

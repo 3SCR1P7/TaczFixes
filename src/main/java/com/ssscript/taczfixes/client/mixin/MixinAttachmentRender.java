@@ -9,6 +9,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.ssscript.taczfixes.common.compat.ArcanaScopeStateBridge;
 import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
@@ -23,10 +24,39 @@ import org.apache.commons.lang3.tuple.Pair;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(value = {AttachmentRender.class}, remap = false)
 public abstract class MixinAttachmentRender {
+    @Unique
+    private static boolean taczfixes$scopeBloomPushed;
+
+    @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("HEAD")}, remap = false)
+    private static void taczfixes$pushScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
+                                                  ResourceLocation location, PoseStack poseStack,
+                                                  ItemDisplayContext transformType, int light, int overlay,
+                                                  MultiBufferSource bufferSource, ClientAttachmentIndex index,
+                                                  CallbackInfo callback) {
+        taczfixes$scopeBloomPushed = type == AttachmentType.SCOPE && index != null && index.isScope();
+        if (taczfixes$scopeBloomPushed) {
+            PbrRenderer.pushScopeAttachment();
+        }
+    }
+
+    @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("TAIL")}, remap = false)
+    private static void taczfixes$popScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
+                                                 ResourceLocation location, PoseStack poseStack,
+                                                 ItemDisplayContext transformType, int light, int overlay,
+                                                 MultiBufferSource bufferSource, ClientAttachmentIndex index,
+                                                 CallbackInfo callback) {
+        if (taczfixes$scopeBloomPushed) {
+            taczfixes$scopeBloomPushed = false;
+            PbrRenderer.popScopeAttachment();
+        }
+    }
+
     private static final String RENDER_ATTACHMENT_LAMBDA =
             "lambda$renderAttachment$0(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
             + "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lnet/minecraft/resources/ResourceLocation;"
