@@ -91,7 +91,7 @@ public final class OffhandShieldHandler {
             player.getCooldowns().addCooldown(Items.SHIELD, 100);
             player.level().playSound(null, player.blockPosition(), SoundEvents.SHIELD_BREAK,
                     SoundSource.PLAYERS, 0.8F, 0.8F + player.level().random.nextFloat() * 0.4F);
-            return false;
+            return true;
         }
         if (player.getCooldowns().isOnCooldown(shield.getItem())) {
             return false;
