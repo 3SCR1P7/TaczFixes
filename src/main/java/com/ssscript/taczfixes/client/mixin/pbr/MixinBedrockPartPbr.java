@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.mixin.pbr;
 
-import com.ssscript.taczfixes.client.render.PbrBloom;
 import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import org.spongepowered.asm.mixin.Mixin;
@@ -13,13 +12,8 @@ public abstract class MixinBedrockPartPbr {
             at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false)
     private int taczfixes$pbrMarkIlluminated(int packedLight) {
         if (!PbrRenderer.enabled()) return packedLight;
-        // Mark the light passed to the actual cubes, including direct compile calls.
-        // Preserve TaCZ's flag and inherited illumination without changing its consumer type.
         for (BedrockPart part = (BedrockPart) (Object) this; part != null; part = part.getParent()) {
-            if (part.illuminated) {
-                PbrBloom.markEmissive();
-                return packedLight | 1;
-            }
+            if (part.illuminated) return packedLight | 1;
         }
         return packedLight;
     }

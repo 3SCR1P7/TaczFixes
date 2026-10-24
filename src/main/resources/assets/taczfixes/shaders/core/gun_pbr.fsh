@@ -62,7 +62,7 @@ vec3 metalF0(float code, vec3 albedo) {
     if (code < 235.5) return vec3(0.95, 0.64, 0.54); // copper
     if (code < 236.5) return vec3(0.67, 0.64, 0.59); // platinum
     if (code < 237.5) return vec3(0.95, 0.93, 0.88); // silver
-    return albedo; // LabPBR custom metals use base color
+    return albedo;
 }
 
 // 眩光高光: 比主反光更宽的高光叶, 写入泛光目标后由泛光链路模糊成光晕
@@ -114,7 +114,6 @@ void main() {
     float alpha = base.a * vertexColor.a * ColorModulator.a;
     if (alpha < 0.1) discard;
     vec4 specular = HasSpecular != 0 ? texture(Sampler3, texCoord0) : vec4(0.0, 0.0, 0.0, 1.0);
-    // LabPBR alpha 255 is the non-emissive sentinel, NOT maximum emission.
     float emission = max(float(illuminatedGroup),
             specular.a < 254.5 / 255.0 ? specular.a * (255.0 / 254.0) : 0.0);
     vec3 glow = base.rgb * rawVertexColor.rgb * ColorModulator.rgb * emission * EmissionStrength;
@@ -149,23 +148,16 @@ void main() {
         float backDim = mix(1.0, 0.2, sunBehind);
         vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength * backDim;
         vec3 total = (glow + glare) * fog;
-        // Sight divisions are drawn without depth test so they stay visible over the
-        // sight body; their bloom must not be rejected by the scene depth check.
         if (ScopeDivisionPass != 0) {
             if (emission <= 0.0 && dot(total, total) < 1.0e-6) discard;
             fragColor = vec4(total, 0.0);
             return;
         }
-        // Emission target may be smaller than the main target; sample scene depth by screen UV.
         float sceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
         if (gl_FragCoord.z > sceneDepth + 0.000001) discard;
-        // Write even non-emissive PBR fragments as black. Their depth then occludes
-        // bloom from models behind them, including translucent block-entity models
-        // that do not write the main depth buffer.
         fragColor = vec4(total, alpha);
         return;
     }
-    // IViewRotMat is inverse camera rotation, independent of gun/hand model transforms.
     vec3 l = safeNormalize(transpose(IViewRotMat) * CelestialDirection);
     vec3 h = safeNormalize(v + l);
     float nv = max(dot(n, v), 0.001);
@@ -173,7 +165,6 @@ void main() {
     float nh = max(dot(n, h), 0.0);
     float vh = max(dot(v, h), 0.0);
     // 反光面积: 保留原始 GGX 高光, 额外叠加一层随 area 变宽的柔和高光叶。
-    // 不能只放大粗糙度: GGX 峰值按四次方衰减, area=2 时高光几乎被摊薄到不可见。
     float area = clamp(ReflectionArea, 0.1, 8.0);
     float areaT = clamp((area - 1.0) / 3.0, 0.0, 1.0);
     vec3 fresnel = f0 + (1.0 - f0) * pow(1.0 - vh, 5.0);
@@ -244,9 +235,6 @@ void main() {
             * mix(1.0, 0.2, sunBehind) * 0.35;
     reflection = reflection / (1.0 + reflection);
     vec3 color = wetBase * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;
-    // Keep vanilla's lit albedo as the baseline. This renderer has no captured
-    // environment to replace the diffuse energy removed by a full metal BRDF.
-    // Darkening all metal here made it black indoors or away from the highlight.
     color += reflection * (1.0 - color);
     // 太阳漫反射: 不依赖视线方向, 太阳照到的面从任何视角都能看到被照亮。
     float sunDiffuse = max(nl, 0.0) * exposure * CelestialVisibility;

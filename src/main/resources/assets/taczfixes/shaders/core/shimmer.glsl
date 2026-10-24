@@ -1,8 +1,6 @@
 #version 150
 
-// #define ADDITIVE
 
-//shimmer light
 struct Light {
     vec4 color;
     vec3 position;
@@ -10,7 +8,7 @@ struct Light {
 };
 
 layout (std140) uniform Lights {
-    Light lights[2048];     //  16  8 * 2048
+    Light lights[2048];     
 };
 
 layout (std140) uniform Env {
@@ -52,7 +50,6 @@ vec4 color_light(vec3 pos, vec4 vertex_color) {
 
     vec3 lcolor_2 = clamp(lightColor.rgb, 0.0f, 1.0f);
 
-    // blend
     return vec4(vertex_color.rgb + lcolor_2, vertex_color.a);
 }
 

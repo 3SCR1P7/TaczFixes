@@ -24,12 +24,12 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 
+
 /** Separate world/hand phases prevent the hand depth clear from invalidating world bloom. */
 public final class PbrBloom {
     private static RenderTarget emission, horizontal, vertical, scopeMask;
     private static VertexBuffer quad, maskQuad;
     private static boolean active, dirty, stencilCopied, scopeMaskValid;
-    private static boolean emissiveThisFrame;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
     public static void beginFrame() {
@@ -37,21 +37,11 @@ public final class PbrBloom {
         dirty = false;
         stencilCopied = false;
         scopeMaskValid = false;
-        emissiveThisFrame = false;
         PbrRenderer.resetScopeDivision();
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
             release();
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
-    }
-
-    /** 閺堫剙鎶氶崘娆忓弳娴滃棗褰查懗钘夊絺閸忓娈戞い鍓佸仯(illuminated 缂佸嫨鈧線鏆涚亸鍕帨閺夌喓鐡?閵?*/
-    public static void markEmissive() {
-        emissiveThisFrame = true;
-    }
-
-    public static boolean hasEmissiveContent() {
-        return emissiveThisFrame;
     }
 
     public static boolean canCapture() {
@@ -85,10 +75,11 @@ public final class PbrBloom {
             // The caller enables depth writes before clearing this target.
             emission.clear(Minecraft.ON_OSX);
             dirty = true;
+        } else {
         }
         if (main.isStencilEnabled() && (!stencilCopied || pureScopeAiming()
                 || GL11.glIsEnabled(GL11.GL_STENCIL_TEST))) {
-            // 閸忋劌鐫?stencil 閹风柉绀夊В蹇撴姎閸欘亜浠涙稉鈧▎? 娑斿澧犲В蹇庨嚋 PBR mesh 闁姤瀚圭拹婵呯濞喡扳偓?            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
+            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
             GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, emission.frameBufferId);
             GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, emission.width, emission.height,
                     GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
@@ -106,7 +97,12 @@ public final class PbrBloom {
     }
 
     public static void endFrame() {
-        try { composite(); } finally { active = false; dirty = false; }
+        try {
+            composite();
+        } finally {
+            active = false;
+            dirty = false;
+        }
     }
 
     public static void composite() {
@@ -252,7 +248,7 @@ public final class PbrBloom {
         return id != null && TimelessAPI.getClientAttachmentIndex(id).isPresent();
     }
 
-    /** 当前渲染的配件是否为正在使用的 scope 视图瞄具。 */
+    /** 褰撳墠娓叉煋鐨勯厤浠舵槸鍚︿负姝ｅ湪浣跨敤鐨?scope 瑙嗗浘鐬勫叿銆?*/
     public static boolean isActiveScopeItem(ItemStack attachment, ItemStack gun) {
         if (attachment == null || attachment.isEmpty() || gun == null || gun.isEmpty()) return false;
         LocalPlayer player = Minecraft.getInstance().player;
@@ -277,7 +273,7 @@ public final class PbrBloom {
         return Minecraft.getInstance().getMainRenderTarget().isStencilEnabled();
     }
 
-    /** 把当前 scope 镜内区域(division 除外)记录为遮罩, 泛光合成时剔除镜内泛光。 */
+    /** 鎶婂綋鍓?scope 闀滃唴鍖哄煙(division 闄ゅ)璁板綍涓洪伄缃? 娉涘厜鍚堟垚鏃跺墧闄ら暅鍐呮硾鍏夈€?*/
     public static void captureScopeMask() {
         if (!pureScopeAiming()) {
             scopeMaskValid = false;

@@ -5,7 +5,6 @@ import com.ssscript.taczfixes.client.mixin.pbr.PbrTextureAccessor;
 
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.platform.NativeImage;
 import com.ssscript.taczfixes.common.config.Config;
 import com.mojang.blaze3d.vertex.*;
 import com.ssscript.taczfixes.TaczFixesMod;
@@ -33,7 +32,6 @@ import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
@@ -42,7 +40,7 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
-    // 缂傚倹鎸搁悺?Uniform 鐎殿喗娲滈弫? 闂侇剙鐏濋崢銈呅掕箛鎾村/婵絽绻戦濂稿几椤忓拋娼剧紓浣姑崺妤呮焾閼恒儱鐦婚悗娑欘殘椤戜焦绋夐崣澶屽弨闁瑰吀鍕橀埀?
+    // 缂傚倸鍊归幐鎼佹偤?Uniform 閻庢鍠楀ú婊堝极? 闂備緡鍓欓悘婵嬪储閵堝憛鎺曠疀閹炬潙顫?濠殿噯绲界换鎴︻敃婵傜鍑犳い蹇撴媼濞煎墽绱撴担濮戭亪宕哄Δ鍛劸闁兼亽鍎遍惁濠氭倵濞戞瑯娈樻い鎴滅劍缁嬪宕ｆ径灞藉绩闂佺懓鍚€閸曟﹢鍩€?
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
     private static AbstractUniform uReflectionStrength, uReflectionArea, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uLocalLightDirection, uLocalLightColor, uLocalLightStrength;
@@ -51,7 +49,39 @@ public final class PbrRenderer {
     private static AbstractUniform uBlurDirection, uCompositeStrength, uHasScopeMask;
     private static VertexBuffer mesh;
     private static int emissionBlendOverride;
+    private static boolean acceleratedPbrPass;
+    private static boolean emissionReplay;
     private static final int MATERIALS_MAX = 256;
+
+    public static void beginAcceleratedPass() {
+        acceleratedPbrPass = true;
+    }
+
+    public static void endAcceleratedPass() {
+        acceleratedPbrPass = false;
+    }
+
+    static boolean isAcceleratedPbrPass() {
+        return acceleratedPbrPass;
+    }
+
+    public static boolean isEmissionReplay() {
+        return emissionReplay;
+    }
+
+    public static boolean shouldReplayEmission(RenderType type) {
+        return enabled() && PbrBloom.canCapture() && !isAcceleratedPbrPass()
+                && com.tacz.guns.compat.ar.ARCompat.shouldAccelerate()
+                && resolve(type) instanceof PbrType;
+    }
+
+    public static void beginEmissionReplay() {
+        emissionReplay = true;
+    }
+
+    public static void endEmissionReplay() {
+        emissionReplay = false;
+    }
 
     public static void applyEmissionBlendOverride() {
         if (emissionBlendOverride > 0) {
@@ -76,7 +106,7 @@ public final class PbrRenderer {
                 }
             };
     private static final int TYPES_MAX = 512;
-    // RenderType 闁哄牜浜ｉ々顐﹀礃?equals/hashCode(濮掓稒顭堥濠氬冀閸ヮ亞妲曢悹鍥跺幒缁?, 闁活潿鍔忛鏍⒒椤旇偐纰?LRU 闂侇剙鐏濋崢銈夊箣濡粯鐏?闁衡偓绾拋妫呭☉鎿冨幗閺嗭絾鎷呴幘瀵割伕缂佸本妞介崳绋款嚈閹巻鍋?
+    // RenderType 闂佸搫鐗滄禍锝夈€呴锕€绀?equals/hashCode(婵帗绋掗…鍫ヮ敇婵犳艾鍐€闁搞儺浜炲Σ鏇㈡偣閸ヨ泛骞掔紒?, 闂佹椿娼块崝蹇涱敊閺嶎厽鈷掓い鏃囧亹绾?LRU 闂備緡鍓欓悘婵嬪储閵堝绠ｆ俊顖滅帛閻?闂佽　鍋撶痪顓炴媼濡懎鈽夐幙鍐ㄥ箺闁哄棴绲鹃幏鍛村箻鐎靛壊浼曠紓浣告湰濡炰粙宕崇粙娆惧殘闁诡厽宸婚崑?
     private static final Map<RenderType, RenderType> TYPES =
             new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
                 @Override
@@ -86,11 +116,11 @@ public final class PbrRenderer {
             };
     private static final Method OPTIFINE_SHADERS = findOptifine();
 
-    private record Material(ResourceLocation specular, ResourceLocation normal, boolean emissive) {}
+    private record Material(ResourceLocation specular, ResourceLocation normal) {}
 
     private static int tracerBloomSuppression;
 
-    /** 闁哄洤鍟块崢婊冾嚕鐟欏嫯顩柡灞炬尰濠€锟犳⒒鐎涙ê顫囬柛鎺撳劶閸ゆ粓宕ｉ幋婵嗗辅婵炲绋戦崢婊堝箲閺団€崇(闁哄嫷鍨伴幆渚€寮甸埀顒傜磼閸垺鏅搁柡浣哥墢閺?Config.PBR_BLOOM_TRACER 闁告劕鍟块悾?闁?*/
+    /** 闂佸搫娲ら崯鍧楀储濠婂喚鍤曢悷娆忓椤╊偊鏌＄仦鐐鞍婵犫偓閿熺姵鈷掗悗娑櫭～鍥煕閹烘挸鍔堕柛銈嗙矒瀹曪綁骞嬪┑鍡楄緟濠电偛顦扮粙鎴﹀储濠婂牆绠查柡鍥ｂ偓宕囶唵(闂佸搫瀚烽崹浼村箚娓氣偓瀵敻鍩€椤掑倻纾奸柛顐犲灪閺呮悂鏌℃担鍝ュⅱ闁?Config.PBR_BLOOM_TRACER 闂佸憡鍔曢崯鍧楁偩?闂?*/
     public static void pushTracerBloomSuppression() {
         tracerBloomSuppression++;
     }
@@ -146,8 +176,8 @@ public final class PbrRenderer {
         if (level == null) return;
         var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         var origin = camera.getPosition();
-        // 閻忕偐鍋撻梺顔哄妼閸樻粌鈹?闁诲浚鍋呮俊?闁诲浚鍨抽妤冪驳?: 闂傚牏鍋涢妵澶岀矚閾忚妯婇幖杈剧細缁″啴寮?
-        // 闁告瑯浜滃﹢顏堝嫉閳ь剚娼婚幋婵堟澖闂傚嫬鎳愮划顖炲礆閹壆绠?PBR 闁哄啳鍩栨竟鍌炲箵韫囨挾婀伴梺顔哄妼閸? 闂侇剙鐏濋崢銈夊籍閻樺磭浠?闁?PBR 闁哄啫澧庡▍褔骞嶉锝嗙厵闁秆勩仠閳?
+        // 闁诲繒鍋愰崑鎾绘⒑椤斿搫濡奸柛妯荤矊閳?闂佽娴氶崑鍛繆?闂佽娴氶崹鎶筋敄濡ゅ啰椹?: 闂傚倸鐗忛崑娑㈠Φ婢跺瞼鐭氶柧蹇氼潐濡﹪骞栨潏鍓х窗缂佲€冲暣瀵?
+        // 闂佸憡鐟禍婊冿耿椤忓牆瀚夐柍褜鍓氬濠氬箣濠靛牊婢栭梻鍌氬閹虫劗鍒掗鐐茬闁诡垱澹嗙粻?PBR 闂佸搫鍟抽崺鏍ㄧ珶閸岀偛绠甸煫鍥ㄦ尵濠€浼存⒑椤斿搫濡奸柛? 闂備緡鍓欓悘婵嬪储閵堝绫嶉柣妯虹－娴?闂?PBR 闂佸搫鍟晶搴♀枍瑜旈獮宥夘敃閿濆棛鍘甸梺绉嗗嫨浠犻柍?
         if (System.currentTimeMillis() - lastPbrDrawAt <= 500L) {
             updateLocalLight(level, origin);
         }
@@ -175,14 +205,14 @@ public final class PbrRenderer {
                 ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
         setUniform(uCelestialVisibility, visible ? 1f : 0f);
         setUniform(uLocalSkyExposure, level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
-        // 婵烇絽顑夊ú锕傚箥閹惧鐣? 濞寸姴鎳嶇€靛本绋夐弽顐ｆ珪闁靛棔绶氬﹢鑸靛緞閳衡偓缁楁牗寰勯幘顔衡偓濠囧籍閻樿绱曢柟绯曞墲濡炲倿鎮介悢鍛婃珡, 鐎殿喖鎼€瑰磭鎹勯悢鍏碱吂闂傚棎鍔戦崳娲Υ?
-        // 闁活潿鍔庣敮铏光偓瑙勬构缂嶅懐绱旈搴撳亾鐏炶偐鐟濋柡鍕靛灣濞村寮垫潪鎵Т缂? 缂佹鍏涚粭浣圭閾忓墣鐐烘儎閸涘﹥绨氶柛娆樺灥閸忔﹢宕烽妸銉ф簣婵＄偓鍔曢ˇ? 濞达絽妫欓悘娆撳椽瀹€鈧敮铏光偓纭呮硾濠€顏堟焼椤旇棄鐨″☉鎾愁儎缁楀鎯旈弮鈧晶锕€锕㈢憗銈傚亾?
+        // 濠电儑绲介澶娒洪敃鍌氱闁规儳顕悾? 婵炲濮撮幊宥団偓闈涙湰缁嬪寮介锝嗙彧闂侀潧妫旂欢姘耿閼搁潧绶為柍琛″亾缂佹鐗楀鍕箻椤旇　鍋撴繝鍥х睄闁绘顔婄槐鏇㈡煙缁洖澧叉俊鐐插€块幃浠嬫偄閸涘﹥鐝? 閻庢鍠栭幖顐も偓鐟扮－閹瑰嫰鎮㈤崗纰卞悅闂傚倸妫庨崝鎴﹀闯濞差亜违?
+        // 闂佹椿娼块崝搴ｆ暜閾忓厜鍋撶憴鍕瀯缂傚秴鎳愮槐鏃堫敊鎼存挸浜鹃悘鐐跺亹閻熸繈鏌￠崟闈涚仯婵炴潙顦靛鍨姜閹殿喚孝缂? 缂備焦顨忛崗娑氱箔娴ｅ湱顩查柧蹇撳ⅲ閻愮儤鍎庨柛娑橈攻缁ㄦ岸鏌涘▎妯虹仴闁稿繑锕㈠畷鐑藉Ω閵壯勭埃濠碉紕鍋撻崝鏇⑺? 婵炶揪绲藉Λ娆撴倶濞嗘挸妞界€光偓閳ь剛鏁搹鍏夊亾绾懏纭炬繝鈧鍫熺劶妞ゆ棁妫勯惃鈥斥槈閹炬剚鍎庣紒妤€顦伴幆鏃堝籍閳ь剚鏅堕敃鈧敃銏㈡啑閵堝倸浜?
         float targetWetness = 0f;
         var wetnessAnchor = Minecraft.getInstance().player != null
                 ? Minecraft.getInstance().player.position() : origin;
         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && level.isRaining()) {
             BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
-            // isRainingAt 鐎瑰憡褰冪€垫﹢宕?canSeeSky/濡ゅ倹锚鐎规娊宕?缂傚洢鍊楅柈鎾⒔瀹ュ澶勬俊顐熷亾闁? canSeeSky 闁告劕绉靛Ο澶婎嚕韫囨洍鈧鎷嬮妶鍛粓濡炪倛鍩栧Λ銈夊棘閻熺増鍋ラ梺顒夊枟鐏忓懘濡?
+            // isRainingAt 閻庣懓鎲¤ぐ鍐偓鍨耿瀹?canSeeSky/婵°倕鍊归敋閻庤濞婂畷?缂傚倸娲㈤崐妤呮焾閹绢喗鈷旂€广儱顦版径鍕繆椤愮喎浜鹃梺? canSeeSky 闂佸憡鍔曠粔闈浳熸径濠庡殨闊洦娲嶉埀顒侇焽閹峰濡堕崨顐＄矒婵＄偑鍊涢崺鏍涢妶澶婃闁荤喓澧楅崑銉╂⒑椤掑鏋熼悘蹇撴嚇婵?
             if (level.canSeeSky(wetPos) && level.isRainingAt(wetPos)) {
                 targetWetness = level.getRainLevel(partialTick);
             }
@@ -195,7 +225,7 @@ public final class PbrRenderer {
     private static final float WET_SECONDS = 5.0f;
     private static final float DRY_SECONDS = 8.0f;
 
-    /** 婵烇絽顑嗙粻?闁哄懏鍎抽崗閬嶆焾閼恒儱鐦婚柡鍐ㄧ埣濡灝銆掗幇顒€缍? 闂侇剙鐏濋崢銈嗘交濞戞ê姣夐悗骞垮€曢崬鎾籍閸撲胶浠滈梻鍌滎棎閻戯箓宕ｅΟ绯曞亾?*/
+    /** 濠电儑绲介鍡欑不?闂佸搫鎳忛崕鎶藉礂闁秵鐒鹃柤鎭掑劚閻﹀鏌￠崘銊у煟婵☆偄鐏濋妴鎺楀箛椤掆偓缂? 闂備緡鍓欓悘婵嬪储閵堝棙浜ゆ繛鎴灻В澶愭倵楠炲灝鈧洟宕幘顔肩睄闁告挷鑳舵禒婊堟⒒閸屾粠妫庨柣鎴畵瀹曪絽螣缁洖浜?*/
     private static float updateWetness(float target) {
         long now = System.nanoTime();
         if (wetnessLastNanos == 0L) {
@@ -222,7 +252,7 @@ public final class PbrRenderer {
     private static int localLightEmission = 0;
     private static long lastPbrDrawAt = 0L;
 
-    /** 闁规鍋呭鍧楁⒔閸曨喚绠柛娆愬灥閸樻粓寮悷鐗堝仴(闁煎搫鍊圭粊?; 闁哄倻鎳撻幃?鐎殿喖鎼€瑰啿袙韫囨挻濮庨柟绋款槸缂嶅宕滃鍕Т缂傚喚鍣ｉ崳鍝ョ不? 缂佸顕ф慨鈺呭籍閸洜褰柛蹇擃槸闁解晛顭ㄩ幋锝囶€€闂傚懎绻嬬粭澶愬础閿熺姰鈧垿濡?*/
+    /** 闂佽顔栭崑鍛嚕閸ф鈷旈柛鏇ㄥ枤缁狀噣鏌涘▎鎰仴闁告ɑ绮撳顒勬偡閻楀牆浠?闂佺厧鎼崐鍦矈?; 闂佸搫鍊婚幊鎾诲箖?閻庢鍠栭幖顐も偓鐟板暱琚欓煫鍥ㄦ尰婵酣鏌熺粙娆炬Ц缂傚秴顑夊畷婊冾吋閸曨厾孝缂傚倸鍠氶崳锝夊闯閸濄儳涓? 缂備礁顦抽褎鎱ㄩ埡鍛睄闁割偅娲滆ぐ顖炴煕韫囨搩妲搁梺瑙ｆ櫅椤劑骞嬮敐鍥垛偓鈧梻鍌氭噹缁诲绮径鎰闁跨喓濮伴埀顒佸灴婵?*/
     private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin) {
         Minecraft minecraft = Minecraft.getInstance();
         var player = minecraft.player;
@@ -282,14 +312,14 @@ public final class PbrRenderer {
             double score = localLightEmission / (1.0D + len * len * 0.35D);
             targetStrength = (float) Math.max(0.0D, Math.min(1.0D, score / 7.0D));
         }
-        // 闁哄倻鎳撻幃婊冃掕箛鎾村闁哄洤鐡ㄩ弻?閺夆晝鍋熼悽?, 鐎殿喖鎼€硅櫕娼拠韫俺妤犵偠娅曠划锕傛焼閸喖甯抽柛鎺戞处瀹曟煡宕楁径瀣埍閻犲搫鍟胯ぐ?
+        // 闂佸搫鍊婚幊鎾诲箖濠婂唭鎺曠疀閹炬潙顫撻梺鍝勬搐閻°劑寮?闁哄鏅濋崑鐔兼偨?, 閻庢鍠栭幖顐も偓纭呮珪濞碱亞鎷犻煫顓犱亢濡ょ姷鍋犲▍鏇犲垝閿曞倹鐒奸柛顭戝枛鐢娊鏌涢幒鎴炲鐎规洘鐓″畷妤佸緞鐎ｎ剛鍩嶉柣鐘叉惈閸熻儻銇?
         localLightX = targetX;
         localLightY = targetY;
         localLightZ = targetZ;
         localLightStrength += (targetStrength - localLightStrength) * 0.35f;
     }
 
-    /** 闁稿繐顦扮花顕€宕氶幍顔艰礋閻庣懓澧庡┃鍌炴儓濞戞顓洪梻鍌氱摠濡叉悂宕ラ敂鑺ョ畳闂侇剦鍠楃亸鍛村棘閻熺増鍋? 闁绘粏宕甸幏鎴犵驳婢跺鐟濋梺顒夊枟鐏忓懘鎯冮崟顒佺厵闁秆勩仦缁辨壆绮氶懗顖滅畺闁?*/
+    /** 闂佺绻愰ˇ鎵姳椤曗偓瀹曟岸骞嶉鑹扮闁诲海鎳撴晶搴♀攦閸岀偞鍎撴繛鎴烆殘椤撴椽姊婚崒姘辨憼婵″弶鎮傚畷銉╂晜閼恒儳鐣抽梻渚囧墻閸犳浜搁崨鏉戞闁荤喓澧楅崑? 闂佺粯绮忓畷鐢稿箯閹寸姷椹冲璺侯槺閻熸繈姊洪澶婃灍閻忓繐鎳橀幆鍐礋椤掍胶鍘甸梺绉嗗嫨浠︾紒杈ㄥ缁岸鎳楅婊呯暫闂?*/
     private static boolean isLightVisible(net.minecraft.world.level.Level level, Vec3 from, BlockPos lightPos,
                                            Entity entity) {
         Vec3 target = new Vec3(lightPos.getX() + 0.5D, lightPos.getY() + 0.5D, lightPos.getZ() + 0.5D);
@@ -399,7 +429,7 @@ public final class PbrRenderer {
         uWetness = s.safeGetUniform("Wetness");
     }
 
-    /** 缂傚倹鎸搁悺銊︾▔閾忓厜鏁?閻犙冨缁噣鏌屽鍫熺グ/闁活偀鍋撻柤瑙勫絻濞呮帞绱撻崫鍕╀杭)闁哄啯鍎奸悜锔芥交閸パ冩櫢闁稿繈鍎埀?*/
+    /** 缂傚倸鍊归幐鎼佹偤閵婏妇鈻旈柧蹇撳帨閺?闁荤姍鍐仾缂侇煈鍣ｉ弻灞筋吋閸喓銈?闂佹椿鍋€閸嬫捇鏌ょ憴鍕祷婵炲懏甯炵槐鎾诲传閸曗晙鏉?闂佸搫鍟崕濂告倻閿旇姤浜ら柛銉戝啯娅㈤梺绋跨箞閸庮垶鍩€?*/
     static void setUniform(AbstractUniform uniform, int value) {
         if (uniform != null) uniform.set(value);
     }
@@ -416,18 +446,39 @@ public final class PbrRenderer {
         if (uniform != null) uniform.set(x, y, z);
     }
 
-    /** 闁稿繐褰夐棅鈺佄熼敍鍕囬柣顐熷亾闁艰褰冨▍鎺楁儍閸曨剚鐓欓柛?UV 闁告娲戠紞?闁?*/
+    /** 闂佺绻愯ぐ澶愭閳轰絼鐔兼晬閸曨厔鍥煟椤愮喎浜鹃梺鑹邦潐瑜板啫鈻嶉幒妤佸剭闁告洦鍓氶悡娆撴煕?UV 闂佸憡顨嗗ú鎴犵礊?闂?*/
     static void setBlurDirection(float x, float y) {
         if (uBlurDirection != null) uBlurDirection.set(x, y);
     }
 
-    /** 闁稿繐褰夐棅鈺佲枖濞戞ê甯ㄩ柛姘墛閸ㄦ岸鎯堥埀顒勬嚌閹绘帗鐝ら柣銊ュ瀹歌鲸鎯旈敂琛″亾?*/
+    /** 闂佺绻愯ぐ澶愭閳轰讲鏋栨繛鎴灻敮銊╂煕濮橆剛澧涢柛銊﹀哺閹牓鍩€椤掑嫭鍤岄柟缁樺笚閻濄倝鏌ｉ妸銉ヮ仼鐎规瓕椴搁幆鏃堟晜鐞涒€充壕?*/
     static void setBloomStrength(float value) {
         if (uCompositeStrength != null) uCompositeStrength.set(value);
     }
 
     static void setHasScopeMask(int value) {
         if (uHasScopeMask != null) uHasScopeMask.set(value);
+    }
+
+    static void applyMaterialState(Material material) {
+        if (shader == null) {
+            return;
+        }
+        if (material.specular() != null) {
+            RenderSystem.setShaderTexture(3, material.specular());
+        }
+        if (material.normal() != null) {
+            RenderSystem.setShaderTexture(4, material.normal());
+        }
+        setUniform(uHasSpecular, material.specular() == null ? 0 : 1);
+        setUniform(uHasNormal, material.normal() == null ? 0 : 1);
+        setUniform(uReflectionStrength, material.specular() == null ? 0f : Config.PBR_REFLECTION.get().floatValue());
+        setUniform(uReflectionArea, Config.PBR_REFLECTION_AREA.get().floatValue());
+        setUniform(uGlareStrength, material.specular() == null ? 0f : Config.PBR_GLARE_STRENGTH.get().floatValue());
+        setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
+        setUniform(uEmissionPass, 0);
+        setUniform(uScopeDivisionPass, 0);
+        RenderSystem.setShader(() -> shader);
     }
 
     public static RenderType resolve(RenderType original) {
@@ -464,25 +515,8 @@ public final class PbrRenderer {
         ResourceLocation normal = new ResourceLocation(base.getNamespace(), stem + "_n.png");
         var resources = Minecraft.getInstance().getResourceManager();
         ResourceLocation specularLocation = resources.getResource(specular).isPresent() ? specular : null;
-        boolean emissive = specularLocation != null && hasEmissiveAlpha(resources, specularLocation);
         return Optional.of(new Material(specularLocation,
-                resources.getResource(normal).isPresent() ? normal : null, emissive));
-    }
-
-    /** LabPBR alpha 255 濞戞挻妞藉顏堟嚊椤忓嫬绲洪柛蹇擃槸閹界娀宕楅棃娑掑亾缁楄　鍋? 濞戞挾鍎ゅΛ銈夋嚊椤忓嫬绲洪柛? 闁稿繑婀圭紞?alpha 濞寸媴缍€閵嗗啴宕ｉ幋婵嗗辅鐎殿喖鎼€规娊濡?*/
-    private static boolean hasEmissiveAlpha(ResourceManager resources, ResourceLocation location) {
-        var resource = resources.getResource(location);
-        if (resource.isEmpty()) return false;
-        try (InputStream stream = resource.get().open(); NativeImage image = NativeImage.read(stream)) {
-            for (int y = 0; y < image.getHeight(); y++) {
-                for (int x = 0; x < image.getWidth(); x++) {
-                    int alpha = (image.getPixelRGBA(x, y) >>> 24) & 0xFF;
-                    if (alpha != 0 && alpha != 255) return true;
-                }
-            }
-        } catch (IOException | RuntimeException ignored) {
-        }
-        return false;
+                resources.getResource(normal).isPresent() ? normal : null));
     }
 
     private static final class PbrType extends RenderType {
@@ -497,6 +531,15 @@ public final class PbrRenderer {
         }
 
         @Override public Optional<RenderType> outline() { return original.outline(); }
+
+        @Override
+        public void setupRenderState() {
+            original.setupRenderState();
+            boolean accelerated = isAcceleratedPbrPass();
+            if (accelerated) {
+                applyMaterialState(material);
+            }
+        }
 
         @Override
         public void end(BufferBuilder builder, VertexSorting sorting) {
@@ -529,7 +572,9 @@ public final class PbrRenderer {
                 setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
                 setUniform(uEmissionPass, 0);
                 RenderSystem.setShader(() -> shader);
-                mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
+                if (!emissionReplay) {
+                    mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
+                }
                 int previousFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
                 int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
                 boolean lensDivision = previousFbo != mainFbo && isScopeDivision() && PbrBloom.pureScopeAiming();
@@ -611,6 +656,7 @@ public final class PbrRenderer {
                 clearRenderState();
             }
         }
+
     }
 
     private PbrRenderer() {}

@@ -99,6 +99,7 @@ dependencies {
     compileOnly files('libs/taczaddon-1.20.1-1.1.6.jar')
 
     compileOnly files('libs/arcana-mod-140.jar')
+    compileOnly files('libs/acceleratedrendering-1.0.14-1.20.1-alpha.jar')
     compileOnly files('libs/ProjectE-1.20.1-PE1.0.1.jar')
     compileOnly files('libs/embeddium-0.3.31+mc1.20.1.jar')
 compileOnly files('libs/simplebedrockmodel-2.5.6-forge-mc1.20.1.jar')

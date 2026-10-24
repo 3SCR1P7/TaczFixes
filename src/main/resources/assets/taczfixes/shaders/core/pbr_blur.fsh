@@ -10,8 +10,6 @@ void main() {
     float sigma = max(length(Direction * size), 0.5);
     vec2 stepUV = Direction / sigma;
     int support = int(ceil(min(sigma * 2.0, 48.0)));
-    // Pair adjacent texels into one bilinear tap: same Gaussian as one fetch per
-    // texel, but half the texture fetches. stepUV is exactly one texel.
     for (int i = -support; i < support; i += 2) {
         float f0 = float(i);
         float f1 = f0 + 1.0;
@@ -21,7 +19,6 @@ void main() {
         color += texture(Sampler0, texCoord + stepUV * (f0 + w1 / wsum)).rgb * wsum;
         total += wsum;
     }
-    // The unpaired outermost texel of the symmetric kernel.
     float fs = float(support);
     float ws = exp(-0.5 * (fs / sigma) * (fs / sigma));
     color += texture(Sampler0, texCoord + stepUV * fs).rgb * ws;
