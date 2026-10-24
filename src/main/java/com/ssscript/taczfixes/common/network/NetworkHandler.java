@@ -183,6 +183,16 @@ public class NetworkHandler {
                 ClientMessageOffhandItemAttack::decode,
                 ClientMessageOffhandItemAttack::handle,
                 Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(33, ClientMessageOffhandShieldState.class,
+                ClientMessageOffhandShieldState::encode,
+                ClientMessageOffhandShieldState::decode,
+                ClientMessageOffhandShieldState::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
+        CHANNEL.registerMessage(34, ClientMessageOffhandUseState.class,
+                ClientMessageOffhandUseState::encode,
+                ClientMessageOffhandUseState::decode,
+                ClientMessageOffhandUseState::handle,
+                Optional.of(NetworkDirection.PLAY_TO_SERVER));
 
     }
 }

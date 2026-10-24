@@ -31,9 +31,13 @@ public class MixinFirstPersonRenderHandlerOffhand {
             return;
         }
         ItemStack offhand = player.getOffhandItem();
-        if (IGun.getIGunOrNull(player.getMainHandItem()) != null
-                && IGun.getIGunOrNull(offhand) == null
-                && !offhand.isEmpty()) {
+        ItemStack mainhand = player.getMainHandItem();
+        boolean mainGun = IGun.getIGunOrNull(mainhand) != null;
+        boolean offGun = IGun.getIGunOrNull(offhand) != null;
+        boolean mainShield = mainhand.is(net.minecraft.world.item.Items.SHIELD);
+        if (mainGun && !offGun && !offhand.isEmpty()) {
+            callback.cancel();
+        } else if (!mainGun && offGun && !mainShield) {
             callback.cancel();
         }
     }
