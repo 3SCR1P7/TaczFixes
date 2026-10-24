@@ -27,10 +27,8 @@ import org.lwjgl.opengl.GL30;
 /** Separate world/hand phases prevent the hand depth clear from invalidating world bloom. */
 public final class PbrBloom {
     private static RenderTarget emission, horizontal, vertical;
-    private static RenderTarget scopeMaskTarget;
     private static VertexBuffer quad;
-    private static VertexBuffer maskQuad;
-    private static boolean active, dirty, stencilCopied, scopeMaskValid;
+    private static boolean active, dirty, stencilCopied;
     private static boolean emissiveThisFrame;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
@@ -38,7 +36,6 @@ public final class PbrBloom {
         active = true;
         dirty = false;
         stencilCopied = false;
-        scopeMaskValid = false;
         emissiveThisFrame = false;
         PbrRenderer.resetScopeDivision();
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
@@ -194,90 +191,6 @@ public final class PbrBloom {
         }
     }
 
-    public static void captureScopeMask() {
-        if (!pureScopeAiming()) {
-            scopeMaskValid = false;
-            return;
-        }
-        var main = Minecraft.getInstance().getMainRenderTarget();
-        if (!main.isStencilEnabled()) {
-            scopeMaskValid = false;
-            return;
-        }
-        if (scopeMaskTarget == null || scopeMaskTarget.width != main.width || scopeMaskTarget.height != main.height) {
-            releaseScopeMask();
-            scopeMaskTarget = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
-            scopeMaskTarget.enableStencil();
-            scopeMaskTarget.setClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        }
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
-        GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, scopeMaskTarget.frameBufferId);
-        GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, scopeMaskTarget.width, scopeMaskTarget.height,
-                GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
-        scopeMaskTarget.bindWrite(true);
-        GL11.glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
-        GL11.glClear(GL11.GL_COLOR_BUFFER_BIT);
-        boolean depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
-        boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-        boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
-        boolean stencil = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
-        int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
-        int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
-        int stencilValueMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
-        int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
-        int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
-        int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
-        ShaderInstance previous = RenderSystem.getShader();
-        try {
-            RenderSystem.disableDepthTest();
-            RenderSystem.disableCull();
-            RenderSystem.disableBlend();
-            GL11.glEnable(GL11.GL_STENCIL_TEST);
-            GL11.glStencilFunc(GL11.GL_NOTEQUAL, 0, 255);
-            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-            ensureMaskQuad();
-            RenderSystem.setShader(GameRenderer::getPositionColorShader);
-            ShaderInstance shader = RenderSystem.getShader();
-            maskQuad.bind();
-            maskQuad.drawWithShader(IDENTITY, IDENTITY, shader);
-        } finally {
-            main.bindWrite(true);
-            RenderSystem.setShader(() -> previous);
-            if (depth) RenderSystem.enableDepthTest(); else RenderSystem.disableDepthTest();
-            if (cull) RenderSystem.enableCull(); else RenderSystem.disableCull();
-            if (blend) RenderSystem.enableBlend(); else RenderSystem.disableBlend();
-            if (stencil) {
-                GL11.glEnable(GL11.GL_STENCIL_TEST);
-                GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
-                GL11.glStencilOp(stencilFail, stencilDepthFail, stencilDepthPass);
-            } else {
-                GL11.glDisable(GL11.GL_STENCIL_TEST);
-            }
-        }
-        scopeMaskValid = true;
-    }
-
-    private static void ensureMaskQuad() {
-        if (maskQuad != null) return;
-        BufferBuilder b = new BufferBuilder(128);
-        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        b.vertex(-1, -1, 0).color(255, 255, 255, 255).endVertex();
-        b.vertex(1, -1, 0).color(255, 255, 255, 255).endVertex();
-        b.vertex(1, 1, 0).color(255, 255, 255, 255).endVertex();
-        b.vertex(-1, 1, 0).color(255, 255, 255, 255).endVertex();
-        maskQuad = new VertexBuffer(VertexBuffer.Usage.STATIC);
-        maskQuad.bind();
-        maskQuad.upload(b.end());
-    }
-
-    private static void releaseScopeMask() {
-        if (scopeMaskTarget != null) {
-            scopeMaskTarget.destroyBuffers();
-            scopeMaskTarget = null;
-        }
-        scopeMaskValid = false;
-    }
-
     private static void compositeToMain(RenderTarget input, ShaderInstance shader) {
         // Apply the shader first, then establish the actual draw state. ShaderInstance
         // and third-party hooks may otherwise replace factors set before apply().
@@ -322,7 +235,6 @@ public final class PbrBloom {
         if (horizontal != null) horizontal.destroyBuffers();
         if (vertical != null) vertical.destroyBuffers();
         emission = horizontal = vertical = null;
-        releaseScopeMask();
         dirty = false;
         stencilCopied = false;
     }
@@ -330,7 +242,6 @@ public final class PbrBloom {
     public static void release() {
         releaseTargets();
         if (quad != null) { quad.close(); quad = null; }
-        if (maskQuad != null) { maskQuad.close(); maskQuad = null; }
     }
 
     public static boolean pureScopeAiming() {

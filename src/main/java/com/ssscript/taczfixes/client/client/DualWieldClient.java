@@ -664,6 +664,18 @@ public final class DualWieldClient {
         poseStack.mulPose(Axis.XP.rotationDegrees(Math.abs(Mth.cos(phase - 0.2f) * bob) * 5.0f));
     }
 
+    private static void applyInverseVanillaBob(PoseStack poseStack, LocalPlayer player, float partialTick) {
+        float delta = player.walkDist - player.walkDistO;
+        float walk = -(player.walkDist + delta * partialTick);
+        float bob = Mth.lerp(partialTick, player.oBob, player.bob);
+        float phase = walk * (float) Math.PI;
+        float x = Mth.sin(phase) * bob * 0.5f;
+        float y = -Math.abs(Mth.cos(phase) * bob);
+        poseStack.mulPose(Axis.XP.rotationDegrees(-Math.abs(Mth.cos(phase - 0.2f) * bob) * 5.0f));
+        poseStack.mulPose(Axis.ZP.rotationDegrees(-Mth.sin(phase) * bob * 3.0f));
+        poseStack.translate(-x, -y, 0.0d);
+    }
+
     @SubscribeEvent(priority = EventPriority.LOWEST, receiveCanceled = true)
     public static void onRenderOffhand(RenderHandEvent event) {
         LocalPlayer player;
@@ -695,7 +707,18 @@ public final class DualWieldClient {
             event.setCanceled(false);
             return;
         }
-        boolean rendered = DualFirstPersonRenderer.renderOffhand(player, renderStack, event.getPoseStack(), event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
+        PoseStack poseStack = event.getPoseStack();
+        boolean cancelOriginalBob = IGun.getIGunOrNull(player.getMainHandItem()) == null;
+        poseStack.pushPose();
+        if (cancelOriginalBob) {
+            applyInverseVanillaBob(poseStack, player, event.getPartialTick());
+        }
+        boolean rendered;
+        try {
+            rendered = DualFirstPersonRenderer.renderOffhand(player, renderStack, poseStack, event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
+        } finally {
+            poseStack.popPose();
+        }
         if (rendered) {
             event.setCanceled(true);
         }
