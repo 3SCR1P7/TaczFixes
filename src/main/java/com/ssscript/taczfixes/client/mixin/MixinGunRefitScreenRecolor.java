@@ -43,7 +43,9 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
             return;
         }
         if (GunRecolorGuiState.isOpen()) {
-            GunRecolorGuiState.buildPanel((Screen) (Object) this, this::addRenderableWidget, this::init);
+            GunRecolorGuiState.buildPanel((Screen) (Object) this,
+                    widget -> this.addRenderableWidget(widget),
+                    () -> this.init());
             return;
         }
         if (!com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_RECOLOR_BUTTON.get()) {
