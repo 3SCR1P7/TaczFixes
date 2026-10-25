@@ -2,6 +2,9 @@ package com.ssscript.taczfixes.common.handler;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.common.data.AutoCraftSavedData;
+import com.ssscript.taczfixes.common.data.AutoCraftSavedData.TableKey;
+import com.ssscript.taczfixes.common.data.AutoCraftSavedData.Task;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.network.ServerMessageAutoCraftState;
 import com.ssscript.taczfixes.common.util.GunSmithTablePosAccess;
@@ -12,7 +15,6 @@ import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.inventory.GunSmithTableMenu;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
@@ -20,11 +22,12 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraftforge.common.capabilities.ForgeCapabilities;
 import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.event.server.ServerStartedEvent;
+import net.minecraftforge.event.server.ServerStoppingEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.items.IItemHandler;
@@ -41,15 +44,41 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
 public final class GunSmithTableAutoCraftHandler {
 
-    private static final Map<TaskKey, Task> TASKS = new ConcurrentHashMap<>();
+    private static final Map<TableKey, Task> TASKS = new ConcurrentHashMap<>();
+    private static AutoCraftSavedData savedData;
+    private static MinecraftServer savedServer;
 
     private GunSmithTableAutoCraftHandler() {
+    }
+
+    @SubscribeEvent
+    public static void onServerStarted(ServerStartedEvent event) {
+        loadData(event.getServer());
+    }
+
+    @SubscribeEvent
+    public static void onServerStopping(ServerStoppingEvent event) {
+        if (savedData != null) {
+            savedData.markDirty();
+        }
+        TASKS.clear();
+        savedData = null;
+        savedServer = null;
+    }
+
+    private static AutoCraftSavedData loadData(MinecraftServer server) {
+        if (savedData == null || savedServer != server) {
+            savedData = AutoCraftSavedData.get(server);
+            savedServer = server;
+            TASKS.clear();
+            TASKS.putAll(savedData.tasks());
+        }
+        return savedData;
     }
 
     public static void setEnabled(ServerPlayer player, int containerId, ResourceLocation recipeId, boolean enabled) {
@@ -57,15 +86,27 @@ public final class GunSmithTableAutoCraftHandler {
         if (menu == null) return;
         BlockPos tablePos = tablePos(menu);
         if (tablePos == null) return;
+        MinecraftServer server = player.getServer();
+        if (server == null) return;
         ServerLevel level = player.serverLevel();
-        TaskKey key = new TaskKey(player.getUUID(), level.dimension(), tablePos);
+        AutoCraftSavedData data = loadData(server);
+        TableKey key = new TableKey(level.dimension(), tablePos);
+        Task existing = TASKS.get(key);
+        if (existing != null && !existing.owner.equals(player.getUUID())) {
+            sendState(player, menu, false, null, false, 0.0F, false);
+            return;
+        }
         if (!enabled) {
-            TASKS.remove(key);
+            if (TASKS.remove(key) != null) {
+                data.markDirty();
+            }
             sendState(player, menu, false, null, false, 0.0F, false);
             return;
         }
         if (!Config.AUTO_CRAFT_ENABLED.get()) {
-            TASKS.remove(key);
+            if (TASKS.remove(key) != null) {
+                data.markDirty();
+            }
             sendState(player, menu, false, null, false, 0.0F, false);
             return;
         }
@@ -73,15 +114,18 @@ public final class GunSmithTableAutoCraftHandler {
                 ? be : null;
         GunSmithTableRecipe recipe = resolveRecipe(level, recipeId);
         if (table == null || recipe == null || !menu.canSelectRecipe(recipeId, level.getRecipeManager())) {
-            TASKS.remove(key);
+            if (TASKS.remove(key) != null) {
+                data.markDirty();
+            }
             sendState(player, menu, false, null, false, 0.0F, false);
             return;
         }
-        Task task = new Task(table.getId(), recipeId);
+        Task task = new Task(player.getUUID(), table.getId(), recipeId);
         if (canCraft(level, tablePos, recipe)) {
             startCraft(task, recipe);
         }
         TASKS.put(key, task);
+        data.markDirty();
         sendState(player, menu, true, recipeId, task.enough, progress(task), coolingDown(task));
     }
 
@@ -93,11 +137,20 @@ public final class GunSmithTableAutoCraftHandler {
             sendState(player, menu, false, null, false, 0.0F, false);
             return;
         }
+        MinecraftServer server = player.getServer();
+        if (server == null) return;
         ServerLevel level = player.serverLevel();
-        TaskKey key = new TaskKey(player.getUUID(), level.dimension(), tablePos);
+        AutoCraftSavedData data = loadData(server);
+        TableKey key = new TableKey(level.dimension(), tablePos);
         Task task = TASKS.get(key);
+        if (task != null && !task.owner.equals(player.getUUID())) {
+            sendState(player, menu, false, null, false, 0.0F, false);
+            return;
+        }
         if (task == null || !Config.AUTO_CRAFT_ENABLED.get()) {
-            TASKS.remove(key);
+            if (TASKS.remove(key) != null) {
+                data.markDirty();
+            }
             sendState(player, menu, false, null, false, 0.0F, false);
             return;
         }
@@ -105,7 +158,9 @@ public final class GunSmithTableAutoCraftHandler {
                 ? be : null;
         GunSmithTableRecipe recipe = resolveRecipe(level, task.recipeId);
         if (table == null || recipe == null || !Objects.equals(table.getId(), task.blockId)) {
-            TASKS.remove(key);
+            if (TASKS.remove(key) != null) {
+                data.markDirty();
+            }
             sendState(player, menu, false, null, false, 0.0F, false);
             return;
         }
@@ -115,13 +170,20 @@ public final class GunSmithTableAutoCraftHandler {
         }
         if (task.cooldownUntilMillis != 0L) {
             task.cooldownUntilMillis = 0L;
+            data.markDirty();
         }
+        boolean changed = false;
         if (task.craftStartMillis == 0L) {
             if (canCraft(level, tablePos, recipe)) {
                 startCraft(task, recipe);
-            } else {
+                changed = true;
+            } else if (task.enough) {
                 task.enough = false;
+                changed = true;
             }
+        }
+        if (changed) {
+            data.markDirty();
         }
         sendState(player, menu, true, task.recipeId, task.enough, progress(task), coolingDown(task));
     }
@@ -131,38 +193,40 @@ public final class GunSmithTableAutoCraftHandler {
         if (event.phase != TickEvent.Phase.END || TASKS.isEmpty()) return;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
+        AutoCraftSavedData data = loadData(server);
 
         if (!Config.AUTO_CRAFT_ENABLED.get()) {
-            for (Map.Entry<TaskKey, Task> entry : TASKS.entrySet()) {
-                ServerPlayer player = server.getPlayerList().getPlayer(entry.getKey().playerId);
+            for (Map.Entry<TableKey, Task> entry : TASKS.entrySet()) {
+                ServerPlayer player = server.getPlayerList().getPlayer(entry.getValue().owner);
                 if (player != null) {
                     sendState(player, viewingMenu(player, entry.getKey()), false, null, false, 0.0F, false);
                 }
             }
             TASKS.clear();
+            data.markDirty();
             return;
         }
 
         Set<String> craftedThisTick = new HashSet<>();
-        Iterator<Map.Entry<TaskKey, Task>> iterator = TASKS.entrySet().iterator();
+        Iterator<Map.Entry<TableKey, Task>> iterator = TASKS.entrySet().iterator();
         while (iterator.hasNext()) {
-            Map.Entry<TaskKey, Task> entry = iterator.next();
-            TaskKey key = entry.getKey();
+            Map.Entry<TableKey, Task> entry = iterator.next();
+            TableKey key = entry.getKey();
             Task task = entry.getValue();
-            ServerPlayer player = server.getPlayerList().getPlayer(key.playerId);
+            ServerPlayer player = server.getPlayerList().getPlayer(task.owner);
             if (player == null) {
-                iterator.remove();
                 continue;
             }
-            ServerLevel level = server.getLevel(key.dimension);
-            if (level == null || !level.isLoaded(key.tablePos)) {
+            ServerLevel level = server.getLevel(key.dimension());
+            if (level == null || !level.isLoaded(key.tablePos())) {
                 continue;
             }
             GunSmithTableMenu viewingMenu = viewingMenu(player, key);
-            GunSmithTableBlockEntity table = level.getBlockEntity(key.tablePos) instanceof GunSmithTableBlockEntity be
+            GunSmithTableBlockEntity table = level.getBlockEntity(key.tablePos()) instanceof GunSmithTableBlockEntity be
                     ? be : null;
             if (table == null || !Objects.equals(table.getId(), task.blockId)) {
                 iterator.remove();
+                data.markDirty();
                 sendState(player, viewingMenu, false, null, false, 0.0F, false);
                 continue;
             }
@@ -170,23 +234,24 @@ public final class GunSmithTableAutoCraftHandler {
             if (recipe == null || (viewingMenu != null
                     && !viewingMenu.canSelectRecipe(task.recipeId, level.getRecipeManager()))) {
                 iterator.remove();
+                data.markDirty();
                 sendState(player, viewingMenu, false, null, false, 0.0F, false);
                 continue;
             }
 
             long now = System.currentTimeMillis();
-            String positionKey = key.dimension.location() + "@" + key.tablePos.asLong();
+            String positionKey = key.dimension().location() + "@" + key.tablePos().asLong();
             if (coolingDown(task)) {
                 // Still cooling down: do not start or finish another craft.
             } else if (task.cooldownUntilMillis != 0L) {
                 task.cooldownUntilMillis = 0L;
-                boolean enough = canCraft(level, key.tablePos, recipe);
+                boolean enough = canCraft(level, key.tablePos(), recipe);
                 task.enough = enough;
                 if (enough) {
                     startCraft(task, recipe);
                 }
             } else if (task.craftStartMillis != 0L) {
-                if (!canCraft(level, key.tablePos, recipe)) {
+                if (!canCraft(level, key.tablePos(), recipe)) {
                     // Materials removed during the craft: reset progress immediately.
                     task.craftStartMillis = 0L;
                     task.craftDurationMillis = 0L;
@@ -196,13 +261,13 @@ public final class GunSmithTableAutoCraftHandler {
                     long elapsed = now - task.craftStartMillis;
                     if (elapsed >= task.craftDurationMillis) {
                         if (!craftedThisTick.contains(positionKey)) {
-                            boolean crafted = craftOnce(level, key.tablePos, recipe);
+                            boolean crafted = craftOnce(level, key.tablePos(), recipe);
                             if (crafted) {
                                 craftedThisTick.add(positionKey);
                             }
                             task.craftStartMillis = 0L;
                             task.craftDurationMillis = 0L;
-                            boolean enough = canCraft(level, key.tablePos, recipe);
+                            boolean enough = canCraft(level, key.tablePos(), recipe);
                             task.enough = enough;
                             if (crafted) {
                                 long cooldown = cooldownMillis();
@@ -218,7 +283,7 @@ public final class GunSmithTableAutoCraftHandler {
                     }
                 }
             } else {
-                boolean enough = canCraft(level, key.tablePos, recipe);
+                boolean enough = canCraft(level, key.tablePos(), recipe);
                 task.enough = enough;
                 if (enough) {
                     startCraft(task, recipe);
@@ -226,6 +291,7 @@ public final class GunSmithTableAutoCraftHandler {
             }
 
             sendState(player, viewingMenu, true, task.recipeId, task.enough, progress(task), coolingDown(task));
+            data.markDirty();
         }
     }
 
@@ -277,14 +343,14 @@ public final class GunSmithTableAutoCraftHandler {
         return menu instanceof GunSmithTablePosAccess access ? access.taczfixes$getTablePos() : null;
     }
 
-    private static GunSmithTableMenu viewingMenu(ServerPlayer player, TaskKey key) {
-        if (!player.level().dimension().equals(key.dimension)) {
+    private static GunSmithTableMenu viewingMenu(ServerPlayer player, TableKey key) {
+        if (!player.level().dimension().equals(key.dimension())) {
             return null;
         }
         if (!(player.containerMenu instanceof GunSmithTableMenu menu)) {
             return null;
         }
-        return key.tablePos.equals(tablePos(menu)) ? menu : null;
+        return key.tablePos().equals(tablePos(menu)) ? menu : null;
     }
 
     private static void sendState(ServerPlayer player, GunSmithTableMenu menu, boolean enabled,
@@ -460,23 +526,6 @@ public final class GunSmithTableAutoCraftHandler {
         entity.setChanged();
         BlockState state = level.getBlockState(entity.getBlockPos());
         level.sendBlockUpdated(entity.getBlockPos(), state, state, 3);
-    }
-
-    private record TaskKey(UUID playerId, ResourceKey<Level> dimension, BlockPos tablePos) {
-    }
-
-    private static final class Task {
-        private final ResourceLocation blockId;
-        private final ResourceLocation recipeId;
-        private boolean enough;
-        private long craftStartMillis;
-        private long craftDurationMillis;
-        private long cooldownUntilMillis;
-
-        private Task(ResourceLocation blockId, ResourceLocation recipeId) {
-            this.blockId = blockId;
-            this.recipeId = recipeId;
-        }
     }
 
     private record ContainerRef(BlockEntity entity, IItemHandler handler) {
