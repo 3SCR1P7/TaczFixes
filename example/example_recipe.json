@@ -1,0 +1,38 @@
+{
+  "materials": [
+    {
+      "item": {
+        "tag": "forge:ingots/iron"
+      },
+      "count": 56
+    },
+    {
+      "item": {
+        "tag": "forge:ingots/gold"
+      },
+      "count": 12
+    },
+    {
+      "item": {
+        "tag": "forge:gems/quartz"
+      },
+      "count": 8
+    }
+  ],
+  "result": {
+    "type": "gun",
+    "id": "tacz:ak12"
+  },
+  "type": "tacz:gun_smith_table_crafting",
+  "taczfixes": {
+    // 手动合成时所需消耗的电量，单位fe
+    // 电量不足则无法合成
+    "consumption_manually": 1000,
+    // 自动合成时额外消耗电量的速度，单位fe/t
+    // 与工作台的电量消耗速度叠加
+    // 电量不足则暂停自动合成，保留进度
+    "consumption_auto": 100,
+    // 自动合成所需时间的修正，可以为正或负
+    "crafting_time": -0.02
+  }
+}
