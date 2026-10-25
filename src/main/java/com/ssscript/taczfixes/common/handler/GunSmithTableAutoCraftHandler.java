@@ -49,7 +49,7 @@ import java.util.concurrent.ConcurrentHashMap;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
 public final class GunSmithTableAutoCraftHandler {
 
-    private static final Map<TableKey, Task> TASKS = new ConcurrentHashMap<>();
+    private static Map<TableKey, Task> TASKS = new ConcurrentHashMap<>();
     private static AutoCraftSavedData savedData;
     private static MinecraftServer savedServer;
 
@@ -66,7 +66,7 @@ public final class GunSmithTableAutoCraftHandler {
         if (savedData != null) {
             savedData.markDirty();
         }
-        TASKS.clear();
+        TASKS = new ConcurrentHashMap<>();
         savedData = null;
         savedServer = null;
     }
@@ -75,8 +75,7 @@ public final class GunSmithTableAutoCraftHandler {
         if (savedData == null || savedServer != server) {
             savedData = AutoCraftSavedData.get(server);
             savedServer = server;
-            TASKS.clear();
-            TASKS.putAll(savedData.tasks());
+            TASKS = savedData.tasks();
         }
         return savedData;
     }
