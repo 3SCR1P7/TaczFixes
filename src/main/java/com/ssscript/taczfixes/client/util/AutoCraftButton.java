@@ -13,15 +13,17 @@ public class AutoCraftButton extends Button {
     private boolean active;
     private boolean enoughMaterials;
     private boolean coolingDown;
+    private boolean powerPaused;
 
     public AutoCraftButton(int x, int y, OnPress onPress) {
         super(x, y, 20, 20, Component.empty(), onPress, Button.DEFAULT_NARRATION);
     }
 
-    public void setStatus(boolean active, boolean enoughMaterials, boolean coolingDown) {
+    public void setStatus(boolean active, boolean enoughMaterials, boolean coolingDown, boolean powerPaused) {
         this.active = active;
         this.enoughMaterials = enoughMaterials;
         this.coolingDown = coolingDown;
+        this.powerPaused = powerPaused;
     }
 
     @Override
@@ -31,7 +33,7 @@ public class AutoCraftButton extends Button {
         int border;
         int background;
         if (this.active) {
-            if (this.coolingDown) {
+            if (this.coolingDown || this.powerPaused) {
                 border = 0xFFFFE000;
                 background = 0xFFD4A800;
             } else if (this.enoughMaterials) {

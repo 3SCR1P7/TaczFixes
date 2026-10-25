@@ -39,9 +39,19 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
     @Unique
     private boolean taczfixes$coolingDown;
     @Unique
+    private boolean taczfixes$powerPaused;
+    @Unique
+    private int taczfixes$energy;
+    @Unique
+    private int taczfixes$energyCapacity;
+    @Unique
+    private long taczfixes$manualPowerErrorUntil;
+    @Unique
     private float taczfixes$progress;
     @Unique
     private boolean taczfixes$stateRequested;
+    @Unique
+    private long taczfixes$lastPowerRequestTick;
     @Unique
     private boolean taczfixes$applyingServerState;
     @Unique
@@ -60,7 +70,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
 
     @Inject(method = "m_7856_", at = @At("TAIL"), remap = false)
     private void taczfixes$requestAutoCraftState(CallbackInfo ci) {
-        if (taczfixes$stateRequested || !Config.AUTO_CRAFT_ENABLED.get()) {
+        if (taczfixes$stateRequested) {
             return;
         }
         taczfixes$stateRequested = true;
@@ -93,7 +103,8 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
         int guiTop = (this.height - 186) / 2;
         AutoCraftButton button = new AutoCraftButton(guiLeft + 264, guiTop + 161,
                 b -> taczfixes$toggleAutoCraft());
-        button.setStatus(taczfixes$autoCraft, taczfixes$enoughMaterials, taczfixes$coolingDown);
+        button.setStatus(taczfixes$autoCraft, taczfixes$enoughMaterials, taczfixes$coolingDown,
+                taczfixes$powerPaused);
         button.setTooltip(Tooltip.create(Component.translatable("taczfixes.gun_smith_table.auto_craft")));
         taczfixes$autoButton = button;
         this.addRenderableWidget(button);
@@ -107,6 +118,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
             taczfixes$autoCraft = true;
             taczfixes$enoughMaterials = false;
             taczfixes$coolingDown = false;
+            taczfixes$powerPaused = false;
             taczfixes$progress = 0.0F;
             taczfixes$autoRecipeId = selectedRecipe.m_6423_();
             taczfixes$autoCraftName = selectedRecipe.getOutput().getHoverName();
@@ -123,6 +135,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
         taczfixes$autoCraft = false;
         taczfixes$enoughMaterials = false;
         taczfixes$coolingDown = false;
+        taczfixes$powerPaused = false;
         taczfixes$progress = 0.0F;
         taczfixes$autoRecipeId = null;
         taczfixes$autoCraftName = null;
@@ -145,8 +158,13 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
     @Override
     public void taczfixes$applyAutoCraftState(boolean enabled, ResourceLocation recipeId,
                                               boolean enoughMaterials, float progress,
-                                              boolean coolingDown) {
+                                              boolean coolingDown, boolean powerPaused,
+                                              int energy, int capacity) {
+        taczfixes$energy = Math.max(0, energy);
+        taczfixes$energyCapacity = Math.max(0, capacity);
+        taczfixes$powerPaused = powerPaused;
         if (!enabled || recipeId == null || TACZFIXES_NO_RECIPE.equals(recipeId)) {
+            taczfixes$powerPaused = false;
             if (taczfixes$autoCraft || taczfixes$autoRecipeId != null || taczfixes$autoCraftName != null) {
                 taczfixes$clearAutoCraft(false);
                 taczfixes$refreshScreen();
@@ -167,8 +185,14 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
             }
             taczfixes$refreshScreen();
         } else if (taczfixes$autoButton != null) {
-            taczfixes$autoButton.setStatus(true, enoughMaterials, coolingDown);
+            taczfixes$autoButton.setStatus(true, enoughMaterials, coolingDown, powerPaused);
         }
+    }
+
+    @Override
+    public void taczfixes$showManualPowerError() {
+        this.taczfixes$manualPowerErrorUntil = Math.max(this.taczfixes$manualPowerErrorUntil,
+                System.currentTimeMillis() + 1000L);
     }
 
     @Unique
@@ -196,14 +220,33 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
     @Inject(method = "m_88315_", at = @At("TAIL"), remap = false)
     private void taczfixes$renderAutoCraftStatus(GuiGraphics graphics, int mouseX, int mouseY,
                                                   float partialTick, CallbackInfo ci) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (minecraft.level != null) {
+            long now = minecraft.level.getGameTime();
+            if (now - taczfixes$lastPowerRequestTick >= 10L) {
+                taczfixes$lastPowerRequestTick = now;
+                NetworkHandler.CHANNEL.sendToServer(new ClientMessageAutoCraftStateRequest(
+                        ((GunSmithTableScreen) (Object) this).getMenu().containerId));
+            }
+        }
+        int guiLeft = (this.width - 344) / 2;
+        int guiTop = (this.height - 186) / 2;
+        if (taczfixes$energyCapacity > 0) {
+            boolean manualError = System.currentTimeMillis() < taczfixes$manualPowerErrorUntil;
+            int energyColor = taczfixes$powerPaused || manualError ? 0xFFFF5555 : 0xFFFFFFFF;
+            Component energyText = Component.translatable(
+                    "taczfixes.gun_smith_table.energy", taczfixes$energy, taczfixes$energyCapacity);
+            graphics.pose().pushPose();
+            graphics.pose().translate(guiLeft + 254, guiTop + 192, 0.0F);
+            graphics.pose().scale(0.75F, 0.75F, 1.0F);
+            graphics.drawString(minecraft.font, energyText, 0, 0, energyColor, false);
+            graphics.pose().popPose();
+        }
         if (!taczfixes$autoCraft || taczfixes$autoCraftName == null) {
             return;
         }
-        Minecraft minecraft = Minecraft.getInstance();
-        int guiLeft = (this.width - 344) / 2;
-        int guiTop = (this.height - 186) / 2;
         int y = Math.max(2, guiTop - 12);
-        int color = taczfixes$coolingDown
+        int color = taczfixes$coolingDown || taczfixes$powerPaused
                 ? 0xFFFFFF55
                 : (taczfixes$enoughMaterials ? 0xFF55FF55 : 0xFFFF5555);
         int percent = Math.max(0, Math.min(100, Math.round(taczfixes$progress * 100.0F)));

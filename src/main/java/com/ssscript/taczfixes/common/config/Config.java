@@ -58,6 +58,8 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_TYPE;
     public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_ITEM;
     public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_COOLDOWN_SECONDS;
+    public static final ForgeConfigSpec.IntValue GUN_SMITH_TABLE_POWER_MAX;
+    public static final ForgeConfigSpec.IntValue GUN_SMITH_TABLE_AUTO_CONSUMPTION;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_RECOLOR_BUTTON;
@@ -759,8 +761,14 @@ public class Config {
                 .comment("配方所需材料总数每有 1 个，合成时长增加的秒数。默认值：0.05")
                 .defineInRange("seconds_per_item", 0.05, 0.0, 10.0);
         AUTO_CRAFT_COOLDOWN_SECONDS = BUILDER
-                .comment("每次合成结束后的冷却时长（秒）。默认值：0.1")
+                .comment("ÿ�κϳɽ����ĵ���ȴʱ�����룩��Ĭ��ֵ��0.1")
                 .defineInRange("cooldown_seconds", 0.1, 0.0, 60.0);
+        GUN_SMITH_TABLE_POWER_MAX = BUILDER
+                .comment("Default FE capacity of a gun smith table. Default: 0")
+                .defineInRange("power_capacity", 0, 0, Integer.MAX_VALUE);
+        GUN_SMITH_TABLE_AUTO_CONSUMPTION = BUILDER
+                .comment("Default automatic crafting FE consumption in FE/t. Default: 0")
+                .defineInRange("auto_consumption", 0, 0, Integer.MAX_VALUE);
         BUILDER.pop();
         SPECS.put("auto_craft", BUILDER.build());
 

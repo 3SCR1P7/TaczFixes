@@ -474,5 +474,8 @@
     "config.taczfixes.entry.auto_craft.base_seconds":  "Base Craft Time (seconds)",
     "config.taczfixes.entry.auto_craft.seconds_per_type":  "Seconds per Material Type",
     "config.taczfixes.entry.auto_craft.seconds_per_item":  "Seconds per Material Item",
-    "config.taczfixes.entry.auto_craft.cooldown_seconds":  "Craft Cooldown (seconds)"
+    "config.taczfixes.entry.auto_craft.cooldown_seconds":  "Craft Cooldown (seconds)",
+    "config.taczfixes.entry.auto_craft.power_capacity":  "Default Table FE Capacity",
+    "config.taczfixes.entry.auto_craft.auto_consumption":  "Default Auto Craft FE/t",
+    "taczfixes.gun_smith_table.energy":  "FE: %s / %s"
 }

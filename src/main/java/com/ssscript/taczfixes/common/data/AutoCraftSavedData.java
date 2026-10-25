@@ -42,9 +42,15 @@ public final class AutoCraftSavedData extends SavedData {
             TableKey key = new TableKey(dimension, BlockPos.of(entry.getLong("pos")));
             Task task = new Task(entry.getUUID("owner"), blockId, recipeId);
             task.enough = entry.getBoolean("enough");
-            task.craftStartMillis = entry.getLong("craft_start");
+            task.craftElapsedMillis = entry.getLong("craft_elapsed");
+            if (!entry.contains("craft_elapsed") && entry.contains("craft_start")) {
+                long start = entry.getLong("craft_start");
+                task.craftElapsedMillis = start <= 0L ? 0L
+                        : Math.max(0L, System.currentTimeMillis() - start);
+            }
             task.craftDurationMillis = entry.getLong("craft_duration");
             task.cooldownUntilMillis = entry.getLong("cooldown_until");
+            task.powerPaused = entry.getBoolean("power_paused");
             data.tasks.put(key, task);
         }
         return data;
@@ -63,9 +69,10 @@ public final class AutoCraftSavedData extends SavedData {
             entry.putString("block", task.blockId.toString());
             entry.putString("recipe", task.recipeId.toString());
             entry.putBoolean("enough", task.enough);
-            entry.putLong("craft_start", task.craftStartMillis);
+            entry.putLong("craft_elapsed", task.craftElapsedMillis);
             entry.putLong("craft_duration", task.craftDurationMillis);
             entry.putLong("cooldown_until", task.cooldownUntilMillis);
+            entry.putBoolean("power_paused", task.powerPaused);
             list.add(entry);
         }
         tag.put("tasks", list);
@@ -88,9 +95,10 @@ public final class AutoCraftSavedData extends SavedData {
         public final ResourceLocation blockId;
         public final ResourceLocation recipeId;
         public boolean enough;
-        public long craftStartMillis;
+        public long craftElapsedMillis;
         public long craftDurationMillis;
         public long cooldownUntilMillis;
+        public boolean powerPaused;
 
         public Task(UUID owner, ResourceLocation blockId, ResourceLocation recipeId) {
             this.owner = owner;

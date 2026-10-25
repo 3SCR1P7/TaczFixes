@@ -208,6 +208,11 @@ public class NetworkHandler {
                 ServerMessageAutoCraftState::decode,
                 ServerMessageAutoCraftState::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(38, ServerMessageManualCraftPower.class,
+                ServerMessageManualCraftPower::encode,
+                ServerMessageManualCraftPower::decode,
+                ServerMessageManualCraftPower::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
     }
 }

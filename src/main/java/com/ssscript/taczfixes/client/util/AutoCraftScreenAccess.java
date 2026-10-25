@@ -4,5 +4,8 @@ import net.minecraft.resources.ResourceLocation;
 
 public interface AutoCraftScreenAccess {
     void taczfixes$applyAutoCraftState(boolean enabled, ResourceLocation recipeId,
-                                       boolean enoughMaterials, float progress, boolean coolingDown);
+                                       boolean enoughMaterials, float progress, boolean coolingDown,
+                                       boolean powerPaused, int energy, int capacity);
+
+    void taczfixes$showManualPowerError();
 }

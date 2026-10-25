@@ -474,5 +474,8 @@
     "config.taczfixes.entry.auto_craft.base_seconds":  "基础合成时长",
     "config.taczfixes.entry.auto_craft.seconds_per_type":  "每种材料增加时长",
     "config.taczfixes.entry.auto_craft.seconds_per_item":  "每个材料增加时长",
-    "config.taczfixes.entry.auto_craft.cooldown_seconds":  "合成冷却时长"
+    "config.taczfixes.entry.auto_craft.cooldown_seconds":  "合成冷却时长",
+    "config.taczfixes.entry.auto_craft.power_capacity":  "工作台默认电量上限（FE）",
+    "config.taczfixes.entry.auto_craft.auto_consumption":  "自动合成默认耗电（FE/t）",
+    "taczfixes.gun_smith_table.energy":  "电量：%s / %s FE"
 }

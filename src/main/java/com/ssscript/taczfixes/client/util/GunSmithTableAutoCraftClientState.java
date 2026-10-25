@@ -10,7 +10,8 @@ public final class GunSmithTableAutoCraftClientState {
     }
 
     public static void handle(int containerId, boolean enabled, ResourceLocation recipeId,
-                              boolean enoughMaterials, float progress, boolean coolingDown) {
+                              boolean enoughMaterials, float progress, boolean coolingDown,
+                              boolean powerPaused, int energy, int capacity) {
         Minecraft minecraft = Minecraft.getInstance();
         if (!(minecraft.screen instanceof GunSmithTableScreen screen)) {
             return;
@@ -19,7 +20,21 @@ public final class GunSmithTableAutoCraftClientState {
             return;
         }
         if (screen instanceof AutoCraftScreenAccess access) {
-            access.taczfixes$applyAutoCraftState(enabled, recipeId, enoughMaterials, progress, coolingDown);
+            access.taczfixes$applyAutoCraftState(enabled, recipeId, enoughMaterials, progress,
+                    coolingDown, powerPaused, energy, capacity);
+        }
+    }
+
+    public static void handleManualPowerError(int containerId) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!(minecraft.screen instanceof GunSmithTableScreen screen)) {
+            return;
+        }
+        if (screen.getMenu().containerId != containerId) {
+            return;
+        }
+        if (screen instanceof AutoCraftScreenAccess access) {
+            access.taczfixes$showManualPowerError();
         }
     }
 }

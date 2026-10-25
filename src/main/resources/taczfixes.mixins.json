@@ -93,6 +93,9 @@
         "MixinAttachmentCachePropertyAdapter",
         "MixinGunPackLoader",
         "MixinGunSmithTableMenu",
-        "MixinGunSmithTableBlockEntity"
+        "MixinGunSmithTableBlockEntity",
+        "MixinBlockDataTaczFixes",
+        "MixinTableRecipeTaczFixes",
+        "MixinGunSmithTableRecipeTaczFixes"
     ]
 }

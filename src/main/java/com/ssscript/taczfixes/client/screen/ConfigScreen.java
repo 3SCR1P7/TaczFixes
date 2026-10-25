@@ -357,6 +357,8 @@ public class ConfigScreen {
         dbl_(cat, entry, "auto_craft.seconds_per_type", Config.AUTO_CRAFT_SECONDS_PER_TYPE);
         dbl_(cat, entry, "auto_craft.seconds_per_item", Config.AUTO_CRAFT_SECONDS_PER_ITEM);
         dbl_(cat, entry, "auto_craft.cooldown_seconds", Config.AUTO_CRAFT_COOLDOWN_SECONDS);
+        int_(cat, entry, "auto_craft.power_capacity", Config.GUN_SMITH_TABLE_POWER_MAX);
+        int_(cat, entry, "auto_craft.auto_consumption", Config.GUN_SMITH_TABLE_AUTO_CONSUMPTION);
     }
 
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {
