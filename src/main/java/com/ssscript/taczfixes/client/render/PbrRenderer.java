@@ -43,6 +43,7 @@ public final class PbrRenderer {
     // 缂傚倸鍊归幐鎼佹偤?Uniform 閻庢鍠楀ú婊堝极? 闂備緡鍓欓悘婵嬪储閵堝憛鎺曠疀閹炬潙顫?濠殿噯绲界换鎴︻敃婵傜鍑犳い蹇撴媼濞煎墽绱撴担濮戭亪宕哄Δ鍛劸闁兼亽鍎遍惁濠氭倵濞戞瑯娈樻い鎴滅劍缁嬪宕ｆ径灞藉绩闂佺懓鍚€閸曟﹢鍩€?
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
     private static AbstractUniform uReflectionStrength, uReflectionArea, uGlareStrength, uEmissionStrength;
+    private static AbstractUniform uGlareDepthTest;
     private static AbstractUniform uLocalLightDirection, uLocalLightColor, uLocalLightStrength;
     private static AbstractUniform uCelestialDirection, uCelestialColor, uSkyAmbient;
     private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness;
@@ -403,6 +404,7 @@ public final class PbrRenderer {
     private static void clearUniformCache() {
         uHasSpecular = uHasNormal = uEmissionPass = uScopeDivisionPass = null;
         uReflectionStrength = uReflectionArea = uGlareStrength = uEmissionStrength = null;
+        uGlareDepthTest = null;
         uLocalLightDirection = uLocalLightColor = uLocalLightStrength = null;
         uCelestialDirection = uCelestialColor = uSkyAmbient = null;
         uCelestialVisibility = uLocalSkyExposure = uWetness = null;
@@ -417,6 +419,7 @@ public final class PbrRenderer {
         uReflectionStrength = s.safeGetUniform("ReflectionStrength");
         uReflectionArea = s.safeGetUniform("ReflectionArea");
         uGlareStrength = s.safeGetUniform("GlareStrength");
+        uGlareDepthTest = s.safeGetUniform("GlareDepthTest");
         uEmissionStrength = s.safeGetUniform("EmissionStrength");
         uLocalLightDirection = s.safeGetUniform("LocalLightDirection");
         uLocalLightColor = s.safeGetUniform("LocalLightColor");
@@ -479,6 +482,16 @@ public final class PbrRenderer {
         setUniform(uEmissionPass, 0);
         setUniform(uScopeDivisionPass, 0);
         RenderSystem.setShader(() -> shader);
+        bindGlareDepth();
+    }
+
+    private static void bindGlareDepth() {
+        var main = Minecraft.getInstance().getMainRenderTarget();
+        boolean mainTarget = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING) == main.frameBufferId;
+        if (mainTarget) {
+            RenderSystem.setShaderTexture(5, main.getDepthTextureId());
+        }
+        setUniform(uGlareDepthTest, mainTarget ? 1 : 0);
     }
 
     public static RenderType resolve(RenderType original) {
@@ -535,6 +548,7 @@ public final class PbrRenderer {
         @Override
         public void setupRenderState() {
             original.setupRenderState();
+            bindGlareDepth();
             boolean accelerated = isAcceleratedPbrPass();
             if (accelerated) {
                 applyMaterialState(material);
@@ -572,6 +586,7 @@ public final class PbrRenderer {
                 setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
                 setUniform(uEmissionPass, 0);
                 RenderSystem.setShader(() -> shader);
+                bindGlareDepth();
                 if (!emissionReplay) {
                     mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                 }

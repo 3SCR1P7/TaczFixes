@@ -180,6 +180,8 @@ public final class PbrBloom {
         // and third-party hooks may otherwise replace factors set before apply().
         shader.setSampler("Sampler0", input.getColorTextureId());
         shader.setSampler("ScopeMask", maskTexture);
+        shader.setSampler("EmissionDepth", emission.getDepthTextureId());
+        shader.setSampler("SceneDepth", Minecraft.getInstance().getMainRenderTarget().getDepthTextureId());
         PbrRenderer.setHasScopeMask(maskTexture != 0 ? 1 : 0);
         quad.bind();
         shader.apply();

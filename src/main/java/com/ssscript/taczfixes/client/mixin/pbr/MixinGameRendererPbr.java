@@ -17,9 +17,13 @@ public abstract class MixinGameRendererPbr {
         PbrBloom.beginFrame();
     }
 
+    @Inject(method = "renderLevel", at = @At("RETURN"))
+    private void taczfixes$pbrComposite(float tick, long time, PoseStack pose, CallbackInfo ci) {
+        PbrBloom.endFrame();
+    }
+
     @Inject(method = "render", at = @At("RETURN"))
     private void taczfixes$pbrEnd(float tick, long time, boolean renderLevel, CallbackInfo ci) {
-        PbrBloom.endFrame();
         com.ssscript.taczfixes.client.render.AimBlur.composite();
         com.ssscript.taczfixes.client.render.SuppressionEffect.composite();
     }

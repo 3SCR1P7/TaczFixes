@@ -27,6 +27,7 @@ uniform vec3 LocalLightColor;
 uniform float LocalLightStrength;
 uniform float ReflectionArea;
 uniform float GlareStrength;
+uniform int GlareDepthTest;
 in float vertexDistance;
 in vec4 vertexColor;
 in vec4 rawVertexColor;
@@ -230,8 +231,13 @@ void main() {
     float sunBehind = smoothstep(0.05, 0.75, l.z);
     reflection *= mix(1.0, 0.15, sunBehind);
     // 主通道额外叠加一份清晰眩光核心; 泛光链路只负责外圈光晕, 避免眩光本体被模糊。
-    reflection += glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength
+    vec3 glareCore = glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength
             * mix(1.0, 0.2, sunBehind) * 0.35;
+    if (GlareDepthTest != 0) {
+        float glareSceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
+        glareCore *= step(gl_FragCoord.z, glareSceneDepth + 0.000001);
+    }
+    reflection += glareCore;
     reflection = reflection / (1.0 + reflection);
     vec3 color = wetBase * vertexColor.rgb * ColorModulator.rgb * lightMapColor.rgb;
     color += reflection * (1.0 - color);

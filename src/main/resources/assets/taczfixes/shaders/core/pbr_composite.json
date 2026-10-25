@@ -6,6 +6,12 @@
     },
     {
       "name": "ScopeMask"
+    },
+    {
+      "name": "EmissionDepth"
+    },
+    {
+      "name": "SceneDepth"
     }
   ],
   "uniforms": [
