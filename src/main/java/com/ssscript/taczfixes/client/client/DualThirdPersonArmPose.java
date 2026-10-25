@@ -43,42 +43,12 @@ public final class DualThirdPersonArmPose {
                 || entity.getPose() == Pose.FALL_FLYING) {
             return false;
         }
-        if (offGun && !mainGun) {
-            GunDisplayInstance display = OffhandDisplayManager.getOrCreate(offhand);
-            if (display == null) {
-                display = TimelessAPI.getGunDisplay(offhand).orElse(null);
-            }
-            if (display == null) {
-                return false;
-            }
-            float rightX = rightArm.x;
-            float rightY = rightArm.y;
-            float rightZ = rightArm.z;
-            float rightXRot = rightArm.xRot;
-            float rightYRot = rightArm.yRot;
-            float rightZRot = rightArm.zRot;
-            ThirdPersonManager.getAnimation(display.getThirdPersonAnimation())
-                    .animateGunHold(entity, rightArm, leftArm, body, head);
-            leftArm.x = -rightArm.x;
-            leftArm.y = rightArm.y;
-            leftArm.z = rightArm.z;
-            leftArm.xRot = rightArm.xRot;
-            leftArm.yRot = (2.0f * head.yRot) - rightArm.yRot;
-            leftArm.zRot = -rightArm.zRot;
-            rightArm.x = rightX;
-            rightArm.y = rightY;
-            rightArm.z = rightZ;
-            rightArm.xRot = rightXRot;
-            rightArm.yRot = rightYRot;
-            rightArm.zRot = rightZRot;
-        } else {
-            leftArm.x = -rightArm.x;
-            leftArm.y = rightArm.y;
-            leftArm.z = rightArm.z;
-            leftArm.xRot = rightArm.xRot;
-            leftArm.yRot = (2.0f * head.yRot) - rightArm.yRot;
-            leftArm.zRot = -rightArm.zRot;
-        }
+        leftArm.x = -rightArm.x;
+        leftArm.y = rightArm.y;
+        leftArm.z = rightArm.z;
+        leftArm.xRot = rightArm.xRot;
+        leftArm.yRot = (2.0f * head.yRot) - rightArm.yRot;
+        leftArm.zRot = -rightArm.zRot;
         if (entity.swinging && entity.swingingArm == InteractionHand.OFF_HAND) {
             float attack = entity.getAttackAnim(Minecraft.getInstance().getFrameTime());
             if (attack > 0.0F) {

@@ -1525,7 +1525,11 @@ public final class DualWieldClient {
                 state.beginReload(stack, sourceStackId, empty, duration);
                 NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandReload(sourceStackId, state.getReloadRequestId()));
                 SoundPlayManager.stopPlayGunSound();
-                OffhandDisplayManager.triggerNative("reload");
+                if (com.ssscript.taczfixes.common.data.TaczFixesDataManager.usesNativeReloadAnimation(stack)) {
+                    OffhandDisplayManager.triggerNative("reload");
+                } else {
+                    DualReloadAnimationManager.beginOffhandReload(player, stack, data, feedTime);
+                }
                 playOffhandThirdPersonPlayerAnimation(player, stack, AnimationName.RELOAD_UPPER, AnimationName.LIE_RELOAD);
                 if (display != null) {
                     DualReloadSoundFilter.playOffhandLegacyReload(player, stack, display, empty);
