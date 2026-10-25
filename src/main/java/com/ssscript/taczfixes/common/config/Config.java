@@ -94,11 +94,8 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MIN;
     public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
-    /** 枪械类型（tacz 枪械 data 的 type 字段）名称, 与 GunTabType 一致。 */
     public static final String[] GUN_LIGHT_TYPE_NAMES = {"pistol", "sniper", "rifle", "shotgun", "smg", "rpg", "mg", "dmr"};
-    /** 每种枪械类型的全局光照覆盖配置(time>0 时覆盖通用全局值)。 */
     public static final java.util.Map<String, GunLightTypeConfig> GUN_LIGHT_TYPE_CONFIGS = new java.util.LinkedHashMap<>();
-    /** 枪口配件未配置 light 字段时, 对光照参数的全局增量调整。 */
     public static final GunLightTypeConfig GUN_LIGHT_MUZZLE_ADJUST;
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
@@ -146,6 +143,9 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FACTOR;
     public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FIRE_EXPANSION;
     public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_RECOVER_SECONDS;
+    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_STILL_FACTOR;
+    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_MAX;
+    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_MAX_FACTOR;
     public static final ForgeConfigSpec.BooleanValue BLOCKED_CROSSHAIR_ENABLED;
     public static final ForgeConfigSpec.IntValue BLOCKED_CROSSHAIR_SIZE;
     public static final ForgeConfigSpec.BooleanValue GUN_SPELL_ENABLED;
@@ -494,11 +494,11 @@ public class Config {
                 .comment("回正散布的速度。默认值：0.1")
                 .defineInRange("decay", 0.10, 0.0, 1.0);
         JUMP_INACCURACY_DEFAULT_MULTIPLIER = BUILDER
-                .comment("枪械data未配置 jump_inaccuracy 时默认的滞空散布倍率。默认值：1.0")
-                .defineInRange("jump_default_multiplier", 1.0, 0.0, 10.0);
+                .comment("默认滞空散布倍率。默认值：1.2")
+                .defineInRange("jump_default_multiplier", 1.2, 0.0, 10.0);
         JUMP_INACCURACY_DEFAULT_SPEED = BUILDER
-                .comment("枪械data未配置 jump_inaccuracy 时默认的每tick涨落速度。默认值：0.1")
-                .defineInRange("jump_default_speed", 0.1, 0.0001, 1.0);
+                .comment("默认滞空散布回正速度。默认值：0.2")
+                .defineInRange("jump_default_speed", 0.2, 0.01, 1.0);
         BUILDER.pop();
         SPECS.put("inaccuracy_modifier", BUILDER.build());
 
@@ -607,7 +607,6 @@ public class Config {
         BUILDER.push("gun_spell");
         GUN_SPELL_ENABLED = BUILDER
                 .comment("是否允许通过奥术铁砧为枪械注入 Iron's Spells 'n Spellbooks 的法术。",
-                        "注入后开火时发动(需冷却完毕且有足够法力值); 需要锁定目标的法术在子弹命中实体时对目标发动。",
                         "需要 Iron's Spells 'n Spellbooks 模组。默认值：true")
                 .define("enabled", true);
         GUN_SPELL_COUNT = BUILDER
@@ -617,10 +616,10 @@ public class Config {
                 .comment("枪械发动法术后的最小触发冷却(秒); 冷却期间无法再次触发法术。默认值：0.5")
                 .defineInRange("cooldown", 0.5, 0.0, 3600.0);
         GUN_SPELL_MANA_MULTIPLIER = BUILDER
-                .comment("枪械注入法术的法力值消耗倍率, 也受枪械 data 的 imbuement.mana_consume_multiplier 覆盖。默认值：0.5")
+                .comment("枪械注入法术的法力值消耗倍率。默认值：0.5")
                 .defineInRange("mana_consume_multiplier", 0.5, 0.0, 100.0);
         GUN_SPELL_COOLDOWN_MULTIPLIER = BUILDER
-                .comment("枪械注入法术的自身冷却时间倍率(不影响最小触发冷却), 也受枪械 data 的 imbuement.cooldown_multiplier 覆盖。默认值：0.5")
+                .comment("枪械注入法术的自身冷却时间倍率。默认值：0.5")
                 .defineInRange("cooldown_multiplier", 0.5, 0.0, 100.0);
         BUILDER.pop();
         SPECS.put("gun_spell", BUILDER.build());
@@ -639,7 +638,7 @@ public class Config {
                 .defineInRange("zoom_alt_multiplier", 0.25, 0.1, 1.0);
         STEPLESS_ZOOM_GLOBAL_ENABLED = BUILDER
                 .comment("是否开启全局无极变倍。默认值：false",
-                        "开启后，scope 类型、能切换倍率、不是组合瞄具(多个不同视图)且未配置 stepless 字段的瞄具也会启用无极变倍。")
+                        "开启后筒状瞄具默认启用无极变倍。")
                 .define("global_enabled", false);
         STEPLESS_ZOOM_GLOBAL_SPEED = BUILDER
                 .comment("全局无极变倍的倍率调整速度。默认值：0.5")
@@ -657,16 +656,25 @@ public class Config {
                 .comment("动态准星扩散强度倍率。默认值：1.0")
                 .defineInRange("factor", 1.0, 0.0, 5.0);
         DYNAMIC_CROSSHAIR_FIRE_EXPANSION = BUILDER
-                .comment("开火瞬间准星扩散倍率。默认值：1.8")
-                .defineInRange("fire_expansion", 1.8, 1.0, 3.0);
+                .comment("开火瞬间准星扩散倍率。默认值：2.0")
+                .defineInRange("fire_expansion", 2.0, 1.0, 10.0);
         DYNAMIC_CROSSHAIR_RECOVER_SECONDS = BUILDER
-                .comment("开火扩散的回正时间。默认值：0.2")
-                .defineInRange("recover_seconds", 0.2, 0.02, 2.0);
+                .comment("������ɢ�Ļ���ʱ�䡣Ĭ��ֵ��0.25")
+                .defineInRange("recover_seconds", 0.25, 0.0, 2.0);
+        DYNAMIC_CROSSHAIR_SPEED_STILL_FACTOR = BUILDER
+                .comment("静止准星扩散倍率。默认值：0.75")
+                .defineInRange("speed_still_factor", 0.75, 0.0, 5.0);
+        DYNAMIC_CROSSHAIR_SPEED_MAX = BUILDER
+                .comment("最大准星扩散所需速度。默认值：6.0")
+                .defineInRange("speed_max", 6.0, 0.1, 50.0);
+        DYNAMIC_CROSSHAIR_SPEED_MAX_FACTOR = BUILDER
+                .comment("最大准星扩散倍率。默认值：1.25")
+                .defineInRange("speed_max_factor", 1.25, 0.0, 5.0);
         BLOCKED_CROSSHAIR_ENABLED = BUILDER
-                .comment("是否启用禁止符号(水下/方块阻挡时替代准星)。默认值：true")
+                .comment("是否启用阻挡提示。默认值：true")
                 .define("blocked_crosshair_enabled", true);
         BLOCKED_CROSSHAIR_SIZE = BUILDER
-                .comment("禁止符号的显示大小。默认值：10")
+                .comment("阻挡提示的显示大小。默认值：10")
                 .defineInRange("blocked_crosshair_size", 10, 4, 32);
         BUILDER.pop();
         SPECS.put("dynamic_crosshair", BUILDER.build());
@@ -696,8 +704,7 @@ public class Config {
                 .define("show_recolor_button", true);
 
         REFIT_SLOT_SIZE = BUILDER
-                .comment("配件槽尺寸: 1.0 为当前值, 0.5 为边长一半, 2.0 为边长两倍；",
-                        "槽位/改装点数提示/候选配件/候选适配器位置会随尺寸移动, 槽位图标同步缩放。默认值：1.0")
+                .comment("配件槽尺寸。默认值：1.0")
                 .defineInRange("slot_size", 1.0, 0.5, 2.0);
 
         REFIT_TOAST_DURATION_MS = BUILDER
@@ -717,11 +724,11 @@ public class Config {
                 .defineInRange("view_zoom_max", 4.0, 1.0, 100.0);
 
         REFIT_BUTTON_OPACITY = BUILDER
-                .comment("改装界面按钮（查看当前改装/保存当前方案/加载改装方案）背景的不透明度。0=全透明，1=不透明。默认值：0.45")
+                .comment("改装界面按钮背景的不透明度。0=全透明，1=不透明。默认值：0.45")
                 .defineInRange("button_opacity", 0.45, 0.0, 1.0);
 
         REFIT_POINT_DEFAULT_CONSUME = BUILDER
-                .comment("配件改装点数的全局默认消耗。data中未填写refit_point_consume字段的配件使用此值。默认值：0")
+                .comment("配件改装点数的全局默认消耗。默认值：0")
                 .defineInRange("point_default_consume", 0, 0, 100);
 
         RECOLOR_HUE_WEIGHT = BUILDER

@@ -307,6 +307,9 @@ public class ConfigScreen {
         dbl_(cat, entry, "dynamic_crosshair.factor", Config.DYNAMIC_CROSSHAIR_FACTOR);
         dbl_(cat, entry, "dynamic_crosshair.fire_expansion", Config.DYNAMIC_CROSSHAIR_FIRE_EXPANSION);
         dbl_(cat, entry, "dynamic_crosshair.recover_seconds", Config.DYNAMIC_CROSSHAIR_RECOVER_SECONDS);
+        dbl_(cat, entry, "dynamic_crosshair.speed_still_factor", Config.DYNAMIC_CROSSHAIR_SPEED_STILL_FACTOR);
+        dbl_(cat, entry, "dynamic_crosshair.speed_max", Config.DYNAMIC_CROSSHAIR_SPEED_MAX);
+        dbl_(cat, entry, "dynamic_crosshair.speed_max_factor", Config.DYNAMIC_CROSSHAIR_SPEED_MAX_FACTOR);
         bool_(cat, entry, "dynamic_crosshair.blocked_crosshair_enabled", Config.BLOCKED_CROSSHAIR_ENABLED);
         int_(cat, entry, "dynamic_crosshair.blocked_crosshair_size", Config.BLOCKED_CROSSHAIR_SIZE);
     }

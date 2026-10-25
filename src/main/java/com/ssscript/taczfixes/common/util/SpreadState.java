@@ -39,10 +39,15 @@ public class SpreadState {
         Map<ResourceLocation, Entry> perGun = STATES.get(shooter.getUUID());
         Entry entry = perGun == null ? null : perGun.get(gunId);
         int currentStacks = entry == null ? 0 : Math.max(0, entry.stacks - 1);
+        return applyPenalty(baseInaccuracy, currentStacks, params);
+    }
+
+    public static float applyPenalty(float baseInaccuracy, int appliedStacks, InaccuracyParams params) {
+        int stacks = Math.max(0, appliedStacks);
         double shotPercent = params != null ? params.shotPercent : Config.SPREAD_RAMP_INCREMENT.get();
         double shotAddend = params != null ? params.shotAddend : Config.SPREAD_RAMP_FLAT_INCREMENT.get();
-        float percMultiplier = 1.0f + (float) (currentStacks * shotPercent);
-        float flatAdd = (float) (currentStacks * shotAddend);
+        float percMultiplier = 1.0f + (float) (stacks * shotPercent);
+        float flatAdd = (float) (stacks * shotAddend);
         return baseInaccuracy * percMultiplier + flatAdd;
     }
 

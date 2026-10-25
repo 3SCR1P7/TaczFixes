@@ -41,7 +41,6 @@ out vec4 fragColor;
 
 vec3 safeNormalize(vec3 v) { return v * inversesqrt(max(dot(v, v), 1e-8)); }
 
-// Derivative tangent frame works with mirrored Bedrock UVs; no extra vertex attributes needed.
 vec3 mappedNormal(vec3 n, vec2 xy) {
     vec3 dp1 = dFdx(viewPosition), dp2 = dFdy(viewPosition);
     vec2 duv1 = dFdx(texCoord0), duv2 = dFdy(texCoord0);

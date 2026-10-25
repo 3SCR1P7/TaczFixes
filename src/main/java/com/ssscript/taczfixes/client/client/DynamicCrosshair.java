@@ -47,12 +47,15 @@ public final class DynamicCrosshair {
     private static final float BASE_OFFSET_PIXELS = 8.0f;
     private static final float MAX_OFFSET_PIXELS = 18.0f;
     private static final float MAX_RATIO = 3.0f;
+    private static final float REFERENCE_HIP_INACCURACY = 4.5f;
     private static final float SMOOTH_TAU_SECONDS = 0.07f;
     private static final float MIN_RECOVER_SECONDS = 0.02f;
     private static final float JUMP_TAU_SECONDS = 0.15f;
+    private static final float SPEED_FACTOR_TAU_SECONDS = 0.08f;
 
     private static float displayedRatio;
     private static float fireImpulse;
+    private static float speedFactor = 1.0f;
     private static float jumpFactor = 1.0f;
     private static long lastFrameNanos = System.nanoTime();
     /** 带迟滞的移动状态: TaCZ 的 MOVE/STAND 判定依赖瞬时速度采样, 采样抖动会让准星在移动/静止间抽搐。 */
@@ -67,6 +70,7 @@ public final class DynamicCrosshair {
         if (expansion > 1.0f) {
             fireImpulse = Math.max(fireImpulse, expansion - 1.0f);
         }
+        CrosshairSpreadRamp.onShot(player, stack);
     }
 
     /** 绘制动态准星, 返回 true 表示已接管渲染。 */
@@ -123,6 +127,7 @@ public final class DynamicCrosshair {
         LocalPlayer player = Minecraft.getInstance().player;
         updateJumpFactor(player, dt);
         updateMovingState(player);
+        float movementFactor = updateSpeedFactor(player, dt);
         float targetRatio = 0.0f;
         if (player != null) {
             targetRatio = spreadRatio(player, player.getMainHandItem());
@@ -131,9 +136,9 @@ public final class DynamicCrosshair {
         displayedRatio += (targetRatio - displayedRatio) * alpha;
         float factor = Config.DYNAMIC_CROSSHAIR_FACTOR.get().floatValue();
         float base = Math.min(displayedRatio * factor * BASE_OFFSET_PIXELS, MAX_OFFSET_PIXELS);
-        // 开火扩散 = 当前散布宽度 + (倍率-1) * 基准值, 而不是把当前大小乘以倍率
+        // ������ɢ = ��ǰɢ������ + (����-1) * ��׼ֵ, �����ǰѵ�ǰ��С���Ա���
         float impulse = fireImpulse * factor * BASE_OFFSET_PIXELS;
-        return base + impulse;
+        return (base + impulse) * movementFactor;
     }
 
     /**
@@ -152,6 +157,23 @@ public final class DynamicCrosshair {
         } else if (speed > 0.06) {
             movingState = true;
         }
+    }
+
+    private static float updateSpeedFactor(LocalPlayer player, float dt) {
+        float still = Config.DYNAMIC_CROSSHAIR_SPEED_STILL_FACTOR.get().floatValue();
+        float maxFactor = Config.DYNAMIC_CROSSHAIR_SPEED_MAX_FACTOR.get().floatValue();
+        float maxSpeed = Config.DYNAMIC_CROSSHAIR_SPEED_MAX.get().floatValue();
+        float target = still;
+        if (player != null) {
+            double dx = player.getX() - player.xo;
+            double dz = player.getZ() - player.zo;
+            double speed = Math.sqrt(dx * dx + dz * dz) * 20.0;
+            float t = maxSpeed <= 0.0f ? 1.0f : Mth.clamp((float) (speed / maxSpeed), 0.0f, 1.0f);
+            target = Mth.lerp(t, still, maxFactor);
+        }
+        float alpha = 1.0f - (float) Math.exp(-dt / SPEED_FACTOR_TAU_SECONDS);
+        speedFactor += (target - speedFactor) * alpha;
+        return speedFactor;
     }
 
     /** 滞空散布倍率平滑过渡, 避免落地/起跳和 onGround 抖动造成准星抽搐。 */
@@ -174,10 +196,6 @@ public final class DynamicCrosshair {
         jumpFactor += (target - jumpFactor) * alpha;
     }
 
-    /**
-     * 当前散布相对该枪站立散布的倍率(站立=1, 移动>1, 潜行/趴下<1, 滞空再乘滞空倍率)。
-     * 相比固定区间归一化, 这样滞空倍率、配件等造成的整体散布变化也会反映为准星扩散。
-     */
     private static float spreadRatio(LocalPlayer player, ItemStack stack) {
         if (player == null || stack == null || stack.isEmpty()) {
             return 0.0f;
@@ -224,12 +242,8 @@ public final class DynamicCrosshair {
             }
         }
         base *= jumpFactor;
-        Float standValue = table.get(InaccuracyType.STAND);
-        float reference = standValue == null ? base : standValue.floatValue();
-        if (reference <= 1.0e-3f) {
-            reference = Math.max(base, 0.05f);
-        }
-        return Mth.clamp(base / reference, 0.0f, MAX_RATIO);
+        base = CrosshairSpreadRamp.modifyInaccuracy(player, gun.getGunId(stack), base);
+        return Mth.clamp(base / REFERENCE_HIP_INACCURACY, 0.0f, MAX_RATIO);
     }
 
     /**
