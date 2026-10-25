@@ -28,7 +28,7 @@ public abstract class MixinDualItemInHandLayer<T extends LivingEntity, M extends
 
     @Inject(method = {"render(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;ILnet/minecraft/world/entity/LivingEntity;FFFFFF)V"}, at = {@At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/entity/layers/ItemInHandLayer;renderArmWithItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", ordinal = ServerMessageOffhandActionResult.ACTION_RELOAD, shift = At.Shift.BEFORE)}, require = ServerMessageOffhandActionResult.ACTION_RELOAD)
     private void dualWield$renderOffhandBeforeTaczCancellation(PoseStack poseStack, MultiBufferSource buffer, int packedLight, LivingEntity entity, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callback) {
-        if (!DualThirdPersonRenderer.isDualMode(entity)) {
+        if (!DualThirdPersonRenderer.usesAnimatedOffhand(entity)) {
             return;
         }
         renderAtHand(entity, entity.getOffhandItem(), HumanoidArm.LEFT, poseStack, buffer, packedLight, true);
@@ -36,7 +36,7 @@ public abstract class MixinDualItemInHandLayer<T extends LivingEntity, M extends
 
     @Inject(method = {"renderArmWithItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"}, at = {@At("HEAD")}, cancellable = true)
     private void dualWield$renderPhysicalHands(LivingEntity entity, ItemStack stack, ItemDisplayContext displayContext, HumanoidArm arm, PoseStack poseStack, MultiBufferSource buffer, int packedLight, CallbackInfo callback) {
-        if (!DualThirdPersonRenderer.isDualMode(entity)) {
+        if (!DualThirdPersonRenderer.usesAnimatedOffhand(entity)) {
             return;
         }
         ItemStack handStack = arm == HumanoidArm.LEFT ? entity.getOffhandItem() : entity.getMainHandItem();

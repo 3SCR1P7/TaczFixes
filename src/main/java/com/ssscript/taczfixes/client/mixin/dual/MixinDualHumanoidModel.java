@@ -16,6 +16,10 @@ public abstract class MixinDualHumanoidModel<T extends LivingEntity> {
 
     @Shadow
     @Final
+    public ModelPart body;
+
+    @Shadow
+    @Final
     public ModelPart head;
 
     @Shadow
@@ -28,6 +32,6 @@ public abstract class MixinDualHumanoidModel<T extends LivingEntity> {
 
     @Inject(method = {"setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"}, at = {@At("TAIL")})
     private void dualWield$mirrorRightArmAnimation(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callback) {
-        DualThirdPersonArmPose.mirrorRightArm(entity, this.head, this.rightArm, this.leftArm);
+        DualThirdPersonArmPose.mirrorRightArm(entity, this.body, this.head, this.rightArm, this.leftArm);
     }
 }

@@ -829,6 +829,14 @@ public final class DualWieldClient {
             return;
         }
         ItemStack stack = player.getItemInHand(hand);
+        if (hand == InteractionHand.OFF_HAND && stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
+            net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
+            if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit) {
+                Minecraft.getInstance().gameMode.useItemOn(player, hand, blockHit);
+                player.swing(hand, true);
+                return;
+            }
+        }
         if (hand == InteractionHand.OFF_HAND && stack.getUseDuration() > 0) {
             if (Minecraft.getInstance().getConnection() != null) {
                 Minecraft.getInstance().getConnection().send(
@@ -1517,11 +1525,7 @@ public final class DualWieldClient {
                 state.beginReload(stack, sourceStackId, empty, duration);
                 NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandReload(sourceStackId, state.getReloadRequestId()));
                 SoundPlayManager.stopPlayGunSound();
-                if (com.ssscript.taczfixes.common.data.TaczFixesDataManager.usesNativeReloadAnimation(stack)) {
-                    OffhandDisplayManager.triggerNative("reload");
-                } else {
-                    DualReloadAnimationManager.beginOffhandReload(player, stack, data, feedTime);
-                }
+                OffhandDisplayManager.triggerNative("reload");
                 playOffhandThirdPersonPlayerAnimation(player, stack, AnimationName.RELOAD_UPPER, AnimationName.LIE_RELOAD);
                 if (display != null) {
                     DualReloadSoundFilter.playOffhandLegacyReload(player, stack, display, empty);

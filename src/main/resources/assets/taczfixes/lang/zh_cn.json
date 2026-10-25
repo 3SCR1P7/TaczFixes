@@ -239,6 +239,7 @@
     "config.taczfixes.entry.gun_spell.cooldown_multiplier":  "法术冷却倍率",
     "config.taczfixes.entry.compat.disable_arcana_magnification_for_sight":  "非筒状瞄具禁用镜内放大",
     "config.taczfixes.entry.compat.parcool_slide_as_move_inaccuracy":  "滑铲按移动散布计算",
+    "config.taczfixes.entry.compat.disable_parcool_charge_jump_animation":  "持枪时禁用蓄力跳蓄力动画",
     "config.taczfixes.entry.compat.disable_tracking_after_penetration":  "穿透实体后失去追踪",
     "config.taczfixes.entry.compat.peek_headshot_height":  "探头头部判定高度",
     "config.taczfixes.entry.compat.ads_interrupt_sprint":  "开镜强制打断疾跑",

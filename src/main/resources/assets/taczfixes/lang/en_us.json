@@ -241,6 +241,7 @@
     "config.taczfixes.entry.gun_spell.cooldown_multiplier":  "Spell Cooldown Multiplier",
     "config.taczfixes.entry.compat.disable_arcana_magnification_for_sight":  "Disable Scope Magnification for Non-Tubular Scopes",
     "config.taczfixes.entry.compat.parcool_slide_as_move_inaccuracy":  "Slide Uses Movement Spread",
+    "config.taczfixes.entry.compat.disable_parcool_charge_jump_animation":  "Disable Charge-Jump Animation When Holding Gun",
     "config.taczfixes.entry.compat.disable_tracking_after_penetration":  "Lose Tracking After Penetrating Entity",
     "config.taczfixes.entry.compat.peek_headshot_height":  "Peek Headshot Height",
     "config.taczfixes.entry.compat.ads_interrupt_sprint":  "ADS Interrupts Sprinting",

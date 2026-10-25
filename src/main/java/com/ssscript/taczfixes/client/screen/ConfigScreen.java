@@ -364,6 +364,7 @@ public class ConfigScreen {
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {
         bool_(cat, entry, "compat.disable_arcana_magnification_for_sight", Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT);
         bool_(cat, entry, "compat.parcool_slide_as_move_inaccuracy", Config.PARCOOL_SLIDE_AS_MOVE_INACCURACY);
+        bool_(cat, entry, "compat.disable_parcool_charge_jump_animation", Config.DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION);
         bool_(cat, entry, "compat.disable_tracking_after_penetration", Config.DISABLE_TRACKING_AFTER_PENETRATION);
         dbl_(cat, entry, "compat.peek_headshot_height", Config.PEEK_HEADSHOT_HEIGHT);
         bool_(cat, entry, "compat.ads_interrupt_sprint", Config.ADS_INTERRUPT_SPRINT);

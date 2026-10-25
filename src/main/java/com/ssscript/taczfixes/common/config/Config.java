@@ -48,6 +48,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
     public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
+    public static final ForgeConfigSpec.BooleanValue DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION;
     public static final ForgeConfigSpec.BooleanValue DISABLE_TRACKING_AFTER_PENETRATION;
     public static final ForgeConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
@@ -835,6 +836,9 @@ public class Config {
                 .comment("滑铲时，应用移动时而非爬行时的腰射散布。默认值：true",
                         "需要ParCool模组。")
                 .define("parcool_slide_as_move_inaccuracy", true);
+        DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION = BUILDER
+                .comment("手持枪械时，是否禁用ParCool蓄力跳跃动画。默认值：true")
+                .define("disable_parcool_charge_jump_animation", true);
         DISABLE_TRACKING_AFTER_PENETRATION = BUILDER
                 .comment("子弹穿透实体后是否失去追踪。默认值：true",
                         "需要GunsmithLib模组的追踪功能。")

@@ -25,7 +25,7 @@ public abstract class MixinDualPlayerModel<T extends LivingEntity> extends Human
 
     @Inject(method = {"setupAnim(Lnet/minecraft/world/entity/LivingEntity;FFFFF)V"}, at = {@At("TAIL")})
     private void dualWield$mirrorPlayerArm(T entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callback) {
-        if (DualThirdPersonArmPose.mirrorRightArm(entity, this.head, this.rightArm, this.leftArm)) {
+        if (DualThirdPersonArmPose.mirrorRightArm(entity, this.body, this.head, this.rightArm, this.leftArm)) {
             this.leftSleeve.copyFrom(this.leftArm);
         }
     }

@@ -69,6 +69,7 @@ public final class OffhandDisplayManager {
     private static final ScriptManager OFFHAND_SCRIPTS = new ScriptManager(new FileToIdConverter("scripts", ".lua"), List.of(new LuaAnimationConstant(), new LuaGunAnimationConstant()));
     private static final ClientOffhandState CLIENT_STATE = new ClientOffhandState();
     private static long putAwayEndTimestamp = -1;
+    private static long lastThirdPersonAnimationTick = Long.MIN_VALUE;
     private static ItemStack putAwayMainStack = ItemStack.EMPTY;
     private static ItemStack putAwayNextMainStack = ItemStack.EMPTY;
     private static ItemStack putAwayNextOffhandStack = ItemStack.EMPTY;
@@ -193,6 +194,12 @@ public final class OffhandDisplayManager {
     }
 
     static void updateThirdPersonAnimation(ItemStack stack, float partialTick) {
+        Minecraft minecraft = Minecraft.getInstance();
+        long tick = minecraft.level == null ? Long.MIN_VALUE : minecraft.level.getGameTime();
+        if (tick != Long.MIN_VALUE && tick == lastThirdPersonAnimationTick) {
+            return;
+        }
+        lastThirdPersonAnimationTick = tick;
         GunDisplayInstance currentDisplay = getOrCreate(stack);
         BedrockGunModel model = currentDisplay == null ? null : currentDisplay.getGunModel();
         if (model == null) {
