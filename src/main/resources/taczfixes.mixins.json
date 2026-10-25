@@ -96,6 +96,7 @@
         "MixinGunSmithTableBlockEntity",
         "MixinBlockDataTaczFixes",
         "MixinTableRecipeTaczFixes",
-        "MixinGunSmithTableRecipeTaczFixes"
+        "MixinGunSmithTableRecipeTaczFixes",
+        "MixinEntityKineticBulletWaterSplash"
     ]
 }

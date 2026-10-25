@@ -752,22 +752,22 @@ public class Config {
                 .comment("是否开启工作台自动合成功能。默认值：true")
                 .define("enabled", true);
         AUTO_CRAFT_BASE_SECONDS = BUILDER
-                .comment("每次自动合成的基础时长（秒）。默认值：0.0")
-                .defineInRange("base_seconds", 0.0, 0.0, 60.0);
+                .comment("每次自动合成的基础时长。默认值：0.1")
+                .defineInRange("base_seconds", 0.1, 0.0, 60.0);
         AUTO_CRAFT_SECONDS_PER_TYPE = BUILDER
-                .comment("配方每有 1 种所需材料，合成时长增加的秒数。默认值：0.25")
+                .comment("配方中每种材料增加的时长。默认值：0.25")
                 .defineInRange("seconds_per_type", 0.25, 0.0, 10.0);
         AUTO_CRAFT_SECONDS_PER_ITEM = BUILDER
-                .comment("配方所需材料总数每有 1 个，合成时长增加的秒数。默认值：0.05")
+                .comment("配方中每个材料增加的时长。默认值：0.05")
                 .defineInRange("seconds_per_item", 0.05, 0.0, 10.0);
         AUTO_CRAFT_COOLDOWN_SECONDS = BUILDER
-                .comment("ÿ�κϳɽ����ĵ���ȴʱ�����룩��Ĭ��ֵ��0.1")
+                .comment("每次完成合成后的冷却时长。默认值：0.1")
                 .defineInRange("cooldown_seconds", 0.1, 0.0, 60.0);
         GUN_SMITH_TABLE_POWER_MAX = BUILDER
-                .comment("Default FE capacity of a gun smith table. Default: 0")
+                .comment("枪械工作台容纳FE的上限。默认值：0")
                 .defineInRange("power_capacity", 0, 0, Integer.MAX_VALUE);
         GUN_SMITH_TABLE_AUTO_CONSUMPTION = BUILDER
-                .comment("Default automatic crafting FE consumption in FE/t. Default: 0")
+                .comment("枪械工作台自动合成消耗FE的速度。默认值：0")
                 .defineInRange("auto_consumption", 0, 0, Integer.MAX_VALUE);
         BUILDER.pop();
         SPECS.put("auto_craft", BUILDER.build());
@@ -1385,8 +1385,8 @@ public class Config {
                 .comment("上肢耐力消耗倍率的默认值。默认值：1.0")
                 .defineInRange("consumption_multiplier", 1.0, 0.0, 100000.0);
         AIMING_STAMINA_RECOVERY = BUILDER
-                .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：20")
-                .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
+                .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：40")
+                .defineInRange("recovery_per_second", 40.0, 0.0, 100000.0);
         AIMING_STAMINA_RECOVERY_DELAY_MS = BUILDER
                 .comment("未开镜持续多少毫秒后开始恢复上肢耐力。默认值：1000")
                 .defineInRange("recovery_delay_ms", 1000, 0, 600000);
