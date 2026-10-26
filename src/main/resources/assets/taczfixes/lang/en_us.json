@@ -57,6 +57,7 @@
     "config.taczfixes.category.dual_wield": "Dual Wield",
     "config.taczfixes.category.aiming_stamina": "Aiming Stamina",
     "config.taczfixes.category.stamina": "Stamina",
+    "config.taczfixes.category.dynamic_crosshair":  "Dynamic Crosshair",
 
     "config.taczfixes.category.player": "Player",
     "config.taczfixes.category.gun_types": "Gun Types",

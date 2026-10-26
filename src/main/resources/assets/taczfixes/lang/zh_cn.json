@@ -59,6 +59,7 @@
     "config.taczfixes.category.dual_wield":  "双持功能",
     "config.taczfixes.category.aiming_stamina":  "上肢耐力",
     "config.taczfixes.category.stamina":  "耐力系统",
+    "config.taczfixes.category.dynamic_crosshair":  "动态准星",
 
     "config.taczfixes.category.player":  "玩家",
     "config.taczfixes.category.gun_types":  "枪械类型",
