@@ -19,7 +19,7 @@ import net.minecraftforge.eventbus.api.SubscribeEvent;
  */
 public class GunPackMenuButtonHandler {
     /** TaCZ 默认枪包 logo: GunPackIconLoader 会自动在 textures/ 下查找, 路径不含 textures 前缀。 */
-    private static final ResourceLocation DEFAULT_LOGO = new ResourceLocation("tacz", "pack");
+    private static final ResourceLocation DEFAULT_LOGO = ResourceLocation.fromNamespaceAndPath("tacz", "pack");
 
     @SubscribeEvent
     public void onScreenInit(ScreenEvent.Init.Post event) {

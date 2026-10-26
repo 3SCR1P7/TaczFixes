@@ -13,7 +13,7 @@ public final class GunSmithTableEnergyHandler {
     @SubscribeEvent
     public void onAttachBlockEntityCapabilities(AttachCapabilitiesEvent<BlockEntity> event) {
         if (event.getObject() instanceof GunSmithTableBlockEntity table) {
-            event.addCapability(new ResourceLocation(TaczFixesMod.MOD_ID, "gun_smith_table_energy"),
+            event.addCapability(ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "gun_smith_table_energy"),
                     new GunSmithTableEnergyProvider(table));
         }
     }

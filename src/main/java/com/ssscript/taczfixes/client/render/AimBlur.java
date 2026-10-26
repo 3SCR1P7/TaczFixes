@@ -69,7 +69,7 @@ public final class AimBlur {
         shader = null;
         uMaskStart = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "aim_blur"), DefaultVertexFormat.POSITION_TEX),
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "aim_blur"), DefaultVertexFormat.POSITION_TEX),
                 s -> {
                     shader = s;
                     uMaskStart = s.safeGetUniform("MaskStart");

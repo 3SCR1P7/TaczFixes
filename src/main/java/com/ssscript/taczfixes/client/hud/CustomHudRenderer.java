@@ -33,9 +33,9 @@ public final class CustomHudRenderer {
     private static final java.text.DecimalFormat CURRENT_AMMO_FORMAT = new java.text.DecimalFormat("000");
     private static final java.text.DecimalFormat CURRENT_AMMO_FORMAT_PERCENT = new java.text.DecimalFormat("000%");
     private static final java.text.DecimalFormat INVENTORY_AMMO_FORMAT = new java.text.DecimalFormat("0000");
-    private static final ResourceLocation FIRE_MODE_SEMI = new ResourceLocation("tacz", "textures/hud/fire_mode_semi.png");
-    private static final ResourceLocation FIRE_MODE_AUTO = new ResourceLocation("tacz", "textures/hud/fire_mode_auto.png");
-    private static final ResourceLocation FIRE_MODE_BURST = new ResourceLocation("tacz", "textures/hud/fire_mode_burst.png");
+    private static final ResourceLocation FIRE_MODE_SEMI = ResourceLocation.fromNamespaceAndPath("tacz", "textures/hud/fire_mode_semi.png");
+    private static final ResourceLocation FIRE_MODE_AUTO = ResourceLocation.fromNamespaceAndPath("tacz", "textures/hud/fire_mode_auto.png");
+    private static final ResourceLocation FIRE_MODE_BURST = ResourceLocation.fromNamespaceAndPath("tacz", "textures/hud/fire_mode_burst.png");
 
     private CustomHudRenderer() {
     }

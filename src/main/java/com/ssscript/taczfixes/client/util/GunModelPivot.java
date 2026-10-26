@@ -159,7 +159,7 @@ public final class GunModelPivot {
     }
 
     private static float[] readJsonPivot(ResourceLocation gunId) {
-        ResourceLocation geoPath = new ResourceLocation(gunId.getNamespace(),
+        ResourceLocation geoPath = ResourceLocation.fromNamespaceAndPath(gunId.getNamespace(),
                 "geo_models/gun/" + gunId.getPath() + "_geo.json");
         Optional<Resource> res = Minecraft.getInstance().getResourceManager().getResource(geoPath);
         if (res.isEmpty()) return null;

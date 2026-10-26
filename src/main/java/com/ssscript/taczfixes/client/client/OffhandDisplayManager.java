@@ -709,7 +709,7 @@ public final class OffhandDisplayManager {
     private static void replaceWithIndependentStateMachine(GunDisplayInstance target, GunDisplay rawDisplay) {
         ResourceLocation scriptId = rawDisplay.getStateMachineLocation();
         if (scriptId == null) {
-            scriptId = new ResourceLocation("tacz", "default_state_machine");
+            scriptId = ResourceLocation.fromNamespaceAndPath("tacz", "default_state_machine");
         }
         LuaTable script = OFFHAND_SCRIPTS.getScript(scriptId);
         if (script == null) {

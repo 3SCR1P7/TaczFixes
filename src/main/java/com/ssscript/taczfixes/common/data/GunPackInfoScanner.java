@@ -25,7 +25,7 @@ import java.util.zip.ZipFile;
 public final class GunPackInfoScanner {
     private static final String DEFAULT_PACK_DIR = "tacz_default_gun";
     private static final String DEFAULT_PACK_NAMESPACE = "tacz";
-    private static final ResourceLocation FALLBACK_LOGO = new ResourceLocation("tacz", "textures/pack.png");
+    private static final ResourceLocation FALLBACK_LOGO = ResourceLocation.fromNamespaceAndPath("tacz", "textures/pack.png");
 
     public record PackInfoData(String id, String name, Path path, Path iconPath, Component displayName,
                                Component description, ResourceLocation logo) {

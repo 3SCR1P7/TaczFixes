@@ -26,7 +26,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GunSmithTableScreen.class)
 public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implements AutoCraftScreenAccess {
 
-    private static final ResourceLocation TACZFIXES_NO_RECIPE = new ResourceLocation("taczfixes", "none");
+    private static final ResourceLocation TACZFIXES_NO_RECIPE = ResourceLocation.fromNamespaceAndPath("taczfixes", "none");
 
     @Shadow(remap = false)
     @Nullable

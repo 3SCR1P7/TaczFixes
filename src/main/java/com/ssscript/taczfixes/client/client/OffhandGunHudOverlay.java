@@ -48,9 +48,9 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
 
     @Nullable
     private static ResourceLocation cachedGunId;
-    private static final ResourceLocation SEMI = new ResourceLocation("tacz", "textures/hud/fire_mode_semi.png");
-    private static final ResourceLocation AUTO = new ResourceLocation("tacz", "textures/hud/fire_mode_auto.png");
-    private static final ResourceLocation BURST = new ResourceLocation("tacz", "textures/hud/fire_mode_burst.png");
+    private static final ResourceLocation SEMI = ResourceLocation.fromNamespaceAndPath("tacz", "textures/hud/fire_mode_semi.png");
+    private static final ResourceLocation AUTO = ResourceLocation.fromNamespaceAndPath("tacz", "textures/hud/fire_mode_auto.png");
+    private static final ResourceLocation BURST = ResourceLocation.fromNamespaceAndPath("tacz", "textures/hud/fire_mode_burst.png");
     private static final DecimalFormat CURRENT_AMMO_FORMAT = new DecimalFormat("000");
     private static final DecimalFormat CURRENT_AMMO_FORMAT_PERCENT = new DecimalFormat("000%");
     private static final DecimalFormat INVENTORY_AMMO_FORMAT = new DecimalFormat("0000");

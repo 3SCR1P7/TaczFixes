@@ -9,7 +9,7 @@ import net.minecraftforge.network.NetworkEvent;
 import java.util.function.Supplier;
 
 public class ClientMessageAutoCraft {
-    private static final ResourceLocation NONE = new ResourceLocation("taczfixes", "none");
+    private static final ResourceLocation NONE = ResourceLocation.fromNamespaceAndPath("taczfixes", "none");
 
     private final int containerId;
     private final ResourceLocation recipeId;

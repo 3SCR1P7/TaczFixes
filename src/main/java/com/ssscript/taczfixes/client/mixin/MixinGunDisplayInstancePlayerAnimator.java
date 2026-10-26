@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(targets = {"com.tacz.guns.client.resource.GunDisplayInstance"}, remap = false)
 /* 双持时把 minigun 类型动画的枪械按普通枪械处理 (第三人称 player_animation 资源换成 rifle_default)。 */
 public abstract class MixinGunDisplayInstancePlayerAnimator {
-    private static final ResourceLocation TACZFIXES$RIFLE_DEFAULT_PLAYER_ANIMATION = new ResourceLocation("tacz", "rifle_default.player_animation");
+    private static final ResourceLocation TACZFIXES$RIFLE_DEFAULT_PLAYER_ANIMATION = ResourceLocation.fromNamespaceAndPath("tacz", "rifle_default.player_animation");
 
     private static final String TACZFIXES$MINIGUN = "minigun";
     private static final String TACZFIXES$DEFAULT_THIRD_PERSON_ANIMATION = "default";

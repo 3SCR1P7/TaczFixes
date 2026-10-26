@@ -136,7 +136,6 @@ public final class DynamicCrosshair {
         displayedRatio += (targetRatio - displayedRatio) * alpha;
         float factor = Config.DYNAMIC_CROSSHAIR_FACTOR.get().floatValue();
         float base = Math.min(displayedRatio * factor * BASE_OFFSET_PIXELS, MAX_OFFSET_PIXELS);
-        // ������ɢ = ��ǰɢ������ + (����-1) * ��׼ֵ, �����ǰѵ�ǰ��С���Ա���
         float impulse = fireImpulse * factor * BASE_OFFSET_PIXELS;
         return (base + impulse) * movementFactor;
     }

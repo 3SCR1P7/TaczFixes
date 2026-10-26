@@ -382,19 +382,19 @@ public final class PbrRenderer {
         shader = blurShader = compositeShader = maskShader = null;
         clearUniformCache();
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> {
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> {
                     shader = s;
                     cacheGunUniforms(s);
                 });
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "pbr_mask"), DefaultVertexFormat.POSITION_TEX), s -> maskShader = s);
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_mask"), DefaultVertexFormat.POSITION_TEX), s -> maskShader = s);
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "pbr_blur"), DefaultVertexFormat.POSITION_TEX), s -> {
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_blur"), DefaultVertexFormat.POSITION_TEX), s -> {
                     blurShader = s;
                     uBlurDirection = s.safeGetUniform("Direction");
                 });
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "pbr_composite"), DefaultVertexFormat.POSITION_TEX), s -> {
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_composite"), DefaultVertexFormat.POSITION_TEX), s -> {
                     compositeShader = s;
                     uCompositeStrength = s.safeGetUniform("Strength");
                     uHasScopeMask = s.safeGetUniform("HasScopeMask");
@@ -524,8 +524,8 @@ public final class PbrRenderer {
         String path = base.getPath();
         if (!path.endsWith(".png")) return Optional.empty();
         String stem = path.substring(0, path.length() - 4);
-        ResourceLocation specular = new ResourceLocation(base.getNamespace(), stem + "_s.png");
-        ResourceLocation normal = new ResourceLocation(base.getNamespace(), stem + "_n.png");
+        ResourceLocation specular = ResourceLocation.fromNamespaceAndPath(base.getNamespace(), stem + "_s.png");
+        ResourceLocation normal = ResourceLocation.fromNamespaceAndPath(base.getNamespace(), stem + "_n.png");
         var resources = Minecraft.getInstance().getResourceManager();
         ResourceLocation specularLocation = resources.getResource(specular).isPresent() ? specular : null;
         return Optional.of(new Material(specularLocation,

@@ -95,6 +95,6 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
             name = name.substring(0, name.length() - "_display".length());
         }
         if (name.isEmpty()) return null;
-        return new ResourceLocation(displayLocation.getNamespace(), name);
+        return ResourceLocation.fromNamespaceAndPath(displayLocation.getNamespace(), name);
     }
 }

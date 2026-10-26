@@ -31,7 +31,7 @@ public final class ExpandedCircleCrosshair {
         NativeImage image = render(layout, quantized);
         DynamicTexture texture = new DynamicTexture(image);
         texture.setFilter(true, false);
-        ResourceLocation location = new ResourceLocation(TaczFixesMod.MOD_ID,
+        ResourceLocation location = ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID,
                 "dynamic_crosshair/" + NEXT_ID.incrementAndGet());
         Minecraft.getInstance().getTextureManager().register(location, texture);
         CACHE.put(key, location);

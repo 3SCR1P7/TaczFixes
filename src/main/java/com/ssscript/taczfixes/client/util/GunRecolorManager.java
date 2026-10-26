@@ -250,7 +250,7 @@ public final class GunRecolorManager {
     private static Set<String> paintModuleIds() {
         try {
             Set<String> ids = CommonAssetsManager.getInstance()
-                    .getAttachmentTags(new ResourceLocation("tacz", "paint_module"));
+                    .getAttachmentTags(ResourceLocation.fromNamespaceAndPath("tacz", "paint_module"));
             return ids == null ? Set.of() : ids;
         } catch (Throwable ignored) {
             return Set.of();
@@ -281,7 +281,7 @@ public final class GunRecolorManager {
         if (image == null) return null;
         DynamicTexture texture = new DynamicTexture(image);
         texture.setFilter(false, false);
-        ResourceLocation rl = new ResourceLocation("taczfixes",
+        ResourceLocation rl = ResourceLocation.fromNamespaceAndPath("taczfixes",
                 "recolor/" + sanitize(original) + "_" + Integer.toHexString(Arrays.hashCode(targets)));
         Minecraft.getInstance().getTextureManager().register(rl, texture);
         RECACHED.put(key, new Recached(rl, texture));

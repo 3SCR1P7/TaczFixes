@@ -33,7 +33,7 @@ public final class DualFocusAimState {
     private static float progress;
     private static AnimationController preservedMainAimController;
     private static boolean releasingPreservedMainAim;
-    private static final ResourceLocation TOUHOU_MAID_ENTITY_ID = new ResourceLocation("touhou_little_maid", "maid");
+    private static final ResourceLocation TOUHOU_MAID_ENTITY_ID = ResourceLocation.fromNamespaceAndPath("touhou_little_maid", "maid");
     private static int preservedMainAimTrack = -1;
 
     private DualFocusAimState() {

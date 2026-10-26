@@ -34,7 +34,7 @@ public final class GunPackIconLoader {
             CACHE.put(icon, null);
             return null;
         }
-        ResourceLocation registered = new ResourceLocation("taczfixes", "icon_" + icon.getNamespace() + "_" + icon.getPath().replace('/', '_'));
+        ResourceLocation registered = ResourceLocation.fromNamespaceAndPath("taczfixes", "icon_" + icon.getNamespace() + "_" + icon.getPath().replace('/', '_'));
         DynamicTexture texture = new DynamicTexture(image);
         texture.setFilter(false, false);
         Minecraft.getInstance().getTextureManager().register(registered, texture);

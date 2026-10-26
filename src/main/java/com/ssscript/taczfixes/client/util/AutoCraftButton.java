@@ -8,7 +8,7 @@ import net.minecraft.resources.ResourceLocation;
 public class AutoCraftButton extends Button {
 
     private static final ResourceLocation GEAR =
-            new ResourceLocation("taczfixes", "textures/gui/auto_craft_gear.png");
+            ResourceLocation.fromNamespaceAndPath("taczfixes", "textures/gui/auto_craft_gear.png");
 
     private boolean active;
     private boolean enoughMaterials;

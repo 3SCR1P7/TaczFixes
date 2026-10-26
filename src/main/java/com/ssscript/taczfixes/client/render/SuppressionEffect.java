@@ -79,7 +79,7 @@ public final class SuppressionEffect {
         uMaskStart = uMaskStartWeak = uBlurOpacity = null;
         uAbOpacity = uDarken = uDarkenMaskStart = uDarkenOpacity = uAberration = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
-                new ResourceLocation("taczfixes", "suppress_blur"), DefaultVertexFormat.POSITION_TEX),
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "suppress_blur"), DefaultVertexFormat.POSITION_TEX),
                 s -> {
                     shader = s;
                     uMaskStart = s.safeGetUniform("MaskStart");

@@ -17,7 +17,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 public final class DualMovementAnimationLibrary {
     private static final String ASSET_PREFIX = "dual_";
     private static volatile Map<String, ObjectAnimation> cachedPrototypes;
-    private static final ResourceLocation MOVEMENT_ANIMATION = new ResourceLocation(TaczFixesMod.MOD_ID, "dual_wield_movement");
+    private static final ResourceLocation MOVEMENT_ANIMATION = ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "dual_wield_movement");
     private static final Set<String> BONE_ALLOWLIST = Set.of("root");
     private static final Set<String> MOVEMENT_CLIPS = Set.of("run_start", "run", "run_hold", "run_end", "walk_aiming", "walk_forward", "walk_sideway", "walk_backward");
 

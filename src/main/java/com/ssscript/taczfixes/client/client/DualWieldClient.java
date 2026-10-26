@@ -1,7 +1,6 @@
 package com.ssscript.taczfixes.client.client;
 
 import com.ssscript.taczfixes.client.client.DynamicCrosshair;
-
 import com.ssscript.taczfixes.client.render.ClientGunLightManager;
 
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -40,7 +39,6 @@ import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.resource.pojo.data.gun.GunDefaultMeleeData;
 import com.tacz.guns.resource.pojo.data.gun.GunMeleeData;
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
 import com.ssscript.taczfixes.common.util.OffhandItemCombat;
@@ -52,6 +50,10 @@ import com.ssscript.taczfixes.common.network.ClientMessageOffhandItemAttack;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandMelee;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandReload;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandShoot;
+import com.ssscript.taczfixes.common.network.ClientMessageOffhandShieldState;
+import com.ssscript.taczfixes.common.network.ClientMessageOffhandUseState;
+import com.ssscript.taczfixes.client.mixin.MixinMinecraftStartUseInvoker;
+import com.ssscript.taczfixes.client.mixin.MixinItemInHandRendererHeightAccessor;
 
 import it.unimi.dsi.fastutil.Pair;
 import java.util.Iterator;
@@ -82,11 +84,6 @@ import net.minecraftforge.fml.LogicalSide;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ShieldItem;
-import com.ssscript.taczfixes.common.network.ClientMessageOffhandShieldState;
-import com.ssscript.taczfixes.common.network.ClientMessageOffhandUseState;
-import com.ssscript.taczfixes.common.network.NetworkHandler;
-import com.ssscript.taczfixes.client.mixin.MixinMinecraftStartUseInvoker;
-import com.ssscript.taczfixes.client.mixin.MixinItemInHandRendererHeightAccessor;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
 public final class DualWieldClient {
@@ -96,7 +93,6 @@ public final class DualWieldClient {
     private static boolean lastOffhandShieldRaised;
     private static boolean lastMainItemUseDown;
     private static long lastOffhandItemAttackMs;
-
 
     private static boolean lastRightDown;
     private static boolean lastLeftShootSuccess;
@@ -138,18 +134,20 @@ public final class DualWieldClient {
                 && IGun.getIGunOrNull(player.getOffhandItem()) != null
                 && !DualWieldEligibility.isForbiddenDualItem(player.getMainHandItem());
     }
+
+    /**
+     * 是否处于双持状态。
+     *
+     * <p>统一委托 {@link DualWieldEligibility#isDualWielding(net.minecraft.world.entity.LivingEntity)}，
+     * 由它统一处理禁入物品、deniedGunIds、allowedGunIds、allowedGunTypes、
+     * allowOtherGunTypes，以及"主手枪 + 副手物品"等组合判定。这样可以在客户端与服务端
+     * 使用同一份规则，避免出现"服务器拒绝但客户端仍渲染/开火"的不一致。
+     */
     public static boolean isDualMode(LocalPlayer player) {
         if (player == null || player.isSpectator() || player.isDeadOrDying()) {
             return false;
         }
-        if (DualWieldEligibility.isForbiddenDualItem(player.getMainHandItem())
-                || DualWieldEligibility.isForbiddenDualItem(player.getOffhandItem())) {
-            return false;
-        }
-        if (IGun.getIGunOrNull(player.getOffhandItem()) != null) {
-            return true;
-        }
-        return IGun.getIGunOrNull(player.getMainHandItem()) != null && !player.getOffhandItem().isEmpty();
+        return DualWieldEligibility.isDualWielding(player);
     }
 
     static boolean isDualMovementActive(LocalPlayer player) {
@@ -172,7 +170,7 @@ public final class DualWieldClient {
             return;
         }
         lastSyncedOffhandShootState = down;
-        com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.sendToServer(
+        NetworkHandler.CHANNEL.sendToServer(
                 new com.ssscript.taczfixes.common.network.ClientMessageOffhandShootState(down));
     }
 
@@ -653,7 +651,6 @@ public final class DualWieldClient {
         waitAimReleaseAfterFocusChange = false;
     }
 
-
     private static void applyOffhandItemBob(PoseStack poseStack, LocalPlayer player, float partialTick) {
         float delta = player.walkDist - player.walkDistO;
         float walk = -(player.walkDist + delta * partialTick);
@@ -802,6 +799,7 @@ public final class DualWieldClient {
         }
         return true;
     }
+
     private static boolean isAttackOnly(ItemStack stack) {
         if (stack.isEmpty() || stack.getUseDuration() > 0 || stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
             return false;
@@ -810,6 +808,7 @@ public final class DualWieldClient {
                 || stack.getItem() instanceof net.minecraft.world.item.DiggerItem
                 || stack.getItem() instanceof me.xjqsh.lrtactical.api.item.IMeleeWeapon;
     }
+
     private static void startOffhandUse(LocalPlayer player) {
         ItemStack stack = player.getOffhandItem();
         if (stack.getUseDuration() > 0) {

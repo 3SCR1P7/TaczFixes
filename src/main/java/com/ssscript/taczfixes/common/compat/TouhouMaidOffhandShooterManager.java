@@ -48,7 +48,7 @@ import net.minecraft.world.entity.Entity;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
 public final class TouhouMaidOffhandShooterManager {
     private static final long RELOAD_FAILURE_BACKOFF_TICKS = 100;
-    private static final ResourceLocation MAID_ENTITY_ID = new ResourceLocation("touhou_little_maid", "maid");
+    private static final ResourceLocation MAID_ENTITY_ID = ResourceLocation.fromNamespaceAndPath("touhou_little_maid", "maid");
     private static final Map<UUID, MaidOffhandShooter> SHOOTERS = new ConcurrentHashMap();
     private static final Set<String> WARNED_RELOAD_FAILURES = ConcurrentHashMap.newKeySet();
 

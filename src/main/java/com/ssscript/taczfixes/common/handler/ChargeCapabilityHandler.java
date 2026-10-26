@@ -17,6 +17,6 @@ public class ChargeCapabilityHandler {
         if (stack == null || stack.isEmpty() || !ChargeStorage.isChargeGun(stack)) {
             return;
         }
-        event.addCapability(new ResourceLocation(TaczFixesMod.MOD_ID, "charge"), new ChargeCapabilityProvider(stack));
+        event.addCapability(ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "charge"), new ChargeCapabilityProvider(stack));
     }
 }

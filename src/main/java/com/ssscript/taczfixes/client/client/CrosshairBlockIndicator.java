@@ -21,7 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public final class CrosshairBlockIndicator {
     private static final ResourceLocation TEXTURE =
-            new ResourceLocation(TaczFixesMod.MOD_ID, "textures/gui/blocked_crosshair.png");
+        new ResourceLocation(TaczFixesMod.MOD_ID, "textures/gui/blocked_crosshair.png");
 
     private CrosshairBlockIndicator() {
     }
