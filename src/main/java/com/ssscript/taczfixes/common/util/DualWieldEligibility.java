@@ -3,9 +3,7 @@ package com.ssscript.taczfixes.common.util;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.ssscript.taczfixes.common.config.Config;
-import me.xjqsh.lrtactical.api.item.IConsumable;
-import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
-import me.xjqsh.lrtactical.api.item.IThrowable;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -13,10 +11,19 @@ import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.minecraftforge.fml.ModList;
 
 public final class DualWieldEligibility {
     private static final String EMBEDDED_DUAL_SMG_ID = "eos:eos_m_57cw_t2x2";
     private static volatile Rules clientRules;
+
+    /**
+     * lrtactical 兼容钩子。模组未安装或 API 不匹配时为 null。
+     * 全部通过反射访问, 避免本类常量池里出现 lrtactical 的类型引用,
+     * 否则未安装模组时首次调用 {@link #isForbiddenDualItem(ItemStack)} 会抛
+     * {@link NoClassDefFoundError} 导致进世界崩溃。
+     */
+    private static final LrTacticalCompat LR_TACTICAL = LrTacticalCompat.load();
 
     private DualWieldEligibility() {
     }
@@ -54,10 +61,11 @@ public final class DualWieldEligibility {
     }
 
     public static boolean isForbiddenDualItem(ItemStack stack) {
-        return stack != null && !stack.isEmpty()
-                && (stack.getItem() instanceof IConsumable
-                || stack.getItem() instanceof IThrowable
-                || IMeleeWeapon.of(stack) != null);
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        LrTacticalCompat lr = LR_TACTICAL;
+        return lr != null && lr.isForbidden(stack);
     }
 
     public static boolean isEligibleGun(ItemStack stack) {
@@ -165,7 +173,58 @@ public final class DualWieldEligibility {
     private static void validateRange(String name, double value, double minimum, double maximum) {
         if (!Double.isFinite(value) || value < minimum || value > maximum) {
             throw new IllegalArgumentException(name + " must be finite and in [" + minimum + ", " + maximum + "]: " + value);
-            
+
+        }
+    }
+
+    /**
+     * lrtactical 可选兼容层: 通过反射检测"消耗品 / 投掷物 / 近战武器"三类物品。
+     * 使用静态工厂 {@link #load()} 在首次访问时确定可用性, 之后 {@link #isForbidden(ItemStack)}
+     * 是普通 java 反射调用, 开销仅在双持判定路径上。
+     */
+    private static final class LrTacticalCompat {
+        private static final String MOD_ID = "lrtactical";
+        private static final String CLS_CONSUMABLE = "me.xjqsh.lrtactical.api.item.IConsumable";
+        private static final String CLS_THROWABLE = "me.xjqsh.lrtactical.api.item.IThrowable";
+        private static final String CLS_MELEE = "me.xjqsh.lrtactical.api.item.IMeleeWeapon";
+        private static final String MELEE_FACTORY_METHOD = "of";
+
+        private final Class<?> consumableClass;
+        private final Class<?> throwableClass;
+        private final Method meleeOfMethod;
+
+        private LrTacticalCompat(Class<?> consumableClass, Class<?> throwableClass, Method meleeOfMethod) {
+            this.consumableClass = consumableClass;
+            this.throwableClass = throwableClass;
+            this.meleeOfMethod = meleeOfMethod;
+        }
+
+        private static LrTacticalCompat load() {
+            if (!ModList.get().isLoaded(MOD_ID)) {
+                return null;
+            }
+            try {
+                Class<?> consumableClass = Class.forName(CLS_CONSUMABLE);
+                Class<?> throwableClass = Class.forName(CLS_THROWABLE);
+                Class<?> meleeClass = Class.forName(CLS_MELEE);
+                Method meleeOfMethod = meleeClass.getMethod(MELEE_FACTORY_METHOD, ItemStack.class);
+                return new LrTacticalCompat(consumableClass, throwableClass, meleeOfMethod);
+            } catch (Throwable t) {
+                // 模组已安装但 API 类加载/签名不匹配: 降级为不检测, 不影响双持系统的其余功能
+                return null;
+            }
+        }
+
+        private boolean isForbidden(ItemStack stack) {
+            Object item = stack.getItem();
+            if (consumableClass.isInstance(item) || throwableClass.isInstance(item)) {
+                return true;
+            }
+            try {
+                return meleeOfMethod.invoke(null, stack) != null;
+            } catch (ReflectiveOperationException e) {
+                return false;
+            }
         }
     }
 
