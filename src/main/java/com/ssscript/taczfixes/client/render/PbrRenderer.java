@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.render;
-import com.ssscript.taczfixes.client.mixin.pbr.PbrCompositeAccessor;
-import com.ssscript.taczfixes.client.mixin.pbr.PbrStateAccessor;
-import com.ssscript.taczfixes.client.mixin.pbr.PbrTextureAccessor;
+import com.ssscript.taczfixes.client.mixin.shader.PbrCompositeAccessor;
+import com.ssscript.taczfixes.client.mixin.shader.PbrStateAccessor;
+import com.ssscript.taczfixes.client.mixin.shader.PbrTextureAccessor;
 
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;

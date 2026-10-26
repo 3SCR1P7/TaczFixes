@@ -1,0 +1,154 @@
+package com.ssscript.taczfixes.client.mixin.model.attachment;
+
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.client.model.BedrockAttachmentModel;
+import com.tacz.guns.client.model.bedrock.BedrockPart;
+import com.tacz.guns.client.model.functional.AttachmentRender;
+import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.render.PbrRenderer;
+import com.ssscript.taczfixes.common.compat.ArcanaScopeStateBridge;
+import java.lang.reflect.InvocationTargetException;
+import java.util.IdentityHashMap;
+import java.util.List;
+import java.util.Map;
+import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.renderer.RenderType;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
+import org.apache.commons.lang3.tuple.Pair;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(value = {AttachmentRender.class}, remap = false)
+public abstract class MixinAttachmentRender {
+    @Unique
+    private static boolean taczfixes$scopeBloomPushed;
+
+    @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("HEAD")}, remap = false)
+    private static void taczfixes$pushScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
+                                                  ResourceLocation location, PoseStack poseStack,
+                                                  ItemDisplayContext transformType, int light, int overlay,
+                                                  MultiBufferSource bufferSource, ClientAttachmentIndex index,
+                                                  CallbackInfo callback) {
+        taczfixes$scopeBloomPushed = type == AttachmentType.SCOPE && index != null && index.isScope();
+        if (taczfixes$scopeBloomPushed) {
+            PbrRenderer.pushScopeAttachment();
+        }
+    }
+
+    @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("TAIL")}, remap = false)
+    private static void taczfixes$popScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
+                                                 ResourceLocation location, PoseStack poseStack,
+                                                 ItemDisplayContext transformType, int light, int overlay,
+                                                 MultiBufferSource bufferSource, ClientAttachmentIndex index,
+                                                 CallbackInfo callback) {
+        if (taczfixes$scopeBloomPushed) {
+            taczfixes$scopeBloomPushed = false;
+            PbrRenderer.popScopeAttachment();
+        }
+    }
+
+    private static final String RENDER_ATTACHMENT_LAMBDA =
+            "lambda$renderAttachment$0(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
+            + "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lnet/minecraft/resources/ResourceLocation;"
+            + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;II"
+            + "Lnet/minecraft/client/renderer/MultiBufferSource;"
+            + "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;)V";
+
+    @Redirect(method = {RENDER_ATTACHMENT_LAMBDA}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;getLodModel()Lorg/apache/commons/lang3/tuple/Pair;", remap = false), remap = false)
+    private static Pair<BedrockAttachmentModel, ResourceLocation> dualWield$forceThirdPersonFullAttachmentModel(
+            ClientAttachmentIndex invokedIndex,
+            ItemStack attachmentStack, ItemStack gunStack, AttachmentType type, ResourceLocation location,
+            PoseStack poseStack, ItemDisplayContext transformType, int light, int overlay,
+            MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) {
+        if (transformType == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
+                || transformType == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
+            return null;
+        }
+        // 副手第一人称瞄具也强制使用完整模型: LOD 模型可能没有 ocular/ocular_* 骨。
+        if (dualWield$isOffhandFirstPerson(transformType) && invokedIndex != null
+                && (invokedIndex.isScope() || invokedIndex.isSight())) {
+            return null;
+        }
+        return invokedIndex.getLodModel();
+    }
+
+    @WrapOperation(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At(value = "INVOKE", target = "Lcom/tacz/guns/client/model/BedrockAttachmentModel;render(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/client/renderer/RenderType;IIFLnet/minecraft/client/renderer/MultiBufferSource;)V", remap = false)}, remap = false)
+    private static void dualWield$renderOffhandOpticAsPhysicalModel(
+            BedrockAttachmentModel model, ItemStack attachmentStack, ItemStack gunStack, PoseStack poseStack,
+            ItemDisplayContext transformType, RenderType renderType, int light, int overlay, float partialTicks,
+            MultiBufferSource callBufferSource,
+            Operation<Void> original,
+            ItemStack lambdaAttachmentStack, ItemStack lambdaGunStack, AttachmentType type, ResourceLocation location,
+            PoseStack lambdaPoseStack, ItemDisplayContext lambdaTransformType, int lambdaLight, int lambdaOverlay,
+            MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        if (!dualWield$isOffhandFirstPerson(transformType) || (!model.isScope() && !model.isSight())) {
+            original.call(new Object[]{model, attachmentStack, gunStack, poseStack, transformType, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
+            return;
+        }
+        Map<BedrockPart, Boolean> ocularRestore = taczfixes$showOcularParts(model);
+        ArcanaScopeStateBridge.Snapshot previousArcanaScope = ArcanaScopeStateBridge.capture();
+        try {
+            original.call(new Object[]{model, attachmentStack, gunStack, poseStack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
+            ArcanaScopeStateBridge.restore(previousArcanaScope);
+        } catch (Throwable th) {
+            ArcanaScopeStateBridge.restore(previousArcanaScope);
+            throw th;
+        } finally {
+            for (Map.Entry<BedrockPart, Boolean> entry : ocularRestore.entrySet()) {
+                entry.getKey().visible = entry.getValue();
+            }
+        }
+    }
+
+    /** 副手瞄具以实体模型渲染, 目镜组(ocular_sight/ocular_scope_n)可能已被主手开镜渲染置为不可见, 这里按类型恢复: 仅 scope 类型目镜恢复可见, sight 类型目镜保持隐藏。 */
+    @Unique
+    private static Map<BedrockPart, Boolean> taczfixes$showOcularParts(BedrockAttachmentModel model) {
+        Map<BedrockPart, Boolean> restore = new IdentityHashMap<>();
+        try {
+            MixinBedrockAttachmentModelScopeSuppress accessor = (MixinBedrockAttachmentModelScopeSuppress) model;
+            List<List<BedrockPart>> oculars = accessor.taczfixes$ocularNodePaths();
+            if (oculars == null) {
+                return restore;
+            }
+            List<Boolean> scopeFlags = accessor.taczfixes$isScopeOcular();
+            boolean pureScope = model.isScope() && !model.isSight();
+            boolean pureSight = model.isSight() && !model.isScope();
+            for (int i = 0; i < oculars.size(); i++) {
+                List<BedrockPart> path = oculars.get(i);
+                if (path == null) {
+                    continue;
+                }
+                boolean scopeOcular = scopeFlags != null && i < scopeFlags.size()
+                        && Boolean.TRUE.equals(scopeFlags.get(i));
+                boolean wantVisible = pureScope || (!pureSight && scopeOcular);
+                for (BedrockPart part : path) {
+                    if (!restore.containsKey(part)) {
+                        restore.put(part, Boolean.valueOf(part.visible));
+                    }
+                    part.visible = wantVisible;
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        return restore;
+    }
+
+
+    private static boolean dualWield$isOffhandFirstPerson(ItemDisplayContext transformType) {
+        boolean firstPerson = transformType == ItemDisplayContext.FIRST_PERSON_LEFT_HAND || transformType == ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
+        if (firstPerson) {
+            return DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND || transformType == ItemDisplayContext.FIRST_PERSON_LEFT_HAND;
+        }
+        return false;
+    }
+}

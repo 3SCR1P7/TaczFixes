@@ -62,6 +62,7 @@ public final class OffhandDisplayManager {
     private static boolean resumeDualAfterPutAway;
     private static boolean restartMainAfterPutAway;
     private static boolean keepOffhandDisplay;
+    private static boolean handSwapTransition;
     private static boolean capturingManualActionTrack;
     private static boolean manualActionCapturePending;
     private static boolean manualActionHoldingArmMotionSeen;
@@ -251,7 +252,7 @@ public final class OffhandDisplayManager {
         DualInspectAnimationFilter.triggerFiltered(stateMachine, display == null ? null : display.getGunModel());
     }
 
-    public static boolean beginPutAway(LocalPlayer player, ItemStack previousMainStack, ItemStack previousOffhandStack, ItemStack nextMainStack, ItemStack nextOffhandStack, boolean resumeDual) {
+    public static boolean beginPutAway(LocalPlayer player, ItemStack previousMainStack, ItemStack previousOffhandStack, ItemStack nextMainStack, ItemStack nextOffhandStack, boolean resumeDual, boolean handSwap) {
         LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
         BedrockGunModel bedrockGunModel;
         long j;
@@ -259,9 +260,10 @@ public final class OffhandDisplayManager {
             updatePutAwayTarget(nextMainStack, nextOffhandStack, resumeDual);
             return true;
         }
+        handSwapTransition = handSwap;
         ItemStack safePreviousOffhand = copyOrEmpty(previousOffhandStack);
-        boolean offhandUnchanged = resumeDual && sameLogicalStack(safePreviousOffhand, nextOffhandStack);
-        boolean offhandSwitchedAhead = !sameLogicalStack(activeStack, safePreviousOffhand) && sameLogicalStack(activeStack, nextOffhandStack);
+        boolean offhandUnchanged = !handSwap && resumeDual && sameLogicalStack(safePreviousOffhand, nextOffhandStack);
+        boolean offhandSwitchedAhead = !handSwap && !sameLogicalStack(activeStack, safePreviousOffhand) && sameLogicalStack(activeStack, nextOffhandStack);
         if (!offhandSwitchedAhead && !sameLogicalStack(activeStack, safePreviousOffhand)) {
             getOrCreate(safePreviousOffhand);
         }
@@ -286,13 +288,17 @@ public final class OffhandDisplayManager {
         putAwayNextOffhandStack = copyOrEmpty(nextOffhandStack);
         resumeDualAfterPutAway = resumeDual;
         keepOffhandDisplay = offhandUnchanged || offhandSwitchedAhead;
-        boolean mainUnchanged = resumeDual && sameLogicalStack(putAwayMainStack, putAwayNextMainStack);
-        restartMainAfterPutAway = !mainUnchanged && requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack);
+        boolean mainUnchanged = !handSwap && resumeDual && sameLogicalStack(putAwayMainStack, putAwayNextMainStack);
+        restartMainAfterPutAway = handSwap
+                ? sameLogicalStack(putAwayMainStack, putAwayNextMainStack)
+                : (!mainUnchanged && requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack));
         GunItemRendererWrapper mainRenderer = getGunRenderer(putAwayMainStack);
         long mainPutAwayTime = mainUnchanged ? 0L : getMainPutAwayTime(mainRenderer, putAwayMainStack);
         if (restartMainAfterPutAway && player != null && mainRenderer != null) {
             try {
-                IClientPlayerGunOperator.fromLocalPlayer(player).draw(putAwayMainStack);
+                if (!handSwap) {
+                    IClientPlayerGunOperator.fromLocalPlayer(player).draw(putAwayMainStack);
+                }
                 mainRenderer.tryExit(putAwayMainStack, mainPutAwayTime);
             } catch (RuntimeException exception) {
                 TaczFixesMod.LOGGER.error("Failed to start compensated main-hand put-away animation", exception);
@@ -397,7 +403,8 @@ public final class OffhandDisplayManager {
         ItemStack nextOffhandStack = putAwayNextOffhandStack.copy();
         boolean resumeDual = resumeDualAfterPutAway;
         boolean restartMain = restartMainAfterPutAway;
-        boolean reuseOffhandDisplay = resumeDual && sameLogicalStack(activeStack, nextOffhandStack) && display != null && context != null;
+        boolean reuseOffhandDisplay = !handSwapTransition && resumeDual
+                && sameLogicalStack(activeStack, nextOffhandStack) && display != null && context != null;
         if (keepOffhandDisplay && reuseOffhandDisplay) {
             // 副手未变化或渲染已提前切换到新枪: 保持当前显示与动画, 不重播收枪/掏枪动画
             clearPutAwayMetadata();
@@ -695,6 +702,7 @@ public final class OffhandDisplayManager {
         resumeDualAfterPutAway = false;
         restartMainAfterPutAway = false;
         keepOffhandDisplay = false;
+        handSwapTransition = false;
     }
 
     private static ResourceLocation resolveDisplayId(ResourceLocation gunId, ResourceLocation requestedDisplayId) {

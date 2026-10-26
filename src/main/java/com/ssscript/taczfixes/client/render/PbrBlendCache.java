@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.render;
 
 import com.mojang.blaze3d.shaders.BlendMode;
-import com.ssscript.taczfixes.client.mixin.pbr.PbrBlendModeAccessor;
+import com.ssscript.taczfixes.client.mixin.shader.PbrBlendModeAccessor;
 import com.mojang.blaze3d.systems.RenderSystem;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL20;

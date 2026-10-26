@@ -194,7 +194,7 @@ public class TaczFixesMod {
     }
 
     private void onRegisterClientReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(new com.ssscript.taczfixes.client.data.ClientDisplayDataReloadListener());
+        event.registerReloadListener(new com.ssscript.taczfixes.client.util.ClientDisplayDataReloadListener());
         event.registerReloadListener(new com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)

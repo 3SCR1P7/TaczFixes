@@ -225,7 +225,7 @@ public final class DualWieldClient {
                 if (player == null || player.isSpectator() || player.isDeadOrDying()) {
                     OffhandDisplayManager.clear();
                 } else {
-                    OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, player.getMainHandItem(), player.getOffhandItem(), false);
+                    OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, player.getMainHandItem(), player.getOffhandItem(), false, false);
                 }
             }
             if (player != null) {
@@ -261,6 +261,8 @@ public final class DualWieldClient {
         dualWasActive = true;
         ItemStack currentMainStack = player.getMainHandItem();
         ItemStack currentOffhandStack = player.getOffhandItem();
+        DualWieldStackId.getOrCreate(currentMainStack);
+        DualWieldStackId.getOrCreate(currentOffhandStack);
         boolean currentOffhandGun = IGun.getIGunOrNull(currentOffhandStack) != null;
         boolean stackPairChanged = (dualStarted || (sameLogicalStack(lastDualMainStack, currentMainStack) && sameLogicalStack(lastDualOffhandStack, currentOffhandStack))) ? false : true;
         if (stackPairChanged && currentOffhandGun && !OffhandDisplayManager.isPuttingAway()) {
@@ -271,11 +273,13 @@ public final class DualWieldClient {
             waitLeftReleaseAfterScreen = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
             waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
             resetFocusAimImmediately(player);
-            if (taczfixes$isHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack)) {
-                // F 交换主副手: 不做收枪过渡, 立刻播放两把枪的掏枪动画
-                OffhandDisplayManager.swapHandsImmediately(player, currentMainStack, currentOffhandStack);
+            boolean handSwap = taczfixes$isHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack);
+            if (handSwap) {
+                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
+                        currentMainStack, currentOffhandStack, true, true);
             } else {
-                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack, true);
+                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
+                        currentMainStack, currentOffhandStack, true, false);
             }
         }
         if (currentOffhandGun && OffhandDisplayManager.isPuttingAway()) {
@@ -1007,9 +1011,24 @@ public final class DualWieldClient {
     /** 是否为主副手互换(上一帧的主/副手正好是这一帧的副/主手)。 */
     private static boolean taczfixes$isHandSwap(ItemStack previousMain, ItemStack previousOffhand,
                                                 ItemStack currentMain, ItemStack currentOffhand) {
-        return sameLogicalStack(previousMain, currentOffhand)
-                && sameLogicalStack(previousOffhand, currentMain)
-                && !sameLogicalStack(previousMain, previousOffhand);
+        return sameSwapStack(previousMain, currentOffhand)
+                && sameSwapStack(previousOffhand, currentMain)
+                && !sameSwapStack(previousMain, previousOffhand);
+    }
+
+    private static boolean sameSwapStack(ItemStack first, ItemStack second) {
+        if (first == null || second == null) {
+            return false;
+        }
+        if (first.isEmpty() || second.isEmpty()) {
+            return first.isEmpty() && second.isEmpty();
+        }
+        UUID firstId = DualWieldStackId.get(first);
+        UUID secondId = DualWieldStackId.get(second);
+        if (firstId != null && secondId != null) {
+            return firstId.equals(secondId);
+        }
+        return ItemStack.isSameItemSameTags(first, second);
     }
 
     private static void updateOffhandSprint(LocalPlayer player, ItemStack stack) {

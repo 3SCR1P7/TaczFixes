@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
-import com.ssscript.taczfixes.client.mixin.MixinAttachmentModelAccessor;
+import com.ssscript.taczfixes.client.mixin.model.attachment.MixinAttachmentModelAccessor;
 import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;

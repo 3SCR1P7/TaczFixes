@@ -81,8 +81,8 @@ public final class StandbySlotBuffer {
     public static void ensureScopeOcularVisible(BedrockAttachmentModel model,
                                                 java.util.Map<BedrockPart, Boolean> restore) {
         try {
-            com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
-                    (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
+            com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress acc =
+                    (com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress) model;
             List<List<BedrockPart>> ocular = acc.taczfixes$ocularNodePaths();
             List<Boolean> isScopeOcular = acc.taczfixes$isScopeOcular();
             if (ocular == null) return;
@@ -117,8 +117,8 @@ public final class StandbySlotBuffer {
                                          ItemDisplayContext displayContext, RenderType renderType,
                                          int light, int overlay) {
         if (model == null) return;
-        com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress acc =
-                (com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress) model;
+        com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress acc =
+                (com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress) model;
         if (!acc.taczfixes$isScope() || acc.taczfixes$isSight()) return;
         List<List<BedrockPart>> paths = acc.taczfixes$ocularNodePaths();
         List<Boolean> flags = acc.taczfixes$isScopeOcular();

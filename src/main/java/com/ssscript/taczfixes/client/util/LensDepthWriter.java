@@ -4,7 +4,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.ssscript.taczfixes.client.mixin.MixinBedrockAttachmentModelScopeSuppress;
+import com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
