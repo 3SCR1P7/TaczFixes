@@ -362,6 +362,7 @@ public class ConfigScreen {
     }
 
     private static void buildCompat(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "compat.create_contraption_bullet_collision", Config.CREATE_CONTRAPTION_BULLET_COLLISION);
         bool_(cat, entry, "compat.disable_arcana_magnification_for_sight", Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT);
         bool_(cat, entry, "compat.parcool_slide_as_move_inaccuracy", Config.PARCOOL_SLIDE_AS_MOVE_INACCURACY);
         bool_(cat, entry, "compat.disable_parcool_charge_jump_animation", Config.DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION);

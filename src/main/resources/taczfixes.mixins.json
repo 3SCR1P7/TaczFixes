@@ -38,6 +38,7 @@
         "MixinEntityKineticBullet",
         "MixinEntityKineticBulletAccessor",
         "MixinEntityKineticBulletBulletProperty",
+        "MixinEntityKineticBulletCreateCollision",
         "MixinEntityKineticBulletDamageByDistance",
         "MixinEntityKineticBulletDecapitation",
         "MixinEntityKineticBulletEnchant",

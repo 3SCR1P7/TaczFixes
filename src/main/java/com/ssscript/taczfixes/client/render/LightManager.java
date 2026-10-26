@@ -2,7 +2,6 @@ package com.ssscript.taczfixes.client.render;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.fml.ModList;
 import org.joml.Vector3f;
 import org.lwjgl.BufferUtils;
 import org.lwjgl.opengl.GL30;
@@ -153,7 +152,7 @@ public enum LightManager {
     public void reloadShaders() {
         if (lightUBO == null) {
             int size = getOffset(MAXIMUM_LIGHT_SUPPORT);
-            int uboOffset = ModList.get().isLoaded("modernui") ? 6 : 1;
+            int uboOffset = 14;
             lightUBO = new ShaderUBO();
             lightUBO.createBufferData(size, GL30.GL_STREAM_DRAW);
             envUBO = new ShaderUBO();

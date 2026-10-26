@@ -320,6 +320,7 @@
     "config.taczfixes.entry.compat.disable_hitboxes": "Disable Entity Hitbox Display",
     "config.taczfixes.entry.compat.disable_third_person": "Disable Third-Person Switching",
     "config.taczfixes.entry.compat.ammo_emc_blacklist": "Ammo Types Excluded from Magazine EMC",
+    "config.taczfixes.entry.compat.create_contraption_bullet_collision": "Contraption Bullet Collision Fix",
     "config.taczfixes.entry.compat.gun_pack.button_offset_x": "Button X Offset (px)",
     "config.taczfixes.entry.compat.gun_pack.button_offset_y": "Button Y Offset (px)",
     "config.taczfixes.entry.compat.gun_pack.button_size": "Button Size (px)",

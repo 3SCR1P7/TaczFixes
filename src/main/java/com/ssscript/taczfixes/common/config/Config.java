@@ -46,6 +46,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_DMR;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
+    public static final ForgeConfigSpec.BooleanValue CREATE_CONTRAPTION_BULLET_COLLISION;
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
     public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
     public static final ForgeConfigSpec.BooleanValue DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION;
@@ -828,6 +829,10 @@ public class Config {
 
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("compat");
+        CREATE_CONTRAPTION_BULLET_COLLISION = BUILDER
+                .comment("是否让 TaCZ 子弹被机械动力动态结构阻挡。默认值：true",
+                        "需要 Create 模组。")
+                .define("create_contraption_bullet_collision", true);
         DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
                         "需要TaCZ: Arcana模组。")

@@ -322,6 +322,7 @@
     "config.taczfixes.entry.compat.disable_hitboxes":  "禁用实体碰撞箱显示",
     "config.taczfixes.entry.compat.disable_third_person":  "禁用切换第三人称视角",
     "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",
+    "config.taczfixes.entry.compat.create_contraption_bullet_collision":  "动态结构子弹碰撞修复",
     "config.taczfixes.entry.compat.gun_pack.button_offset_x":  "按钮水平偏移（像素）",
     "config.taczfixes.entry.compat.gun_pack.button_offset_y":  "按钮垂直偏移（像素）",
     "config.taczfixes.entry.compat.gun_pack.button_size":  "按钮尺寸（像素）",
