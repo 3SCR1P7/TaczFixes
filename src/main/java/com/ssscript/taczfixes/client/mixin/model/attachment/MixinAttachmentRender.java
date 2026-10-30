@@ -8,6 +8,7 @@ import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.ssscript.taczfixes.common.compat.ArcanaScopeStateBridge;
@@ -63,6 +64,22 @@ public abstract class MixinAttachmentRender {
             + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;II"
             + "Lnet/minecraft/client/renderer/MultiBufferSource;"
             + "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;)V";
+
+    @Inject(method = "renderSlotAdapter", at = {@At("HEAD")}, remap = false)
+    private static void taczfixes$pushAdapterMaterialFallbackSuppression(
+            ClientSlotAdapterIndex adapter, ItemStack gunItem, PoseStack poseStack,
+            ItemDisplayContext transformType, int light, int overlay, MultiBufferSource bufferSource,
+            CallbackInfo callback) {
+        PbrRenderer.pushMaterialFallbackSuppression();
+    }
+
+    @Inject(method = "renderSlotAdapter", at = {@At("RETURN")}, remap = false)
+    private static void taczfixes$popAdapterMaterialFallbackSuppression(
+            ClientSlotAdapterIndex adapter, ItemStack gunItem, PoseStack poseStack,
+            ItemDisplayContext transformType, int light, int overlay, MultiBufferSource bufferSource,
+            CallbackInfo callback) {
+        PbrRenderer.popMaterialFallbackSuppression();
+    }
 
     @Redirect(method = {RENDER_ATTACHMENT_LAMBDA}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;getLodModel()Lorg/apache/commons/lang3/tuple/Pair;", remap = false), remap = false)
     private static Pair<BedrockAttachmentModel, ResourceLocation> dualWield$forceThirdPersonFullAttachmentModel(

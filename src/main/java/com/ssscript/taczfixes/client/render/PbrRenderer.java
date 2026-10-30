@@ -118,6 +118,17 @@ public final class PbrRenderer {
     private record Material(ResourceLocation specular, ResourceLocation normal) {}
 
     private static int tracerBloomSuppression;
+    private static int materialFallbackSuppression;
+
+    public static void pushMaterialFallbackSuppression() {
+        materialFallbackSuppression++;
+    }
+
+    public static void popMaterialFallbackSuppression() {
+        if (materialFallbackSuppression > 0) {
+            materialFallbackSuppression--;
+        }
+    }
 
     public static void pushTracerBloomSuppression() {
         tracerBloomSuppression++;
@@ -526,23 +537,28 @@ public final class PbrRenderer {
     public static RenderType resolve(RenderType original) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
-        return TYPES.computeIfAbsent(original, key -> {
-            var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
-            var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
-            if (texture.isEmpty()) return original;
-            ResourceLocation base = com.ssscript.taczfixes.client.util.GunRecolorManager.sourceOf(texture.get());
-            Material material = material(base);
-            if (material == null || material.specular() == null && material.normal() == null) {
-                ResourceLocation own = com.ssscript.taczfixes.client.util.GunRecolorManager.currentBaseTexture();
-                if (own != null && !own.equals(base)) {
-                    Material ownMaterial = material(own);
-                    if (ownMaterial != null && (ownMaterial.specular() != null || ownMaterial.normal() != null)) {
-                        material = ownMaterial;
-                    }
+        if (materialFallbackSuppression > 0) {
+            return resolveType(original, composite, false);
+        }
+        return TYPES.computeIfAbsent(original, key -> resolveType(key, composite, true));
+    }
+
+    private static RenderType resolveType(RenderType original, PbrCompositeAccessor composite, boolean allowFallback) {
+        var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
+        var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
+        if (texture.isEmpty()) return original;
+        ResourceLocation base = com.ssscript.taczfixes.client.util.GunRecolorManager.sourceOf(texture.get());
+        Material material = material(base);
+        if (allowFallback && material != null && material.specular() == null && material.normal() == null) {
+            ResourceLocation own = com.ssscript.taczfixes.client.util.GunRecolorManager.currentBaseTexture();
+            if (own != null && !own.equals(base)) {
+                Material ownMaterial = material(own);
+                if (ownMaterial != null && (ownMaterial.specular() != null || ownMaterial.normal() != null)) {
+                    material = ownMaterial;
                 }
             }
-            return material == null ? original : new PbrType(original, material);
-        });
+        }
+        return material == null ? original : new PbrType(original, material);
     }
 
     private static Material material(ResourceLocation base) {

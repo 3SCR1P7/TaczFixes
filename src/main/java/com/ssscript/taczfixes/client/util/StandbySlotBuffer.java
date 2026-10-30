@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.TimelessAPI;
@@ -162,9 +163,14 @@ public final class StandbySlotBuffer {
             BedrockAttachmentModel adapterModel = adapterIndex.getAdapterModel();
             ResourceLocation adapterTexture = adapterIndex.getModelTexture();
             if (adapterModel != null && adapterTexture != null) {
-                adapterModel.render(ItemStack.EMPTY, gun, poseStack,
-                        ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
-                        RenderType.entityCutout(adapterTexture), light, overlay);
+                PbrRenderer.pushMaterialFallbackSuppression();
+                try {
+                    adapterModel.render(ItemStack.EMPTY, gun, poseStack,
+                            ItemDisplayContext.THIRD_PERSON_RIGHT_HAND,
+                            RenderType.entityCutout(adapterTexture), light, overlay);
+                } finally {
+                    PbrRenderer.popMaterialFallbackSuppression();
+                }
             }
             org.joml.Vector3f mountOffset = adapterIndex.getMountOffset();
             if (mountOffset != null) {
