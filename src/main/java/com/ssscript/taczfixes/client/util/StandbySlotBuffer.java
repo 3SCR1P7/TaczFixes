@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
@@ -183,6 +184,7 @@ public final class StandbySlotBuffer {
             if (node == null || node.name == null || !node.name.endsWith("_pos")) return;
             key = node.name.substring(0, node.name.length() - "_pos".length());
         }
+        if (!GunPosAlterManager.isEnabled(gun, key)) return;
         float z = PosAlterStorage.get(gun, key);
         if (z != 0.0F) {
             pose.translate(0.0F, 0.0F, z / 16.0F);

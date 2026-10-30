@@ -197,6 +197,9 @@
     "config.taczfixes.entry.blocking.prevent_shooting_underwater": "Prevent Shooting Underwater",
 
     "config.taczfixes.entry.refit.hide_unavailable_default_slots": "Hide Unavailable Default Attachment Slots",
+    "config.taczfixes.entry.refit.pos_alter_enabled": "Enable Attachment Position Adjustment",
+    "config.taczfixes.entry.refit.pos_alter_max": "Attachment Position Adjustment Maximum",
+    "config.taczfixes.entry.refit.pos_alter_min": "Attachment Position Adjustment Minimum",
     "config.taczfixes.entry.refit.virtual_attachments": "Virtual Attachments",
     "config.taczfixes.entry.refit.show_preset_buttons": "Show Refit Preset Buttons",
     "config.taczfixes.entry.refit.show_search_box": "Show Search Box",

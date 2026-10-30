@@ -195,6 +195,12 @@ public class CustomSlotManager {
         return getEntries(gunStack).get(slotId);
     }
 
+    /** 槽定义是否显式声明了 pos_alter（即使数值无效也不回退到配置默认范围）。 */
+    public static boolean hasPosAlter(ItemStack gunStack, String slotId) {
+        SlotEntry entry = getEntries(gunStack).get(slotId);
+        return entry != null && entry.def() != null && entry.def().pos_alter != null;
+    }
+
     /** 槽定义里的 pos_alter 范围 [min, max]; 未配置返回 null。 */
     public static float[] getPosAlterRange(ItemStack gunStack, String slotId) {
         SlotEntry entry = getEntries(gunStack).get(slotId);

@@ -199,6 +199,9 @@
     "config.taczfixes.entry.blocking.prevent_shooting_underwater":  "阻止水下开火",
 
     "config.taczfixes.entry.refit.hide_unavailable_default_slots":  "隐藏不可用的默认配件槽",
+    "config.taczfixes.entry.refit.pos_alter_enabled":  "启用配件定位调整",
+    "config.taczfixes.entry.refit.pos_alter_max":  "配件定位调整最大值",
+    "config.taczfixes.entry.refit.pos_alter_min":  "配件定位调整最小值",
     "config.taczfixes.entry.refit.virtual_attachments":  "虚拟配件",
     "config.taczfixes.entry.refit.show_preset_buttons":  "显示改装方案按钮",
     "config.taczfixes.entry.refit.show_search_box":  "显示搜索框",

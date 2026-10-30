@@ -213,6 +213,11 @@ public class NetworkHandler {
                 ServerMessageManualCraftPower::decode,
                 ServerMessageManualCraftPower::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(39, ServerMessageContraptionHit.class,
+                ServerMessageContraptionHit::encode,
+                ServerMessageContraptionHit::decode,
+                ServerMessageContraptionHit::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
     }
 }

@@ -334,6 +334,9 @@ public class ConfigScreen {
     }
 
     private static void buildRefit(ConfigCategory cat, ConfigEntryBuilder entry) {
+        bool_(cat, entry, "refit.pos_alter_enabled", Config.REFIT_POS_ALTER_ENABLED);
+        dbl_(cat, entry, "refit.pos_alter_max", Config.REFIT_POS_ALTER_MAX);
+        dbl_(cat, entry, "refit.pos_alter_min", Config.REFIT_POS_ALTER_MIN);
         bool_(cat, entry, "refit.hide_unavailable_default_slots", Config.HIDE_UNAVAILABLE_DEFAULT_SLOTS);
         enum_(cat, entry, "refit.virtual_attachments", Config.VIRTUAL_ATTACHMENTS);
         bool_(cat, entry, "refit.show_preset_buttons", Config.REFITSCREEN_SHOW_PRESET_BUTTONS);

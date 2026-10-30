@@ -65,6 +65,9 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
     public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_RECOLOR_BUTTON;
+    public static final ForgeConfigSpec.BooleanValue REFIT_POS_ALTER_ENABLED;
+    public static final ForgeConfigSpec.DoubleValue REFIT_POS_ALTER_MAX;
+    public static final ForgeConfigSpec.DoubleValue REFIT_POS_ALTER_MIN;
     public static final ForgeConfigSpec.DoubleValue REFIT_SLOT_SIZE;
     public static final ForgeConfigSpec.BooleanValue SPREAD_RAMP_ENABLED;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
@@ -685,6 +688,16 @@ public class Config {
 
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("refit");
+
+        REFIT_POS_ALTER_ENABLED = BUILDER
+                .comment("是否对 grip、laser、scope、stock 和自定义配件槽启用配件定位调整。默认值：true")
+                .define("pos_alter_enabled", true);
+        REFIT_POS_ALTER_MAX = BUILDER
+                .comment("配件定位调整的最大值。默认值：1.0")
+                .defineInRange("pos_alter_max", 1.0, -10.0, 10.0);
+        REFIT_POS_ALTER_MIN = BUILDER
+                .comment("配件定位调整的最小值。默认值：-1.0")
+                .defineInRange("pos_alter_min", -1.0, -10.0, 10.0);
 
         HIDE_UNAVAILABLE_DEFAULT_SLOTS = BUILDER
                 .comment("是否隐藏不可用的默认配件槽。默认值：false")

@@ -2,16 +2,19 @@ package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.compat.create.ContraptionBlockHitResult;
 import com.ssscript.taczfixes.common.compat.create.CreateContraptionCollisionHelper;
+import com.ssscript.taczfixes.common.network.NetworkHandler;
+import com.ssscript.taczfixes.common.network.ServerMessageContraptionHit;
 import com.tacz.guns.api.event.server.AmmoHitBlockEvent;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.ExplodeUtil;
-import net.minecraft.core.particles.BlockParticleOption;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
@@ -35,6 +38,14 @@ public class MixinEntityKineticBulletCreateCollision {
     private boolean explosionDestroyBlock;
     @Shadow
     private boolean igniteBlock;
+    @Shadow
+    private ResourceLocation ammoId;
+    @Shadow
+    private ResourceLocation gunId;
+    @Shadow
+    private ResourceLocation gunDisplayId;
+    @Shadow
+    private boolean igniteEntity;
 
     @Unique
     private ContraptionBlockHitResult taczfixes$contraptionHit;
@@ -96,9 +107,12 @@ public class MixinEntityKineticBulletCreateCollision {
         }
 
         if (bullet.level() instanceof ServerLevel serverLevel) {
-            serverLevel.sendParticles(
-                    new BlockParticleOption(ParticleTypes.BLOCK, hitResult.getState()),
-                    hitVec.x, hitVec.y, hitVec.z, 12, 0.15D, 0.15D, 0.15D, 0.08D);
+            NetworkHandler.CHANNEL.send(
+                    PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                            hitVec.x, hitVec.y, hitVec.z, 64.0D, serverLevel.dimension())),
+                    new ServerMessageContraptionHit(hitVec, hitResult.getDirection(), hitResult.getState(),
+                            this.ammoId.toString(), this.gunId.toString(), this.gunDisplayId.toString(),
+                            this.igniteEntity));
             if (this.igniteBlock) {
                 serverLevel.sendParticles(ParticleTypes.LAVA, hitVec.x, hitVec.y, hitVec.z, 1,
                         0.0D, 0.0D, 0.0D, 0.0D);

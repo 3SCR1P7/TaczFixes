@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.common.network;
 
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
+import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
@@ -13,8 +14,6 @@ import java.util.Locale;
 import java.util.function.Supplier;
 
 public class ClientMessageGunPosAlter {
-    private static final float MAX_ABS = 100.0F;
-
     private final String slotKey;
     private final float value;
 
@@ -45,7 +44,9 @@ public class ClientMessageGunPosAlter {
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (gun == null) return;
         if (!isValidSlotKey(gunStack, message.slotKey)) return;
-        float clamped = Math.max(-MAX_ABS, Math.min(MAX_ABS, message.value));
+        float[] range = GunPosAlterManager.getRange(gunStack, message.slotKey);
+        if (range == null) return;
+        float clamped = Math.max(range[0], Math.min(range[1], message.value));
         if (Float.isNaN(clamped) || Float.isInfinite(clamped)) clamped = 0.0F;
         PosAlterStorage.set(gunStack, message.slotKey, clamped);
         player.inventoryMenu.broadcastChanges();

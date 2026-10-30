@@ -4,6 +4,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.item.IGun;
@@ -87,7 +88,8 @@ public class MixinFirstPersonRenderGunEventAimScope {
         float x = sum == null ? 0.0F : sum[0];
         float y = sum == null ? 0.0F : sum[1];
         float z = sum == null ? 0.0F : sum[2];
-        float posAlterZ = PosAlterStorage.get(gunStack, "scope");
+        float posAlterZ = GunPosAlterManager.isEnabled(gunStack, "scope")
+                ? PosAlterStorage.get(gunStack, "scope") : 0.0F;
         if (x == 0.0F && y == 0.0F && z == 0.0F && posAlterZ == 0.0F) return base;
         Vector3f v = base == null ? new Vector3f() : base;
         v.x += x;

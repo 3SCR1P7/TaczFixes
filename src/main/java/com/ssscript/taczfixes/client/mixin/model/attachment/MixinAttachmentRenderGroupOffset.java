@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.mixin.model.attachment;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.ssscript.taczfixes.client.util.GunRecolorManager;
@@ -55,9 +56,11 @@ public abstract class MixinAttachmentRenderGroupOffset {
         if (type == null || gunStack == null || gunStack.isEmpty()) return;
         String slotKey = type.name().toLowerCase(Locale.ROOT);
         AttachmentGroupOffsetHelper.applyForGun(poseStack, gunStack, slotKey);
-        float z = PosAlterStorage.get(gunStack, slotKey);
-        if (z != 0.0F) {
-            poseStack.translate(0.0F, 0.0F, z / 16.0F);
+        if (GunPosAlterManager.isEnabled(gunStack, slotKey)) {
+            float z = PosAlterStorage.get(gunStack, slotKey);
+            if (z != 0.0F) {
+                poseStack.translate(0.0F, 0.0F, z / 16.0F);
+            }
         }
     }
 }

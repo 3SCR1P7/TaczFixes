@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.util;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
+import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.AttachmentGroupOffsetHelper;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
@@ -114,6 +115,7 @@ public final class CustomSlotMount {
 
     private static void applyPosAlter(PoseStack pose, ItemStack gun, String key) {
         if (key == null || gun == null || gun.isEmpty()) return;
+        if (!GunPosAlterManager.isEnabled(gun, key)) return;
         float z = PosAlterStorage.get(gun, key);
         if (z != 0.0F) {
             pose.translate(0.0F, 0.0F, z / 16.0F);

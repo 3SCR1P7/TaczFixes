@@ -44,6 +44,9 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         if ("com.ssscript.taczfixes.common.mixin.MixinEntityKineticBulletCreateCollision".equals(mixinClassName)) {
             return CREATE_PRESENT;
         }
+        if (mixinClassName.startsWith("com.ssscript.taczfixes.client.mixin.compat.create.")) {
+            return CREATE_PRESENT;
+        }
         if (mixinClassName.contains(".MixinParCool")) {
             return PARCOOL_PRESENT;
         }

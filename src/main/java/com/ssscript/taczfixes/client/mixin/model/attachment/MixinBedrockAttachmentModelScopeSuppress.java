@@ -16,6 +16,9 @@ import java.util.List;
 @Mixin(BedrockAttachmentModel.class)
 public interface MixinBedrockAttachmentModelScopeSuppress {
 
+    @Accessor("scopeViewPaths")
+    List<List<BedrockPart>> taczfixes$scopeViewPaths();
+
     @Accessor("ocularNodePaths")
     List<List<BedrockPart>> taczfixes$ocularNodePaths();
 
