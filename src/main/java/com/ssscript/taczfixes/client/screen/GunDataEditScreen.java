@@ -191,6 +191,29 @@ public class GunDataEditScreen extends Screen {
         return this.content.split("\n", -1);
     }
 
+    /** 仅用于显示: 制表符展开为两个空格, 其它控制字符替换为空格, 避免字体渲染成缺字方框. */
+    private static String displayText(String text) {
+        StringBuilder result = null;
+        for (int i = 0; i < text.length(); i++) {
+            char c = text.charAt(i);
+            String replacement = c == '\t' ? "  " : (Character.isISOControl(c) ? " " : null);
+            if (replacement != null) {
+                if (result == null) {
+                    result = new StringBuilder(text.length() + 8);
+                    result.append(text, 0, i);
+                }
+                result.append(replacement);
+            } else if (result != null) {
+                result.append(c);
+            }
+        }
+        return result == null ? text : result.toString();
+    }
+
+    private int displayWidth(String text, int endIndex) {
+        return this.font.width(displayText(text.substring(0, Math.max(0, Math.min(endIndex, text.length())))));
+    }
+
     /** 光标所在逻辑行列(字符索引)。 */
     private int[] cursorPos() {
         String[] lines = lines();
@@ -218,11 +241,12 @@ public class GunDataEditScreen extends Screen {
         String[] logicalLines = lines();
         int maxLines = (this.editH - 8) / LINE_H;
         int topLimit = Math.max(0, logicalLines.length - maxLines);
-        int textW = this.font.width(logicalLines[Math.min(pos[0], logicalLines.length - 1)]
-                .substring(0, Math.min(pos[1], logicalLines[Math.min(pos[0], logicalLines.length - 1)].length())));
+        String caretLine = logicalLines[Math.min(pos[0], logicalLines.length - 1)];
+        int textW = displayWidth(caretLine,
+                Math.min(pos[1], caretLine.length()));
         int maxHS = 0;
         for (String l : logicalLines) {
-            maxHS = Math.max(maxHS, this.font.width(l) - (this.editW - 8));
+            maxHS = Math.max(maxHS, this.font.width(displayText(l)) - (this.editW - 8));
         }
         maxHS = Math.max(0, maxHS);
         if (this.followCaret) {
@@ -253,12 +277,12 @@ public class GunDataEditScreen extends Screen {
                 int selLow = Math.max(rowStart, selectionLow());
                 int selHigh = Math.min(rowEnd, selectionHigh());
                 if (selHigh > selLow) {
-                    int xStart = fx + 4 + this.font.width(lineText.substring(0, selLow - rowStart)) - this.hScroll;
-                    int xEnd = fx + 4 + this.font.width(lineText.substring(0, selHigh - rowStart)) - this.hScroll;
+                    int xStart = fx + 4 + displayWidth(lineText, selLow - rowStart) - this.hScroll;
+                    int xEnd = fx + 4 + displayWidth(lineText, selHigh - rowStart) - this.hScroll;
                     graphics.fill(xStart, y, xEnd, y + 10, 0xFF3355CC);
                 }
             }
-            graphics.drawString(this.font, lineText, fx + 4 - this.hScroll, y, 0xFFE0E0E0);
+            graphics.drawString(this.font, displayText(lineText), fx + 4 - this.hScroll, y, 0xFFE0E0E0);
         }
         graphics.disableScissor();
 
@@ -267,7 +291,7 @@ public class GunDataEditScreen extends Screen {
             int visualRow = pos[0] - this.scroll;
             if (visualRow >= 0 && visualRow < maxLines) {
                 String lineText = logicalLines[pos[0]];
-                int cx = fx + 4 + this.font.width(lineText.substring(0, Math.min(pos[1], lineText.length()))) - this.hScroll;
+                int cx = fx + 4 + displayWidth(lineText, Math.min(pos[1], lineText.length())) - this.hScroll;
                 int cy = fy + 4 + visualRow * LINE_H;
                 graphics.fill(cx, cy, cx + 1, cy + 9, 0xFFFFFFFF);
             }
@@ -365,17 +389,17 @@ public class GunDataEditScreen extends Screen {
             column = 0;
         } else {
             for (int i = 0; i < lineText.length(); i++) {
-                if (this.font.width(lineText.substring(0, i + 1)) >= clickX) {
+                if (displayWidth(lineText, i + 1) >= clickX) {
                     column = i + 1;
                     break;
                 }
             }
             if (column == 0) {
                 column = lineText.length();
-            } else if (this.font.width(lineText.substring(0, column)) >= clickX) {
+            } else if (displayWidth(lineText, column) >= clickX) {
                 // 落点处于字符左半: 取前一列
-                if (column > 0 && this.font.width(lineText.substring(0, column - 1))
-                        >= clickX - this.font.width(lineText.substring(column - 1, column)) / 2) {
+                if (column > 0 && displayWidth(lineText, column - 1)
+                        >= clickX - (displayWidth(lineText, column) - displayWidth(lineText, column - 1)) / 2) {
                     column = Math.max(0, column - 1);
                 }
             }
@@ -405,7 +429,7 @@ public class GunDataEditScreen extends Screen {
             int clickX = (int) (mouseX - fx - 4) + this.hScroll;
             int column = 0;
             for (int i = 0; i < lineText.length(); i++) {
-                if (this.font.width(lineText.substring(0, i + 1)) >= clickX) {
+                if (displayWidth(lineText, i + 1) >= clickX) {
                     column = i + 1;
                     break;
                 }
@@ -437,7 +461,7 @@ public class GunDataEditScreen extends Screen {
             int steps = (int) Math.round(delta * 20);
             int maxHS = 0;
             for (String l : lines) {
-                maxHS = Math.max(maxHS, this.font.width(l) - (this.editW - 8));
+                maxHS = Math.max(maxHS, this.font.width(displayText(l)) - (this.editW - 8));
             }
             maxHS = Math.max(0, maxHS);
             this.hScroll = Math.max(0, Math.min(this.hScroll + steps, maxHS));
