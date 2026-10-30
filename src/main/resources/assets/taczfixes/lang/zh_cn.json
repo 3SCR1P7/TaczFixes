@@ -497,7 +497,7 @@
     "taczfixes.tooltip.fire_mode_semi":  "半自动",
     "taczfixes.tooltip.refit_point_consume":  "消耗改装点数",
     "tooltip.taczfixes.durability":  "耐久度：%s / %s",
-    "tooltip.taczfixes.limb_damage":  "%s 四肢倍率",
+    "tooltip.taczfixes.limb_damage":  "%s 四肢伤害",
     
 
     "attribute.name.taczfixes.aiming_stamina":  "上肢耐力",
