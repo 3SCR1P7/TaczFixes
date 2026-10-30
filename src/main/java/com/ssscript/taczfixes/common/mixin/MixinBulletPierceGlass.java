@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.common.mixin;
 
-import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.event.server.AmmoHitBlockEvent;
 import com.tacz.guns.config.common.AmmoConfig;
@@ -20,6 +19,7 @@ import net.minecraftforge.common.MinecraftForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 @Mixin(EntityKineticBullet.class)
 public class MixinBulletPierceGlass {
@@ -29,11 +29,7 @@ public class MixinBulletPierceGlass {
     @Shadow(remap = false)
     private boolean explosion;
 
-    @ModifyExpressionValue(method = "onBulletTick",
-            at = @At(value = "INVOKE",
-                    target = "Lcom/tacz/guns/util/block/BlockRayTrace;rayTraceBlocks(Lnet/minecraft/world/level/Level;Lnet/minecraft/world/level/ClipContext;)Lnet/minecraft/world/phys/BlockHitResult;",
-                    remap = false),
-            remap = false)
+    @ModifyVariable(method = "onBulletTick", at = @At("STORE"), ordinal = 0, remap = false)
     private BlockHitResult taczfixes$pierceGlass(BlockHitResult original) {
         if (!Config.BULLET_PIERCE_GLASS.get() || !AmmoConfig.DESTROY_GLASS.get()
                 || explosion || original.getType() == HitResult.Type.MISS) {
