@@ -1,24 +1,18 @@
 package com.ssscript.taczfixes.common.handler;
 
 import com.ssscript.taczfixes.common.config.Config;
-import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
-import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.CrawlHitboxHelper;
+import com.ssscript.taczfixes.common.util.LimbDamageFactorHelper;
 import com.ssscript.taczfixes.common.util.LimbDamageHelper;
-import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
-import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.resource.index.CommonGunIndex;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.Vec3;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.List;
-import java.util.Optional;
 
 public class LimbDamageHandler {
 
@@ -67,47 +61,8 @@ public class LimbDamageHandler {
     private float getLimbFactorForGun(EntityHurtByGunEvent.Pre event) {
         LivingEntity shooter = (LivingEntity) event.getAttacker();
         if (shooter == null) {
-            return clampLimbFactor(Config.LIMB_FACTOR_DEFAULT.get().doubleValue());
+            return LimbDamageFactorHelper.getDefaultFactor();
         }
-        ItemStack gunItem = shooter.getMainHandItem();
-        IGun iGun = IGun.getIGunOrNull(gunItem);
-        if (iGun == null) {
-            return clampLimbFactor(Config.LIMB_FACTOR_DEFAULT.get().doubleValue());
-        }
-        ResourceLocation gunId = iGun.getGunId(gunItem);
-        if (gunId == null) {
-            return clampLimbFactor(Config.LIMB_FACTOR_DEFAULT.get().doubleValue());
-        }
-        ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
-        Double limbFactor = TaczFixesDataManager.getLimbFactor(dataId);
-        double base;
-        if (limbFactor != null) {
-            base = limbFactor;
-        } else {
-            Optional<CommonGunIndex> gunIndex = TimelessAPI.getCommonGunIndex(gunId);
-            if (gunIndex.isEmpty()) {
-                return clampLimbFactor(Config.LIMB_FACTOR_DEFAULT.get().doubleValue());
-            }
-            String type = gunIndex.get().getType();
-            if (type == null) {
-                return clampLimbFactor(Config.LIMB_FACTOR_DEFAULT.get().doubleValue());
-            }
-            base = switch (type) {
-                case "pistol" -> Config.GUN_TYPE_PISTOL.get();
-                case "rifle" -> Config.GUN_TYPE_RIFLE.get();
-                case "sniper" -> Config.GUN_TYPE_SNIPER.get();
-                case "shotgun" -> Config.GUN_TYPE_SHOTGUN.get();
-                case "smg" -> Config.GUN_TYPE_SMG.get();
-                case "rpg" -> Config.GUN_TYPE_RPG.get();
-                case "mg" -> Config.GUN_TYPE_MG.get();
-                case "dmr" -> Config.GUN_TYPE_DMR.get();
-                default -> Config.GUN_TYPE_OTHER.get();
-            };
-        }
-        return clampLimbFactor(AttachmentTaczFixesManager.applyLimbFactor(gunItem, base));
-    }
-
-    private static float clampLimbFactor(double value) {
-        return (float) Math.min(1.0, Math.max(0.0, value));
+        return LimbDamageFactorHelper.getFinalFactor(shooter.getMainHandItem());
     }
 }

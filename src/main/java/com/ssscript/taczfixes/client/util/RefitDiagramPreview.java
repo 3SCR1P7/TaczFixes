@@ -25,6 +25,7 @@ public final class RefitDiagramPreview {
     private static int width;
     private static int height;
     private static AttachmentCacheProperty cache;
+    private static ItemStack previewGun = ItemStack.EMPTY;
     private static int cacheHash;
 
     private RefitDiagramPreview() {
@@ -56,8 +57,14 @@ public final class RefitDiagramPreview {
     public static void clear() {
         slotKey = null;
         attachment = ItemStack.EMPTY;
+        previewGun = ItemStack.EMPTY;
         cache = null;
         cacheHash = 0;
+    }
+
+    /** 当前悬停配件预览使用的枪械副本；无预览时返回空栈。 */
+    public static ItemStack previewGun() {
+        return previewCache() == null ? ItemStack.EMPTY : previewGun;
     }
 
     /** 悬浮中的预览属性缓存; 无悬浮/鼠标已移开返回 null(调用方回退真实缓存)。 */
@@ -106,8 +113,10 @@ public final class RefitDiagramPreview {
             }
             AttachmentCacheProperty property = new AttachmentCacheProperty();
             property.eval(preview, gunData);
+            previewGun = preview.copy();
             return property;
         } catch (Throwable ignored) {
+            previewGun = ItemStack.EMPTY;
             return null;
         }
     }

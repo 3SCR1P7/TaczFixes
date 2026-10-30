@@ -111,6 +111,7 @@
         "MixinCameraSetupEvent",
         "MixinCameraSetupEventZoom",
         "MixinClientAttachmentItemTooltip",
+        "MixinClientGunTooltipLimbDamage",
         "MixinClientTrackingSync",
         "MixinEntityBulletRenderer",
         "MixinEntityBulletSuppression",

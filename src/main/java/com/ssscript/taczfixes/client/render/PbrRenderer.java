@@ -40,7 +40,6 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
-    // 缂傚倸鍊归幐鎼佹偤?Uniform 閻庢鍠楀ú婊堝极? 闂備緡鍓欓悘婵嬪储閵堝憛鎺曠疀閹炬潙顫?濠殿噯绲界换鎴︻敃婵傜鍑犳い蹇撴媼濞煎墽绱撴担濮戭亪宕哄Δ鍛劸闁兼亽鍎遍惁濠氭倵濞戞瑯娈樻い鎴滅劍缁嬪宕ｆ径灞藉绩闂佺懓鍚€閸曟﹢鍩€?
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
     private static AbstractUniform uReflectionStrength, uReflectionArea, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uGlareDepthTest;
@@ -107,7 +106,6 @@ public final class PbrRenderer {
                 }
             };
     private static final int TYPES_MAX = 512;
-    // RenderType 闂佸搫鐗滄禍锝夈€呴锕€绀?equals/hashCode(婵帗绋掗…鍫ヮ敇婵犳艾鍐€闁搞儺浜炲Σ鏇㈡偣閸ヨ泛骞掔紒?, 闂佹椿娼块崝蹇涱敊閺嶎厽鈷掓い鏃囧亹绾?LRU 闂備緡鍓欓悘婵嬪储閵堝绠ｆ俊顖滅帛閻?闂佽　鍋撶痪顓炴媼濡懎鈽夐幙鍐ㄥ箺闁哄棴绲鹃幏鍛村箻鐎靛壊浼曠紓浣告湰濡炰粙宕崇粙娆惧殘闁诡厽宸婚崑?
     private static final Map<RenderType, RenderType> TYPES =
             new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
                 @Override
@@ -121,7 +119,6 @@ public final class PbrRenderer {
 
     private static int tracerBloomSuppression;
 
-    /** 闂佸搫娲ら崯鍧楀储濠婂喚鍤曢悷娆忓椤╊偊鏌＄仦鐐鞍婵犫偓閿熺姵鈷掗悗娑櫭～鍥煕閹烘挸鍔堕柛銈嗙矒瀹曪綁骞嬪┑鍡楄緟濠电偛顦扮粙鎴﹀储濠婂牆绠查柡鍥ｂ偓宕囶唵(闂佸搫瀚烽崹浼村箚娓氣偓瀵敻鍩€椤掑倻纾奸柛顐犲灪閺呮悂鏌℃担鍝ュⅱ闁?Config.PBR_BLOOM_TRACER 闂佸憡鍔曢崯鍧楁偩?闂?*/
     public static void pushTracerBloomSuppression() {
         tracerBloomSuppression++;
     }
@@ -177,10 +174,9 @@ public final class PbrRenderer {
         if (level == null) return;
         var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         var origin = camera.getPosition();
-        // 闁诲繒鍋愰崑鎾绘⒑椤斿搫濡奸柛妯荤矊閳?闂佽娴氶崑鍛繆?闂佽娴氶崹鎶筋敄濡ゅ啰椹?: 闂傚倸鐗忛崑娑㈠Φ婢跺瞼鐭氶柧蹇氼潐濡﹪骞栨潏鍓х窗缂佲€冲暣瀵?
-        // 闂佸憡鐟禍婊冿耿椤忓牆瀚夐柍褜鍓氬濠氬箣濠靛牊婢栭梻鍌氬閹虫劗鍒掗鐐茬闁诡垱澹嗙粻?PBR 闂佸搫鍟抽崺鏍ㄧ珶閸岀偛绠甸煫鍥ㄦ尵濠€浼存⒑椤斿搫濡奸柛? 闂備緡鍓欓悘婵嬪储閵堝绫嶉柣妯虹－娴?闂?PBR 闂佸搫鍟晶搴♀枍瑜旈獮宥夘敃閿濆棛鍘甸梺绉嗗嫨浠犻柍?
+        float dt = frameDelta();
         if (System.currentTimeMillis() - lastPbrDrawAt <= 500L) {
-            updateLocalLight(level, origin);
+            updateLocalLight(level, origin, dt);
         }
         setUniform(uLocalLightDirection, localLightX, localLightY, localLightZ);
         setUniform(uLocalLightColor, localLightR, localLightG, localLightB);
@@ -190,7 +186,7 @@ public final class PbrRenderer {
             setUniform(uCelestialDirection, 0f, 1f, 0f);
             setUniform(uCelestialColor, 0f, 0f, 0f);
             setUniform(uSkyAmbient, 0f);
-            setUniform(uCelestialVisibility, 0f);
+            setUniform(uCelestialVisibility, updateCelestialVisibility(0f, dt));
             setUniform(uLocalSkyExposure, 0f);
             setUniform(uWetness, updateWetness(0f));
             return;
@@ -204,16 +200,13 @@ public final class PbrRenderer {
         var end = origin.add(new Vec3(light.x(), light.y(), 0).scale(96));
         boolean visible = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
                 ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
-        setUniform(uCelestialVisibility, visible ? 1f : 0f);
+        setUniform(uCelestialVisibility, updateCelestialVisibility(visible ? 1f : 0f, dt));
         setUniform(uLocalSkyExposure, level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
-        // 濠电儑绲介澶娒洪敃鍌氱闁规儳顕悾? 婵炲濮撮幊宥団偓闈涙湰缁嬪寮介锝嗙彧闂侀潧妫旂欢姘耿閼搁潧绶為柍琛″亾缂佹鐗楀鍕箻椤旇　鍋撴繝鍥х睄闁绘顔婄槐鏇㈡煙缁洖澧叉俊鐐插€块幃浠嬫偄閸涘﹥鐝? 閻庢鍠栭幖顐も偓鐟扮－閹瑰嫰鎮㈤崗纰卞悅闂傚倸妫庨崝鎴﹀闯濞差亜违?
-        // 闂佹椿娼块崝搴ｆ暜閾忓厜鍋撶憴鍕瀯缂傚秴鎳愮槐鏃堫敊鎼存挸浜鹃悘鐐跺亹閻熸繈鏌￠崟闈涚仯婵炴潙顦靛鍨姜閹殿喚孝缂? 缂備焦顨忛崗娑氱箔娴ｅ湱顩查柧蹇撳ⅲ閻愮儤鍎庨柛娑橈攻缁ㄦ岸鏌涘▎妯虹仴闁稿繑锕㈠畷鐑藉Ω閵壯勭埃濠碉紕鍋撻崝鏇⑺? 婵炶揪绲藉Λ娆撴倶濞嗘挸妞界€光偓閳ь剛鏁搹鍏夊亾绾懏纭炬繝鈧鍫熺劶妞ゆ棁妫勯惃鈥斥槈閹炬剚鍎庣紒妤€顦伴幆鏃堝籍閳ь剚鏅堕敃鈧敃銏㈡啑閵堝倸浜?
         float targetWetness = 0f;
         var wetnessAnchor = Minecraft.getInstance().player != null
                 ? Minecraft.getInstance().player.position() : origin;
         if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && level.isRaining()) {
             BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
-            // isRainingAt 閻庣懓鎲¤ぐ鍐偓鍨耿瀹?canSeeSky/婵°倕鍊归敋閻庤濞婂畷?缂傚倸娲㈤崐妤呮焾閹绢喗鈷旂€广儱顦版径鍕繆椤愮喎浜鹃梺? canSeeSky 闂佸憡鍔曠粔闈浳熸径濠庡殨闊洦娲嶉埀顒侇焽閹峰濡堕崨顐＄矒婵＄偑鍊涢崺鏍涢妶澶婃闁荤喓澧楅崑銉╂⒑椤掑鏋熼悘蹇撴嚇婵?
             if (level.canSeeSky(wetPos) && level.isRainingAt(wetPos)) {
                 targetWetness = level.getRainLevel(partialTick);
             }
@@ -226,7 +219,6 @@ public final class PbrRenderer {
     private static final float WET_SECONDS = 5.0f;
     private static final float DRY_SECONDS = 8.0f;
 
-    /** 濠电儑绲介鍡欑不?闂佸搫鎳忛崕鎶藉礂闁秵鐒鹃柤鎭掑劚閻﹀鏌￠崘銊у煟婵☆偄鐏濋妴鎺楀箛椤掆偓缂? 闂備緡鍓欓悘婵嬪储閵堝棙浜ゆ繛鎴灻В澶愭倵楠炲灝鈧洟宕幘顔肩睄闁告挷鑳舵禒婊堟⒒閸屾粠妫庨柣鎴畵瀹曪絽螣缁洖浜?*/
     private static float updateWetness(float target) {
         long now = System.nanoTime();
         if (wetnessLastNanos == 0L) {
@@ -241,6 +233,35 @@ public final class PbrRenderer {
         }
         return smoothedWetness;
     }
+
+    private static final float OCCLUSION_FADE_SECONDS = 0.1f;
+    private static float smoothedCelestialVisibility = 0f;
+    private static long lastFrameNanos;
+
+    private static float frameDelta() {
+        long now = System.nanoTime();
+        if (lastFrameNanos == 0L) {
+            lastFrameNanos = now;
+            return 0f;
+        }
+        float dt = Math.min((now - lastFrameNanos) / 1.0e9f, 0.25f);
+        lastFrameNanos = now;
+        return dt;
+    }
+
+    private static float updateCelestialVisibility(float target, float dt) {
+        smoothedCelestialVisibility = approach(smoothedCelestialVisibility, target, dt);
+        return smoothedCelestialVisibility;
+    }
+
+    private static float approach(float current, float target, float dt) {
+        float step = dt / OCCLUSION_FADE_SECONDS;
+        if (current < target) {
+            return Math.min(target, current + step);
+        }
+        return Math.max(target, current - step);
+    }
+
     private static float localLightX = 0f;
     private static float localLightY = 1f;
     private static float localLightZ = 0f;
@@ -253,8 +274,7 @@ public final class PbrRenderer {
     private static int localLightEmission = 0;
     private static long lastPbrDrawAt = 0L;
 
-    /** 闂佽顔栭崑鍛嚕閸ф鈷旈柛鏇ㄥ枤缁狀噣鏌涘▎鎰仴闁告ɑ绮撳顒勬偡閻楀牆浠?闂佺厧鎼崐鍦矈?; 闂佸搫鍊婚幊鎾诲箖?閻庢鍠栭幖顐も偓鐟板暱琚欓煫鍥ㄦ尰婵酣鏌熺粙娆炬Ц缂傚秴顑夊畷婊冾吋閸曨厾孝缂傚倸鍠氶崳锝夊闯閸濄儳涓? 缂備礁顦抽褎鎱ㄩ埡鍛睄闁割偅娲滆ぐ顖炴煕韫囨搩妲搁梺瑙ｆ櫅椤劑骞嬮敐鍥垛偓鈧梻鍌氭噹缁诲绮径鎰闁跨喓濮伴埀顒佸灴婵?*/
-    private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin) {
+    private static void updateLocalLight(net.minecraft.world.level.Level level, Vec3 origin, float dt) {
         Minecraft minecraft = Minecraft.getInstance();
         var player = minecraft.player;
         Vec3 visibilityAnchor = player != null ? player.getEyePosition(1.0F) : origin;
@@ -262,6 +282,7 @@ public final class PbrRenderer {
         if (now >= localLightNextScan) {
             localLightNextScan = now + 250L;
             BlockPos center = BlockPos.containing(origin);
+            BlockPos previous = localLightBlock;
             BlockPos best = null;
             int bestEmission = 0;
             double bestScore = 0.0D;
@@ -281,8 +302,13 @@ public final class PbrRenderer {
                     bestEmission = emission;
                 }
             }
-            localLightBlock = best;
-            localLightEmission = bestEmission;
+            if (best == null && previous != null && isLocalLightCandidate(level, previous, center)) {
+                localLightBlock = previous;
+                localLightEmission = level.getBlockState(previous).getLightEmission(level, previous);
+            } else {
+                localLightBlock = best;
+                localLightEmission = bestEmission;
+            }
             if (best != null) {
                 int color = level.getBlockState(best).getMapColor(level, best).col;
                 int r = (color >> 16) & 255;
@@ -313,14 +339,20 @@ public final class PbrRenderer {
             double score = localLightEmission / (1.0D + len * len * 0.35D);
             targetStrength = (float) Math.max(0.0D, Math.min(1.0D, score / 7.0D));
         }
-        // 闂佸搫鍊婚幊鎾诲箖濠婂唭鎺曠疀閹炬潙顫撻梺鍝勬搐閻°劑寮?闁哄鏅濋崑鐔兼偨?, 閻庢鍠栭幖顐も偓纭呮珪濞碱亞鎷犻煫顓犱亢濡ょ姷鍋犲▍鏇犲垝閿曞倹鐒奸柛顭戝枛鐢娊鏌涢幒鎴炲鐎规洘鐓″畷妤佸緞鐎ｎ剛鍩嶉柣鐘叉惈閸熻儻銇?
         localLightX = targetX;
         localLightY = targetY;
         localLightZ = targetZ;
-        localLightStrength += (targetStrength - localLightStrength) * 0.35f;
+        localLightStrength = approach(localLightStrength, targetStrength, dt);
     }
 
-    /** 闂佺绻愰ˇ鎵姳椤曗偓瀹曟岸骞嶉鑹扮闁诲海鎳撴晶搴♀攦閸岀偞鍎撴繛鎴烆殘椤撴椽姊婚崒姘辨憼婵″弶鎮傚畷銉╂晜閼恒儳鐣抽梻渚囧墻閸犳浜搁崨鏉戞闁荤喓澧楅崑? 闂佺粯绮忓畷鐢稿箯閹寸姷椹冲璺侯槺閻熸繈姊洪澶婃灍閻忓繐鎳橀幆鍐礋椤掍胶鍘甸梺绉嗗嫨浠︾紒杈ㄥ缁岸鎳楅婊呯暫闂?*/
+    private static boolean isLocalLightCandidate(net.minecraft.world.level.Level level, BlockPos pos, BlockPos center) {
+        if (Math.abs(pos.getX() - center.getX()) > 6 || Math.abs(pos.getY() - center.getY()) > 4
+                || Math.abs(pos.getZ() - center.getZ()) > 6) {
+            return false;
+        }
+        return level.getBlockState(pos).getLightEmission(level, pos) > 0;
+    }
+
     private static boolean isLightVisible(net.minecraft.world.level.Level level, Vec3 from, BlockPos lightPos,
                                            Entity entity) {
         Vec3 target = new Vec3(lightPos.getX() + 0.5D, lightPos.getY() + 0.5D, lightPos.getZ() + 0.5D);
@@ -432,7 +464,6 @@ public final class PbrRenderer {
         uWetness = s.safeGetUniform("Wetness");
     }
 
-    /** 缂傚倸鍊归幐鎼佹偤閵婏妇鈻旈柧蹇撳帨閺?闁荤姍鍐仾缂侇煈鍣ｉ弻灞筋吋閸喓銈?闂佹椿鍋€閸嬫捇鏌ょ憴鍕祷婵炲懏甯炵槐鎾诲传閸曗晙鏉?闂佸搫鍟崕濂告倻閿旇姤浜ら柛銉戝啯娅㈤梺绋跨箞閸庮垶鍩€?*/
     static void setUniform(AbstractUniform uniform, int value) {
         if (uniform != null) uniform.set(value);
     }
@@ -449,12 +480,10 @@ public final class PbrRenderer {
         if (uniform != null) uniform.set(x, y, z);
     }
 
-    /** 闂佺绻愯ぐ澶愭閳轰絼鐔兼晬閸曨厔鍥煟椤愮喎浜鹃梺鑹邦潐瑜板啫鈻嶉幒妤佸剭闁告洦鍓氶悡娆撴煕?UV 闂佸憡顨嗗ú鎴犵礊?闂?*/
-    static void setBlurDirection(float x, float y) {
+   static void setBlurDirection(float x, float y) {
         if (uBlurDirection != null) uBlurDirection.set(x, y);
     }
 
-    /** 闂佺绻愯ぐ澶愭閳轰讲鏋栨繛鎴灻敮銊╂煕濮橆剛澧涢柛銊﹀哺閹牓鍩€椤掑嫭鍤岄柟缁樺笚閻濄倝鏌ｉ妸銉ヮ仼鐎规瓕椴搁幆鏃堟晜鐞涒€充壕?*/
     static void setBloomStrength(float value) {
         if (uCompositeStrength != null) uCompositeStrength.set(value);
     }

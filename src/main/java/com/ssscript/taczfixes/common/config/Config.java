@@ -31,6 +31,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_SNEAKING;
     public static final ForgeConfigSpec.DoubleValue CRAWL_HEADSHOT_LENGTH;
     public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_SHOW_IN_CHARTS;
     public static final ForgeConfigSpec.BooleanValue CRAWL_HITBOX_ENABLED;
     public static final ForgeConfigSpec.DoubleValue LIMB_FACTOR_DEFAULT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BURST_BLOCK_ATTACHMENTS;
@@ -47,6 +48,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_DMR;
     public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
     public static final ForgeConfigSpec.BooleanValue CREATE_CONTRAPTION_BULLET_COLLISION;
+    public static final ForgeConfigSpec.BooleanValue BULLET_PIERCE_GLASS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
     public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
     public static final ForgeConfigSpec.BooleanValue DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION;
@@ -388,6 +390,9 @@ public class Config {
         LIMB_DAMAGE_ENABLED = BUILDER
                 .comment("是否启用四肢伤害。默认值：true")
                 .define("enabled", true);
+        LIMB_DAMAGE_SHOW_IN_CHARTS = BUILDER
+                .comment("是否在枪械 tooltip 和改装界面属性图表中显示四肢伤害。默认值：true")
+                .define("show_in_charts", true);
         CRAWL_HITBOX_ENABLED = BUILDER
                 .comment("是否启用更好的爬行受击碰撞箱。默认值：true")
                 .define("crawl_hitbox_enabled", true);
@@ -846,6 +851,9 @@ public class Config {
                 .comment("是否让 TaCZ 子弹被机械动力动态结构阻挡。默认值：true",
                         "需要 Create 模组。")
                 .define("create_contraption_bullet_collision", true);
+        BULLET_PIERCE_GLASS = BUILDER
+                .comment("是否允许子弹击碎玻璃后继续飞行。默认值：true")
+                .define("bullet_pierce_glass", true);
         DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT = BUILDER
                 .comment("是否在使用非筒状瞄具时禁用镜内放大。默认值：true",
                         "需要TaCZ: Arcana模组。")

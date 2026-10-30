@@ -21,6 +21,7 @@
         "MixinBlockDataTaczFixes",
         "MixinBulletIgnoreDamagedEntity",
         "MixinBulletPenetrationBlocker",
+        "MixinBulletPierceGlass",
         "MixinBulletTrackingFlag",
         "MixinBurstDataAccessor",
         "MixinClientMessageRefitGunAccessor",

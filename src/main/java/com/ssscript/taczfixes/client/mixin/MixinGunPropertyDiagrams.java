@@ -1,8 +1,21 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.client.util.RefitDiagramPreview;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
+import com.ssscript.taczfixes.common.util.LimbDamageFactorHelper;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.modifier.IAttachmentModifier;
+import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
+import com.tacz.guns.resource.modifier.AttachmentPropertyManager;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -10,6 +23,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.text.DecimalFormat;
+import java.util.Locale;
 
 /**
  * 改装界面数据图表: 跑射延迟(sprint_time)条目.
@@ -20,6 +37,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(targets = "com.tacz.guns.client.gui.components.refit.GunPropertyDiagrams", remap = false)
 public class MixinGunPropertyDiagrams {
+
+    @Unique
+    private static final DecimalFormat TACZFIXES_LIMB_CHART_FORMAT = new DecimalFormat("0.00");
 
     @Unique
     private static boolean taczfixes$sprintActive = false;
@@ -148,5 +168,88 @@ public class MixinGunPropertyDiagrams {
             return;
         }
         graphics.fill(x1, y1, x2, y2, color);
+    }
+
+    @Inject(method = "getHidePropertyButtonYOffset", at = @At("RETURN"), cancellable = true, remap = false)
+    private static void taczfixes$addLimbDamageRowHeight(CallbackInfoReturnable<Integer> cir) {
+        if (!Config.LIMB_DAMAGE_SHOW_IN_CHARTS.get()) {
+            return;
+        }
+        // 多留一行给四肢伤害，并补偿 TaCZ 实际绘制行数与声明行数不一致的情况。
+        cir.setReturnValue(cir.getReturnValue() + 20);
+    }
+
+    @Unique
+    private static int taczfixes$actualDiagramRows(ItemStack gunItem) {
+        int fallback = 0;
+        int actual = 0;
+        LocalPlayer player = Minecraft.getInstance().player;
+        AttachmentCacheProperty cache = player == null ? null : IGunOperator.fromLivingEntity(player).getCacheProperty();
+        GunData gunData = null;
+        IGun gun = IGun.getIGunOrNull(gunItem);
+        if (gun != null) {
+            gunData = TimelessAPI.getCommonGunIndex(gun.getGunId(gunItem))
+                    .map(index -> index.getGunData()).orElse(null);
+        }
+        for (IAttachmentModifier<?, ?> modifier : AttachmentPropertyManager.getModifiers().values()) {
+            fallback += modifier.getDiagramsDataSize();
+            try {
+                if (gunData != null) {
+                    actual += modifier.getPropertyDiagramsData(gunItem, gunData, cache).size();
+                }
+            } catch (RuntimeException ignored) {
+            }
+        }
+        return Math.max(actual, fallback);
+    }
+
+    @Inject(method = "draw", at = @At("TAIL"), remap = false)
+    private static void taczfixes$drawLimbDamageRow(GuiGraphics graphics, Font font, int x, int y, CallbackInfo ci) {
+        if (!Config.LIMB_DAMAGE_SHOW_IN_CHARTS.get()) {
+            return;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null) {
+            return;
+        }
+        ItemStack gunItem = player.getMainHandItem();
+        if (IGun.getIGunOrNull(gunItem) == null) {
+            return;
+        }
+        ItemStack chartGun = RefitDiagramPreview.previewGun();
+        if (chartGun.isEmpty()) {
+            chartGun = gunItem;
+        }
+
+        int rows = taczfixes$actualDiagramRows(chartGun);
+        int lineY = y + 35 + rows * 10;
+        int barStartX = x + 83;
+        int barEndX = barStartX + 120;
+        int nameTextStartX = x + 5;
+        int valueTextStartX = x + 210;
+
+        float base = LimbDamageFactorHelper.clamp(LimbDamageFactorHelper.getBaseFactor(chartGun));
+        float modified = LimbDamageFactorHelper.getFinalFactor(chartGun);
+        float diff = modified - base;
+        int defaultLength = barStartX + (int) (120 * (double) base);
+        int modifiedLength = barStartX + (int) (120 * (double) modified);
+
+        graphics.drawString(font, Component.translatable("gui.taczfixes.property_diagrams.limb_damage"),
+                nameTextStartX, lineY, 0xCCCCCC, false);
+        graphics.fill(barStartX, lineY + 2, barEndX, lineY + 6, 0xFF000000);
+        graphics.fill(barStartX, lineY + 2, defaultLength, lineY + 6, 0xFFFFFFFF);
+        if (diff > 0.0005F) {
+            graphics.fill(defaultLength, lineY + 2, Math.min(modifiedLength, barEndX), lineY + 6, 0xFF55FF55);
+        } else if (diff < -0.0005F) {
+            graphics.fill(Math.max(modifiedLength, barStartX), lineY + 2, defaultLength, lineY + 6, 0xFFFF5555);
+        }
+
+        String value = "x" + TACZFIXES_LIMB_CHART_FORMAT.format(modified);
+        if (diff > 0.0005F || diff < -0.0005F) {
+            double percent = base > 0.0001F ? (double) diff / base * 100.0D : (double) diff * 100.0D;
+            String delta = String.format(Locale.ROOT, "%+.1f%%", percent);
+            value += (diff > 0.0F ? " \u00a7a(" : " \u00a7c(") + delta + ")";
+        }
+        graphics.drawString(font, value, valueTextStartX, lineY, 0xCCCCCC, false);
     }
 }
