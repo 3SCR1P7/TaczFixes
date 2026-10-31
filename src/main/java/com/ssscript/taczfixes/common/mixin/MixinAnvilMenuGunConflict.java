@@ -66,6 +66,16 @@ public class MixinAnvilMenuGunConflict {
     }
 
     @Redirect(method = "createResult",
+            at = @At(value = "INVOKE",
+                    target = "Lnet/minecraft/world/item/ItemStack;supportsEnchantment(Lnet/minecraft/core/Holder;)Z"))
+    private static boolean taczfixes$supportsGunEnchantment(ItemStack stack, Holder<Enchantment> enchantment) {
+        if (GunEnchantmentHelper.isEnabled() && stack.getItem() instanceof IGun) {
+            return GunEnchantmentHelper.isEnchantAllowed(enchantment.unwrapKey().orElse(null));
+        }
+        return stack.supportsEnchantment(enchantment);
+    }
+
+    @Redirect(method = "createResult",
             at = @At(value = "FIELD",
                     target = "Lnet/minecraft/world/entity/player/Abilities;instabuild:Z",
                     opcode = Opcodes.GETFIELD))
