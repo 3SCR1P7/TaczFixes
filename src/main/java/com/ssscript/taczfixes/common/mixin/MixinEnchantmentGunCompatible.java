@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantment;
 import org.spongepowered.asm.mixin.Mixin;
@@ -11,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public class MixinEnchantmentGunCompatible {
     @Inject(method = "isCompatibleWith", at = @At("HEAD"), cancellable = true)
     private void taczfixes$allowGunConflicts(Enchantment other, CallbackInfoReturnable<Boolean> cir) {
-        if (GunEnchantmentHelper.isGunEnchanting()) {
+        if (Config.GUN_ENCHANT_IGNORE_CONFLICT.get() && GunEnchantmentHelper.isGunEnchanting()) {
             cir.setReturnValue(true);
         }
     }

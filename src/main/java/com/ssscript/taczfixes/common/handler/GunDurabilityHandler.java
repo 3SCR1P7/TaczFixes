@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.common.handler;
 
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.util.DurabilityStorage;
+import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
@@ -160,7 +161,8 @@ public class GunDurabilityHandler {
             int leftLevel = map.getOrDefault(enchantment, 0);
             int level = entry.getValue();
             level = leftLevel == level ? level + 1 : Math.max(level, leftLevel);
-            boolean canApply = instabuild || enchantment.canEnchant(left);
+            boolean canApply = instabuild || (GunEnchantmentHelper.isEnabled()
+                    && GunEnchantmentHelper.isEnchantAllowed(enchantment));
             for (Enchantment existing : map.keySet()) {
                 if (existing != enchantment && !enchantment.isCompatibleWith(existing)) {
                     canApply = false;
