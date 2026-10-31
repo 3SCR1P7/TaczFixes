@@ -891,6 +891,10 @@ public final class DualWieldClient {
                 return true;
             }
             if (stack.getUseDuration() > 0) {
+                var food = stack.getItem().getFoodProperties();
+                if (food != null && !player.canEat(food.canAlwaysEat())) {
+                    return true;
+                }
                 if (!player.isUsingItem()) {
                     player.startUsingItem(InteractionHand.MAIN_HAND);
                 }
