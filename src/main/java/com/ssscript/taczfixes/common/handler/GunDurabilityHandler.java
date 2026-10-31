@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.common.handler;
 import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.util.DurabilityStorage;
+import com.ssscript.taczfixes.common.util.ChargeStorage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
@@ -59,6 +60,31 @@ public class GunDurabilityHandler {
         } else {
             syncGun(shooter, gun);
         }
+    }
+
+    @SubscribeEvent
+    public void onGunFireCharge(GunFireEvent event) {
+        if (event.getLogicalSide() != LogicalSide.SERVER || event.isCanceled()) {
+            return;
+        }
+        LivingEntity shooter = event.getShooter();
+        ItemStack gun = actualGunStack(shooter, event.getGunItemStack());
+        GunTaczFixesData.ChargeConfig cfg = ChargeStorage.config(gun);
+        if (cfg == null || ChargeStorage.getMax(gun) <= 0) {
+            return;
+        }
+        int consumption = cfg.fire_consumption == null ? 0 : cfg.fire_consumption;
+        if (consumption <= 0) {
+            return;
+        }
+        if (ChargeStorage.get(gun) < consumption) {
+            if (Boolean.TRUE.equals(cfg.blocking_fire)) {
+                event.setCanceled(true);
+            }
+            return;
+        }
+        ChargeStorage.consume(gun, consumption);
+        syncGun(shooter, gun);
     }
 
     private static ItemStack actualGunStack(LivingEntity shooter, ItemStack eventStack) {

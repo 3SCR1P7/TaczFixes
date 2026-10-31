@@ -35,7 +35,8 @@ public final class ChargeStorage {
         if (max <= 0) {
             return 0;
         }
-        int value = ItemNbt.getOrCreate(stack).getInt(TAG_KEY);
+        var tag = ItemNbt.get(stack);
+        int value = tag == null ? 0 : tag.getInt(TAG_KEY);
         return Math.max(0, Math.min(value, max));
     }
 
@@ -47,7 +48,8 @@ public final class ChargeStorage {
         if (max <= 0) {
             return;
         }
-        ItemNbt.getOrCreate(stack).putInt(TAG_KEY, Math.max(0, Math.min(value, max)));
+        int clamped = Math.max(0, Math.min(value, max));
+        ItemNbt.mutate(stack, tag -> tag.putInt(TAG_KEY, clamped));
     }
 
     /** 返回实际接收到的电量。 */
