@@ -92,6 +92,8 @@ public final class DualWieldClient {
     private static boolean lastOffhandUseActive;
     private static boolean lastOffhandShieldRaised;
     private static boolean lastMainItemUseDown;
+    private static boolean mainItemUseRepeat;
+    private static int mainItemUseCooldown;
     private static long lastOffhandItemAttackMs;
 
     private static boolean lastRightDown;
@@ -363,7 +365,25 @@ public final class DualWieldClient {
         } else {
             lastOffhandItemUseDown = false;
         }
-        lastMainItemUseDown = false;
+        if (hasOffhandGun && !hasMainGun) {
+            if (Minecraft.getInstance().mouseHandler.isRightPressed()
+                    && !InteractKey.INTERACT_KEY.isDown() && !DualFocusAimKey.FOCUS_AIM_KEY.isDown()) {
+                if (mainItemUseCooldown > 0) {
+                    mainItemUseCooldown--;
+                } else if (lastMainItemUseDown && mainItemUseRepeat && !player.isUsingItem()) {
+                    mainItemUseRepeat = useMainItemOrAttack(player);
+                    mainItemUseCooldown = mainItemUseRepeat ? 3 : 0;
+                }
+            } else {
+                lastMainItemUseDown = false;
+                mainItemUseRepeat = false;
+                mainItemUseCooldown = 0;
+            }
+        } else {
+            lastMainItemUseDown = false;
+            mainItemUseRepeat = false;
+            mainItemUseCooldown = 0;
+        }
         updateThirdPersonGunAnimations(minecraft, leftGun, rightGun);
         if (hasOffhandGun) {
             leftState.tickManualShotChamberSync(leftGun);
@@ -750,10 +770,14 @@ public final class DualWieldClient {
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
         if (event.getButton() == 1 && offGun && !mainGun) {
+            lastMainItemUseDown = true;
             if (isAttackOnly(main)) {
+                mainItemUseRepeat = false;
+                mainItemUseCooldown = 0;
                 attackMainHand(player);
             } else {
-                useMainItemOrAttack(player);
+                mainItemUseRepeat = useMainItemOrAttack(player);
+                mainItemUseCooldown = mainItemUseRepeat ? 4 : 0;
             }
             return;
         }
@@ -831,14 +855,17 @@ public final class DualWieldClient {
         }
     }
 
-    private static void useMainItemOrAttack(LocalPlayer player) {
+    private static boolean useMainItemOrAttack(LocalPlayer player) {
         net.minecraft.client.multiplayer.MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
         if (gameMode == null) {
-            return;
+            return false;
         }
         ItemStack stack = player.getMainHandItem();
         if (stack.isEmpty()) {
-            return;
+            return false;
+        }
+        if (player.isUsingItem() && player.getUsedItemHand() == InteractionHand.MAIN_HAND) {
+            return true;
         }
         net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
         if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
@@ -848,19 +875,30 @@ public final class DualWieldClient {
                 result = gameMode.interact(player, entityHit.getEntity(), InteractionHand.MAIN_HAND);
             }
             if (result.consumesAction()) {
-                return;
+                player.swing(InteractionHand.MAIN_HAND, true);
+                return true;
             }
         } else if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
                 && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
             if (gameMode.useItemOn(player, InteractionHand.MAIN_HAND, blockHit).consumesAction()) {
-                return;
+                player.swing(InteractionHand.MAIN_HAND, true);
+                return true;
             }
         }
-        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem)
-                && gameMode.useItem(player, InteractionHand.MAIN_HAND).consumesAction()) {
-            return;
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem)) {
+            net.minecraft.world.InteractionResult result = gameMode.useItem(player, InteractionHand.MAIN_HAND);
+            boolean consume = result.consumesAction();
+            boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
+                    && stack.getUseDuration() > 0;
+            if (consume || overridden) {
+                if (stack.getUseDuration() > 0 && !player.isUsingItem()) {
+                    player.startUsingItem(InteractionHand.MAIN_HAND);
+                }
+                return true;
+            }
         }
         attackMainHand(player);
+        return false;
     }
 
     private static void startOffhandUse(LocalPlayer player) {
