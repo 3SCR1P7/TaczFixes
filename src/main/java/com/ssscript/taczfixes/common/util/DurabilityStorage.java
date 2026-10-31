@@ -56,7 +56,8 @@ public final class DurabilityStorage {
         if (max <= 0) {
             return;
         }
-        ItemNbt.getOrCreate(stack).putInt(TAG_KEY, Math.max(0, Math.min(value, max)));
+        int clamped = Math.max(0, Math.min(value, max));
+        ItemNbt.mutate(stack, tag -> tag.putInt(TAG_KEY, clamped));
     }
 
     /** 消耗耐久(允许归零), 返回消耗后的剩余值。 */

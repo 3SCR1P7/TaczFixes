@@ -1,23 +1,21 @@
 package com.ssscript.taczfixes.client.mixin.compat.parcool;
 
+import com.alrex.parcool.common.attachment.common.ReadonlyStamina;
 import com.ssscript.taczfixes.client.util.ParCoolStaminaConsumeHelper;
-import net.minecraft.world.entity.player.Player;
+import net.minecraft.client.player.LocalPlayer;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-/** ParCool 耐力消耗改为消耗本模组耐力(ParCoolStaminaHunger)。 */
-@Mixin(targets = "com.alrex.parcool.common.stamina.impl.HungerStamina", remap = false)
+/** ParCool 3.4.3.3 stamina handlers: redirect consumption to our stamina. */
+@Mixin(targets = "com.alrex.parcool.common.stamina.handlers.HungerStaminaHandler", remap = false)
 public class MixinParCoolStaminaHunger {
-    @Shadow(remap = false)
-    private Player owner;
-
     @Inject(method = "consume", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$consumeOurStamina(double amount, CallbackInfo ci) {
-        if (ParCoolStaminaConsumeHelper.handle(owner, amount)) {
-            ci.cancel();
+    private void taczfixes$consumeOurStamina(LocalPlayer player, ReadonlyStamina stamina,
+                                             int amount, CallbackInfoReturnable<ReadonlyStamina> cir) {
+        if (ParCoolStaminaConsumeHelper.handle(player, amount)) {
+            cir.setReturnValue(stamina);
         }
     }
 }

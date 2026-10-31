@@ -32,7 +32,6 @@ public final class DualFocusAimState {
     private static float progress;
     private static AnimationController preservedMainAimController;
     private static boolean releasingPreservedMainAim;
-    private static final ResourceLocation TOUHOU_MAID_ENTITY_ID = ResourceLocation.fromNamespaceAndPath("touhou_little_maid", "maid");
     private static int preservedMainAimTrack = -1;
 
     private DualFocusAimState() {
@@ -148,7 +147,7 @@ public final class DualFocusAimState {
         if (localPlayer != null && (entity == localPlayer || entity.getUUID().equals(localPlayer.getUUID()))) {
             return getFrameProgress();
         }
-        if (!(entity instanceof Player) && !isTouhouMaid(entity)) {
+        if (!(entity instanceof Player)) {
             return 0.0f;
         }
         try {
@@ -158,10 +157,7 @@ public final class DualFocusAimState {
         }
     }
 
-    private static boolean isTouhouMaid(LivingEntity entity) {
-        ResourceLocation entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
-        return TOUHOU_MAID_ENTITY_ID.equals(entityId);
-    }
+
 
     /** 主手单手瞄准时, 副手枪械降下到低位。 */
     public static void applyFirstPersonOffhandLowReady(PoseStack poseStack, float partialTick) {

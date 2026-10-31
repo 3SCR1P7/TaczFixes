@@ -188,7 +188,8 @@ public class GunEnchantmentHelper {
         if (stack.isEmpty()) {
             return 0;
         }
-        return ItemNbt.getOrCreate(stack).getInt("GunLevel");
+        IGun gun = IGun.getIGunOrNull(stack);
+        return gun == null ? 0 : gun.getLevel(stack);
     }
 
     public static int getRiptideLevel(@Nullable LivingEntity shooter) {

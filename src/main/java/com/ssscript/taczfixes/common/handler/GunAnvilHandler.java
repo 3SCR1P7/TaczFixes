@@ -34,10 +34,12 @@ public class GunAnvilHandler {
         }
 
         ItemStack result = target.copy();
-        CompoundTag tag = ItemNbt.getOrCreate(result);
-        int newExp = tag.getInt("GunLevelExp") + count * expPerBottle;
-        tag.putInt("GunLevelExp", newExp);
-        tag.putInt("GunLevel", iGun.getLevel(newExp));
+        int newExp = iGun.getExp(result) + count * expPerBottle;
+        int newLevel = iGun.getLevel(newExp);
+        ItemNbt.mutate(result, tag -> {
+            tag.putInt("GunLevelExp", newExp);
+            tag.putInt("GunLevel", newLevel);
+        });
 
         int cost = Config.GUN_BOTTLE_COST.get();
         event.setOutput(result);

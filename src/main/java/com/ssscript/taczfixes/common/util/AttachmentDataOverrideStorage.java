@@ -5,18 +5,14 @@ import net.neoforged.fml.loading.FMLPaths;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
-import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
-import java.util.zip.ZipOutputStream;
 
 /** 编辑后配件 data 的持久化覆盖: 保存到 config/taczfixes/attachment_data, 启动/重载时替换进源包。 */
 public final class AttachmentDataOverrideStorage {
@@ -145,36 +141,14 @@ public final class AttachmentDataOverrideStorage {
         }
         if (!found) return false;
 
-        Path tmp = zipFile.resolveSibling(zipFile.getFileName().toString() + ".tmp");
-        try (
-                ZipFile zip = new ZipFile(zipFile.toFile());
-                ZipOutputStream out = new ZipOutputStream(Files.newOutputStream(tmp))
-        ) {
-            var entries = zip.entries();
-            while (entries.hasMoreElements()) {
-                ZipEntry e = entries.nextElement();
-                ZipEntry copy = new ZipEntry(e.getName());
-                out.putNextEntry(copy);
-                if (e.getName().equals(entryName)) {
-                    out.write(fullText.getBytes(StandardCharsets.UTF_8));
-                } else {
-                    try (InputStream is = zip.getInputStream(e)) {
-                        is.transferTo(out);
-                    }
-                }
-                out.closeEntry();
-            }
-        } catch (Exception ex) {
-            LOGGER.warn("taczfixes: failed to rewrite attachment zip pack {}", zipFile, ex);
-            try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}
-            return false;
-        }
         try {
-            Files.move(tmp, zipFile, StandardCopyOption.REPLACE_EXISTING);
-            return true;
+            if (ZipAppendUpdater.replaceEntry(zipFile, entryName, fullText.getBytes(StandardCharsets.UTF_8))) {
+                return true;
+            }
+            LOGGER.warn("taczfixes: failed to append entry to zip pack {}", zipFile);
+            return false;
         } catch (Exception ex) {
-            LOGGER.warn("taczfixes: failed to replace attachment zip pack {}", zipFile, ex);
-            try { Files.deleteIfExists(tmp); } catch (Exception ignored) {}
+            LOGGER.warn("taczfixes: failed to append entry to zip pack {}", zipFile, ex);
             return false;
         }
     }

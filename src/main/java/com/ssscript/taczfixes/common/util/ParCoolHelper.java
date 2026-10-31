@@ -9,22 +9,26 @@ import java.lang.reflect.Method;
 public class ParCoolHelper {
     private static Boolean parcoolLoaded = null;
     private static Method parkourabilityGet = null;
-    private static Method getAction = null;
+    private static Method actionGet = null;
     private static Method isDoing = null;
+    private static Method isCharging = null;
     private static Class<?> crawlClass = null;
     private static Class<?> slideClass = null;
+    private static Class<?> chargeJumpClass = null;
 
     public static boolean isCrawling(LivingEntity entity) {
-        if (!isParCoolLoaded()) return false;
         if (!(entity instanceof Player player)) return false;
-        return checkAction(player, crawlClass());
+        return checkAction(player, crawlClass(), false);
     }
 
-    /** ParCool 滑铲(Slide)动作是否进行中。 */
     public static boolean isSliding(LivingEntity entity) {
-        if (!isParCoolLoaded()) return false;
         if (!(entity instanceof Player player)) return false;
-        return checkAction(player, slideClass());
+        return checkAction(player, slideClass(), false);
+    }
+
+    public static boolean isChargingJump(LivingEntity entity) {
+        if (!(entity instanceof Player player)) return false;
+        return checkAction(player, chargeJumpClass(), true);
     }
 
     public static boolean isParCoolLoaded() {
@@ -56,17 +60,32 @@ public class ParCoolHelper {
         return slideClass;
     }
 
-    private static boolean checkAction(Player player, Class<?> actionClass) {
-        if (actionClass == null) return false;
+    private static Class<?> chargeJumpClass() {
+        if (chargeJumpClass == null) {
+            try {
+                chargeJumpClass = Class.forName("com.alrex.parcool.common.action.impl.ChargeJump");
+            } catch (ClassNotFoundException e) {
+                return null;
+            }
+        }
+        return chargeJumpClass;
+    }
+
+    private static boolean checkAction(Player player, Class<?> actionClass, boolean charging) {
+        if (!isParCoolLoaded() || actionClass == null) return false;
         try {
             Object parkourability = getParkourability(player);
             if (parkourability == null) return false;
-            Object actionEntry = Class.forName("com.alrex.parcool.common.action.ParCoolActions")
-                    .getField(actionClass.getSimpleName().toUpperCase(java.util.Locale.ROOT)).get(null);
-            Object action = getAction.invoke(parkourability, actionEntry);
+            Object action = actionGet.invoke(parkourability, actionClass);
             if (action == null) return false;
+            if (charging) {
+                if (isCharging == null) {
+                    isCharging = actionClass.getMethod("isCharging");
+                }
+                return (boolean) isCharging.invoke(action);
+            }
             if (isDoing == null) {
-                isDoing = Class.forName("com.alrex.parcool.api.action.ContinuableAction").getMethod("isDoing");
+                isDoing = Class.forName("com.alrex.parcool.common.action.Action").getMethod("isDoing");
             }
             return (boolean) isDoing.invoke(action);
         } catch (Exception e) {
@@ -76,10 +95,10 @@ public class ParCoolHelper {
 
     private static Object getParkourability(Player player) {
         try {
-            if (parkourabilityGet == null || getAction == null) {
-                Class<?> parkourabilityClass = Class.forName("com.alrex.parcool.common.Parkourability");
+            if (parkourabilityGet == null || actionGet == null) {
+                Class<?> parkourabilityClass = Class.forName("com.alrex.parcool.common.attachment.common.Parkourability");
                 parkourabilityGet = parkourabilityClass.getMethod("get", Player.class);
-                getAction = parkourabilityClass.getMethod("get", Class.forName("com.alrex.parcool.api.action.ActionEntry"));
+                actionGet = parkourabilityClass.getMethod("get", Class.class);
             }
             return parkourabilityGet.invoke(null, player);
         } catch (Exception e) {
