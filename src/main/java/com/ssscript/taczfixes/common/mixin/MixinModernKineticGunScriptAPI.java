@@ -350,34 +350,6 @@ public abstract class MixinModernKineticGunScriptAPI {
         ci.cancel();
     }
 
-    /** 每发实际开火消耗一次耐久; 归零时按 damage_action 移除枪械(disable 由开火前检查拦截)。 */
-    @Inject(method = "lambda$shootOnce$3(ZLcom/tacz/guns/resource/modifier/AttachmentCacheProperty;ILcom/tacz/guns/resource/pojo/data/gun/GunData;Lcom/tacz/guns/resource/pojo/data/gun/BulletData;Lcom/tacz/guns/api/entity/IGunOperator;FFFIZ)Z",
-            at = @At(value = "NEW", target = "com/tacz/guns/network/message/event/ServerMessageGunFire"),
-            cancellable = true, remap = false)
-    private void taczfixes$consumeDurabilityPerShot(boolean needConsumeAmmo, AttachmentCacheProperty cache, int bulletAmount,
-                                                    GunData gunData, BulletData bulletData, IGunOperator operator,
-                                                    float damageMultiplier, float bulletSpeed, float inaccuracy,
-                                                    int soundDistance, boolean silenced, CallbackInfoReturnable<Boolean> cir) {
-        if (this.itemStack == null || this.itemStack.isEmpty()) {
-            // 归零后被移除的枪械(remove): 终止本轮连发的后续子弹
-            cir.setReturnValue(false);
-            return;
-        }
-        com.ssscript.taczfixes.common.data.GunTaczFixesData.DurabilityConfig cfg =
-                com.ssscript.taczfixes.common.util.DurabilityStorage.config(this.itemStack);
-        if (cfg == null || com.ssscript.taczfixes.common.util.DurabilityStorage.getMax(this.itemStack) <= 0) {
-            return;
-        }
-        int consumption = cfg.fire_consumption == null ? 0 : cfg.fire_consumption;
-        if (consumption <= 0) {
-            return;
-        }
-        int remaining = com.ssscript.taczfixes.common.util.DurabilityStorage.consume(this.itemStack, consumption);
-        if (remaining <= 0 && "remove".equals(com.ssscript.taczfixes.common.util.DurabilityStorage.damageAction(cfg))) {
-            taczfixes$removeBrokenGun();
-        }
-    }
-
     /** 移除损坏的枪械并播放原版损坏音效(仅服务端)。 */
     @Unique
     private void taczfixes$removeBrokenGun() {

@@ -12,6 +12,12 @@ import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.ItemEnchantments;
 import net.neoforged.neoforge.event.AnvilUpdateEvent;
 import net.neoforged.neoforge.event.GrindstoneEvent;
+import com.tacz.guns.api.event.common.GunFireEvent;
+import net.neoforged.fml.LogicalSide;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.server.level.ServerPlayer;
+import com.tacz.guns.api.item.IGun;
 import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.HashMap;
@@ -19,6 +25,93 @@ import java.util.Map;
 
 /** 枪械耐久: 铁砧材料修复/同枪合并, 砂轮同枪合并。 */
 public class GunDurabilityHandler {
+
+    @SubscribeEvent
+    public void onGunFire(GunFireEvent event) {
+        if (event.getLogicalSide() != LogicalSide.SERVER) {
+            return;
+        }
+        LivingEntity shooter = event.getShooter();
+        ItemStack gun = actualGunStack(shooter, event.getGunItemStack());
+        GunTaczFixesData.DurabilityConfig cfg = DurabilityStorage.config(gun);
+        if (cfg == null || DurabilityStorage.getMax(gun) <= 0) {
+            return;
+        }
+        int current = DurabilityStorage.get(gun);
+        String action = DurabilityStorage.damageAction(cfg);
+        if (current <= 0) {
+            if ("none".equals(action)) {
+                return;
+            }
+            if ("remove".equals(action)) {
+                removeBrokenGun(shooter, gun);
+            }
+            event.setCanceled(true);
+            return;
+        }
+        int consumption = cfg.fire_consumption == null ? 0 : cfg.fire_consumption;
+        if (consumption <= 0) {
+            return;
+        }
+        int remaining = DurabilityStorage.consume(gun, consumption);
+        if (remaining <= 0 && "remove".equals(action)) {
+            removeBrokenGun(shooter, gun);
+        } else {
+            syncGun(shooter, gun);
+        }
+    }
+
+    private static ItemStack actualGunStack(LivingEntity shooter, ItemStack eventStack) {
+        if (!(shooter instanceof Player player)) {
+            return eventStack;
+        }
+        ItemStack main = player.getMainHandItem();
+        if (sameGun(main, eventStack)) {
+            return main;
+        }
+        ItemStack off = player.getOffhandItem();
+        if (sameGun(off, eventStack)) {
+            return off;
+        }
+        for (ItemStack stack : player.getInventory().items) {
+            if (sameGun(stack, eventStack)) {
+                return stack;
+            }
+        }
+        return eventStack;
+    }
+
+    private static boolean sameGun(ItemStack a, ItemStack b) {
+        if (a == null || b == null || a.isEmpty() || b.isEmpty() || !a.is(b.getItem())) {
+            return false;
+        }
+        IGun ga = IGun.getIGunOrNull(a);
+        IGun gb = IGun.getIGunOrNull(b);
+        if (ga == null || gb == null) {
+            return false;
+        }
+        var idA = ga.getGunId(a);
+        var idB = gb.getGunId(b);
+        return idA != null && idA.equals(idB);
+    }
+
+    private static void syncGun(LivingEntity shooter, ItemStack gun) {
+        if (shooter instanceof ServerPlayer player) {
+            player.getInventory().setChanged();
+            player.inventoryMenu.broadcastChanges();
+        }
+    }
+
+    private static void removeBrokenGun(LivingEntity shooter, ItemStack gun) {
+        gun.shrink(gun.getCount());
+        if (shooter.level() != null) {
+            shooter.level().playSound(null, shooter.getX(), shooter.getY(), shooter.getZ(),
+                    net.minecraft.sounds.SoundEvents.ITEM_BREAK, shooter.getSoundSource(), 0.8f,
+                    0.8f + shooter.level().random.nextFloat() * 0.4f);
+        }
+        syncGun(shooter, gun);
+    }
+
 
     @SubscribeEvent
     public void onAnvilUpdate(AnvilUpdateEvent event) {
