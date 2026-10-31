@@ -890,6 +890,10 @@ public final class DualWieldClient {
                 return true;
             }
             if (stack.getUseDuration(player) > 0) {
+                var food = stack.get(net.minecraft.core.component.DataComponents.FOOD);
+                if (food != null && !player.canEat(food.canAlwaysEat())) {
+                    return true;
+                }
                 if (!player.isUsingItem()) {
                     player.startUsingItem(InteractionHand.MAIN_HAND);
                 }
