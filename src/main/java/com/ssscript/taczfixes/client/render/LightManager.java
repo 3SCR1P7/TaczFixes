@@ -81,6 +81,15 @@ public enum LightManager {
         return s;
     }
 
+    /** Sodium(1.21.1) 地形着色器注入: Sodium 的 light coord 是 0..1 的 vec2。 */
+    public static String sodiumVVSHInjection(String s) {
+        s = new StringBuffer(s).insert(s.lastIndexOf("void main()"), getLightShader()).toString();
+        s = new StringBuffer(s).insert(s.lastIndexOf('}'),
+                "v_Color = color_light_uv(position, v_Color, ivec2(_vert_tex_light_coord * 255.0)).rgba;\n"
+        ).toString();
+        return s;
+    }
+
     public static void injectShaders() {
         ShaderInjection.registerVSHInjection("particle", LightManager::PositionInjection);
         ShaderInjection.registerVSHInjection("rendertype_solid", LightManager::ChunkInjection);
@@ -149,18 +158,23 @@ public enum LightManager {
         }
     }
 
-    public void reloadShaders() {
-        if (lightUBO == null) {
-            int size = getOffset(MAXIMUM_LIGHT_SUPPORT);
-            int uboOffset = 14;
-            lightUBO = new ShaderUBO();
-            lightUBO.createBufferData(size, GL30.GL_STREAM_DRAW);
-            envUBO = new ShaderUBO();
-            envUBO.createBufferData(32, GL30.GL_STREAM_DRAW);
-            envUBO.bufferSubData(0, new int[8]);
-            lightUBO.blockBinding(uboOffset);
-            envUBO.blockBinding(uboOffset + 1);
+    private void ensureBuffers() {
+        if (lightUBO != null) {
+            return;
         }
+        int size = getOffset(MAXIMUM_LIGHT_SUPPORT);
+        int uboOffset = 14;
+        lightUBO = new ShaderUBO();
+        lightUBO.createBufferData(size, GL30.GL_STREAM_DRAW);
+        envUBO = new ShaderUBO();
+        envUBO.createBufferData(32, GL30.GL_STREAM_DRAW);
+        envUBO.bufferSubData(0, new int[8]);
+        lightUBO.blockBinding(uboOffset);
+        envUBO.blockBinding(uboOffset + 1);
+    }
+
+    public void reloadShaders() {
+        ensureBuffers();
         bindProgram("particle");
         bindProgram("rendertype_solid");
         bindProgram("rendertype_cutout");
@@ -188,6 +202,7 @@ public enum LightManager {
 
     /** 绑定彩色光 UBO 到外部程序(Embeddium 地形着色器)。 */
     public void bindRbProgram(int programID) {
+        ensureBuffers();
         if (lightUBO == null || envUBO == null) {
             return;
         }

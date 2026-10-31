@@ -248,7 +248,6 @@
     "config.taczfixes.entry.compat.parcool_slide_as_move_inaccuracy": "Slide Uses Movement Spread",
     "config.taczfixes.entry.compat.disable_parcool_charge_jump_animation": "Disable Charge-Jump Animation When Holding Gun",
     "config.taczfixes.entry.compat.disable_tracking_after_penetration": "Lose Tracking After Penetrating Entity",
-    "config.taczfixes.entry.compat.peek_headshot_height": "Peek Headshot Height",
     "config.taczfixes.entry.compat.ads_interrupt_sprint": "ADS Interrupts Sprinting",
     "config.taczfixes.entry.compat.prevent_sprint_reengage_when_tilt": "Prevent Sprint Re-Engage While Tactical Hold",
 
@@ -320,7 +319,6 @@
     "config.taczfixes.entry.recoil_knockback.ignore_entity_enable": "Ignore Entity After Hit",
     "config.taczfixes.entry.recoil_knockback.ignore_entity_cooldown_ms": "Entity Ignore Duration (ms)",
 
-    "config.taczfixes.entry.compat.auto_aim_when_peeking": "Auto-ADS When Peeking",
     "config.taczfixes.entry.compat.disable_hitboxes": "Disable Entity Hitbox Display",
     "config.taczfixes.entry.compat.disable_third_person": "Disable Third-Person Switching",
     "config.taczfixes.entry.compat.ammo_emc_blacklist": "Ammo Types Excluded from Magazine EMC",
