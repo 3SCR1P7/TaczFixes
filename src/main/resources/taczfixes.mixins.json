@@ -84,6 +84,7 @@
         "MixinModernKineticGunBulletSpread",
         "MixinModernKineticGunDoBulletSpread",
         "MixinModernKineticGunItemFireSelect",
+        "MixinModernKineticGunItemInventoryCooling",
         "MixinModernKineticGunItemReload",
         "MixinModernKineticGunItemSpread",
         "MixinModernKineticGunMeleeEnchant",
