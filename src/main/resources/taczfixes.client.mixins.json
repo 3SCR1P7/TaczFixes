@@ -35,6 +35,8 @@
         "dual.MixinDualReloadCoordinatorFallback",
         "dual.MixinDualWieldClientInspect",
         "dual.MixinDualWieldClientMuzzleParticles",
+        "dual.MixinMinecraftStartUseItem",
+        "dual.MixinMultiPlayerGameModeUseResult",
         "dual.MixinOffhandGunHudOverlayHeat",
         "dual.MixinOffhandItemThirdPerson",
         "model.attachment.MixinAttachmentModelAccessor",
