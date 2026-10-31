@@ -14,6 +14,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean EMBEDDIUM_PRESENT;
     private static final boolean SODIUM_PRESENT;
     private static final boolean CREATE_PRESENT;
+    private static final boolean ACCELERATED_PRESENT;
 
     static {
         PARCOOL_PRESENT = hasResource("com/alrex/parcool/common/attachment/common/Parkourability.class");
@@ -23,6 +24,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         SODIUM_PRESENT = hasResource("net/caffeinemc/mods/sodium/client/gl/shader/ShaderLoader.class")
                 || EMBEDDIUM_PRESENT;
         CREATE_PRESENT = hasResource("com/simibubi/create/content/contraptions/AbstractContraptionEntity.class");
+        ACCELERATED_PRESENT = hasResource("com/github/argon4w/acceleratedrendering/core/buffers/accelerated/AcceleratedBufferSource.class");
     }
 
     private static boolean hasResource(String path) {
@@ -43,6 +45,9 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinParCool")) {
             return PARCOOL_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinAccelerated")) {
+            return ACCELERATED_PRESENT;
         }
         if (mixinClassName.contains(".MixinLr")) {
             return LRTACTICAL_PRESENT;

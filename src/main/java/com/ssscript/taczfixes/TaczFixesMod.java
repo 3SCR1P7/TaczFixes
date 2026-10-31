@@ -5,18 +5,15 @@ import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.TaczFixesDataHandler;
 import com.ssscript.taczfixes.common.util.GunEnchantments;
 import com.ssscript.taczfixes.common.handler.GunAnvilHandler;
-import com.ssscript.taczfixes.client.handler.GunEnchantmentHandler;
 import com.ssscript.taczfixes.common.handler.GunLevelHandler;
 import com.ssscript.taczfixes.common.handler.JumpInaccuracyHandler;
 import com.ssscript.taczfixes.common.handler.LimbDamageHandler;
 import com.ssscript.taczfixes.common.handler.SpreadRampHandler;
-import com.ssscript.taczfixes.client.handler.SteplessZoomHandler;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import net.neoforged.neoforge.common.NeoForge;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.common.Mod;
 import net.neoforged.fml.config.ModConfig;
-import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.fml.ModContainer;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.DeferredHolder;
@@ -131,21 +128,14 @@ public class TaczFixesMod {
         modBus.addListener(this::onEntityAttributeModification);
         modBus.addListener(this::onCommonSetup);
         if (net.neoforged.fml.loading.FMLLoader.getDist().isClient()) {
-            modContainer.registerExtensionPoint(
-                    net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
-                    (container, parent) -> com.ssscript.taczfixes.client.screen.ConfigScreen.create(parent));
-            com.ssscript.taczfixes.client.render.LightManager.injectShaders();
-            modBus.addListener(this::onClientSetup);
-            modBus.addListener(this::onRegisterKeyMappings);
-            modBus.addListener(this::onRegisterClientReloadListeners);
-            modBus.addListener(this::onRegisterGuiLayers);
-            modBus.addListener(com.ssscript.taczfixes.common.network.NetworkHandler::register);
+            try {
+                Class.forName("com.ssscript.taczfixes.client.ClientModEvents")
+                        .getMethod("init", IEventBus.class, ModContainer.class)
+                        .invoke(null, modBus, modContainer);
+            } catch (Throwable t) {
+                LOGGER.error("Failed to initialize client events", t);
+            }
         }
-    }
-
-    private void onRegisterGuiLayers(net.neoforged.neoforge.client.event.RegisterGuiLayersEvent event) {
-        event.registerAboveAll(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, "aiming_stamina"), new com.ssscript.taczfixes.client.hud.AimingStaminaOverlay());
-        event.registerAboveAll(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(MOD_ID, "stamina"), new com.ssscript.taczfixes.client.hud.StaminaOverlay());
     }
 
     /** 启动时应用 gun data 覆盖(zip/目录枪包重写需在包被读取前)。 */
@@ -163,42 +153,4 @@ public class TaczFixesMod {
         event.add(net.minecraft.world.entity.EntityType.PLAYER, STAMINA_CONSUMPTION_ATTRIBUTE);
     }
 
-    private void onRegisterClientReloadListeners(net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent event) {
-        event.registerReloadListener(new com.ssscript.taczfixes.client.util.ClientDisplayDataReloadListener());
-        event.registerReloadListener(new com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener());
-        event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
-                java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
-                        .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor));
-    }
-
-    private void onRegisterKeyMappings(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
-        event.register(com.ssscript.taczfixes.client.handler.ScopeSwitchHandler.SWITCH_SCOPE_KEY);
-        event.register(com.ssscript.taczfixes.client.handler.ConfigKeyHandler.OPEN_CONFIG_KEY);
-        event.register(com.ssscript.taczfixes.client.handler.EditDataKeyHandler.EDIT_DATA_KEY);
-        event.register(com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler.HOLD_BREATH_KEY);
-        event.register(com.ssscript.taczfixes.client.handler.GunPackKeyHandler.GUN_PACK_KEY);
-    }
-
-    private void onClientSetup(FMLClientSetupEvent event) {
-        event.enqueueWork(() -> {
-            NeoForge.EVENT_BUS.register(new SteplessZoomHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunEnchantmentHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.EditDataKeyHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDataMessageHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.InputSyncHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.AimSwayHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeStencilHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.StaminaClientHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ArcanaOffhandKeyHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.CrawlHitboxDebugHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackKeyHandler());
-            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler());
-        });
-    }
 }
