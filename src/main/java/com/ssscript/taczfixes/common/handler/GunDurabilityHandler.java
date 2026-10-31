@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.util.DurabilityStorage;
 import com.ssscript.taczfixes.common.util.ChargeStorage;
+import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
@@ -286,7 +287,8 @@ public class GunDurabilityHandler {
             int leftLevel = map.getLevel(enchantment);
             int level = entry.getIntValue();
             level = leftLevel == level ? level + 1 : Math.max(level, leftLevel);
-            boolean canApply = instabuild || enchantment.value().canEnchant(left);
+            boolean canApply = instabuild || (GunEnchantmentHelper.isEnabled()
+                    && GunEnchantmentHelper.isEnchantAllowed(enchantment.unwrapKey().orElse(null)));
             for (Holder<Enchantment> existing : map.keySet()) {
                 if (!existing.equals(enchantment) && !Enchantment.areCompatible(existing, enchantment)) {
                     canApply = false;
