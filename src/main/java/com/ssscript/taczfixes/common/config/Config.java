@@ -355,6 +355,8 @@ public class Config {
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER;
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_LEFT_X_OFFSET;
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_RIGHT_X_OFFSET;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_FORWARD_OFFSET_PISTOL;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_FORWARD_OFFSET_OTHER;
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_MELEE_SWITCH_PERCENT;
 
     static {
@@ -1542,11 +1544,17 @@ public class Config {
                 .comment("单手瞄准时的散布倍率。默认值：1.25")
                 .defineInRange("focusAimInaccuracyMultiplier", 1.25, 0.0, 10.0);
         DUAL_WIELD_LEFT_X_OFFSET = BUILDER
-                .comment("左手枪械的坐标偏移。默认值：-0.62")
-                .defineInRange("leftGunXOffset", -0.62, -2.0, 0.0);
+                .comment("左手枪械的坐标偏移。默认值：-0.6")
+                .defineInRange("leftGunXOffset", -0.6, -2.0, 0.0);
         DUAL_WIELD_RIGHT_X_OFFSET = BUILDER
-                .comment("右手枪械的坐标偏移。默认值：0.22")
-                .defineInRange("rightGunXOffset", 0.22, 0.0, 2.0);
+                .comment("右手枪械的坐标偏移。默认值：0.2")
+                .defineInRange("rightGunXOffset", 0.2, 0.0, 2.0);
+        DUAL_WIELD_FORWARD_OFFSET_PISTOL = BUILDER
+                .comment("双持时手枪向前偏移的距离（格）。默认值：0.05")
+                .defineInRange("forwardOffsetPistol", 0.05, -1.0, 1.0);
+        DUAL_WIELD_FORWARD_OFFSET_OTHER = BUILDER
+                .comment("双持时其它枪械向前偏移的距离（格）。默认值：0.15")
+                .defineInRange("forwardOffsetOther", 0.15, -1.0, 1.0);
         DUAL_WIELD_MELEE_SWITCH_PERCENT = BUILDER
                 .comment("一把枪的近战冷却进行到该比例后, 另一只手的枪就可以近战。默认值：0.7")
                 .defineInRange("meleeSwitchPercent", 0.7, 0.0, 1.0);

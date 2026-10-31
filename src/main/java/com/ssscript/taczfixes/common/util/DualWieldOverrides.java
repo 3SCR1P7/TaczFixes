@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.common.util;
 
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.TimelessAPI;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import java.util.Locale;
 import net.minecraft.resources.ResourceLocation;
@@ -48,7 +49,7 @@ public final class DualWieldOverrides {
     public static final HandPos DEFAULT_ON_LEFT = new HandPos(ArmAnchor.UNSET, false, ArmOffset.ZERO);
     public static final HandPos DEFAULT_ON_RIGHT = new HandPos(ArmAnchor.UNSET, false, ArmOffset.ZERO);
 
-    public record Value(Boolean enable, Double recoilMultiplier, Double inaccuracyMultiplier, Double focusAimRecoilMultiplier, Double focusAimInaccuracyMultiplier, Double leftOffset, Double rightOffset, HandPos onLeft, HandPos onRight) {
+    public record Value(Boolean enable, Double recoilMultiplier, Double inaccuracyMultiplier, Double focusAimRecoilMultiplier, Double focusAimInaccuracyMultiplier, Double leftOffset, Double rightOffset, Double forwardOffset, HandPos onLeft, HandPos onRight) {
     }
 
     /** 解析 hand_pos 条目; mirror 未显式配置时不镜像(按锚点原位置渲染)。 */
@@ -144,6 +145,29 @@ public final class DualWieldOverrides {
         Value value = resolveStack(stack);
         Double offset = value == null ? null : value.rightOffset();
         return offset != null && Double.isFinite(offset.doubleValue()) ? offset.doubleValue() : fallback;
+    }
+
+    /** 枪械 data 的 forward_offset 优先；未配置时按枪械类型使用配置文件的默认值。 */
+    public static double forwardOffset(ItemStack stack, double pistolFallback, double otherFallback) {
+        Value value = resolveStack(stack);
+        Double configured = value == null ? null : value.forwardOffset();
+        if (configured != null && Double.isFinite(configured.doubleValue())) {
+            return configured.doubleValue();
+        }
+        return isPistol(stack) ? pistolFallback : otherFallback;
+    }
+
+    private static boolean isPistol(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return false;
+        }
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return false;
+        }
+        return TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
+                .map(index -> "pistol".equalsIgnoreCase(index.getType()))
+                .orElse(false);
     }
 
     public static HandPos handPosLeft(ItemStack stack, HandPos fallback) {

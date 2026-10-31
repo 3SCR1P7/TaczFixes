@@ -266,6 +266,7 @@ public class GunTaczFixesData {
         public Double focus_aim_inaccuracy_multiplier;
         public Double left_offset;
         public Double right_offset;
+        public Double forward_offset;
         /** 双持换弹是否直接使用枪械自身的换弹动画(不使用收枪-等待-掏枪路径)。默认 false。 */
         public Boolean reload_animation;
         public HandPosConfig hand_pos;

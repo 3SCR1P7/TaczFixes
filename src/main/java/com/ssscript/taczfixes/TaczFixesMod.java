@@ -117,6 +117,7 @@ public class TaczFixesMod {
                     cfg.enable, cfg.recoil_multiplier, cfg.inaccuracy_multiplier,
                     cfg.focus_aim_recoil_multiplier, cfg.focus_aim_inaccuracy_multiplier,
                     cfg.left_offset, cfg.right_offset,
+                    cfg.forward_offset,
                     com.ssscript.taczfixes.common.util.DualWieldOverrides.parseHandPos(
                             cfg.hand_pos == null ? null : cfg.hand_pos.on_left,
                             com.ssscript.taczfixes.common.util.DualWieldOverrides.DEFAULT_ON_LEFT),
