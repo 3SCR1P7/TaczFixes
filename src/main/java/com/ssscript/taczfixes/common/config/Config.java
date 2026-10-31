@@ -1544,11 +1544,11 @@ public class Config {
                 .comment("单手瞄准时的散布倍率。默认值：1.25")
                 .defineInRange("focusAimInaccuracyMultiplier", 1.25, 0.0, 10.0);
         DUAL_WIELD_LEFT_X_OFFSET = BUILDER
-                .comment("左手枪械的坐标偏移。默认值：-0.6")
-                .defineInRange("leftGunXOffset", -0.6, -2.0, 0.0);
+                .comment("左手枪械的坐标偏移。默认值：-0.55")
+                .defineInRange("leftGunXOffset", -0.55, -2.0, 0.0);
         DUAL_WIELD_RIGHT_X_OFFSET = BUILDER
-                .comment("右手枪械的坐标偏移。默认值：0.2")
-                .defineInRange("rightGunXOffset", 0.2, 0.0, 2.0);
+                .comment("右手枪械的坐标偏移。默认值：0.15")
+                .defineInRange("rightGunXOffset", 0.15, 0.0, 2.0);
         DUAL_WIELD_FORWARD_OFFSET_PISTOL = BUILDER
                 .comment("双持时手枪向前偏移的距离（格）。默认值：0.05")
                 .defineInRange("forwardOffsetPistol", 0.05, -1.0, 1.0);
