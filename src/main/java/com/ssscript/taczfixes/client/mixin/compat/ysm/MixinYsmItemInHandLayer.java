@@ -7,6 +7,7 @@ import com.ssscript.taczfixes.common.compat.YsmCompatibilityDiagnostics;
 import com.ssscript.taczfixes.common.compat.YsmDualWieldCompat;
 import com.ssscript.taczfixes.common.compat.YsmHeldLayerRenderState;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
+import com.tacz.guns.api.item.IGun;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -45,10 +46,13 @@ public abstract class MixinYsmItemInHandLayer {
     private void taczDualWield$renderYsmHeldGun(ItemInHandRenderer renderer, LivingEntity entity, ItemStack stack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         YsmCompatibilityDiagnostics.markPrimaryHelperCall();
         if (leftHand && taczDualWield$isDualOffhand(entity, stack)) {
-            if (!YsmHeldLayerRenderState.isOffhandRendered(entity) && taczDualWield$renderOffhand(entity, stack, poseStack, buffer, packedLight)) {
-                YsmHeldLayerRenderState.markOffhandRendered(entity);
+            if (YsmHeldLayerRenderState.isOffhandRendered(entity)) {
+                return;
             }
-            return;
+            if (taczDualWield$renderOffhand(entity, stack, poseStack, buffer, packedLight)) {
+                YsmHeldLayerRenderState.markOffhandRendered(entity);
+                return;
+            }
         }
         renderer.renderItem(entity, stack, displayContext, leftHand, poseStack, buffer, packedLight);
     }
@@ -72,7 +76,7 @@ public abstract class MixinYsmItemInHandLayer {
 
     @Redirect(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemDisplayContext;ZLnet/minecraft/client/renderer/MultiBufferSource;ILjava/util/List;)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;m_269530_(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private void taczDualWield$renderYsmExtraOffhandGun(ItemInHandRenderer renderer, LivingEntity entity, ItemStack stack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
-        if (leftHand && taczDualWield$isDualOffhand(entity, stack)) {
+        if (leftHand && taczDualWield$isDualOffhand(entity, stack) && IGun.getIGunOrNull(stack) != null) {
             YsmCompatibilityDiagnostics.markExtraLocatorSuppressed();
             return;
         }
