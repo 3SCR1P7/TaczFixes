@@ -364,25 +364,7 @@ public final class DualWieldClient {
         } else {
             lastOffhandItemUseDown = false;
         }
-        if (hasOffhandGun && !hasMainGun) {
-            if (Minecraft.getInstance().mouseHandler.isRightPressed()
-                    && !InteractKey.INTERACT_KEY.isDown() && !DualFocusAimKey.FOCUS_AIM_KEY.isDown()) {
-                if (mainItemUseCooldown > 0) {
-                    mainItemUseCooldown--;
-                } else if (lastMainItemUseDown && mainItemUseRepeat && !player.isUsingItem()) {
-                    mainItemUseRepeat = useMainItemOrAttack(player);
-                    mainItemUseCooldown = mainItemUseRepeat ? 3 : 0;
-                }
-            } else {
-                lastMainItemUseDown = false;
-                mainItemUseRepeat = false;
-                mainItemUseCooldown = 0;
-            }
-        } else {
-            lastMainItemUseDown = false;
-            mainItemUseRepeat = false;
-            mainItemUseCooldown = 0;
-        }
+        lastMainItemUseDown = false;
         updateThirdPersonGunAnimations(minecraft, leftGun, rightGun);
         if (hasOffhandGun) {
             leftState.tickManualShotChamberSync(leftGun);
@@ -769,14 +751,10 @@ public final class DualWieldClient {
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
         if (event.getButton() == 1 && offGun && !mainGun) {
-            lastMainItemUseDown = true;
+            vanillaUseAttackArmed = true;
             if (isAttackOnly(main, player)) {
-                mainItemUseRepeat = false;
-                mainItemUseCooldown = 0;
+                vanillaUseAttackArmed = false;
                 attackMainHand(player);
-            } else {
-                mainItemUseRepeat = useMainItemOrAttack(player);
-                mainItemUseCooldown = mainItemUseRepeat ? 4 : 0;
             }
             return;
         }
@@ -843,6 +821,47 @@ public final class DualWieldClient {
         } catch (Throwable ignored) {
             return false;
         }
+    }
+
+    private static boolean vanillaUseAttackArmed;
+    private static boolean vanillaUseActive;
+    private static boolean vanillaUseConsumed;
+
+    public static void beginVanillaUse() {
+        vanillaUseActive = true;
+        vanillaUseConsumed = false;
+    }
+
+    public static void markVanillaUse(net.minecraft.world.InteractionResult result) {
+        if (vanillaUseActive && result != null && result.consumesAction()) {
+            vanillaUseConsumed = true;
+        }
+    }
+
+    public static void endVanillaUse(LocalPlayer player) {
+        if (!vanillaUseActive) {
+            return;
+        }
+        vanillaUseActive = false;
+        if (!vanillaUseAttackArmed) {
+            return;
+        }
+        vanillaUseAttackArmed = false;
+        if (vanillaUseConsumed || player == null || !isDualMode(player)) {
+            return;
+        }
+        ItemStack main = player.getMainHandItem();
+        ItemStack off = player.getOffhandItem();
+        if (main.isEmpty() || IGun.getIGunOrNull(off) == null || IGun.getIGunOrNull(main) != null) {
+            return;
+        }
+        if (isAttackOnly(main, player) || main.getItem() instanceof net.minecraft.world.item.BlockItem) {
+            return;
+        }
+        if (main.getUseDuration(player) > 0) {
+            return;
+        }
+        attackMainHand(player);
     }
 
     private static void attackMainHand(LocalPlayer player) {
@@ -981,7 +1000,7 @@ public final class DualWieldClient {
         ItemStack off = player != null ? player.getOffhandItem() : ItemStack.EMPTY;
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
-        if (event.isAttack() || (event.isUseItem() && mainGun != offGun)) {
+        if (event.isAttack() || (event.isUseItem() && mainGun && !offGun)) {
             event.setSwingHand(false);
             event.setCanceled(true);
         }
