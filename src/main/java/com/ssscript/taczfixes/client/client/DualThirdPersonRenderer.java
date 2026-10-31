@@ -78,9 +78,7 @@ public final class DualThirdPersonRenderer {
 
     /* minigun 动画的枪械在双持第三人称使用 default 持枪动画时, 按两种动画的手臂俯仰差补偿枪口方向。 */
     private static void applyMinigunPitchCorrection(LivingEntity entity, ItemStack stack, boolean offhand, PoseStack poseStack) {
-        GunDisplayInstance display = offhand
-                ? OffhandDisplayManager.getOrCreate(stack)
-                : (GunDisplayInstance) TimelessAPI.getGunDisplay(stack).orElse(null);
+        GunDisplayInstance display = (GunDisplayInstance) TimelessAPI.getGunDisplay(stack).orElse(null);
         if (display == null) {
             return;
         }
