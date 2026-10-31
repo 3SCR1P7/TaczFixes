@@ -350,7 +350,8 @@ public final class DualWieldClient {
         }
         if (!DualFocusAimKey.FOCUS_AIM_KEY.isDown() && hasMainGun && !hasOffhandGun
                 && !leftGun.isEmpty() && !(leftGun.getItem() instanceof ShieldItem)) {
-            if (physicalLeftDown && !lastOffhandItemUseDown) {
+            if (physicalLeftDown && !lastOffhandItemUseDown
+                    && (Minecraft.getInstance().gameMode == null || !Minecraft.getInstance().gameMode.isDestroying())) {
                 if (isAttackOnly(leftGun, player)) {
                     useItemOrAttack(player, InteractionHand.OFF_HAND, "tick-offhand");
                 } else {
@@ -848,12 +849,14 @@ public final class DualWieldClient {
             if (result.consumesAction()) {
                 return;
             }
-        } else if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit) {
+        } else if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
+                && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
             if (gameMode.useItemOn(player, InteractionHand.MAIN_HAND, blockHit).consumesAction()) {
                 return;
             }
         }
-        if (gameMode.useItem(player, InteractionHand.MAIN_HAND).consumesAction()) {
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem)
+                && gameMode.useItem(player, InteractionHand.MAIN_HAND).consumesAction()) {
             return;
         }
         attackMainHand(player);
@@ -880,7 +883,8 @@ public final class DualWieldClient {
         ItemStack stack = player.getItemInHand(hand);
         if (hand == InteractionHand.OFF_HAND && stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
             net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
-            if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit) {
+            if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
+                    && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
                 Minecraft.getInstance().gameMode.useItemOn(player, hand, blockHit);
                 player.swing(hand, true);
                 return;
@@ -896,8 +900,9 @@ public final class DualWieldClient {
             }
             return;
         }
-        net.minecraft.world.InteractionResult result =
-                Minecraft.getInstance().gameMode.useItem(player, hand);
+        net.minecraft.world.InteractionResult result = stack.getItem() instanceof net.minecraft.world.item.BlockItem
+                ? net.minecraft.world.InteractionResult.FAIL
+                : Minecraft.getInstance().gameMode.useItem(player, hand);
         boolean consume = result.consumesAction();
         boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
                 && stack.getUseDuration(player) > 0;
