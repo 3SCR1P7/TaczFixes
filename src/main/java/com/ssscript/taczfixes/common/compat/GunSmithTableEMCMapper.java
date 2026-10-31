@@ -12,9 +12,6 @@ import com.tacz.guns.crafting.GunSmithTableIngredient;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.init.ModRecipe;
-import me.xjqsh.lrtactical.api.item.IConsumable;
-import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
-import me.xjqsh.lrtactical.api.item.IThrowable;
 import moze_intel.projecte.api.mapper.collector.IMappingCollector;
 import moze_intel.projecte.api.mapper.recipe.INSSFakeGroupManager;
 import moze_intel.projecte.api.mapper.recipe.IRecipeTypeMapper;
@@ -73,7 +70,6 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
         }
         mapper.setValueBefore(NSSItem.createItem(ModItems.MODERN_KINETIC_GUN.get()), 1L);
         mapper.setValueBefore(NSSItem.createItem(ModItems.AMMO_BOX.get()), 1L);
-        boolean lrtacticalSubtype = isLrtacticalSubtype(output);
         Map<NormalizedSimpleStack, Integer> ingredients = new LinkedHashMap<>();
         for (GunSmithTableIngredient tableIngredient : inputs) {
             Ingredient ingredient = tableIngredient.getIngredient();
@@ -104,10 +100,6 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
             }
         }
         NormalizedSimpleStack canonicalOutput = canonicalNss(output);
-        if (lrtacticalSubtype && canonicalOutput != null) {
-            mapper.addConversion(output.getCount(), canonicalOutput, ingredients);
-            return true;
-        }
         NormalizedSimpleStack outputStack = fullNss(output);
         if (outputStack == null) {
             return false;
@@ -195,18 +187,6 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
                 } else if (ammoBox.isCreative(stack)) {
                     tag.putBoolean(AmmoBoxItemDataAccessor.CREATIVE_TAG, true);
                 }
-            } else if (item instanceof IConsumable consumable) {
-                ResourceLocation id = consumable.getId(stack);
-                if (id == null || IConsumable.EMPTY.equals(id)) return null;
-                tag.putString(IConsumable.ID_TAG, id.toString());
-            } else if (item instanceof IThrowable throwable) {
-                ResourceLocation id = throwable.getId(stack);
-                if (id == null || IThrowable.EMPTY.equals(id)) return null;
-                tag.putString(IThrowable.ID_TAG, id.toString());
-            } else if (item instanceof IMeleeWeapon melee) {
-                ResourceLocation id = melee.getId(stack);
-                if (id == null || IMeleeWeapon.EMPTY.equals(id)) return null;
-                tag.putString(IMeleeWeapon.ID_TAG, id.toString());
             } else {
                 return null;
             }
@@ -216,11 +196,5 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
         }
     }
 
-    private static boolean isLrtacticalSubtype(ItemStack stack) {
-        if (stack == null || stack.isEmpty()) {
-            return false;
-        }
-        Item item = stack.getItem();
-        return item instanceof IConsumable || item instanceof IThrowable || item instanceof IMeleeWeapon;
-    }
+
 }

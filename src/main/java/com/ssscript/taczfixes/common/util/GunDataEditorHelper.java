@@ -172,12 +172,14 @@ public class GunDataEditorHelper {
                     if (shield != null) {
                         // 以 gsm ShieldData(字段名即 snake_case) 为主体, 保留原生 shield 字段, 再挂 taczfixes
                         com.google.gson.JsonObject shieldObj = null;
-                        try {
-                            shieldObj = mod.chloeprime.gunsmithlib.common.gunpack_extension.shared.shield.ShieldData
-                                    .fromGun(gunItem)
-                                    .map(d -> CommonAssetsManager.GSON.toJsonTree(d).getAsJsonObject())
-                                    .orElse(null);
-                        } catch (Exception ignored) {
+                        if (net.minecraftforge.fml.ModList.get().isLoaded("gunsmithlib")) {
+                            try {
+                                shieldObj = mod.chloeprime.gunsmithlib.common.gunpack_extension.shared.shield.ShieldData
+                                        .fromGun(gunItem)
+                                        .map(d -> CommonAssetsManager.GSON.toJsonTree(d).getAsJsonObject())
+                                        .orElse(null);
+                            } catch (Throwable ignored) {
+                            }
                         }
                         if (shieldObj == null) {
                             shieldObj = new com.google.gson.JsonObject();
