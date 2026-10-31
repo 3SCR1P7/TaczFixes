@@ -24,14 +24,15 @@ import moze_intel.projecte.api.nss.NormalizedSimpleStack;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Tuple;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import it.unimi.dsi.fastutil.objects.Object2IntMap;
+import it.unimi.dsi.fastutil.objects.Object2IntOpenHashMap;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeType;
 
-import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -40,6 +41,11 @@ import java.util.Set;
 /** 让 ProjectE 的自动 EMC 计算识别 TaCZ 枪械工作台配方。 */
 @RecipeTypeMapper(requiredMods = {"projecte", "tacz"})
 public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
+    @Override
+    public String getTranslationKey() {
+        return "projecte.mapper.taczfixes.gun_smith_table";
+    }
+
 
     @Override
     public String getName() {
@@ -58,9 +64,9 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
     }
 
     @Override
-    public boolean handleRecipe(IMappingCollector<NormalizedSimpleStack, Long> mapper, Recipe<?> recipe,
+    public boolean handleRecipe(IMappingCollector<NormalizedSimpleStack, Long> mapper, RecipeHolder<?> holder,
                                 RegistryAccess registryAccess, INSSFakeGroupManager fakeGroupManager) {
-        if (!(recipe instanceof GunSmithTableRecipe tableRecipe)) {
+        if (!(holder.value() instanceof GunSmithTableRecipe tableRecipe)) {
             return false;
         }
         ItemStack output = tableRecipe.getResultItem(registryAccess);
@@ -74,7 +80,7 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
         mapper.setValueBefore(NSSItem.createItem(ModItems.MODERN_KINETIC_GUN.get()), 1L);
         mapper.setValueBefore(NSSItem.createItem(ModItems.AMMO_BOX.get()), 1L);
         boolean lrtacticalSubtype = isLrtacticalSubtype(output);
-        Map<NormalizedSimpleStack, Integer> ingredients = new LinkedHashMap<>();
+        Object2IntMap<NormalizedSimpleStack> ingredients = new Object2IntOpenHashMap<>();
         for (GunSmithTableIngredient tableIngredient : inputs) {
             Ingredient ingredient = tableIngredient.getIngredient();
             if (ingredient == null) {
@@ -120,22 +126,22 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
     }
 
     private static boolean addIngredient(IMappingCollector<NormalizedSimpleStack, Long> mapper,
-                                         Map<NormalizedSimpleStack, Integer> ingredients,
+                                         Object2IntMap<NormalizedSimpleStack> ingredients,
                                          Set<NormalizedSimpleStack> variants, int count,
                                          INSSFakeGroupManager fakeGroupManager) {
         if (variants.size() == 1) {
             ingredients.merge(variants.iterator().next(), count, Integer::sum);
             return true;
         }
-        Tuple<NormalizedSimpleStack, Boolean> group = fakeGroupManager.getOrCreateFakeGroup(variants);
-        if (group == null || group.getA() == null) {
+        INSSFakeGroupManager.FakeGroupData group = fakeGroupManager.getOrCreateFakeGroup(variants);
+        if (group == null || group.dummy() == null) {
             return false;
         }
-        NormalizedSimpleStack dummy = group.getA();
+        NormalizedSimpleStack dummy = group.dummy();
         ingredients.merge(dummy, count, Integer::sum);
-        if (group.getB()) {
+        if (group.created()) {
             for (NormalizedSimpleStack variant : variants) {
-                Map<NormalizedSimpleStack, Integer> single = new LinkedHashMap<>();
+                Object2IntMap<NormalizedSimpleStack> single = new Object2IntOpenHashMap<>();
                 single.put(variant, 1);
                 mapper.addConversion(1, dummy, single);
             }
@@ -210,7 +216,9 @@ public class GunSmithTableEMCMapper implements IRecipeTypeMapper {
             } else {
                 return null;
             }
-            return NSSItem.createItem(item, tag);
+            ItemStack canonicalStack = new ItemStack(item);
+            com.ssscript.taczfixes.common.util.ItemNbt.set(canonicalStack, tag);
+            return NSSItem.createItem(canonicalStack);
         } catch (RuntimeException ignored) {
             return null;
         }

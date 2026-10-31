@@ -17,7 +17,7 @@ public final class BulletTickAPI {
 
     private static java.lang.reflect.Field tickCountField() {
         try {
-            java.lang.reflect.Field field = net.minecraft.world.entity.Entity.class.getDeclaredField("f_19797_");
+            java.lang.reflect.Field field = net.minecraft.world.entity.Entity.class.getDeclaredField("tickCount");
             field.setAccessible(true);
             return field;
         } catch (Throwable t) {
@@ -25,9 +25,9 @@ public final class BulletTickAPI {
         }
     }
 
-    private static final java.lang.reflect.Field X_OLD_FIELD = oldField("f_19854_");
-    private static final java.lang.reflect.Field Y_OLD_FIELD = oldField("f_19855_");
-    private static final java.lang.reflect.Field Z_OLD_FIELD = oldField("f_19856_");
+    private static final java.lang.reflect.Field X_OLD_FIELD = oldField("xo");
+    private static final java.lang.reflect.Field Y_OLD_FIELD = oldField("yo");
+    private static final java.lang.reflect.Field Z_OLD_FIELD = oldField("zo");
 
     private static java.lang.reflect.Field oldField(String name) {
         try {

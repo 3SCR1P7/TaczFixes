@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.ssscript.taczfixes.common.util.OffhandBulletSource;
 import com.tacz.guns.api.item.IGun;
@@ -12,8 +13,8 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class GunLevelHandler {
     @SubscribeEvent
@@ -41,7 +42,7 @@ public class GunLevelHandler {
         IGun iGun = IGun.getIGunOrNull(gunStack);
         if (iGun == null) return;
 
-        CompoundTag tag = gunStack.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gunStack);
         int currentExp = tag.getInt("GunLevelExp");
         int newExp = currentExp + 1;
         tag.putInt("GunLevelExp", newExp);

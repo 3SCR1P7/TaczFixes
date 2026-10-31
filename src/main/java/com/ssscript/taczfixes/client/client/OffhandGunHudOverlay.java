@@ -30,17 +30,15 @@ import net.minecraft.util.FastColor;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterGuiOverlaysEvent;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterGuiLayersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.item.Item;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT}, bus = Mod.EventBusSubscriber.Bus.MOD)
-public final class OffhandGunHudOverlay implements IGuiOverlay {
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT}, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
+public final class OffhandGunHudOverlay implements net.minecraft.client.gui.LayeredDraw.Layer {
     private static final int MAX_AMMO_COUNT = 9999;
     private static final int HUD_LEFT = 18;
     private static int cacheMaxAmmoCount;
@@ -57,11 +55,13 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
     private static long checkAmmoTimestamp = -1;
 
     @SubscribeEvent
-    public static void registerOverlay(RegisterGuiOverlaysEvent event) {
-        event.registerAboveAll("offhand_gun_hud", new OffhandGunHudOverlay());
+    public static void registerOverlay(RegisterGuiLayersEvent event) {
+        event.registerAboveAll(ResourceLocation.fromNamespaceAndPath("taczfixes", "offhand_gun_hud"), new OffhandGunHudOverlay());
     }
 
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
+    public void render(GuiGraphics graphics, net.minecraft.client.DeltaTracker deltaTracker) {
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
         ItemStack stack;
         IGun gun;
         int ammoCount;
@@ -140,7 +140,7 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
                 : Component.translatable("taczfixes.hud.left");
         renderNumbers(graphics, minecraft.font, height, currentAmmoCountText, inventoryAmmoCountText, ammoCountColor, inventoryAmmoCountColor, sideLabel);
         renderGunAndFireMode(graphics, minecraft.font, stack, gun, display, height, currentAmmoCountText, gunIconAmmo, overheatLocked);
-        renderHeat(gui, graphics, stack, gun, gunData, height);
+        renderHeat(graphics, stack, gun, gunData, height);
     }
 
     private static void renderNumbers(GuiGraphics graphics, Font font, int height, String currentAmmoCountText, String inventoryAmmoCountText, int ammoCountColor, int inventoryAmmoCountColor, Component sideLabel) {
@@ -213,14 +213,14 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
         }
     }
 
-    private static void renderHeat(ForgeGui gui, GuiGraphics graphics, ItemStack stack, IGun gun, GunData gunData, int height) {
+    private static void renderHeat(GuiGraphics graphics, ItemStack stack, IGun gun, GunData gunData, int height) {
         GunHeatData heatData = gunData.getHeatData();
         if (heatData == null || !gun.hasHeatData(stack) || heatData.getHeatMax() <= 0.0f) {
             return;
         }
         float percent = Mth.clamp(gun.getHeatAmount(stack) / heatData.getHeatMax(), 0.0f, 1.0f);
         boolean locked = gun.isOverheatLocked(stack);
-        int color = getHeatColor(percent, locked, gui.getGuiTicks());
+        int color = getHeatColor(percent, locked, Minecraft.getInstance().gui.getGuiTicks());
         int barTop = height - 22;
         graphics.fill(HUD_LEFT, barTop, HUD_LEFT + 100, barTop + 4, -1610612736);
         graphics.fill(19, barTop + 1, 19 + Math.round(percent * (100 - 2)), barTop + 3, color);

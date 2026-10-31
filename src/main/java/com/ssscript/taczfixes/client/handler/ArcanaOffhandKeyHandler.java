@@ -6,8 +6,8 @@ import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 import org.lwjgl.glfw.GLFW;
 
 /**

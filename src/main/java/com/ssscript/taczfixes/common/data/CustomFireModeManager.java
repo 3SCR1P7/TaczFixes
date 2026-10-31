@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.data;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -65,7 +66,7 @@ public class CustomFireModeManager {
             resetActive();
             return;
         }
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemNbt.get(stack);
         String id = tag == null ? null : tag.getString("TaczFixesCustomFireMode");
         if (id == null || id.isEmpty()) {
             resetActive();

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.client.client.DualFocusAimKey;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
@@ -52,12 +53,12 @@ public class MixinZoomKey {
         if (TimelessAPI.getClientAttachmentIndex(id).map(ClientAttachmentIndex::getZoom).orElse(null) == null) {
             return false;
         }
-        CompoundTag tag = scope.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(scope);
         int number = AttachmentItemDataAccessor.getZoomNumberFromTag(tag);
         AttachmentItemDataAccessor.setZoomNumberToTag(tag, (number + 1) % 2147483646);
-        CompoundTag gunTag = gun.getOrCreateTag();
+        CompoundTag gunTag = ItemNbt.getOrCreate(gun);
         CompoundTag slots = gunTag.getCompound(CustomSlotStorage.TAG_KEY);
-        slots.put(active, scope.save(new CompoundTag()));
+        slots.put(active, ItemNbt.saveStack(scope));
         gunTag.put(CustomSlotStorage.TAG_KEY, slots);
         com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.sendToServer(
                 new com.ssscript.taczfixes.common.network.ClientMessageCustomSlotZoom(active));

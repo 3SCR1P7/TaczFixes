@@ -9,19 +9,19 @@ import com.tacz.guns.util.TacHitResult;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.network.PacketDistributor;
+import com.ssscript.taczfixes.common.network.PacketDistributor;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/** 服务端子弹命中(方块/实体)时, 向附近客户端同步动态光照(爆炸光 + 本 tick 起点到命中点的 bullet 光)。 */
+/** 鏈嶅姟绔瓙寮瑰懡涓?鏂瑰潡/瀹炰綋)鏃? 鍚戦檮杩戝鎴风鍚屾鍔ㄦ€佸厜鐓?鐖嗙偢鍏?+ 鏈?tick 璧风偣鍒板懡涓偣鐨?bullet 鍏?銆?*/
 @Mixin(EntityKineticBullet.class)
 public class MixinEntityKineticBulletHitLight {
 
     @Inject(method = "onHitBlock", at = @At("HEAD"), remap = false)
     private void taczfixes$hitBlockLight(BlockHitResult hitResult, Vec3 from, Vec3 to, CallbackInfo callback) {
-        // TaCZ 每 tick 都会调用 onHitBlock(未命中时 result 为 MISS), 只有真实命中才应触发光照。
+        // TaCZ 姣?tick 閮戒細璋冪敤 onHitBlock(鏈懡涓椂 result 涓?MISS), 鍙湁鐪熷疄鍛戒腑鎵嶅簲瑙﹀彂鍏夌収銆?
         if (hitResult == null || hitResult.getType() == HitResult.Type.MISS) {
             return;
         }

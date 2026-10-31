@@ -23,11 +23,11 @@ public class CustomSlotStorage {
 
     /** 仅返回实际安装在槽位 NBT 中的物理配件。 */
     public static ItemStack getPhysical(ItemStack gun, String slotId) {
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag == null || !tag.contains(TAG_KEY, 10)) return ItemStack.EMPTY;
         CompoundTag slots = tag.getCompound(TAG_KEY);
         if (!slots.contains(slotId, 10)) return ItemStack.EMPTY;
-        return ItemStack.of(slots.getCompound(slotId));
+        return ItemNbt.parseStack(slots.getCompound(slotId));
     }
 
     /** 返回槽位当前实际生效的配件: 物理配件优先, 否则为原厂件(显式选择或 default_attached 虚拟件)。 */
@@ -65,7 +65,7 @@ public class CustomSlotStorage {
     }
 
     public static ResourceLocation getAdapter(ItemStack gun, String slotId) {
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag == null || !tag.contains(ADAPTER_TAG_KEY, 10)) return null;
         CompoundTag adapters = tag.getCompound(ADAPTER_TAG_KEY);
         if (!adapters.contains(slotId, 8)) return null;
@@ -74,7 +74,7 @@ public class CustomSlotStorage {
 
     public static void setAdapter(ItemStack gun, String slotId, ResourceLocation adapterId) {
         if (gun == null || gun.isEmpty()) return;
-        CompoundTag tag = gun.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gun);
         CompoundTag adapters = tag.contains(ADAPTER_TAG_KEY, 10) ? tag.getCompound(ADAPTER_TAG_KEY) : new CompoundTag();
         if (adapterId == null) {
             adapters.remove(slotId);
@@ -94,9 +94,9 @@ public class CustomSlotStorage {
     /** 安装物理配件; 同时清空该槽的原厂件选择, 避免卸下后默认原厂件"复活"。 */
     public static void install(ItemStack gun, String slotId, ItemStack item) {
         if (item == null || item.isEmpty()) return;
-        CompoundTag tag = gun.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gun);
         CompoundTag slots = tag.contains(TAG_KEY, 10) ? tag.getCompound(TAG_KEY) : new CompoundTag();
-        slots.put(slotId, item.save(new CompoundTag()));
+        slots.put(slotId, ItemNbt.saveStack(item));
         tag.put(TAG_KEY, slots);
         setBuiltinEntry(gun, slotId, "");
     }
@@ -152,10 +152,10 @@ public class CustomSlotStorage {
     }
 
     public static boolean hasStandardLaser(ItemStack gun) {
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag == null) return false;
         String key = "Attachment" + AttachmentType.LASER.name();
-        return tag.contains(key, 10) && !ItemStack.of(tag.getCompound(key)).isEmpty();
+        return tag.contains(key, 10) && !ItemNbt.parseStack(tag.getCompound(key)).isEmpty();
     }
 
     public static boolean isLaserFromCustomSlot(ItemStack gun, ItemStack laserItem) {
@@ -176,7 +176,7 @@ public class CustomSlotStorage {
     }
 
     private static String rawBuiltinEntry(ItemStack gun, String slotId) {
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag == null || !tag.contains(BUILTIN_TAG_KEY, 10)) return null;
         CompoundTag builtin = tag.getCompound(BUILTIN_TAG_KEY);
         if (!builtin.contains(slotId, 8)) return null;
@@ -185,14 +185,14 @@ public class CustomSlotStorage {
 
     private static void setBuiltinEntry(ItemStack gun, String slotId, String value) {
         if (gun == null || gun.isEmpty()) return;
-        CompoundTag tag = gun.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gun);
         CompoundTag builtin = tag.contains(BUILTIN_TAG_KEY, 10) ? tag.getCompound(BUILTIN_TAG_KEY) : new CompoundTag();
         builtin.putString(slotId, value == null ? "" : value);
         tag.put(BUILTIN_TAG_KEY, builtin);
     }
 
     private static void removePhysical(ItemStack gun, String slotId) {
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag != null && tag.contains(TAG_KEY, 10)) {
             tag.getCompound(TAG_KEY).remove(slotId);
         }

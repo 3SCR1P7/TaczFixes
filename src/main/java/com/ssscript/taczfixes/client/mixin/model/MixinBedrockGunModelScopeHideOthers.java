@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.model;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress;
@@ -115,7 +116,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
             com.tacz.guns.client.model.BedrockAttachmentModel model = index.getAttachmentModel();
             if (model == null) return;
             int zoomNumber = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor
-                    .getZoomNumberFromTag(item.getTag());
+                    .getZoomNumberFromTag(ItemNbt.get(item));
             ArcanaScopeViewState.set(model, zoomNumber);
         });
     }
@@ -271,7 +272,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
         LocalPlayer player = mc.player;
         if (player == null || !player.isAlive()) return false;
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
-        if (operator == null || operator.getClientAimingProgress(mc.getFrameTime()) <= 0.01f) return false;
+        if (operator == null || operator.getClientAimingProgress(mc.getTimer().getGameTimeDeltaPartialTick(false)) <= 0.01f) return false;
         return ArcanaMagnificationState.active();
     }
 
@@ -319,7 +320,7 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                         try {
                             if (index.isScope()) {
                                 int zoomNumber = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor
-                                        .getZoomNumberFromTag(actItem.getTag());
+                                        .getZoomNumberFromTag(ItemNbt.get(actItem));
                                 ArcanaScopeViewState.set(actModel, zoomNumber);
                             }
                             actModel.render(actItem, gun, pose, displayContext, renderType, light, overlay);
@@ -553,11 +554,11 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
 
     @Unique
     private static ItemStack readStandardScope(ItemStack gun) {
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag != null) {
             String key = com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + AttachmentType.SCOPE.name();
             if (tag.contains(key, 10)) {
-                ItemStack scope = ItemStack.of(tag.getCompound(key));
+                ItemStack scope = ItemNbt.parseStack(tag.getCompound(key));
                 if (!scope.isEmpty()) return scope;
             }
         }

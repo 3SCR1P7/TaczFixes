@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.client.gui.screens.inventory.AnvilScreen;
 import net.minecraft.world.entity.player.Abilities;
@@ -27,7 +28,7 @@ public class MixinAnvilScreenGunCost {
         if (abilities.instabuild) {
             return true;
         }
-        int gunLevel = target.getOrCreateTag().getInt("GunLevel");
+        int gunLevel = ItemNbt.getOrCreate(target).getInt("GunLevel");
         return menu.getCost() <= gunLevel + 39;
     }
 }

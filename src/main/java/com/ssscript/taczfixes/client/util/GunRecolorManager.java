@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
@@ -194,7 +195,7 @@ public final class GunRecolorManager {
             }
         }
         // 兜底: 扫描枪械 NBT 中所有配件物品(含第三方槽位/自定义存储)。
-        CompoundTag tag = gunStack.getTag();
+        CompoundTag tag = ItemNbt.get(gunStack);
         return tag != null && taczfixes$nbtHasPaintModule(tag, modules, 0);
     }
 
@@ -227,7 +228,7 @@ public final class GunRecolorManager {
             return false;
         }
         try {
-            ItemStack stack = ItemStack.of(child);
+            ItemStack stack = com.ssscript.taczfixes.common.util.ItemNbt.parseStack(child);
             if (stack.isEmpty()) {
                 return false;
             }

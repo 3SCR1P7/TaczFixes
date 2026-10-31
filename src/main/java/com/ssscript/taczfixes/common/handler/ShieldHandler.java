@@ -6,8 +6,8 @@ import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.event.common.GunDamageSourcePart;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.living.ShieldBlockEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.living.LivingShieldBlockEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class ShieldHandler {
     /** 子弹格挡: gsm(High)取消事件后，按 resistance 修整格挡量计数，并结算泄漏伤害。 */
@@ -27,7 +27,7 @@ public class ShieldHandler {
 
     /** 原版伤害格挡: 通过 setBlockedDamage 按 resistance 修整格挡量，剩余部分由原版流程继续结算。 */
     @SubscribeEvent
-    public void onShieldBlock(ShieldBlockEvent event) {
+    public void onShieldBlock(LivingShieldBlockEvent event) {
         LivingEntity user = event.getEntity();
         if (user.level().isClientSide()) return;
         ItemStack weapon = user.getMainHandItem();

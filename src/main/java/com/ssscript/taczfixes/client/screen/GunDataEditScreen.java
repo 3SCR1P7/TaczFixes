@@ -230,7 +230,7 @@ public class GunDataEditScreen extends Screen {
 
     @Override
     public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        this.renderBackground(graphics);
+        super.render(graphics, mouseX, mouseY, partialTick);
         int fx = topLeftX();
         int fy = topLeftY();
         graphics.drawCenteredString(this.font, this.title, this.width / 2, 12, 0xFFFFFFFF);
@@ -308,7 +308,6 @@ public class GunDataEditScreen extends Screen {
         if (this.confirmButton != null) {
             this.confirmButton.setFocused(false);
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     private int scrollbarX() {
@@ -455,7 +454,7 @@ public class GunDataEditScreen extends Screen {
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double delta) {
+    public boolean mouseScrolled(double mouseX, double mouseY, double scrollX, double delta) {
         String[] lines = lines();
         if (this.hasShiftDown()) {
             int steps = (int) Math.round(delta * 20);

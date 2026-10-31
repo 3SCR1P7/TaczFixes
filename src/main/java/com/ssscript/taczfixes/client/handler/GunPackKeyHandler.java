@@ -4,10 +4,9 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.ssscript.taczfixes.client.screen.GunPackScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.neoforge.client.settings.KeyModifier;
+import net.neoforged.bus.api.SubscribeEvent;
 import org.lwjgl.glfw.GLFW;
 
 /** Alt+G 打开枪包管理界面(修饰键由 KeyMapping 本身处理)。 */
@@ -21,8 +20,8 @@ public class GunPackKeyHandler {
             "key.categories.taczfixes");
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) return;
         com.ssscript.taczfixes.client.util.PendingResourceReload.tick();
         while (GUN_PACK_KEY.consumeClick()) {
             Minecraft mc = Minecraft.getInstance();

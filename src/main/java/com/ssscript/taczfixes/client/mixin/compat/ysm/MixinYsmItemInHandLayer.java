@@ -42,7 +42,7 @@ public abstract class MixinYsmItemInHandLayer {
         YsmHeldLayerRenderState.end();
     }
 
-    @Redirect(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/elfmcys/yesstevemodel/OOOO0O0O000O000000oOOO0o;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;m_269530_(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
+    @Redirect(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/elfmcys/yesstevemodel/OOOO0O0O000O000000oOOO0o;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lnet/minecraft/world/entity/HumanoidArm;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private void taczDualWield$renderYsmHeldGun(ItemInHandRenderer renderer, LivingEntity entity, ItemStack stack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         YsmCompatibilityDiagnostics.markPrimaryHelperCall();
         if (leftHand && taczDualWield$isDualOffhand(entity, stack)) {
@@ -74,7 +74,7 @@ public abstract class MixinYsmItemInHandLayer {
         }
     }
 
-    @Redirect(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemDisplayContext;ZLnet/minecraft/client/renderer/MultiBufferSource;ILjava/util/List;)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;m_269530_(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
+    @Redirect(method = {"Oo0Oo0o00O00Oo0OOoOOoooo(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemDisplayContext;ZLnet/minecraft/client/renderer/MultiBufferSource;ILjava/util/List;)V"}, at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/ItemInHandRenderer;renderItem(Lnet/minecraft/world/entity/LivingEntity;Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;ZLcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private void taczDualWield$renderYsmExtraOffhandGun(ItemInHandRenderer renderer, LivingEntity entity, ItemStack stack, ItemDisplayContext displayContext, boolean leftHand, PoseStack poseStack, MultiBufferSource buffer, int packedLight) {
         if (leftHand && taczDualWield$isDualOffhand(entity, stack) && IGun.getIGunOrNull(stack) != null) {
             YsmCompatibilityDiagnostics.markExtraLocatorSuppressed();
@@ -92,6 +92,6 @@ public abstract class MixinYsmItemInHandLayer {
     }
 
     private static boolean taczDualWield$isSameStack(ItemStack first, ItemStack second) {
-        return first == second || !(first.isEmpty() || second.isEmpty() || !ItemStack.isSameItemSameTags(first, second));
+        return first == second || !(first.isEmpty() || second.isEmpty() || !ItemStack.isSameItemSameComponents(first, second));
     }
 }

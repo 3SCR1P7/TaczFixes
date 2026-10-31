@@ -8,11 +8,9 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /** 右下角上肢耐力条(位于耐力条上方): 128x1, 剩余白色(低于阈值渐红), 已消耗部分透明。 */
-public class AimingStaminaOverlay implements IGuiOverlay {
+public class AimingStaminaOverlay implements net.minecraft.client.gui.LayeredDraw.Layer {
 
     private static final int BAR_WIDTH = 128;
     private static final int BAR_HEIGHT = 1;
@@ -31,7 +29,9 @@ public class AimingStaminaOverlay implements IGuiOverlay {
     private static long fullSinceMs = -1L;
 
     @Override
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
+    public void render(GuiGraphics graphics, net.minecraft.client.DeltaTracker deltaTracker) {
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
         AimingStaminaBarMode mode = Config.AIMING_STAMINA_BAR_MODE.get();
         if (mode == AimingStaminaBarMode.NEVER) return;
         if (!Config.AIMING_STAMINA_ENABLED.get()) return;
@@ -102,7 +102,7 @@ public class AimingStaminaOverlay implements IGuiOverlay {
 
     private static boolean taczfixes$isStaminaWeapon(ItemStack stack) {
         if (IGun.getIGunOrNull(stack) != null) return true;
-        if (!net.minecraftforge.fml.ModList.get().isLoaded("lrtactical")) return false;
+        if (!net.neoforged.fml.ModList.get().isLoaded("lrtactical")) return false;
         try {
             return me.xjqsh.lrtactical.api.item.IMeleeWeapon.of(stack) != null;
         } catch (Throwable e) {

@@ -10,17 +10,17 @@ public final class RecoilMultiplierStorage {
     }
 
     public static float get(ItemStack stack) {
-        if (stack == null || stack.isEmpty() || stack.getTag() == null
-                || !stack.getTag().contains(TAG_KEY)) {
+        if (stack == null || stack.isEmpty() || ItemNbt.get(stack) == null
+                || !ItemNbt.get(stack).contains(TAG_KEY)) {
             return 1.0f;
         }
-        return stack.getTag().getFloat(TAG_KEY);
+        return ItemNbt.get(stack).getFloat(TAG_KEY);
     }
 
     public static void set(ItemStack stack, float value) {
         if (stack == null || stack.isEmpty()) {
             return;
         }
-        stack.getOrCreateTag().putFloat(TAG_KEY, value);
+        ItemNbt.getOrCreate(stack).putFloat(TAG_KEY, value);
     }
 }

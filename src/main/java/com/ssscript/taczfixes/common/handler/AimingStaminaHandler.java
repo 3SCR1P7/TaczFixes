@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.network.PacketDistributor;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.network.ServerMessageAimingStamina;
 import com.ssscript.taczfixes.common.config.Config;
@@ -7,34 +8,35 @@ import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.AimingStaminaState;
 import com.tacz.guns.api.entity.IGunOperator;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
+import net.minecraft.resources.ResourceLocation;
 import java.util.UUID;
 
 /** 服务端: 上肢耐力消耗/恢复、归零强制收镜、同步到客户端。 */
 public class AimingStaminaHandler {
 
-    private static final UUID MAX_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f01");
-    private static final UUID CONSUMPTION_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f02");
-    private static final UUID RECOVERY_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f03");
+    private static final ResourceLocation MAX_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("taczfixes", "max_modifier_id");
+    private static final ResourceLocation CONSUMPTION_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("taczfixes", "consumption_modifier_id");
+    private static final ResourceLocation RECOVERY_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("taczfixes", "recovery_modifier_id");
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        if (!(event.player instanceof ServerPlayer player)) return;
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false) return;
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!Config.AIMING_STAMINA_ENABLED.get()) return;
 
         UUID uuid = player.getUUID();
-        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
+        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE);
         if (max <= 0) max = 1;
         float consumption = Config.AIMING_STAMINA_CONSUMPTION.get().floatValue();
-        float consumptionMultiplier = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE.get());
-        float recovery = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_RECOVERY_ATTRIBUTE.get());
+        float consumptionMultiplier = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE);
+        float recovery = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_RECOVERY_ATTRIBUTE);
 
         IGunOperator operator = IGunOperator.fromLivingEntity(player);
         boolean aiming = operator != null && operator.getSynIsAiming();
@@ -81,21 +83,21 @@ public class AimingStaminaHandler {
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         applyConfigModifiers(player);
-        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
+        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE);
         AimingStaminaState.setStamina(player.getUUID(), max);
         sendToPlayer(player, max, max);
     }
 
     private static void sendToPlayer(ServerPlayer player, float stamina, float max) {
         NetworkHandler.CHANNEL.send(
-                net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
+                PacketDistributor.PLAYER.with(() -> player),
                 new ServerMessageAimingStamina(stamina, max));
     }
 
     /** 消耗上肢耐力(服务端)并立即同步。 */
     public static void consume(ServerPlayer player, float amount) {
         if (player == null || amount <= 0f) return;
-        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
+        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE);
         if (max <= 0f) max = 1f;
         float value = Math.max(0f, AimingStaminaState.getStamina(player.getUUID(), max) - amount);
         AimingStaminaState.setStamina(player.getUUID(), value);
@@ -107,7 +109,7 @@ public class AimingStaminaHandler {
     /** 上肢耐力是否不足以支付该消耗。 */
     public static boolean isInsufficient(ServerPlayer player, float cost) {
         if (player == null || cost <= 0f) return false;
-        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
+        float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE);
         if (max <= 0f) max = 1f;
         return AimingStaminaState.getStamina(player.getUUID(), max) < cost;
     }
@@ -127,26 +129,26 @@ public class AimingStaminaHandler {
 
     /** 用 config 中的默认值修正 attribute 基础值(config 在注册表事件之后才加载, 无法直接作为 attribute 默认值)。 */
     private static void applyConfigModifiers(ServerPlayer player) {
-        applyModifier(player, TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get(), MAX_MODIFIER_ID,
+        applyModifier(player, TaczFixesMod.AIMING_STAMINA_ATTRIBUTE, MAX_MODIFIER_ID,
                 Config.AIMING_STAMINA_MAX.get());
-        applyModifier(player, TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE.get(), CONSUMPTION_MODIFIER_ID,
+        applyModifier(player, TaczFixesMod.AIMING_STAMINA_CONSUMPTION_ATTRIBUTE, CONSUMPTION_MODIFIER_ID,
                 Config.AIMING_STAMINA_CONSUMPTION_MULTIPLIER.get());
-        applyModifier(player, TaczFixesMod.AIMING_STAMINA_RECOVERY_ATTRIBUTE.get(), RECOVERY_MODIFIER_ID,
+        applyModifier(player, TaczFixesMod.AIMING_STAMINA_RECOVERY_ATTRIBUTE, RECOVERY_MODIFIER_ID,
                 Config.AIMING_STAMINA_RECOVERY.get());
     }
 
-    private static void applyModifier(ServerPlayer player, Attribute attribute, UUID id, double configured) {
+    private static void applyModifier(ServerPlayer player, Holder<Attribute> attribute, ResourceLocation id, double configured) {
         AttributeInstance instance = player.getAttribute(attribute);
         if (instance == null) return;
         double delta = configured - instance.getBaseValue();
         AttributeModifier existing = instance.getModifier(id);
         if (existing != null) {
-            if (Math.abs(existing.getAmount() - delta) < 1.0E-6) return;
+            if (Math.abs(existing.amount() - delta) < 1.0E-6) return;
             instance.removeModifier(existing);
         }
         if (Math.abs(delta) > 1.0E-6) {
-            instance.addTransientModifier(new AttributeModifier(id, "taczfixes_config_default", delta,
-                    AttributeModifier.Operation.ADDITION));
+            instance.addTransientModifier(new AttributeModifier(id, delta,
+                    AttributeModifier.Operation.ADD_VALUE));
         }
     }
 

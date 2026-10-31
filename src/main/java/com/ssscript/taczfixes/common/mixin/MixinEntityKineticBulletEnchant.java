@@ -46,13 +46,13 @@ public class MixinEntityKineticBulletEnchant {
         if (piercing > 0) {
             this.pierce += piercing * Config.ENCH_PIERCE_PER_LEVEL.get();
         }
-        int punch = GunEnchantmentHelper.getLevel(gunItem, Enchantments.PUNCH_ARROWS);
+        int punch = GunEnchantmentHelper.getLevel(gunItem, Enchantments.PUNCH);
         if (punch > 0) {
             double mult = Config.ENCH_PUNCH_BULLET_KNOCKBACK_MULT.get() * punch;
             double flat = Config.ENCH_PUNCH_BULLET_KNOCKBACK_FLAT.get() * punch;
             this.knockback = (float) (this.knockback * (1.0 + mult) + flat);
         }
-        int flame = GunEnchantmentHelper.getLevel(gunItem, Enchantments.FLAMING_ARROWS);
+        int flame = GunEnchantmentHelper.getLevel(gunItem, Enchantments.FLAME);
         if (flame > 0) {
             this.igniteEntity = true;
             this.igniteEntityTime += flame * Config.ENCH_FLAME_IGNITE_TICKS.get();

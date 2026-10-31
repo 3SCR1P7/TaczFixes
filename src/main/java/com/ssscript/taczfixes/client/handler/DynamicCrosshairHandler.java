@@ -3,9 +3,9 @@ package com.ssscript.taczfixes.client.handler;
 import com.ssscript.taczfixes.client.client.DynamicCrosshair;
 import com.tacz.guns.api.event.common.GunFireEvent;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /**
  * 主手开火时给动态准星增加扩散脉冲(副手开火在 DualWieldClient 中通知)。

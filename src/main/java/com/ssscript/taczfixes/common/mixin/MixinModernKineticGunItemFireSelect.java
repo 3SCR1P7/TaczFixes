@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
@@ -32,7 +33,7 @@ public class MixinModernKineticGunItemFireSelect {
     @Unique
     public String taczfixes$fireSelectCustomId(ItemStack stack) {
         if (stack == null) return null;
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemNbt.get(stack);
         if (tag == null) return null;
         String custom = tag.getString("TaczFixesCustomFireMode");
         return custom.isEmpty() ? null : custom;
@@ -41,7 +42,7 @@ public class MixinModernKineticGunItemFireSelect {
     @Unique
     public void taczfixes$fireSelectSetCustomId(ItemStack stack, String id) {
         if (stack == null) return;
-        stack.getOrCreateTag().putString("TaczFixesCustomFireMode", id == null ? "" : id);
+        ItemNbt.getOrCreate(stack).putString("TaczFixesCustomFireMode", id == null ? "" : id);
     }
 
     @Inject(method = "fireSelect", at = @At("HEAD"), cancellable = true, remap = false)

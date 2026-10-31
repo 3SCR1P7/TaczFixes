@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.common.mixin;
 
+import com.ssscript.taczfixes.common.network.PacketDistributor;
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
@@ -60,14 +62,14 @@ public abstract class MixinModernKineticGunScriptAPI {
     @Unique
     public int getLevel() {
         if (itemStack == null || itemStack.isEmpty()) return 0;
-        return itemStack.getOrCreateTag().getInt("GunLevel");
+        return ItemNbt.getOrCreate(itemStack).getInt("GunLevel");
     }
 
     /** lua: gun:getExp() 获取枪械当前经验值。 */
     @Unique
     public int getExp() {
         if (itemStack == null || itemStack.isEmpty()) return 0;
-        return itemStack.getOrCreateTag().getInt("GunLevelExp");
+        return ItemNbt.getOrCreate(itemStack).getInt("GunLevelExp");
     }
 
     /** lua: gun:setExp(int) 设置枪械经验值并同步重算等级。 */
@@ -75,7 +77,7 @@ public abstract class MixinModernKineticGunScriptAPI {
     public void setExp(int exp) {
         if (itemStack == null || itemStack.isEmpty()) return;
         if (exp < 0) exp = 0;
-        CompoundTag tag = itemStack.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(itemStack);
         tag.putInt("GunLevelExp", exp);
         IGun gun = IGun.getIGunOrNull(itemStack);
         if (gun != null) {
@@ -97,7 +99,8 @@ public abstract class MixinModernKineticGunScriptAPI {
         if (server == null) return false;
         CommandSourceStack source = shooter.createCommandSourceStack().withSuppressedOutput().withPermission(4);
         try {
-            return server.getCommands().performPrefixedCommand(source, s) > 0;
+            server.getCommands().performPrefixedCommand(source, s);
+            return true;
         } catch (Exception e) {
             return false;
         }
@@ -122,9 +125,9 @@ public abstract class MixinModernKineticGunScriptAPI {
         net.minecraft.world.scores.Objective objective =
                 server.getScoreboard().getObjective(objectiveName);
         if (objective == null) return 0;
-        net.minecraft.world.scores.Score score =
-                server.getScoreboard().getOrCreatePlayerScore(shooter.getScoreboardName(), objective);
-        return score == null ? 0 : score.getScore();
+        net.minecraft.world.scores.ScoreAccess score =
+                server.getScoreboard().getOrCreatePlayerScore(net.minecraft.world.scores.ScoreHolder.forNameOnly(shooter.getScoreboardName()), objective);
+        return score == null ? 0 : score.get();
     }
 
     /** lua: api:getPlayerFacing() 开火者面向方向 {偏航, 俯仰} (MC 角度, 俯仰正值朝上)。 */
@@ -213,17 +216,16 @@ public abstract class MixinModernKineticGunScriptAPI {
         if (itemStack == null || itemStack.isEmpty()) {
             return result;
         }
-        net.minecraft.nbt.ListTag list = itemStack.getEnchantmentTags();
         int index = 1;
-        for (int i = 0; i < list.size(); i++) {
-            net.minecraft.nbt.CompoundTag entry = list.getCompound(i);
-            String id = entry.getString("id");
+        for (var entry : net.minecraft.world.item.enchantment.EnchantmentHelper
+                .getEnchantmentsForCrafting(itemStack).entrySet()) {
+            String id = entry.getKey().unwrapKey().map(key -> key.location().toString()).orElse("");
             if (id.isEmpty()) {
                 continue;
             }
             org.luaj.vm2.LuaTable pair = new org.luaj.vm2.LuaTable();
             pair.set(1, org.luaj.vm2.LuaValue.valueOf(id));
-            pair.set(2, org.luaj.vm2.LuaValue.valueOf(entry.getInt("lvl")));
+            pair.set(2, org.luaj.vm2.LuaValue.valueOf(entry.getIntValue()));
             result.set(index++, pair);
         }
         return result;
@@ -424,7 +426,7 @@ public abstract class MixinModernKineticGunScriptAPI {
         if (!same && shooter instanceof net.minecraft.server.level.ServerPlayer serverPlayer) {
             // 直推客户端手持物品同步 NBT, 保证下一帧立即使用新的 data/display 渲染
             com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.send(
-                    net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> serverPlayer),
+                    PacketDistributor.PLAYER.with(() -> serverPlayer),
                     new com.ssscript.taczfixes.common.network.ClientMessageReplaceGun(id.toString(), display));
             serverPlayer.inventoryMenu.broadcastChanges();
         }

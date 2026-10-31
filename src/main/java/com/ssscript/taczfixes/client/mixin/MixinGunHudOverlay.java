@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.client.util.GunPackIconLoader;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
@@ -18,14 +19,14 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 public class MixinGunHudOverlay {
 
     @ModifyArg(method = "render", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/gui/GuiGraphics;m_280163_(Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
+            target = "Lnet/minecraft/client/gui/GuiGraphics;blit(Lnet/minecraft/resources/ResourceLocation;IIFFIIII)V",
             ordinal = 1), index = 0, remap = false)
     private ResourceLocation taczfixes$customFireModeIcon(ResourceLocation texture) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) return texture;
         ItemStack stack = player.getMainHandItem();
         if (!(stack.getItem() instanceof IGun iGun)) return texture;
-        String id = stack.getTag() != null ? stack.getTag().getString("TaczFixesCustomFireMode") : "";
+        String id = ItemNbt.get(stack) != null ? ItemNbt.get(stack).getString("TaczFixesCustomFireMode") : "";
         if (id.isEmpty()) return texture;
         ResourceLocation gunId = iGun.getGunId(stack);
         if (gunId == null) return texture;

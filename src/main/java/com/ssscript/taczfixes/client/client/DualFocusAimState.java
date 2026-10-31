@@ -17,7 +17,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.registries.ForgeRegistries;
 import java.util.Locale;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.client.animation.AnimationListenerSupplier;
@@ -138,7 +137,7 @@ public final class DualFocusAimState {
     }
 
     public static float getFrameProgress() {
-        return getProgress(Minecraft.getInstance().getFrameTime());
+        return getProgress(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
     }
 
     public static float getEntityProgress(LivingEntity entity) {
@@ -160,7 +159,7 @@ public final class DualFocusAimState {
     }
 
     private static boolean isTouhouMaid(LivingEntity entity) {
-        ResourceLocation entityId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        ResourceLocation entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         return TOUHOU_MAID_ENTITY_ID.equals(entityId);
     }
 

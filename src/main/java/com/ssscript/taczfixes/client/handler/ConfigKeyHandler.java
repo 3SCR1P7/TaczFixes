@@ -4,11 +4,10 @@ import com.mojang.blaze3d.platform.InputConstants;
 import com.ssscript.taczfixes.client.screen.ConfigScreen;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.client.settings.KeyConflictContext;
-import net.minecraftforge.client.settings.KeyModifier;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.neoforge.client.settings.KeyConflictContext;
+import net.neoforged.neoforge.client.settings.KeyModifier;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModList;
 import org.lwjgl.glfw.GLFW;
 
 public class ConfigKeyHandler {
@@ -23,8 +22,8 @@ public class ConfigKeyHandler {
     private static boolean wasDown = false;
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) {
             wasDown = false;

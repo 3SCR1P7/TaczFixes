@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(EntityKineticBullet.class)
 public class MixinEntityKineticBulletClientLight {
 
-    @Inject(method = "m_8119_", at = @At("TAIL"), remap = false)
+    @Inject(method = "tick", at = @At("TAIL"), remap = false)
     private void taczfixes$bulletLight(CallbackInfo callback) {
         EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
         if (bullet.level().isClientSide) {

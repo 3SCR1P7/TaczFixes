@@ -8,8 +8,7 @@ import com.ssscript.taczfixes.common.util.ParCoolHelper;
 import com.ssscript.taczfixes.common.util.ParCoolStaminaHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /** 客户端: 同步镜像到 ParCool(耐力为 0 时进入力竭); ParCool 滑铲消耗; 断线清理。 */
 public class StaminaClientHandler {
@@ -18,8 +17,8 @@ public class StaminaClientHandler {
     private static boolean lastSprintingSent = false;
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) return;
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             StaminaClientState.reset();

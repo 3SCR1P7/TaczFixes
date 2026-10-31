@@ -11,7 +11,7 @@ public final class DualWieldStackId {
     }
 
     public static UUID get(ItemStack stack) {
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemNbt.get(stack);
         if (tag == null || !tag.hasUUID(TAG_KEY)) {
             return null;
         }
@@ -19,7 +19,7 @@ public final class DualWieldStackId {
     }
 
     public static UUID getOrCreate(ItemStack stack) {
-        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(stack);
         if (!tag.hasUUID(TAG_KEY)) {
             tag.putUUID(TAG_KEY, UUID.randomUUID());
         }
@@ -28,7 +28,7 @@ public final class DualWieldStackId {
 
     public static UUID regenerate(ItemStack stack) {
         UUID stackId = UUID.randomUUID();
-        stack.getOrCreateTag().putUUID(TAG_KEY, stackId);
+        ItemNbt.getOrCreate(stack).putUUID(TAG_KEY, stackId);
         return stackId;
     }
 

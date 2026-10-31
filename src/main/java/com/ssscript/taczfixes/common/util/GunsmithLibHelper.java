@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.common.util;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;

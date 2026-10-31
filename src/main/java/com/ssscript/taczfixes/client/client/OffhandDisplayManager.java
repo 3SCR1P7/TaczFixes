@@ -36,18 +36,18 @@ import net.minecraft.resources.FileToIdConverter;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.extensions.common.IClientItemExtensions;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RegisterClientReloadListenersEvent;
+import net.neoforged.neoforge.client.extensions.common.IClientItemExtensions;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import org.luaj.vm2.LuaTable;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import java.util.concurrent.CompletableFuture;
 
 @OnlyIn(Dist.CLIENT)
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
 public final class OffhandDisplayManager {
     private static final long MAX_PUT_AWAY_TIME_MS = 60000;
     private static GunDisplayInstance display;
@@ -518,7 +518,7 @@ public final class OffhandDisplayManager {
         if (stackId != null && putAwayMainStackId != null) {
             return stackId.equals(putAwayMainStackId);
         }
-        return ItemStack.isSameItemSameTags(stack, putAwayMainStack);
+        return ItemStack.isSameItemSameComponents(stack, putAwayMainStack);
     }
 
     public static boolean isActiveModel(BedrockAnimatedModel model) {

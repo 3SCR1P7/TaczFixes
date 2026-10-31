@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.common.network;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.GunColorStorage;
 import com.tacz.guns.api.item.IGun;
@@ -8,7 +10,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.Arrays;
 import java.util.Locale;
@@ -58,21 +59,21 @@ public class ClientMessageGunColor {
             } catch (IllegalArgumentException ex) {
                 return;
             }
-            ItemStack item = gun == null ? ItemStack.EMPTY : gun.getAttachment(gunStack, type);
+            ItemStack item = gun == null ? ItemStack.EMPTY : TaczItemCompat.getAttachment(gun, gunStack, type);
             if (item.isEmpty()) return;
             GunColorStorage.set(item, targets);
-            CompoundTag tag = gunStack.getOrCreateTag();
+            CompoundTag tag = ItemNbt.getOrCreate(gunStack);
             CompoundTag attachmentTag = new CompoundTag();
-            item.save(attachmentTag);
+            item.save(com.ssscript.taczfixes.common.util.RegistryAccessHelper.provider(), attachmentTag);
             tag.put(com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + type.name(), attachmentTag);
         } else {
             ItemStack item = CustomSlotStorage.getPhysical(gunStack, message.slotId);
             if (item.isEmpty()) return;
             GunColorStorage.set(item, targets);
-            CompoundTag tag = gunStack.getOrCreateTag();
+            CompoundTag tag = ItemNbt.getOrCreate(gunStack);
             CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
                     ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
-            slots.put(message.slotId, item.save(new CompoundTag()));
+            slots.put(message.slotId, ItemNbt.saveStack(item));
             tag.put(CustomSlotStorage.TAG_KEY, slots);
         }
         player.inventoryMenu.broadcastChanges();

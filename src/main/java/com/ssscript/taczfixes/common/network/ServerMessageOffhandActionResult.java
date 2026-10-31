@@ -4,9 +4,8 @@ import com.ssscript.taczfixes.client.client.ClientOffhandNetworkHandler;
 import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import com.ssscript.taczfixes.common.util.DistExecutor;
 
 public final class ServerMessageOffhandActionResult {
     public static final int ACTION_SHOOT = 0;

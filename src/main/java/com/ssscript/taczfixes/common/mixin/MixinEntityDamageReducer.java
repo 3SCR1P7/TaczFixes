@@ -5,7 +5,6 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.TacHitResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -26,7 +25,7 @@ public class MixinEntityDamageReducer {
     @Inject(method = "getDamage", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczfixes$applyDamageReduction(Vec3 hitPos, CallbackInfoReturnable<Float> cir) {
         if (this.taczfixes_damageTargetEntity == null) return;
-        String entityId = ForgeRegistries.ENTITY_TYPES.getKey(this.taczfixes_damageTargetEntity.getType()).toString();
+        String entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(this.taczfixes_damageTargetEntity.getType()).toString();
         List<? extends String> entries = Config.DAMAGE_REDUCTION_ENTITIES.get();
         for (String entry : entries) {
             String[] parts = entry.split(",");

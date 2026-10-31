@@ -1,0 +1,22 @@
+{
+  "anvil_cost": 7,
+  "description": {
+    "translate": "enchantment.taczfixes.annihilation"
+  },
+  "effects": {},
+  "max_cost": {
+    "base": 20,
+    "per_level_above_first": 14
+  },
+  "max_level": 3,
+  "min_cost": {
+    "base": 6,
+    "per_level_above_first": 8
+  },
+  "primary_items": "#taczfixes:enchantable/gun",
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#taczfixes:enchantable/gun",
+  "weight": 2
+}

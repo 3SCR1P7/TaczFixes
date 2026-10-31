@@ -15,13 +15,12 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.event.entity.living.LivingAttackEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.GAME)
 public final class OffhandShieldHandler {
     private static final Map<UUID, Boolean> RAISED = new ConcurrentHashMap<>();
 
@@ -59,14 +58,7 @@ public final class OffhandShieldHandler {
     }
 
     @SubscribeEvent
-    public static void onPlayerAttack(LivingAttackEvent event) {
-        if (event.getEntity() instanceof ServerPlayer player && tryBlock(player, event.getSource())) {
-            event.setCanceled(true);
-        }
-    }
-
-    @SubscribeEvent
-    public static void onPlayerHurt(LivingHurtEvent event) {
+    public static void onPlayerHurt(LivingIncomingDamageEvent event) {
         if (event.getEntity() instanceof ServerPlayer player && tryBlock(player, event.getSource())) {
             event.setAmount(0.0F);
             event.setCanceled(true);
@@ -105,7 +97,7 @@ public final class OffhandShieldHandler {
                 return false;
             }
         }
-        shield.hurtAndBreak(1, player, entity -> entity.broadcastBreakEvent(InteractionHand.OFF_HAND));
+        shield.hurtAndBreak(1, player, net.minecraft.world.entity.EquipmentSlot.OFFHAND);
         player.level().playSound(null, player.blockPosition(), SoundEvents.SHIELD_BLOCK,
                 SoundSource.PLAYERS, 1.0F, 0.8F + player.level().random.nextFloat() * 0.4F);
         return true;

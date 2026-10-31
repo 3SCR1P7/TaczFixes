@@ -23,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 }, remap = false)
 public abstract class MixinLrConsumableOffhandUse {
 
-    @Inject(method = {"m_7203_", "use"}, at = @At("HEAD"), cancellable = true, require = 0, remap = false)
+    @Inject(method = {"use", "use"}, at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void taczfixes$allowOffhandUse(Level level, Player player, InteractionHand hand,
                                            CallbackInfoReturnable<InteractionResultHolder<ItemStack>> callback) {
         if (hand != InteractionHand.OFF_HAND) {

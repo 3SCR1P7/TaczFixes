@@ -18,7 +18,7 @@ public abstract class MixinScreenRefitReject extends Screen {
         super(Component.literal(""));
     }
 
-    @Inject(method = "m_88315_", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void taczfixes$clearRejectedFocus(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (TaczFixesClientState.consumeRejectFocusClear()) {
             this.setFocused(null);

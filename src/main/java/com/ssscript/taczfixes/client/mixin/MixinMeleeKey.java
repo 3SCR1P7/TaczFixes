@@ -7,7 +7,7 @@ import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.client.DualWieldMelee;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -34,7 +34,7 @@ public class MixinEntityKineticBulletRicochet {
     private float taczfixes_ricochetDamage = 1.0f;
 
     @Inject(method = "onHitBlock",
-            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/entity/EntityKineticBullet;m_146870_()V", ordinal = 1),
+            at = @At(value = "INVOKE", target = "Lcom/tacz/guns/entity/EntityKineticBullet;discard()V", ordinal = 1),
             cancellable = true, remap = false)
     private void beforeDiscard(BlockHitResult result, Vec3 startVec, Vec3 endVec, CallbackInfo ci) {
         EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
@@ -106,7 +106,7 @@ public class MixinEntityKineticBulletRicochet {
         this.taczfixes_rz = reflected.z;
     }
 
-    @Inject(method = "m_8119_", at = @At("RETURN"), remap = false)
+    @Inject(method = "tick", at = @At("RETURN"), remap = false)
     private void afterTick(CallbackInfo ci) {
         if (this.taczfixes_ricocheted) {
             ((EntityKineticBullet) (Object) this).setDeltaMovement(new Vec3(this.taczfixes_rx, this.taczfixes_ry, this.taczfixes_rz));

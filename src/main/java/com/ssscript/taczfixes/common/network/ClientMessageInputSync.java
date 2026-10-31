@@ -3,7 +3,6 @@ package com.ssscript.taczfixes.common.network;
 import com.ssscript.taczfixes.common.util.PlayerInputState;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.ArrayList;
 import java.util.HashSet;

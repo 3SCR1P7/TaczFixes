@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
@@ -10,7 +11,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
@@ -54,10 +54,10 @@ public class ClientMessageCustomSlotLaserColor {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) return;
         attachment.setLaserColor(item, message.color);
-        CompoundTag tag = gunStack.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gunStack);
         CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
                 ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
-        slots.put(message.slotId, item.save(new CompoundTag()));
+        slots.put(message.slotId, ItemNbt.saveStack(item));
         tag.put(CustomSlotStorage.TAG_KEY, slots);
         player.inventoryMenu.broadcastChanges();
     }

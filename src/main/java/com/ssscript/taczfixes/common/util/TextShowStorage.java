@@ -30,7 +30,7 @@ public final class TextShowStorage {
         if (stack == null || stack.isEmpty() || key.isEmpty()) {
             return;
         }
-        CompoundTag tag = stack.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(stack);
         CompoundTag values = tag.contains(TAG_KEY, 10) ? tag.getCompound(TAG_KEY) : new CompoundTag();
         values.putString(key, value == null ? "" : value);
         tag.put(TAG_KEY, values);
@@ -41,7 +41,7 @@ public final class TextShowStorage {
         if (stack == null || stack.isEmpty() || key.isEmpty()) {
             return "";
         }
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemNbt.get(stack);
         if (tag == null || !tag.contains(TAG_KEY, 10)) {
             return "";
         }

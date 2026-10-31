@@ -10,7 +10,7 @@ import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.util.TacHitResult;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -154,16 +154,16 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
     }
 
     @Inject(method = {"writeSpawnData"}, at = {@At("TAIL")})
-    private void dualWield$writeHandSource(FriendlyByteBuf buffer, CallbackInfo callback) {
+    private void dualWield$writeHandSource(RegistryFriendlyByteBuf buffer, CallbackInfo callback) {
         buffer.writeBoolean(this.dualWield$offhandSource);
     }
 
     @Inject(method = {"readSpawnData"}, at = {@At("TAIL")})
-    private void dualWield$readHandSource(FriendlyByteBuf buffer, CallbackInfo callback) {
+    private void dualWield$readHandSource(RegistryFriendlyByteBuf buffer, CallbackInfo callback) {
         this.dualWield$offhandSource = buffer.readBoolean();
     }
 
-    @Inject(method = {"m_8119_"}, at = {@At("HEAD")})
+    @Inject(method = {"tick"}, at = {@At("HEAD")})
     private void dualWield$pushOffhandSkillContext(CallbackInfo callback) {
         EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
         if (this.dualWield$sourceData != null && !bullet.level().isClientSide()) {
@@ -171,7 +171,7 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
         }
     }
 
-    @Inject(method = {"m_8119_"}, at = {@At("TAIL")})
+    @Inject(method = {"tick"}, at = {@At("TAIL")})
     private void dualWield$popOffhandSkillContext(CallbackInfo callback) {
         EntityKineticBullet bullet = (EntityKineticBullet) (Object) this;
         if (this.dualWield$sourceData != null && !bullet.level().isClientSide()) {

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.compat;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
@@ -35,17 +36,15 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.ai.memory.MemoryModuleType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.living.LivingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.items.IItemHandler;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.Entity;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
 public final class TouhouMaidOffhandShooterManager {
     private static final long RELOAD_FAILURE_BACKOFF_TICKS = 100;
     private static final ResourceLocation MAID_ENTITY_ID = ResourceLocation.fromNamespaceAndPath("touhou_little_maid", "maid");
@@ -56,8 +55,9 @@ public final class TouhouMaidOffhandShooterManager {
     }
 
     @SubscribeEvent
-    public static void onLivingTick(LivingEvent.LivingTickEvent event) throws IllegalAccessException, NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException {
-        LivingEntity entity = event.getEntity();
+    public static void onLivingTick(net.neoforged.neoforge.event.tick.EntityTickEvent.Post event) throws IllegalAccessException, NoSuchMethodException, SecurityException, IllegalArgumentException, InvocationTargetException {
+        LivingEntity entity = event.getEntity() instanceof LivingEntity living ? living : null;
+        if (entity == null) return;
         if (entity.level().isClientSide() || !isTouhouMaid(entity)) {
             return;
         }
@@ -101,7 +101,7 @@ public final class TouhouMaidOffhandShooterManager {
     }
 
     private static boolean isTouhouMaid(LivingEntity entity) {
-        ResourceLocation entityId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+        ResourceLocation entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
         return MAID_ENTITY_ID.equals(entityId);
     }
 
@@ -214,7 +214,7 @@ public final class TouhouMaidOffhandShooterManager {
             boolean changed = false;
             for (AttachmentType type : AttachmentType.values()) {
                 if (type != AttachmentType.NONE) {
-                    ItemStack attachment = gun.getAttachment(stack, type);
+                    ItemStack attachment = TaczItemCompat.getAttachment(gun, stack, type);
                     int index = type.ordinal();
                     ItemStack previous = this.boundAttachments[index];
                     if (previous == null || !ItemStack.matches(attachment, previous)) {

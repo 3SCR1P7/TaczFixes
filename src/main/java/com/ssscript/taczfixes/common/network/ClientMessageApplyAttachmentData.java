@@ -5,7 +5,6 @@ import com.ssscript.taczfixes.common.util.AttachmentDataOverrideStorage;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 

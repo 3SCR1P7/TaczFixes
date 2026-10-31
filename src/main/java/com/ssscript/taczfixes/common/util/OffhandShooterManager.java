@@ -51,25 +51,24 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
+import com.ssscript.taczfixes.common.network.PacketDistributor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 
-@Mod.EventBusSubscriber
+@net.neoforged.fml.common.EventBusSubscriber
 public final class OffhandShooterManager {
     static final long MANUAL_ACTION_RETRY_TIMEOUT_MS = 5000;
     static final long MAX_SERVER_BOLT_DURATION_MS = 10000;
     static final long FIRE_SELECT_REQUEST_INTERVAL_MS = 150;
     static final long CONTROL_REQUEST_INTERVAL_MS = 50;
-    private static final UUID OFFHAND_WEIGHT_SPEED_MODIFIER_UUID = UUID.fromString("F861CC11-683E-4E22-B62D-D8BAAA2ECC57");
-    private static final UUID OFFHAND_EXTRA_SPEED_MODIFIER_UUID = UUID.fromString("DA2A9E61-6B92-48B5-B30C-55ED296FDFA8");
+    private static final ResourceLocation OFFHAND_WEIGHT_SPEED_MODIFIER_UUID = ResourceLocation.fromNamespaceAndPath("taczfixes", "offhand_weight_speed");
+    private static final ResourceLocation OFFHAND_EXTRA_SPEED_MODIFIER_UUID = ResourceLocation.fromNamespaceAndPath("taczfixes", "offhand_extra_speed");
     private static final Map<UUID, OffhandShooter> SHOOTERS = new ConcurrentHashMap();
     private static final Map<UUID, DualWieldEligibility.Rules> ELIGIBILITY_RULES = new ConcurrentHashMap();
     private static final Set<ShooterDataHolder> OFFHAND_DATA = Collections.synchronizedSet(Collections.newSetFromMap(new WeakHashMap()));
@@ -91,7 +90,7 @@ public final class OffhandShooterManager {
         shooter.melee();
     }
 
-    /** 副手近战冷却是否仍阻挡主手近战(冷却进行到配置比例后不再阻挡)。 */
+    /** 鍓墜杩戞垬鍐峰嵈鏄惁浠嶉樆鎸′富鎵嬭繎鎴?鍐峰嵈杩涜鍒伴厤缃瘮渚嬪悗涓嶅啀闃绘尅)銆?*/
     public static boolean isOffhandMeleeBlockingMainHand(ServerPlayer player) {
         OffhandShooter shooter = getValidated(player);
         return shooter != null && shooter.meleeBlocksMainHand();
@@ -162,7 +161,7 @@ public final class OffhandShooterManager {
         return dataHolder != null && OFFHAND_DATA.contains(dataHolder);
     }
 
-    /** 当前线程若正处于该实体的副手处理上下文, 返回其副手枪械; 否则返回空。 */
+    /** 褰撳墠绾跨▼鑻ユ澶勪簬璇ュ疄浣撶殑鍓墜澶勭悊涓婁笅鏂? 杩斿洖鍏跺壇鎵嬫灙姊? 鍚﹀垯杩斿洖绌恒€?*/
     public static ItemStack getActiveOffhandGunStack(LivingEntity entity) {
         if (entity == null) {
             return ItemStack.EMPTY;
@@ -361,11 +360,11 @@ public final class OffhandShooterManager {
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
+    public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false || event.getEntity().level().isClientSide()) {
             return;
         }
-        Player serverPlayer = event.player;
+        Player serverPlayer = event.getEntity();
         if (!(serverPlayer instanceof ServerPlayer)) {
             return;
         }
@@ -463,7 +462,7 @@ public final class OffhandShooterManager {
         Float cachedWeight = (Float) cacheProperty.getCache(WeightModifier.ID);
         if (weightFactor > 0.0d && cachedWeight != null && Float.isFinite(cachedWeight.floatValue())) {
             float targetWeightSpeed = cachedWeight.floatValue() * ((float) (-weightFactor));
-            updateSpeedModifier(speedAttribute, OFFHAND_WEIGHT_SPEED_MODIFIER_UUID, "Offhand Gun Weight Speed Modifier", targetWeightSpeed, AttributeModifier.Operation.MULTIPLY_BASE);
+            updateSpeedModifier(speedAttribute, OFFHAND_WEIGHT_SPEED_MODIFIER_UUID, "Offhand Gun Weight Speed Modifier", targetWeightSpeed, AttributeModifier.Operation.ADD_MULTIPLIED_BASE);
         } else {
             speedAttribute.removeModifier(OFFHAND_WEIGHT_SPEED_MODIFIER_UUID);
         }
@@ -478,18 +477,18 @@ public final class OffhandShooterManager {
             baseMultiplier = cachedExtraMovement.getBaseMultiplier();
         }
         double targetExtraSpeed = baseMultiplier;
-        updateSpeedModifier(speedAttribute, OFFHAND_EXTRA_SPEED_MODIFIER_UUID, "Offhand Extra Gun Speed Modifier", targetExtraSpeed, AttributeModifier.Operation.MULTIPLY_TOTAL);
+        updateSpeedModifier(speedAttribute, OFFHAND_EXTRA_SPEED_MODIFIER_UUID, "Offhand Extra Gun Speed Modifier", targetExtraSpeed, AttributeModifier.Operation.ADD_MULTIPLIED_TOTAL);
     }
 
-    private static void updateSpeedModifier(AttributeInstance speedAttribute, UUID modifierId, String name, double amount, AttributeModifier.Operation operation) {
+    private static void updateSpeedModifier(AttributeInstance speedAttribute, ResourceLocation modifierId, String name, double amount, AttributeModifier.Operation operation) {
         if (!Double.isFinite(amount)) {
             speedAttribute.removeModifier(modifierId);
             return;
         }
         AttributeModifier currentModifier = speedAttribute.getModifier(modifierId);
-        if (currentModifier == null || currentModifier.getAmount() != amount || currentModifier.getOperation() != operation) {
+        if (currentModifier == null || currentModifier.amount() != amount || currentModifier.operation() != operation) {
             speedAttribute.removeModifier(modifierId);
-            speedAttribute.addTransientModifier(new AttributeModifier(modifierId, name, amount, operation));
+            speedAttribute.addTransientModifier(new AttributeModifier(modifierId, amount, operation));
         }
     }
 

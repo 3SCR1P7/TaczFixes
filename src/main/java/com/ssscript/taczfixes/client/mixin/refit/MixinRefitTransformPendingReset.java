@@ -5,7 +5,6 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.animation.screen.RefitTransform;
 import com.tacz.guns.client.gui.GunRefitScreen;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.event.TickEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -16,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinRefitTransformPendingReset {
 
     @Inject(method = "tickInterpolation", at = @At("RETURN"), remap = false)
-    private static void taczfixes$applyPendingCustomSlotDeselect(TickEvent.RenderTickEvent event, CallbackInfo ci) {
+    private static void taczfixes$applyPendingCustomSlotDeselect(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre event, CallbackInfo ci) {
         if (!CustomSlotGuiState.hasPendingViewReset()) {
             return;
         }

@@ -7,7 +7,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Locale;
 
@@ -42,7 +41,7 @@ public final class DurabilityStorage {
         if (max <= 0) {
             return 0;
         }
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemNbt.get(stack);
         if (tag == null || !tag.contains(TAG_KEY)) {
             return max;
         }
@@ -57,7 +56,7 @@ public final class DurabilityStorage {
         if (max <= 0) {
             return;
         }
-        stack.getOrCreateTag().putInt(TAG_KEY, Math.max(0, Math.min(value, max)));
+        ItemNbt.getOrCreate(stack).putInt(TAG_KEY, Math.max(0, Math.min(value, max)));
     }
 
     /** 消耗耐久(允许归零), 返回消耗后的剩余值。 */
@@ -98,7 +97,7 @@ public final class DurabilityStorage {
                 }
             } else {
                 ResourceLocation id = ResourceLocation.tryParse(value);
-                if (id != null && id.equals(ForgeRegistries.ITEMS.getKey(material.getItem()))) {
+                if (id != null && id.equals(net.minecraft.core.registries.BuiltInRegistries.ITEM.getKey(material.getItem()))) {
                     return true;
                 }
             }

@@ -5,8 +5,8 @@ import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 /* 双持后坐力倍率: 双持时统一使用配置倍率, 单手瞄准时使用瞄准倍率。 */

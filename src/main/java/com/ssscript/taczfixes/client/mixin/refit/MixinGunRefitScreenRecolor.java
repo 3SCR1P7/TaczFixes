@@ -61,7 +61,7 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
         this.addRenderableWidget(button);
     }
 
-    @Inject(method = "m_88315_", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void taczfixes$sweepWidgets(GuiGraphics graphics, int mouseX, int mouseY, float partialTick,
                                         CallbackInfo ci) {
         if (GunRecolorGuiState.isOpen()) {
@@ -70,7 +70,7 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
     }
 
     /** 调色界面打开时连同"显示图表"画出的图表一起隐藏。 */
-    @Redirect(method = "m_88315_", at = @At(value = "INVOKE",
+    @Redirect(method = "render", at = @At(value = "INVOKE",
             target = "Lcom/tacz/guns/client/gui/components/refit/GunPropertyDiagrams;draw" +
                     "(Lnet/minecraft/client/gui/GuiGraphics;Lnet/minecraft/client/gui/Font;II)V",
             remap = false), remap = false)
@@ -81,7 +81,7 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
         GunPropertyDiagrams.draw(graphics, font, x, y);
     }
 
-    @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
+    @Inject(method = "onClose", at = @At("TAIL"), remap = false)
     private void taczfixes$closeRecolor(CallbackInfo ci) {
         GunRecolorGuiState.closeAndSend();
     }

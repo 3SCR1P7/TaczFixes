@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.compat;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.common.util.DualWieldStackId;
 import com.ssscript.taczfixes.common.util.OffhandShooterManager;
@@ -8,10 +9,9 @@ import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Method;
@@ -114,7 +114,7 @@ public final class ArcanaSkillBridge {
         if (stack == null || stack.isEmpty()) {
             return;
         }
-        net.minecraft.nbt.CompoundTag tag = stack.getOrCreateTag();
+        net.minecraft.nbt.CompoundTag tag = ItemNbt.getOrCreate(stack);
         net.minecraft.nbt.CompoundTag extras = tag.contains("Extras", 10)
                 ? tag.getCompound("Extras") : new net.minecraft.nbt.CompoundTag();
         extras.putBoolean("IsGenerated", true);
@@ -122,11 +122,11 @@ public final class ArcanaSkillBridge {
     }
 
     @SubscribeEvent(priority = EventPriority.LOW)
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false || event.getEntity().level().isClientSide()) {
             return;
         }
-        if (!(event.player instanceof ServerPlayer player)) {
+        if (!(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
         if (!ensureResolved()) {

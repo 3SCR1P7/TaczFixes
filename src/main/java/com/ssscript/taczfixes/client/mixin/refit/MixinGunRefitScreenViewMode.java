@@ -54,7 +54,7 @@ public abstract class MixinGunRefitScreenViewMode extends Screen {
         taczfixes$refitPointX = leftmost == Integer.MAX_VALUE ? Integer.MIN_VALUE : leftmost;
     }
 
-    @Inject(method = "m_88315_", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void taczfixes$onRender(GuiGraphics graphics, int mouseX, int mouseY, float partialTick,
                                     CallbackInfo ci) {
         boolean slotSelected = RefitTransform.getCurrentTransformType() != AttachmentType.NONE
@@ -85,7 +85,7 @@ public abstract class MixinGunRefitScreenViewMode extends Screen {
         graphics.drawString(this.font, text, x, y, 0xFFFFFFFF, true);
     }
 
-    @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
+    @Inject(method = "onClose", at = @At("TAIL"), remap = false)
     private void taczfixes$onClose(CallbackInfo ci) {
         // 与收枪动画同步, 缓动重置模型旋转/平移/缩放
         RefitViewMode.beginResetQuick();

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.google.gson.JsonElement;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
@@ -15,7 +16,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.LinkedHashSet;
 import java.util.Locale;
@@ -122,7 +122,7 @@ public class ClientMessageInstallVirtualAttachment {
             if (type == AttachmentType.NONE || realType != type) return;
             if (!gun.allowAttachmentType(gunStack, type)) return;
             if (!gun.allowAttachment(gunStack, built)) return;
-            ItemStack old = gun.getAttachment(gunStack, type);
+            ItemStack old = TaczItemCompat.getAttachment(gun, gunStack, type);
             Integer total = TaczFixesDataManager.getGunRefitPoint(gunStack);
             if (total != null) {
                 int used = AttachmentTaczFixesManager.getRefitPointUsed(gunStack);
@@ -133,7 +133,7 @@ public class ClientMessageInstallVirtualAttachment {
                 }
             }
             ResourceLocation previousId = gun.getAttachmentId(gunStack, type);
-            gun.installAttachment(gunStack, built);
+            TaczItemCompat.installAttachment(gun, gunStack, built);
             com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.triggerChangeAttachment(player,
                     com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(previousId) ? null : previousId.toString(),
                     message.attachmentId.toString());
@@ -147,13 +147,13 @@ public class ClientMessageInstallVirtualAttachment {
         AttachmentPropertyManager.postChangeEvent(player, gunStack);
         player.inventoryMenu.broadcastChanges();
         com.tacz.guns.network.NetworkHandler.sendToClientPlayer(
-                new com.tacz.guns.network.message.ServerMessageRefreshRefitScreen(), player);
+                com.tacz.guns.network.message.ServerMessageRefreshRefitScreen.INSTANCE, player);
     }
 
     private static void unloadStandard(ItemStack gunStack, IGun gun, String refId) {
         try {
             AttachmentType type = AttachmentType.valueOf(refId.toUpperCase(Locale.US));
-            gun.unloadAttachment(gunStack, type);
+            TaczItemCompat.unloadAttachment(gun, gunStack, type);
         } catch (IllegalArgumentException ignored) {
         }
     }
@@ -163,7 +163,7 @@ public class ClientMessageInstallVirtualAttachment {
         if (stack.isEmpty()) {
             try {
                 AttachmentType type = AttachmentType.valueOf(refId.toUpperCase(Locale.US));
-                stack = gun.getAttachment(gunStack, type);
+                stack = TaczItemCompat.getAttachment(gun, gunStack, type);
             } catch (IllegalArgumentException ex) {
                 return 0;
             }

@@ -9,8 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.List;
 
@@ -44,7 +43,7 @@ public class LimbDamageHandler {
             limbThreshold = player.isCrouching() ? Config.LIMB_THRESHOLD_SNEAKING.get() : Config.LIMB_THRESHOLD_STANDING.get();
         } else {
             if (!Config.LIVING_ENTITY_LIMB_ENABLED.get()) return;
-            ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
+            ResourceLocation typeId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
             if (typeId == null) return;
             List<? extends String> excluded = Config.LIVING_ENTITY_LIMB_EXCLUDED.get();
             if (excluded.contains(typeId.toString())) return;

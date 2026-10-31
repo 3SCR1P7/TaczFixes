@@ -207,15 +207,14 @@ public final class PbrBloom {
 
     private static void ensureQuad() {
         if (quad != null) return;
-        BufferBuilder b = new BufferBuilder(128);
-        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        b.vertex(-1, -1, 0).uv(0, 0).endVertex();
-        b.vertex(1, -1, 0).uv(1, 0).endVertex();
-        b.vertex(1, 1, 0).uv(1, 1).endVertex();
-        b.vertex(-1, 1, 0).uv(0, 1).endVertex();
+        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        b.addVertex(-1, -1, 0).setUv(0, 0);
+        b.addVertex(1, -1, 0).setUv(1, 0);
+        b.addVertex(1, 1, 0).setUv(1, 1);
+        b.addVertex(-1, 1, 0).setUv(0, 1);
         quad = new VertexBuffer(VertexBuffer.Usage.STATIC);
         quad.bind();
-        quad.upload(b.end());
+        quad.upload(b.buildOrThrow());
     }
 
     private static void releaseTargets() {
@@ -239,7 +238,7 @@ public final class PbrBloom {
         LocalPlayer player = mc.player;
         if (player == null || !player.isAlive()) return false;
         IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
-        if (operator == null || operator.getClientAimingProgress(mc.getFrameTime()) < 0.01f) return false;
+        if (operator == null || operator.getClientAimingProgress(mc.getTimer().getGameTimeDeltaPartialTick(false)) < 0.01f) return false;
         // Only the currently active scope view occludes bloom. A sight (or the
         // sight view of a combined optic) must keep its own bloom.
         if (!AimSwayHandler.isScopeActive(player)) return false;
@@ -254,7 +253,7 @@ public final class PbrBloom {
     public static boolean isActiveScopeItem(ItemStack attachment, ItemStack gun) {
         if (attachment == null || attachment.isEmpty() || gun == null || gun.isEmpty()) return false;
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !ItemStack.isSameItemSameTags(player.getMainHandItem(), gun)) return false;
+        if (player == null || !ItemStack.isSameItemSameComponents(player.getMainHandItem(), gun)) return false;
         IAttachment iAttachment = IAttachment.getIAttachmentOrNull(attachment);
         IGun iGun = IGun.getIGunOrNull(gun);
         if (iAttachment == null || iGun == null) return false;
@@ -370,15 +369,14 @@ public final class PbrBloom {
 
     private static void ensureMaskQuad() {
         if (maskQuad != null) return;
-        BufferBuilder b = new BufferBuilder(128);
-        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
-        b.vertex(-1, -1, 0).color(255, 255, 255, 255).endVertex();
-        b.vertex(1, -1, 0).color(255, 255, 255, 255).endVertex();
-        b.vertex(1, 1, 0).color(255, 255, 255, 255).endVertex();
-        b.vertex(-1, 1, 0).color(255, 255, 255, 255).endVertex();
+        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_COLOR);
+        b.addVertex(-1, -1, 0).setColor(255, 255, 255, 255);
+        b.addVertex(1, -1, 0).setColor(255, 255, 255, 255);
+        b.addVertex(1, 1, 0).setColor(255, 255, 255, 255);
+        b.addVertex(-1, 1, 0).setColor(255, 255, 255, 255);
         maskQuad = new VertexBuffer(VertexBuffer.Usage.STATIC);
         maskQuad.bind();
-        maskQuad.upload(b.end());
+        maskQuad.upload(b.buildOrThrow());
     }
 
     private static void releaseScopeMask() {

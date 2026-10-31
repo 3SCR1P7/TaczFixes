@@ -6,11 +6,9 @@ import com.ssscript.taczfixes.common.config.Config;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
-import net.minecraftforge.client.gui.overlay.IGuiOverlay;
 
 /** 右下角耐力条(位于上肢耐力条下方): 128x1, 剩余白色(低于20%渐红), 已消耗部分透明。 */
-public class StaminaOverlay implements IGuiOverlay {
+public class StaminaOverlay implements net.minecraft.client.gui.LayeredDraw.Layer {
 
     private static final int BAR_WIDTH = 128;
     private static final int BAR_HEIGHT = 1;
@@ -29,7 +27,9 @@ public class StaminaOverlay implements IGuiOverlay {
     private static long fullSinceMs = -1L;
 
     @Override
-    public void render(ForgeGui gui, GuiGraphics graphics, float partialTick, int width, int height) {
+    public void render(GuiGraphics graphics, net.minecraft.client.DeltaTracker deltaTracker) {
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
         AimingStaminaBarMode mode = Config.STAMINA_BAR_MODE.get();
         if (mode == AimingStaminaBarMode.NEVER) return;
         if (!Config.STAMINA_ENABLED.get()) return;

@@ -6,7 +6,7 @@ import com.tacz.guns.config.common.AmmoConfig;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.EntityUtil;
 import net.minecraft.world.level.ClipContext;
-import net.minecraft.world.level.block.AbstractGlassBlock;
+import net.minecraft.world.level.block.TransparentBlock;
 import net.minecraft.world.level.block.IronBarsBlock;
 import net.minecraft.world.level.block.StainedGlassPaneBlock;
 import net.minecraft.world.level.block.state.BlockState;
@@ -14,7 +14,7 @@ import net.minecraft.world.level.block.state.properties.NoteBlockInstrument;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -56,7 +56,7 @@ public class MixinBulletPierceGlass {
             }
 
             AmmoHitBlockEvent event = new AmmoHitBlockEvent(bullet.level(), hit, state, bullet);
-            if (MinecraftForge.EVENT_BUS.post(event)) {
+            if (NeoForge.EVENT_BUS.post(event).isCanceled()) {
                 return;
             }
             if (isGlass(bullet.level().getBlockState(hit.getBlockPos()))) {
@@ -68,7 +68,7 @@ public class MixinBulletPierceGlass {
     }
 
     private static boolean isGlass(BlockState state) {
-        return state.getBlock() instanceof AbstractGlassBlock
+        return state.getBlock() instanceof TransparentBlock
                 || state.getBlock() instanceof StainedGlassPaneBlock
                 || (state.getBlock() instanceof IronBarsBlock
                 && NoteBlockInstrument.HAT.equals(state.instrument()));

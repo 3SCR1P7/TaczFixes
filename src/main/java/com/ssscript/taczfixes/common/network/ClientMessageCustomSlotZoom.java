@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
@@ -9,7 +10,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.function.Supplier;
 
@@ -48,13 +48,13 @@ public class ClientMessageCustomSlotZoom {
         ResourceLocation id = attachment.getAttachmentId(scope);
         if (id == null || com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(id)) return;
 
-        CompoundTag tag = scope.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(scope);
         int number = AttachmentItemDataAccessor.getZoomNumberFromTag(tag);
         AttachmentItemDataAccessor.setZoomNumberToTag(tag, (number + 1) % 2147483646);
 
-        CompoundTag gunTag = gunStack.getOrCreateTag();
+        CompoundTag gunTag = ItemNbt.getOrCreate(gunStack);
         CompoundTag slots = gunTag.getCompound(CustomSlotStorage.TAG_KEY);
-        slots.put(message.slotId, scope.save(new CompoundTag()));
+        slots.put(message.slotId, ItemNbt.saveStack(scope));
         gunTag.put(CustomSlotStorage.TAG_KEY, slots);
         player.inventoryMenu.broadcastChanges();
     }

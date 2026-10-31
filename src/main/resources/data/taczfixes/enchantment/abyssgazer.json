@@ -1,0 +1,22 @@
+{
+  "anvil_cost": 9,
+  "description": {
+    "translate": "enchantment.taczfixes.abyssgazer"
+  },
+  "effects": {},
+  "max_cost": {
+    "base": 26,
+    "per_level_above_first": 16
+  },
+  "max_level": 1,
+  "min_cost": {
+    "base": 10,
+    "per_level_above_first": 8
+  },
+  "primary_items": "#taczfixes:enchantable/gun",
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#taczfixes:enchantable/gun",
+  "weight": 1
+}

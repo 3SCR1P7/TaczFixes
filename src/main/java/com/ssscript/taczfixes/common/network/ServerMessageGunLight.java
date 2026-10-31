@@ -1,13 +1,12 @@
 package com.ssscript.taczfixes.common.network;
 
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import com.ssscript.taczfixes.common.util.DistExecutor;
 
 import java.util.function.Supplier;
 
-/** 服务端 -> 客户端: 由子弹命中/销毁触发的枪械动态光照(爆炸光或回程 bullet 线段光), 参数由服务端直接下发。 */
+/** 鏈嶅姟绔?-> 瀹㈡埛绔? 鐢卞瓙寮瑰懡涓?閿€姣佽Е鍙戠殑鏋鍔ㄦ€佸厜鐓?鐖嗙偢鍏夋垨鍥炵▼ bullet 绾挎鍏?, 鍙傛暟鐢辨湇鍔＄鐩存帴涓嬪彂銆?*/
 public class ServerMessageGunLight {
 
     private final int color;

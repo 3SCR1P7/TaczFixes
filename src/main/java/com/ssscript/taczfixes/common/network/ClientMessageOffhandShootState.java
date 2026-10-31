@@ -4,7 +4,6 @@ import com.ssscript.taczfixes.common.compat.ArcanaSkillBridge;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraftforge.network.NetworkEvent;
 
 /** 副手开火键按住状态 (用于 Arcana 技能桥接的 ON_CLICK / ON_AUTO_SHOOT)。 */
 public final class ClientMessageOffhandShootState {

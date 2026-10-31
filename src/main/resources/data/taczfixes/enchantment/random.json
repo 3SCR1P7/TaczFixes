@@ -1,0 +1,22 @@
+{
+  "anvil_cost": 9,
+  "description": {
+    "translate": "enchantment.taczfixes.random"
+  },
+  "effects": {},
+  "max_cost": {
+    "base": 24,
+    "per_level_above_first": 14
+  },
+  "max_level": 4,
+  "min_cost": {
+    "base": 10,
+    "per_level_above_first": 8
+  },
+  "primary_items": "#taczfixes:enchantable/gun",
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#taczfixes:enchantable/gun",
+  "weight": 1
+}

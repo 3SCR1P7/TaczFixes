@@ -47,12 +47,12 @@ public enum LightManager {
 
     private static String EntityInjectionLightMapColor(String s) {
         s = s.replace("void main()", getShimmerSource() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'), "lightMapColor = color_light(IViewRotMat * Position, lightMapColor);\n").toString();
+        return new StringBuffer(s).insert(s.lastIndexOf('}'), "lightMapColor = color_light((transpose(mat3(ModelViewMat)) * Position), lightMapColor);\n").toString();
     }
 
     private static String EntityInjectionVertexColor(String s) {
         s = s.replace("void main()", getShimmerSource() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'), "vertexColor = color_light(IViewRotMat * Position, vertexColor);\n").toString();
+        return new StringBuffer(s).insert(s.lastIndexOf('}'), "vertexColor = color_light((transpose(mat3(ModelViewMat)) * Position), vertexColor);\n").toString();
     }
 
     private static String lightShader;

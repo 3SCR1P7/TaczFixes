@@ -16,7 +16,7 @@ public final class GunColorStorage {
 
     public static int[] get(ItemStack gun) {
         if (gun == null || gun.isEmpty()) return new int[0];
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         if (tag == null || !tag.contains(TAG_KEY, 10)) return new int[0];
         int[] targets = tag.getCompound(TAG_KEY).getIntArray(TARGETS_KEY);
         return targets.length > MAX_CLUSTERS ? Arrays.copyOf(targets, MAX_CLUSTERS) : targets;
@@ -26,7 +26,7 @@ public final class GunColorStorage {
         if (gun == null || gun.isEmpty()) return;
         int[] safe = targets == null ? new int[0]
                 : Arrays.copyOf(targets, Math.min(targets.length, MAX_CLUSTERS));
-        CompoundTag tag = gun.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gun);
         CompoundTag color = new CompoundTag();
         color.putIntArray(TARGETS_KEY, safe);
         tag.put(TAG_KEY, color);

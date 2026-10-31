@@ -74,18 +74,17 @@ import net.minecraft.world.item.Items;
 import com.tacz.guns.compat.playeranimator.AnimationName;
 import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
 import com.tacz.guns.compat.playeranimator.animation.AnimationManager;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.client.event.RenderHandEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.RenderHandEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ShieldItem;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
 public final class DualWieldClient {
     private static boolean lastLeftDown;
     private static boolean lastOffhandItemUseDown;
@@ -175,8 +174,8 @@ public final class DualWieldClient {
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) {
             return;
         }
         Minecraft minecraft = Minecraft.getInstance();
@@ -352,7 +351,7 @@ public final class DualWieldClient {
         if (!DualFocusAimKey.FOCUS_AIM_KEY.isDown() && hasMainGun && !hasOffhandGun
                 && !leftGun.isEmpty() && !(leftGun.getItem() instanceof ShieldItem)) {
             if (physicalLeftDown && !lastOffhandItemUseDown) {
-                if (isAttackOnly(leftGun)) {
+                if (isAttackOnly(leftGun, player)) {
                     useItemOrAttack(player, InteractionHand.OFF_HAND, "tick-offhand");
                 } else {
                     startOffhandUse(player);
@@ -748,7 +747,7 @@ public final class DualWieldClient {
         ItemStack off = player.getOffhandItem();
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
-        if (event.getButton() == 1 && offGun && !mainGun && isAttackOnly(main)) {
+        if (event.getButton() == 1 && offGun && !mainGun && isAttackOnly(main, player)) {
             net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
             if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
                 Minecraft.getInstance().gameMode.attack(player, entityHit.getEntity());
@@ -759,7 +758,7 @@ public final class DualWieldClient {
         }
         if (event.getButton() == 0 && mainGun && !offGun && !off.isEmpty() && !lastOffhandItemUseDown) {
             lastOffhandItemUseDown = true;
-            if (isAttackOnly(off)) {
+            if (isAttackOnly(off, player)) {
                 useItemOrAttack(player, InteractionHand.OFF_HAND, "mouse-offhand");
             } else {
                 startOffhandUse(player);
@@ -804,8 +803,8 @@ public final class DualWieldClient {
         return true;
     }
 
-    private static boolean isAttackOnly(ItemStack stack) {
-        if (stack.isEmpty() || stack.getUseDuration() > 0 || stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
+    private static boolean isAttackOnly(ItemStack stack, LocalPlayer player) {
+        if (stack.isEmpty() || stack.getUseDuration(player) > 0 || stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
             return false;
         }
         return stack.getItem() instanceof net.minecraft.world.item.SwordItem
@@ -815,7 +814,7 @@ public final class DualWieldClient {
 
     private static void startOffhandUse(LocalPlayer player) {
         ItemStack stack = player.getOffhandItem();
-        if (stack.getUseDuration() > 0) {
+        if (stack.getUseDuration(player) > 0) {
             if (!player.isUsingItem()) {
                 if (stack.getItem() instanceof ShieldItem) {
                     primeOffhandShieldRaise();
@@ -840,10 +839,10 @@ public final class DualWieldClient {
                 return;
             }
         }
-        if (hand == InteractionHand.OFF_HAND && stack.getUseDuration() > 0) {
+        if (hand == InteractionHand.OFF_HAND && stack.getUseDuration(player) > 0) {
             if (Minecraft.getInstance().getConnection() != null) {
                 Minecraft.getInstance().getConnection().send(
-                        new net.minecraft.network.protocol.game.ServerboundUseItemPacket(hand, 0));
+                        new net.minecraft.network.protocol.game.ServerboundUseItemPacket(hand, 0, player.getYRot(), player.getXRot()));
             }
             if (!player.isUsingItem()) {
                 player.startUsingItem(hand);
@@ -854,9 +853,9 @@ public final class DualWieldClient {
                 Minecraft.getInstance().gameMode.useItem(player, hand);
         boolean consume = result.consumesAction();
         boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
-                && stack.getUseDuration() > 0;
+                && stack.getUseDuration(player) > 0;
         if (consume || overridden) {
-            if (stack.getUseDuration() > 0 && !player.isUsingItem()) {
+            if (stack.getUseDuration(player) > 0 && !player.isUsingItem()) {
                 player.startUsingItem(hand);
             }
             return;
@@ -1005,7 +1004,7 @@ public final class DualWieldClient {
             return firstGun != null && secondGun != null && first.getItem() == second.getItem()
                     && firstGun.getGunId(first).equals(secondGun.getGunId(second));
         }
-        return ItemStack.isSameItemSameTags(first, second);
+        return ItemStack.isSameItemSameComponents(first, second);
     }
 
     /** 是否为主副手互换(上一帧的主/副手正好是这一帧的副/主手)。 */
@@ -1028,7 +1027,7 @@ public final class DualWieldClient {
         if (firstId != null && secondId != null) {
             return firstId.equals(secondId);
         }
-        return ItemStack.isSameItemSameTags(first, second);
+        return ItemStack.isSameItemSameComponents(first, second);
     }
 
     private static void updateOffhandSprint(LocalPlayer player, ItemStack stack) {

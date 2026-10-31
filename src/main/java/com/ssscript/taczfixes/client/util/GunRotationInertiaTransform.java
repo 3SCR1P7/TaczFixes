@@ -31,7 +31,7 @@ public final class GunRotationInertiaTransform {
         if (maxAngle <= 0f) {
             return false;
         }
-        float partial = Minecraft.getInstance().getFrameTime();
+        float partial = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
         float yaw = player.getViewYRot(partial);
         float pitch = player.getViewXRot(partial);
         if (!initialized) {
@@ -80,7 +80,7 @@ public final class GunRotationInertiaTransform {
         if (maxAngle <= 0f) {
             return false;
         }
-        float partial = Minecraft.getInstance().getFrameTime();
+        float partial = Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false);
         float yaw = player.getViewYRot(partial);
         float pitch = player.getViewXRot(partial);
         if (!initialized) {
@@ -136,7 +136,7 @@ public final class GunRotationInertiaTransform {
                 .translate(-pivot.x, -pivot.y, -pivot.z);
         Matrix4f local = new Matrix4f(base).invert().mul(screen).mul(base);
         pose.pushPose();
-        pose.mulPoseMatrix(local);
+        pose.mulPose(local);
         return true;
     }
 
@@ -146,6 +146,6 @@ public final class GunRotationInertiaTransform {
             return 0f;
         }
         return Math.max(0f, Math.min(1f, operator.getClientAimingProgress(
-                Minecraft.getInstance().getFrameTime())));
+                Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false))));
     }
 }

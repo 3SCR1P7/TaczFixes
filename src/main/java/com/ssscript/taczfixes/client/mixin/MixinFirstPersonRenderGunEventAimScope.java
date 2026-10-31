@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.llamalad7.mixinextras.sugar.Local;
@@ -79,7 +80,7 @@ public class MixinFirstPersonRenderGunEventAimScope {
         if (gun == null) return base;
         EnumMap<AttachmentType, ItemStack> attachments = new EnumMap<>(AttachmentType.class);
         for (AttachmentType type : AttachmentType.values()) {
-            ItemStack attachment = gun.getAttachment(gunStack, type);
+            ItemStack attachment = TaczItemCompat.getAttachment(gun, gunStack, type);
             if (attachment != null && !attachment.isEmpty()) {
                 attachments.put(type, attachment);
             }
@@ -114,7 +115,7 @@ public class MixinFirstPersonRenderGunEventAimScope {
         if (gun == null) return matrix;
         EnumMap<AttachmentType, ItemStack> attachments = new EnumMap<>(AttachmentType.class);
         for (AttachmentType type : AttachmentType.values()) {
-            ItemStack attachment = gun.getAttachment(gunStack, type);
+            ItemStack attachment = TaczItemCompat.getAttachment(gun, gunStack, type);
             if (attachment != null && !attachment.isEmpty()) {
                 attachments.put(type, attachment);
             }

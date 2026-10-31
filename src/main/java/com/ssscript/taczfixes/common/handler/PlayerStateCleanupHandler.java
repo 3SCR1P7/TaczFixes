@@ -7,9 +7,8 @@ import com.ssscript.taczfixes.common.util.LimbDamageHelper;
 import com.ssscript.taczfixes.common.util.PatienceHelper;
 import com.ssscript.taczfixes.common.util.ReloadExtraTracker;
 import com.ssscript.taczfixes.common.util.SpreadState;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.UUID;
 
@@ -17,15 +16,15 @@ import java.util.UUID;
 public class PlayerStateCleanupHandler {
     /** 服务端每 tick 刷新 blocking 平滑因子(子弹使用, 与客户端模型同源)。 */
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || event.player.level().isClientSide()) {
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false || event.getEntity().level().isClientSide()) {
             return;
         }
-        GunBlocking.tick(event.player);
+        GunBlocking.tick(event.getEntity());
     }
 
     @SubscribeEvent
-    public void onEntityLeave(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+    public void onEntityLeave(net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent event) {
         if (event.getEntity() instanceof com.tacz.guns.entity.EntityKineticBullet bullet) {
             LimbDamageHelper.clearBullet(bullet.getId());
         }
@@ -39,7 +38,7 @@ public class PlayerStateCleanupHandler {
         ReloadExtraTracker.clear(id);
         DecapitationHelper.clear(id);
         GunBlocking.clearState(id);
-        if (net.minecraftforge.fml.ModList.get().isLoaded("irons_spellbooks")) {
+        if (net.neoforged.fml.ModList.get().isLoaded("irons_spellbooks")) {
             try {
                 Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")
                         .getMethod("clear", UUID.class)

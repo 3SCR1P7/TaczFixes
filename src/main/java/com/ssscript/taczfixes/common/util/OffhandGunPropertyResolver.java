@@ -15,7 +15,7 @@ import java.util.Deque;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
+import net.neoforged.neoforge.common.NeoForge;
 
 public final class OffhandGunPropertyResolver {
     private static final ThreadLocal<Deque<ShooterDataHolder>> ACTIVE_DATA = new ThreadLocal<>();
@@ -30,13 +30,12 @@ public final class OffhandGunPropertyResolver {
 
     public static AttachmentCacheProperty rebuild(LivingEntity shooter, ItemStack stack, IGun gun, ShooterDataHolder dataHolder) {
         AttachmentCacheProperty cache = new AttachmentCacheProperty();
-        AttachmentPropertyEvent event = new AttachmentPropertyEvent(stack, cache);
+        AttachmentPropertyEvent event = new AttachmentPropertyEvent(shooter, stack, cache);
         ChangeGunPropertyEvent.internalOnAttachmentPropertyEvent(event);
         dataHolder.cacheProperty = cache;
         push(dataHolder);
         try {
-            event.postEventToKubeJS(event);
-            MinecraftForge.EVENT_BUS.post(event);
+            NeoForge.EVENT_BUS.post(event);
             GunProperties.allCacheModifiableByScript().forEach((id, property) -> {
                 applyLuaProperty(shooter, stack, gun, dataHolder, cache, property);
             });

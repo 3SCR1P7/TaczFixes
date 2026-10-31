@@ -33,7 +33,7 @@ public final class AttachmentGroupOffsetHelper {
         boolean any = false;
         for (AttachmentType slot : AttachmentType.values()) {
             if (slot == AttachmentType.NONE) continue;
-            ItemStack stack = gun.getAttachment(gunStack, slot);
+            ItemStack stack = TaczItemCompat.getAttachment(gun, gunStack, slot);
             if (stack == null || stack.isEmpty()) {
                 stack = gun.getBuiltinAttachment(gunStack, slot);
             }

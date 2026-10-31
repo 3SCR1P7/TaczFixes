@@ -2,8 +2,8 @@ package com.ssscript.taczfixes.client.util;
 
 import com.ssscript.taczfixes.common.util.TextShowStorage;
 import com.tacz.guns.client.model.papi.PapiManager;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;

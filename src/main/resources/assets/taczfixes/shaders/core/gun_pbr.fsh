@@ -9,7 +9,6 @@ uniform vec4 ColorModulator;
 uniform float FogStart;
 uniform float FogEnd;
 uniform vec4 FogColor;
-uniform mat3 IViewRotMat;
 uniform int HasNormal;
 uniform int HasSpecular;
 uniform int EmissionPass;
@@ -38,6 +37,10 @@ in vec3 viewPosition;
 in vec3 viewNormal;
 in float skyExposure;
 flat in int illuminatedGroup;
+flat in vec3 viewCol0;
+flat in vec3 viewCol1;
+flat in vec3 viewCol2;
+mat3 viewRotation() { return mat3(viewCol0, viewCol1, viewCol2); }
 out vec4 fragColor;
 
 vec3 safeNormalize(vec3 v) { return v * inversesqrt(max(dot(v, v), 1e-8)); }
@@ -80,7 +83,7 @@ vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
     float exposure = min(skyExposure, LocalSkyExposure);
     vec3 sum = vec3(0.0);
     // 太阳/月亮
-    vec3 l = safeNormalize(transpose(IViewRotMat) * CelestialDirection);
+    vec3 l = safeNormalize(viewRotation() * CelestialDirection);
     vec3 h = safeNormalize(v + l);
     float nl = max(dot(n, l), 0.0);
     float nh = max(dot(n, h), 0.0);
@@ -91,7 +94,7 @@ vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
     sum += f * d * g / max(4.0 * nv, 0.001) * mix(0.35, 1.0, 1.0 - gr)
             * CelestialColor * exposure * exposure * CelestialVisibility;
     // 局部光源
-    vec3 ll = safeNormalize(transpose(IViewRotMat) * LocalLightDirection);
+    vec3 ll = safeNormalize(viewRotation() * LocalLightDirection);
     vec3 lh = safeNormalize(v + ll);
     float lnl = max(dot(n, ll), 0.0);
     float lnh = max(dot(n, lh), 0.0);
@@ -143,7 +146,7 @@ void main() {
 
     if (EmissionPass != 0) {
         // 太阳/月亮在玩家身后(背向日月)时眩光整体减弱: 按视线方向与日月方向的夹角, 转身即可察觉
-        vec3 sunView = safeNormalize(transpose(IViewRotMat) * CelestialDirection);
+        vec3 sunView = safeNormalize(viewRotation() * CelestialDirection);
         float sunBehind = smoothstep(0.05, 0.75, sunView.z);
         float backDim = mix(1.0, 0.2, sunBehind);
         vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * GlareStrength * backDim;
@@ -158,7 +161,7 @@ void main() {
         fragColor = vec4(total, alpha);
         return;
     }
-    vec3 l = safeNormalize(transpose(IViewRotMat) * CelestialDirection);
+    vec3 l = safeNormalize(viewRotation() * CelestialDirection);
     vec3 h = safeNormalize(v + l);
     float nv = max(dot(n, v), 0.001);
     float nl = max(dot(n, l), 0.0);
@@ -181,7 +184,7 @@ void main() {
             * CelestialColor * exposure * exposure * CelestialVisibility * (0.9 * areaT);
     // 局部光源(火把/灯笼/岩浆等)高光, 让非日月光方向也有反光。
     // 局部光用较宽的高光叶 + 一层环境贡献, 保证在大多数视角都明显可见。
-    vec3 ll = safeNormalize(transpose(IViewRotMat) * LocalLightDirection);
+    vec3 ll = safeNormalize(viewRotation() * LocalLightDirection);
     vec3 lh = safeNormalize(v + ll);
     float lnl = max(dot(n, ll), 0.0);
     float lnh = max(dot(n, lh), 0.0);
@@ -198,7 +201,7 @@ void main() {
     localDirect += lfresnel * (lnl * smoothstep(-0.02, 0.25, lnl)) * pow(lnh, mix(48.0, 4.0, areaT))
             * LocalLightColor * LocalLightStrength * 0.10 * areaT;
     vec3 localAmbient = LocalLightColor * LocalLightStrength * 0.015;
-    vec3 reflected = IViewRotMat * reflect(-v, n);
+    vec3 reflected = transpose(viewRotation()) * reflect(-v, n);
     // 环境反射: 天空/地面渐变 + 地平线亮带, 让侧向/掠射角也有明显反光。
     // 反射必须带材质色(深色枪身反射深色环境), 否则抬头看天时天空反射会把整枪洗成灰色;
     // 金属按 F0 着色, 并带菲涅尔掠射增强。

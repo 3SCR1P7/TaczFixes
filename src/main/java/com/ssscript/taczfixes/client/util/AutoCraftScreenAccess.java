@@ -8,4 +8,6 @@ public interface AutoCraftScreenAccess {
                                        boolean powerPaused, int energy, int capacity);
 
     void taczfixes$showManualPowerError();
+
+    void taczfixes$onScreenClosed();
 }

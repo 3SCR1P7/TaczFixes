@@ -24,12 +24,11 @@ public final class ParCoolStaminaHelper {
         Object stamina = get(player);
         if (stamina == null) return;
         try {
-            int parcoolMax = (int) getMax.invoke(stamina);
+            double parcoolMax = (double) getMax.invoke(stamina);
             if (parcoolMax <= 0) return;
             float ratio = max <= 0f ? 0f : Math.max(0f, Math.min(1f, value / max));
-            int mapped = Math.round(ratio * parcoolMax);
+            double mapped = ratio * parcoolMax;
             setValue.invoke(stamina, mapped);
-            setExhaustion.invoke(stamina, exhausted);
         } catch (Exception ignored) {
         }
     }
@@ -37,11 +36,11 @@ public final class ParCoolStaminaHelper {
     private static Object get(Player player) {
         try {
             if (getStamina == null) {
-                Class<?> clazz = Class.forName("com.alrex.parcool.common.capability.IStamina");
-                getStamina = clazz.getMethod("get", Player.class);
-                setValue = clazz.getMethod("set", int.class);
-                getMax = clazz.getMethod("getActualMaxStamina");
-                setExhaustion = clazz.getMethod("setExhaustion", boolean.class);
+                Class<?> readable = Class.forName("com.alrex.parcool.api.stamina.IReadableStamina");
+                Class<?> local = Class.forName("com.alrex.parcool.api.stamina.AbstractLocalStamina");
+                getStamina = readable.getMethod("get", Player.class);
+                setValue = local.getMethod("setValue", double.class);
+                getMax = readable.getMethod("max");
             }
             return getStamina.invoke(null, player);
         } catch (Exception e) {

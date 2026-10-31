@@ -1,12 +1,13 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.event.AnvilUpdateEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.AnvilUpdateEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class GunAnvilHandler {
     @SubscribeEvent
@@ -33,7 +34,7 @@ public class GunAnvilHandler {
         }
 
         ItemStack result = target.copy();
-        CompoundTag tag = result.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(result);
         int newExp = tag.getInt("GunLevelExp") + count * expPerBottle;
         tag.putInt("GunLevelExp", newExp);
         tag.putInt("GunLevel", iGun.getLevel(newExp));

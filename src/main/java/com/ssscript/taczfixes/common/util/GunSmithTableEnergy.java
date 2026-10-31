@@ -16,8 +16,8 @@ import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 
 public final class GunSmithTableEnergy {
     public static final String TAG_KEY = "TaczFixesEnergy";
@@ -40,7 +40,7 @@ public final class GunSmithTableEnergy {
         if (recipeId == null || level == null) {
             return null;
         }
-        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).orElse(null);
+        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).map(net.minecraft.world.item.crafting.RecipeHolder::value).orElse(null);
         return recipeConfig(recipe);
     }
 
@@ -191,11 +191,11 @@ public final class GunSmithTableEnergy {
         if (player.isCreative()) {
             return true;
         }
-        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).orElse(null);
+        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).map(net.minecraft.world.item.crafting.RecipeHolder::value).orElse(null);
         if (!(recipe instanceof GunSmithTableRecipe tableRecipe)) {
             return false;
         }
-        IItemHandler handler = player.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
+        IItemHandler handler = player.getCapability(Capabilities.ItemHandler.ENTITY);
         if (handler == null) {
             return false;
         }

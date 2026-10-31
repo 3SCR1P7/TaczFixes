@@ -1,24 +1,29 @@
 package com.ssscript.taczfixes.common.compat;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import me.xjqsh.lrtactical.api.item.IConsumable;
 import me.xjqsh.lrtactical.api.item.IMeleeWeapon;
 import me.xjqsh.lrtactical.api.item.IThrowable;
 import moze_intel.projecte.api.ItemInfo;
-import moze_intel.projecte.api.nbt.INBTProcessor;
-import moze_intel.projecte.api.nbt.NBTProcessor;
+import moze_intel.projecte.api.components.DataComponentProcessor;
+import moze_intel.projecte.api.components.IDataComponentProcessor;
 import moze_intel.projecte.emc.EMCMappingHandler;
+import net.minecraft.core.component.DataComponentPatch;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.CustomData;
+import org.jetbrains.annotations.NotNull;
 
-/**
- * LRTactical's consumables, throwables and melee weapons use NBT only as a
- * subtype id. ProjectE would otherwise keep volatile tags such as durability,
- * display overrides and cooldown data in transmutation-table knowledge.
- */
-@NBTProcessor(priority = 1000, requiredMods = {"projecte", "lrtactical"})
-public class LrtacticalNbtEMCProcessor implements INBTProcessor {
+@DataComponentProcessor(priority = 1000, requiredMods = {"projecte", "lrtactical"})
+public class LrtacticalNbtEMCProcessor implements IDataComponentProcessor {
+    @Override
+    public String getTranslationKey() {
+        return "projecte.gun_nbt_processor.taczfixes.lrtactical";
+    }
+
 
     @Override
     public String getName() {
@@ -31,12 +36,11 @@ public class LrtacticalNbtEMCProcessor implements INBTProcessor {
     }
 
     @Override
-    public boolean hasPersistentNBT() {
+    public boolean hasPersistentComponents() {
         return true;
     }
 
-    @Override
-    public CompoundTag getPersistentNBT(ItemInfo info) {
+    private static CompoundTag persistentTag(ItemInfo info) {
         ItemStack stack = info.createStack();
         Item item = stack.getItem();
         CompoundTag tag = new CompoundTag();
@@ -65,11 +69,21 @@ public class LrtacticalNbtEMCProcessor implements INBTProcessor {
     }
 
     @Override
-    public long recalculateEMC(ItemInfo info, long currentEMC) {
-        CompoundTag tag = getPersistentNBT(info);
+    public void collectPersistentComponents(@NotNull ItemInfo info, DataComponentPatch.Builder builder) {
+        CompoundTag tag = persistentTag(info);
+        if (tag != null) {
+            builder.set(DataComponents.CUSTOM_DATA, CustomData.of(tag));
+        }
+    }
+
+    @Override
+    public long recalculateEMC(@NotNull ItemInfo info, long currentEMC) {
+        CompoundTag tag = persistentTag(info);
         if (tag == null) {
             return currentEMC;
         }
-        return EMCMappingHandler.getStoredEmcValue(ItemInfo.fromItem(info.getItem(), tag));
+        ItemStack stack = info.createStack();
+        ItemNbt.set(stack, tag);
+        return EMCMappingHandler.getStoredEmcValue(ItemInfo.fromStack(stack));
     }
 }

@@ -11,10 +11,10 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.util.Mth;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RenderLevelStageEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
+import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /** F3+B 时以蓝色绘制爬行玩家的独立受击碰撞箱。 */
 @OnlyIn(Dist.CLIENT)
@@ -31,7 +31,7 @@ public class CrawlHitboxDebugHandler {
         if (!com.ssscript.taczfixes.common.config.Config.CRAWL_HITBOX_ENABLED.get()) {
             return;
         }
-        float partialTick = event.getPartialTick();
+        float partialTick = event.getPartialTick().getGameTimeDeltaPartialTick(false);
         Vec3 cameraPos = event.getCamera().getPosition();
         PoseStack poseStack = event.getPoseStack();
         MultiBufferSource.BufferSource buffers = minecraft.renderBuffers().bufferSource();

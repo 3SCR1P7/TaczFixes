@@ -1,15 +1,18 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.util.DurabilityStorage;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Holder;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
-import net.minecraftforge.event.AnvilUpdateEvent;
-import net.minecraftforge.event.GrindstoneEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
+import net.neoforged.neoforge.event.AnvilUpdateEvent;
+import net.neoforged.neoforge.event.GrindstoneEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -35,7 +38,7 @@ public class GunDurabilityHandler {
         int current = DurabilityStorage.get(left);
         boolean instabuild = event.getPlayer() != null && event.getPlayer().getAbilities().instabuild;
         int renameOps = hasNameChange(event, left) ? 1 : 0;
-        int baseCost = Math.max(0, event.getCost()) + renameOps;
+        int baseCost = (int) Math.max(0L, event.getCost()) + renameOps;
         int tooExpensive = tooExpensiveThreshold(left);
 
         // 合并相同枪械修复耐久(同原版铁砧规则: 12% 上限加成 + 附魔合并)
@@ -56,8 +59,7 @@ public class GunDurabilityHandler {
                 if (totalCost >= tooExpensive && !instabuild) {
                     return;
                 }
-                result.setRepairCost(AnvilMenu.calculateIncreasedRepairCost(Math.max(
-                        left.getBaseRepairCost(), right.getBaseRepairCost())));
+                result.set(net.minecraft.core.component.DataComponents.REPAIR_COST, Math.min(40, Math.max(repairCost(left), repairCost(right)) + 2));
                 applyName(event, left, result);
                 event.setOutput(result);
                 event.setCost(totalCost);
@@ -75,7 +77,7 @@ public class GunDurabilityHandler {
                 if (usable > 0 && (totalCost < tooExpensive || instabuild)) {
                     ItemStack result = left.copy();
                     DurabilityStorage.set(result, Math.min(max, current + usable * value));
-                    result.setRepairCost(AnvilMenu.calculateIncreasedRepairCost(left.getBaseRepairCost()));
+                    result.set(net.minecraft.core.component.DataComponents.REPAIR_COST, Math.min(40, repairCost(left) + 2));
                     applyName(event, left, result);
                     event.setOutput(result);
                     event.setCost(totalCost);
@@ -110,24 +112,28 @@ public class GunDurabilityHandler {
         }
         ItemStack result = top.copyWithCount(1);
         DurabilityStorage.set(result, merged);
-        result.setRepairCost(0);
+        result.set(net.minecraft.core.component.DataComponents.REPAIR_COST, 0);
         // 同原版砂轮: 仅保留诅咒附魔
-        Map<Enchantment, Integer> curses = new HashMap<>();
-        for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(result).entrySet()) {
-            if (entry.getKey().isCurse()) {
-                curses.put(entry.getKey(), entry.getValue());
+        ItemEnchantments.Mutable curses = new ItemEnchantments.Mutable(ItemEnchantments.EMPTY);
+        for (var entry : EnchantmentHelper.getEnchantmentsForCrafting(result).entrySet()) {
+            if (entry.getKey().is(net.minecraft.tags.EnchantmentTags.CURSE)) {
+                curses.set(entry.getKey(), entry.getIntValue());
             }
         }
-        EnchantmentHelper.setEnchantments(curses, result);
+        EnchantmentHelper.setEnchantments(result, curses.toImmutable());
         event.setOutput(result);
         event.setXp(0);
     }
 
     /** 过于昂贵的费用阈值: 40 + 枪械等级(复用附魔的过于昂贵规则)。 */
     private static int tooExpensiveThreshold(ItemStack gun) {
-        net.minecraft.nbt.CompoundTag tag = gun.getTag();
+        net.minecraft.nbt.CompoundTag tag = ItemNbt.get(gun);
         int level = tag == null ? 0 : tag.getInt("GunLevel");
         return 40 + Math.max(0, level);
+    }
+
+    private static int repairCost(ItemStack stack) {
+        return stack.getOrDefault(net.minecraft.core.component.DataComponents.REPAIR_COST, 0);
     }
 
     private static boolean hasNameChange(AnvilUpdateEvent event, ItemStack left) {
@@ -137,7 +143,7 @@ public class GunDurabilityHandler {
 
     private static void applyName(AnvilUpdateEvent event, ItemStack left, ItemStack result) {
         if (hasNameChange(event, left)) {
-            result.setHoverName(Component.literal(event.getName()));
+            result.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, Component.literal(event.getName()));
         }
     }
 
@@ -151,18 +157,19 @@ public class GunDurabilityHandler {
      */
     private static int mergeEnchantmentsVanilla(ItemStack left, ItemStack right, ItemStack result,
                                                 boolean instabuild) {
-        Map<Enchantment, Integer> map = EnchantmentHelper.getEnchantments(result);
+        ItemEnchantments.Mutable map = new ItemEnchantments.Mutable(
+                EnchantmentHelper.getEnchantmentsForCrafting(result));
         boolean compatible = false;
         boolean incompatible = false;
         int cost = 0;
-        for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(right).entrySet()) {
-            Enchantment enchantment = entry.getKey();
-            int leftLevel = map.getOrDefault(enchantment, 0);
-            int level = entry.getValue();
+        for (var entry : EnchantmentHelper.getEnchantmentsForCrafting(right).entrySet()) {
+            Holder<Enchantment> enchantment = entry.getKey();
+            int leftLevel = map.getLevel(enchantment);
+            int level = entry.getIntValue();
             level = leftLevel == level ? level + 1 : Math.max(level, leftLevel);
-            boolean canApply = instabuild || enchantment.canEnchant(left);
-            for (Enchantment existing : map.keySet()) {
-                if (existing != enchantment && !enchantment.isCompatibleWith(existing)) {
+            boolean canApply = instabuild || enchantment.value().canEnchant(left);
+            for (Holder<Enchantment> existing : map.keySet()) {
+                if (!existing.equals(enchantment) && !Enchantment.areCompatible(existing, enchantment)) {
                     canApply = false;
                     cost++;
                 }
@@ -172,22 +179,22 @@ public class GunDurabilityHandler {
                 continue;
             }
             compatible = true;
-            if (level > enchantment.getMaxLevel()) {
-                level = enchantment.getMaxLevel();
+            if (level > enchantment.value().getMaxLevel()) {
+                level = enchantment.value().getMaxLevel();
             }
-            map.put(enchantment, level);
-            int rarityWeight = switch (enchantment.getRarity()) {
-                case COMMON -> 1;
-                case UNCOMMON -> 2;
-                case RARE -> 4;
-                case VERY_RARE -> 8;
+            map.set(enchantment, level);
+            int rarityWeight = switch (enchantment.value().getWeight()) {
+                case 10 -> 1;
+                case 5 -> 2;
+                case 2 -> 4;
+                default -> 8;
             };
             cost += rarityWeight * level;
         }
         if (incompatible && !compatible) {
             return -1;
         }
-        EnchantmentHelper.setEnchantments(map, result);
+        EnchantmentHelper.setEnchantments(result, map.toImmutable());
         return cost;
     }
 }

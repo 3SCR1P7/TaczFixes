@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.mixin.shader;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.render.LightManager;
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.LightTexture;
@@ -20,17 +21,17 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class MixinColoredLightLevelRenderer {
 
     @Inject(method = "renderLevel", at = @At("HEAD"))
-    private void taczfixes$coloredLightPre(PoseStack poseStack, float partialTick, long finishNanoTime,
-                                           boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-                                           LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
+    private void taczfixes$coloredLightPre(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera,
+                                           GameRenderer gameRenderer, LightTexture lightTexture,
+                                           Matrix4f projectionMatrix, Matrix4f frustumMatrix, CallbackInfo ci) {
         Vec3 position = camera.getPosition();
         LightManager.INSTANCE.renderLevelPre(0, (float) position.x, (float) position.y, (float) position.z);
     }
 
     @Inject(method = "renderLevel", at = @At("RETURN"))
-    private void taczfixes$coloredLightPost(PoseStack poseStack, float partialTick, long finishNanoTime,
-                                            boolean renderBlockOutline, Camera camera, GameRenderer gameRenderer,
-                                            LightTexture lightTexture, Matrix4f projectionMatrix, CallbackInfo ci) {
+    private void taczfixes$coloredLightPost(DeltaTracker deltaTracker, boolean renderBlockOutline, Camera camera,
+                                            GameRenderer gameRenderer, LightTexture lightTexture,
+                                            Matrix4f projectionMatrix, Matrix4f frustumMatrix, CallbackInfo ci) {
         LightManager.INSTANCE.renderLevelPost();
     }
 }

@@ -2,13 +2,12 @@ package com.ssscript.taczfixes.common.network;
 
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import com.ssscript.taczfixes.common.util.DistExecutor;
 
 import java.util.function.Supplier;
 
-/** 服务端→客户端: 同步上肢耐力(当前值/上限)。 */
+/** 鏈嶅姟绔啋瀹㈡埛绔? 鍚屾涓婅偄鑰愬姏(褰撳墠鍊?涓婇檺)銆?*/
 public class ServerMessageAimingStamina {
 
     private final float stamina;

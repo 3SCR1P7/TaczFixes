@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.mixin;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.CustomFireModeManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.tacz.guns.api.item.IGun;
@@ -21,7 +22,7 @@ public class MixinGunItemDataAccessor {
     @Unique
     public String taczfixes$getCustomFireModeId(ItemStack stack) {
         if (stack == null) return null;
-        CompoundTag tag = stack.getTag();
+        CompoundTag tag = ItemNbt.get(stack);
         if (tag == null) return null;
         String custom = tag.getString("TaczFixesCustomFireMode");
         return custom.isEmpty() ? null : custom;
@@ -30,7 +31,7 @@ public class MixinGunItemDataAccessor {
     @Unique
     public void taczfixes$setCustomFireModeId(ItemStack stack, String id) {
         if (stack == null) return;
-        stack.getOrCreateTag().putString("TaczFixesCustomFireMode", id == null ? "" : id);
+        ItemNbt.getOrCreate(stack).putString("TaczFixesCustomFireMode", id == null ? "" : id);
     }
 
     /** 覆盖接口 default: 自定义 id 存在时按其 type 映射为核心枚举; 否则原逻辑。 */
@@ -49,7 +50,7 @@ public class MixinGunItemDataAccessor {
                 return result;
             }
         }
-        CompoundTag tag = stack == null ? null : stack.getTag();
+        CompoundTag tag = stack == null ? null : ItemNbt.get(stack);
         if (tag == null || !tag.contains("GunFireMode", 8)) {
             return FireMode.UNKNOWN;
         }
@@ -64,7 +65,7 @@ public class MixinGunItemDataAccessor {
     @Unique
     public void setFireMode(ItemStack stack, FireMode mode) {
         if (stack == null) return;
-        stack.getOrCreateTag().putString("GunFireMode", mode == null ? "UNKNOWN" : mode.name());
+        ItemNbt.getOrCreate(stack).putString("GunFireMode", mode == null ? "UNKNOWN" : mode.name());
     }
 
     @Unique

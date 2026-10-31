@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.handler;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.ScopeViewHelper;
@@ -14,9 +15,8 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /** 客户端: scope 瞄具开镜时的准星晃动(屏息逐渐平息, 低耐力增幅)。 */
 public class AimSwayHandler {
@@ -45,7 +45,7 @@ public class AimSwayHandler {
     public static boolean isScopeActive(LocalPlayer player) {
         ItemStack gun = player.getMainHandItem();
         String activeSlot = ScopeSwitchState.getActiveSlot(gun);
-        int tagHash = gun.getTag() == null ? 0 : gun.getTag().hashCode();
+        int tagHash = ItemNbt.get(gun) == null ? 0 : ItemNbt.get(gun).hashCode();
         if (gun == cachedScopeGun && tagHash == cachedScopeHash
                 && java.util.Objects.equals(activeSlot, cachedScopeSlot)) {
             return cachedScopeActive;
@@ -77,8 +77,8 @@ public class AimSwayHandler {
     }
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) return;
         prevYaw = curYaw;
         prevPitch = curPitch;
 

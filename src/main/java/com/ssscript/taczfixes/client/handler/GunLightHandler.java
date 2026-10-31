@@ -10,16 +10,15 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.event.level.ChunkEvent;
-import net.minecraftforge.event.level.ExplosionEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.level.ChunkEvent;
+import net.neoforged.neoforge.event.level.ExplosionEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
 
 /** 纯客户端枪械动态光照: 开火/爆炸/曳光弹事件 -> 光照管理; 区块/世界卸载时清理。 */
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = net.minecraftforge.api.distmarker.Dist.CLIENT)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = net.neoforged.api.distmarker.Dist.CLIENT)
 public class GunLightHandler {
 
     @SubscribeEvent
@@ -52,12 +51,12 @@ public class GunLightHandler {
         if (light == null || light.explosion == null) {
             return;
         }
-        ClientGunLightManager.add(event.getExplosion().getPosition(), light.explosion);
+        ClientGunLightManager.add(event.getExplosion().center(), light.explosion);
     }
 
     @SubscribeEvent
-    public static void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) {
             return;
         }
         ClientGunLightManager.tick();

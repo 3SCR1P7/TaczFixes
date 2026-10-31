@@ -57,16 +57,16 @@ public class MixinClientGunTooltipLimbDamage {
         maxWidth = Math.max(maxWidth, Minecraft.getInstance().font.width(taczfixes$limbDamageLine));
     }
 
-    @Inject(method = "m_142103_", at = @At("RETURN"), cancellable = true, remap = false)
+    @Inject(method = "getHeight", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczfixes$addLimbDamageHeight(CallbackInfoReturnable<Integer> cir) {
         if (taczfixes$limbDamageLine != null) {
             cir.setReturnValue(cir.getReturnValue() + 10);
         }
     }
 
-    @Redirect(method = "m_142440_",
+    @Redirect(method = "renderText",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/Font;m_272077_(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)I",
+                    target = "Lnet/minecraft/client/gui/Font;drawInBatch(Lnet/minecraft/network/chat/Component;FFIZLorg/joml/Matrix4f;Lnet/minecraft/client/renderer/MultiBufferSource;Lnet/minecraft/client/gui/Font$DisplayMode;II)I",
                     remap = false),
             remap = false)
     private int taczfixes$drawLimbDamageLine(Font font, Component text, float x, float y, int color,

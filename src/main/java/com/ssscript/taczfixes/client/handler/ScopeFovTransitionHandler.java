@@ -15,10 +15,9 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.ViewportEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.EventPriority;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.ViewportEvent;
+import net.neoforged.bus.api.EventPriority;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /**
  * 瞄具视图切换时的世界层(镜外) FOV 过渡, 仅在 Arcana 镜内放大状态发生变化时生效:
@@ -56,10 +55,8 @@ public class ScopeFovTransitionHandler {
     }
 
     @SubscribeEvent
-    public void onRenderTick(TickEvent.RenderTickEvent event) {
-        if (event.phase == TickEvent.Phase.START) {
-            worldFovCallPending = false;
-        }
+    public void onRenderTick(net.neoforged.neoforge.client.event.RenderFrameEvent.Pre event) {
+        worldFovCallPending = false;
     }
 
     /** 记录世界层未修改前的基础 FOV(供计算 target)。 */

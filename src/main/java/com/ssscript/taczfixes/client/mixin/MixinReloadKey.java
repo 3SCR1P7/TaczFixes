@@ -2,8 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.input.ReloadKey;
 import com.ssscript.taczfixes.client.client.DualReloadCoordinator;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -27,7 +26,7 @@ public abstract class MixinReloadKey {
     }
 
     @Inject(method = {"autoReload"}, at = {@At("HEAD")}, cancellable = true)
-    private static void dualWield$replaceMainOnlyAutoReload(TickEvent.PlayerTickEvent event, CallbackInfo callback) {
+    private static void dualWield$replaceMainOnlyAutoReload(net.neoforged.neoforge.event.tick.PlayerTickEvent.Pre event, CallbackInfo callback) {
         if (DualReloadCoordinator.shouldSuppressNativeAutoReload()) {
             callback.cancel();
         }

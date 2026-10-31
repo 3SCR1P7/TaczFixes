@@ -33,7 +33,7 @@ import java.util.Locale;
  * 原版仅显示基础值 %.2fs; taczfixes 显示 "当前值 (差值)", 柱状图以绿色表示
  * 缩短部分、红色表示延长部分(与通用属性条一致: 缩短为正向)。
  * 实现: 拦截 getSprintTime 计算修饰值; 拦截文本 String.format 替换为带差值的字符串;
- * 拦截 base 条绘制 m_280509_ 改画 default+diff 两段。
+ * 拦截 base 条绘制 fill 改画 default+diff 两段。
  */
 @Mixin(targets = "com.tacz.guns.client.gui.components.refit.GunPropertyDiagrams", remap = false)
 public class MixinGunPropertyDiagrams {
@@ -115,7 +115,7 @@ public class MixinGunPropertyDiagrams {
 
     @Redirect(method = "lambda$draw$3",
             at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/client/gui/GuiGraphics;m_280509_(IIIII)V", remap = false), remap = false)
+                    target = "Lnet/minecraft/client/gui/GuiGraphics;fill(IIIII)V", remap = false), remap = false)
     private static void taczfixes$sprintBar(net.minecraft.client.gui.GuiGraphics graphics, int x1, int y1, int x2, int y2, int color) {
         if (taczfixes$sprintActive) {
             if (taczfixes$sprintFillCount == 0) {
