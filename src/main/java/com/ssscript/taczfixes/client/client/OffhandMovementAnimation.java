@@ -14,7 +14,7 @@ public final class OffhandMovementAnimation {
     }
 
     public static OffhandMovementAnimation install(AnimationController targetController) {
-        Map<String, ObjectAnimation> replacements = DualMovementAnimationLibrary.getPrototypes();
+        Map<String, ObjectAnimation> replacements = DualMovementAnimationLibrary.getOffhandPrototypes();
         Map<String, ObjectAnimation> prototypes = ((MixinAnimationControllerAccessor) targetController).dualWield$getPrototypes();
         prototypes.putAll(replacements);
         return new OffhandMovementAnimation();

@@ -351,7 +351,8 @@ public final class DualWieldClient {
         }
         if (!DualFocusAimKey.FOCUS_AIM_KEY.isDown() && hasMainGun && !hasOffhandGun
                 && !leftGun.isEmpty() && !(leftGun.getItem() instanceof ShieldItem)) {
-            if (physicalLeftDown && !lastOffhandItemUseDown) {
+            if (physicalLeftDown && !lastOffhandItemUseDown
+                    && (Minecraft.getInstance().gameMode == null || !Minecraft.getInstance().gameMode.isDestroying())) {
                 if (isAttackOnly(leftGun)) {
                     useItemOrAttack(player, InteractionHand.OFF_HAND, "tick-offhand");
                 } else {
@@ -748,12 +749,11 @@ public final class DualWieldClient {
         ItemStack off = player.getOffhandItem();
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
-        if (event.getButton() == 1 && offGun && !mainGun && isAttackOnly(main)) {
-            net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
-            if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
-                Minecraft.getInstance().gameMode.attack(player, entityHit.getEntity());
+        if (event.getButton() == 1 && offGun && !mainGun) {
+            if (isAttackOnly(main)) {
+                attackMainHand(player);
             } else {
-                player.swing(InteractionHand.MAIN_HAND, true);
+                useMainItemOrAttack(player);
             }
             return;
         }
@@ -810,7 +810,57 @@ public final class DualWieldClient {
         }
         return stack.getItem() instanceof net.minecraft.world.item.SwordItem
                 || stack.getItem() instanceof net.minecraft.world.item.DiggerItem
-                || stack.getItem() instanceof me.xjqsh.lrtactical.api.item.IMeleeWeapon;
+                || isLrMeleeWeapon(stack);
+    }
+
+    private static boolean isLrMeleeWeapon(ItemStack stack) {
+        try {
+            return Class.forName("me.xjqsh.lrtactical.api.item.IMeleeWeapon")
+                    .isInstance(stack.getItem());
+        } catch (Throwable ignored) {
+            return false;
+        }
+    }
+
+    private static void attackMainHand(LocalPlayer player) {
+        net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
+        if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+            Minecraft.getInstance().gameMode.attack(player, entityHit.getEntity());
+        } else {
+            player.swing(InteractionHand.MAIN_HAND, true);
+        }
+    }
+
+    private static void useMainItemOrAttack(LocalPlayer player) {
+        net.minecraft.client.multiplayer.MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
+        if (gameMode == null) {
+            return;
+        }
+        ItemStack stack = player.getMainHandItem();
+        if (stack.isEmpty()) {
+            return;
+        }
+        net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
+        if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
+            net.minecraft.world.InteractionResult result =
+                    gameMode.interactAt(player, entityHit.getEntity(), entityHit, InteractionHand.MAIN_HAND);
+            if (!result.consumesAction()) {
+                result = gameMode.interact(player, entityHit.getEntity(), InteractionHand.MAIN_HAND);
+            }
+            if (result.consumesAction()) {
+                return;
+            }
+        } else if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
+                && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
+            if (gameMode.useItemOn(player, InteractionHand.MAIN_HAND, blockHit).consumesAction()) {
+                return;
+            }
+        }
+        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem)
+                && gameMode.useItem(player, InteractionHand.MAIN_HAND).consumesAction()) {
+            return;
+        }
+        attackMainHand(player);
     }
 
     private static void startOffhandUse(LocalPlayer player) {
@@ -834,7 +884,8 @@ public final class DualWieldClient {
         ItemStack stack = player.getItemInHand(hand);
         if (hand == InteractionHand.OFF_HAND && stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
             net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
-            if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit) {
+            if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
+                    && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
                 Minecraft.getInstance().gameMode.useItemOn(player, hand, blockHit);
                 player.swing(hand, true);
                 return;
@@ -850,8 +901,9 @@ public final class DualWieldClient {
             }
             return;
         }
-        net.minecraft.world.InteractionResult result =
-                Minecraft.getInstance().gameMode.useItem(player, hand);
+        net.minecraft.world.InteractionResult result = stack.getItem() instanceof net.minecraft.world.item.BlockItem
+                ? net.minecraft.world.InteractionResult.FAIL
+                : Minecraft.getInstance().gameMode.useItem(player, hand);
         boolean consume = result.consumesAction();
         boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
                 && stack.getUseDuration() > 0;
@@ -888,7 +940,7 @@ public final class DualWieldClient {
         ItemStack off = player != null ? player.getOffhandItem() : ItemStack.EMPTY;
         boolean mainGun = IGun.getIGunOrNull(main) != null;
         boolean offGun = IGun.getIGunOrNull(off) != null;
-        if (event.isAttack() || (event.isUseItem() && mainGun && !offGun)) {
+        if (event.isAttack() || (event.isUseItem() && mainGun != offGun)) {
             event.setSwingHand(false);
             event.setCanceled(true);
         }

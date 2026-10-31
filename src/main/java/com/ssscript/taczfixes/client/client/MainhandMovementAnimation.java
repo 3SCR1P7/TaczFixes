@@ -27,7 +27,7 @@ public final class MainhandMovementAnimation {
         if (DualMovementAnimationLibrary.isMovementClip(animationName) && (listenerSupplier instanceof BedrockAnimatedModel)) {
             BedrockGunModel bedrockGunModel = (BedrockGunModel) listenerSupplier;
             if (BOUNDARY_CONTROLLER.get() == controller) {
-                ObjectAnimation boundaryFallback = DualMovementAnimationLibrary.getPrototypes().get(animationName);
+                ObjectAnimation boundaryFallback = DualMovementAnimationLibrary.getMainPrototypes().get(animationName);
                 return original == null ? boundaryFallback : original;
             }
             Minecraft minecraft = Minecraft.getInstance();
@@ -48,7 +48,7 @@ public final class MainhandMovementAnimation {
             if (mainDisplay == null || mainDisplay.getGunModel() != bedrockGunModel || mainStateMachine == null || mainStateMachine.getAnimationController() != controller) {
                 return original;
             }
-            ObjectAnimation replacement = DualMovementAnimationLibrary.getPrototypes().get(animationName);
+            ObjectAnimation replacement = DualMovementAnimationLibrary.getMainPrototypes().get(animationName);
             return replacement == null ? original : replacement;
         }
         return original;
