@@ -10,7 +10,6 @@ import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = ShaderLoader.class, remap = false)
@@ -18,7 +17,7 @@ public abstract class MixinSodiumShaderLoader {
 
     @Inject(method = "loadShader", at = @At("HEAD"), remap = false)
     private static void taczfixes$pushShaderType(ShaderType type, ResourceLocation name, ShaderConstants constants,
-                                                 CallbackInfo ci) {
+                                                 CallbackInfoReturnable<GlShader> cir) {
         SodiumShaderState.push(type);
     }
 
