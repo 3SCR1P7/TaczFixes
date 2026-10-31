@@ -15,6 +15,7 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.compat.CharmsOffhandRenderCompat;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.ssscript.taczfixes.client.mixin.MixinGunItemRendererWrapperAccessor;
 import net.minecraft.client.player.LocalPlayer;
@@ -90,6 +91,8 @@ public final class DualFirstPersonRenderer {
             poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
             mirroredModel = DualRenderContext.offhandHandPos().mirror();
             AnimateGeoItemRenderer.applyFirstPersonPositioningTransform(poseStack, model, stack);
+            poseStack.translate(0.0d, 0.0d, -com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
+                    stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
             if (mirroredModel) {
                 poseStack.scale(-1.0f, 1.0f, 1.0f);
             }

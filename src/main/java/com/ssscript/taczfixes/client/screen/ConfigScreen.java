@@ -101,6 +101,8 @@ public class ConfigScreen {
         dbl_(cat, entry, "dual_wield.focus_aim_inaccuracy_multiplier", Config.DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER);
         dbl_(cat, entry, "dual_wield.left_offset", Config.DUAL_WIELD_LEFT_X_OFFSET);
         dbl_(cat, entry, "dual_wield.right_offset", Config.DUAL_WIELD_RIGHT_X_OFFSET);
+        dbl_(cat, entry, "dual_wield.forward_offset_pistol", Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL);
+        dbl_(cat, entry, "dual_wield.forward_offset_other", Config.DUAL_WIELD_FORWARD_OFFSET_OTHER);
         dbl_(cat, entry, "dual_wield.melee_switch_percent", Config.DUAL_WIELD_MELEE_SWITCH_PERCENT);
     }
 

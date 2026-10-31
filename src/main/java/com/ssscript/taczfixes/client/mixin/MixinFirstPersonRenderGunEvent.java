@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.mixin;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.event.common.GunFireEvent;
@@ -32,6 +33,10 @@ public class MixinFirstPersonRenderGunEvent {
         if (model == null) return;
         if (DualRenderContext.getPhase() == DualRenderContext.HandPhase.MAIN && DualRenderContext.mainHandPos().mirror()) {
             poseStack.scale(-1.0f, 1.0f, 1.0f);
+        }
+        if (DualWieldClient.isDualMode(player)) {
+            poseStack.translate(0.0d, 0.0d, -com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
+                    stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
         }
         CustomScopeViewShift.apply(poseStack, model, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
     }
