@@ -250,7 +250,6 @@
     "config.taczfixes.entry.compat.parcool_slide_as_move_inaccuracy":  "滑铲按移动散布计算",
     "config.taczfixes.entry.compat.disable_parcool_charge_jump_animation":  "持枪时禁用蓄力跳蓄力动画",
     "config.taczfixes.entry.compat.disable_tracking_after_penetration":  "穿透实体后失去追踪",
-    "config.taczfixes.entry.compat.peek_headshot_height":  "探头头部判定高度",
     "config.taczfixes.entry.compat.ads_interrupt_sprint":  "开镜强制打断疾跑",
     "config.taczfixes.entry.compat.prevent_sprint_reengage_when_tilt":  "据枪时阻止疾跑恢复",
 
@@ -322,7 +321,6 @@
     "config.taczfixes.entry.recoil_knockback.ignore_entity_enable":  "命中后忽略实体",
     "config.taczfixes.entry.recoil_knockback.ignore_entity_cooldown_ms":  "忽略实体的时长（毫秒）",
  
-    "config.taczfixes.entry.compat.auto_aim_when_peeking":  "探头自动开镜",
     "config.taczfixes.entry.compat.disable_hitboxes":  "禁用实体碰撞箱显示",
     "config.taczfixes.entry.compat.disable_third_person":  "禁用切换第三人称视角",
     "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",

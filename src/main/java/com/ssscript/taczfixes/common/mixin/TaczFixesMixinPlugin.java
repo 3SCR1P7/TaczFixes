@@ -12,6 +12,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean LRTACTICAL_PRESENT;
     private static final boolean IRONS_SPELLBOOKS_PRESENT;
     private static final boolean EMBEDDIUM_PRESENT;
+    private static final boolean SODIUM_PRESENT;
     private static final boolean CREATE_PRESENT;
 
     static {
@@ -19,6 +20,8 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         LRTACTICAL_PRESENT = hasResource("me/xjqsh/lrtactical/item/MeleeItem.class");
         IRONS_SPELLBOOKS_PRESENT = hasResource("io/redspace/ironsspellbooks/api/util/Utils.class");
         EMBEDDIUM_PRESENT = hasResource("me/jellysquid/mods/sodium/client/gl/shader/ShaderLoader.class");
+        SODIUM_PRESENT = hasResource("net/caffeinemc/mods/sodium/client/gl/shader/ShaderLoader.class")
+                || EMBEDDIUM_PRESENT;
         CREATE_PRESENT = hasResource("com/simibubi/create/content/contraptions/AbstractContraptionEntity.class");
     }
 
@@ -49,6 +52,9 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinEmbeddium")) {
             return EMBEDDIUM_PRESENT;
+        }
+        if (mixinClassName.startsWith("com.ssscript.taczfixes.client.mixin.compat.sodium.")) {
+            return SODIUM_PRESENT;
         }
         return true;
     }

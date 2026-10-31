@@ -17,6 +17,8 @@
         "compat.parcool.MixinParCoolStamina",
         "compat.parcool.MixinParCoolStaminaHud",
         "compat.parcool.MixinParCoolStaminaHunger",
+        "compat.sodium.MixinSodiumShaderLoader",
+        "compat.sodium.MixinSodiumShaderChunkRenderer",
         "compat.arcana.MixinArcanaAttachmentData",
         "compat.arcana.MixinArcanaFlashlightLamp",
         "compat.arcana.MixinArcanaFlashlightToggle",

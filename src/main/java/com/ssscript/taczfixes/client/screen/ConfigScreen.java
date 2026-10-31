@@ -372,10 +372,8 @@ public class ConfigScreen {
         bool_(cat, entry, "compat.parcool_slide_as_move_inaccuracy", Config.PARCOOL_SLIDE_AS_MOVE_INACCURACY);
         bool_(cat, entry, "compat.disable_parcool_charge_jump_animation", Config.DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION);
         bool_(cat, entry, "compat.disable_tracking_after_penetration", Config.DISABLE_TRACKING_AFTER_PENETRATION);
-        dbl_(cat, entry, "compat.peek_headshot_height", Config.PEEK_HEADSHOT_HEIGHT);
         bool_(cat, entry, "compat.ads_interrupt_sprint", Config.ADS_INTERRUPT_SPRINT);
         bool_(cat, entry, "compat.prevent_sprint_reengage_when_tilt", Config.PREVENT_SPRINT_REENGAGE_WHEN_TILT);
-        bool_(cat, entry, "compat.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
         bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);
         lst_(cat, entry, "compat.ammo_emc_blacklist", Config.AMMO_EMC_BLACKLIST);

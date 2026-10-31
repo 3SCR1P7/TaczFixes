@@ -52,8 +52,6 @@ public class Config {
     public static final ModConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
     public static final ModConfigSpec.BooleanValue DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION;
     public static final ModConfigSpec.BooleanValue DISABLE_TRACKING_AFTER_PENETRATION;
-    public static final ModConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
-    public static final ModConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ModConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
     public static final ModConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
     public static final ModConfigSpec.BooleanValue AUTO_CRAFT_ENABLED;
@@ -868,10 +866,6 @@ public class Config {
                 .comment("子弹穿透实体后是否失去追踪。默认值：true",
                         "需要GunsmithLib模组的追踪功能。")
                 .define("disable_tracking_after_penetration", true);
-        PEEK_HEADSHOT_HEIGHT = BUILDER
-                .comment("玩家探头时，从碰撞箱顶部起视为头部的格数。默认值：0.6",
-                        "需要GD656Peek模组。")
-                .defineInRange("peek_headshot_height", 0.6, 0.0, 1.0);
         ADS_INTERRUPT_SPRINT = BUILDER
                 .comment("开镜是否强制打断疾跑。默认值：true")
                 .define("ads_interrupt_sprint", true);
@@ -879,10 +873,6 @@ public class Config {
                 .comment("持枪时是否阻止冲刺恢复（防止冲刺触发系列滑块颤抖）。默认值：true",
                         "需要TaCZ Tweaks模组。")
                 .define("prevent_sprint_reengage_when_tilt", true);
-        AUTO_AIM_WHEN_PEEKING = BUILDER
-                .comment("是否启用探头自动开镜。默认值：true",
-                        "需要GD656Peek模组。")
-                .define("auto_aim_when_peeking", false);
         DISABLE_HITBOXES = BUILDER
                 .comment("禁用实体碰撞箱显示。默认值：false")
                 .define("disable_hitboxes", false);
