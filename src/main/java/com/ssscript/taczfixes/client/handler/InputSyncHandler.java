@@ -4,8 +4,7 @@ import com.ssscript.taczfixes.common.network.ClientMessageInputSync;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.util.ShooterLuaHelper;
 import net.minecraft.client.Minecraft;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -19,8 +18,8 @@ public class InputSyncHandler {
     private static Set<String> lastSent = Collections.emptySet();
 
     @SubscribeEvent
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
+    public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
             lastSent = Collections.emptySet();

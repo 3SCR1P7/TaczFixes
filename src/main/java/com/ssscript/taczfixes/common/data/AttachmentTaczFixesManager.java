@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.data;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
@@ -106,7 +107,7 @@ public class AttachmentTaczFixesManager {
         if (gun == null) return 0;
         for (AttachmentType type : AttachmentType.values()) {
             if (type == AttachmentType.NONE) continue;
-            ItemStack stack = gun.getAttachment(gunItem, type);
+            ItemStack stack = TaczItemCompat.getAttachment(gun, gunItem, type);
             if (stack.isEmpty()) continue;
             used += getRefitPointConsume(stack);
         }

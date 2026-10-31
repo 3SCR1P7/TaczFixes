@@ -39,18 +39,19 @@ public abstract class MixinColoredLightProgram {
         }
 
         int testShaderId = GlStateManager.glCreateShader(type == Program.Type.VERTEX ? GL20.GL_VERTEX_SHADER : GL20.GL_FRAGMENT_SHADER);
-        GlStateManager.glShaderSource(testShaderId, processor.process(injectedShader));
-        GlStateManager.glCompileShader(testShaderId);
-        if (GlStateManager.glGetShaderi(testShaderId, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-            String errorInfo = StringUtils.trim(GlStateManager.glGetShaderInfoLog(testShaderId, Short.MAX_VALUE));
+        try {
+            GlStateManager.glShaderSource(testShaderId, processor.process(injectedShader));
+            GlStateManager.glCompileShader(testShaderId);
+            if (GlStateManager.glGetShaderi(testShaderId, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
+                String errorInfo = StringUtils.trim(GlStateManager.glGetShaderInfoLog(testShaderId, Short.MAX_VALUE));
+                TaczFixesMod.LOGGER.error("Couldn't compile injected {} program({},{}):{}", type.name(), pShaderSourceName, shaderName, errorInfo);
+                return shader;
+            }
+        } finally {
+            taczfixes$clearImportedPathRecord(processor);
             GlStateManager.glDeleteShader(testShaderId);
-            TaczFixesMod.LOGGER.error("Couldn't compile injected {} program({},{}):{}", type.name(), pShaderSourceName, shaderName, errorInfo);
-            return shader;
         }
 
-        taczfixes$clearImportedPathRecord(processor);
-
-        GlStateManager.glDeleteShader(testShaderId);
         return injectedShader;
     }
 

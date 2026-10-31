@@ -10,12 +10,16 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.network.chat.Component;
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.PackResources;
+import net.minecraft.server.packs.PackSelectionConfig;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
+import net.minecraft.server.packs.repository.PackCompatibility;
 import net.minecraft.server.packs.repository.PackRepository;
 import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.world.flag.FeatureFlags;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -39,7 +43,10 @@ public final class GunPackScreen {
         // 每次 reload 都重新扫描, 否则拖入新枪包后 PackRepository 仍使用旧的扫描结果。
         PackRepository repository = new PackRepository(consumer -> {
             for (GunPackInfoScanner.PackInfoData info : GunPackInfoScanner.scan(taczDir, language)) {
-                consumer.accept(createPack(info, format));
+                Pack pack = createPack(info, format);
+                if (pack != null) {
+                    consumer.accept(pack);
+                }
             }
         });
         repository.reload();
@@ -76,9 +83,22 @@ public final class GunPackScreen {
     }
 
     private static Pack createPack(GunPackInfoScanner.PackInfoData info, int format) {
-        Pack.Info packInfo = new Pack.Info(info.description(), format, FeatureFlags.DEFAULT_FLAGS);
-        return Pack.create(info.id(), info.displayName(), false,
-                id -> new GunPackResources(info.id(), info.path(), info.iconPath(), info.logo()),
-                packInfo, PackType.CLIENT_RESOURCES, Pack.Position.TOP, false, PackSource.DEFAULT);
+        PackLocationInfo location = new PackLocationInfo(info.id(), info.displayName(),
+                PackSource.DEFAULT, java.util.Optional.empty());
+        Pack.ResourcesSupplier supplier = new Pack.ResourcesSupplier() {
+            @Override
+            public PackResources openPrimary(PackLocationInfo loc) {
+                return new GunPackResources(info.id(), info.path(), info.iconPath(), info.logo());
+            }
+
+            @Override
+            public PackResources openFull(PackLocationInfo loc, Pack.Metadata metadata) {
+                return openPrimary(loc);
+            }
+        };
+        Pack.Metadata metadata = new Pack.Metadata(info.description(), PackCompatibility.COMPATIBLE,
+                FeatureFlags.DEFAULT_FLAGS, List.of(), false);
+        return new Pack(location, supplier, metadata,
+                new PackSelectionConfig(false, Pack.Position.TOP, false));
     }
 }

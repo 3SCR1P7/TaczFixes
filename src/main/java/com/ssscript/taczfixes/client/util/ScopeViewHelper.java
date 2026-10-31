@@ -7,8 +7,8 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import java.util.List;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /** 组合瞄具(tacz 多视图瞄具)按当前视图判定是 scope 视图还是 sight 视图。 */
 @OnlyIn(Dist.CLIENT)

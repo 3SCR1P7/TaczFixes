@@ -16,14 +16,14 @@ public class MixinBulletTrackingFlag {
 
     /** defineId 必须由实体类自身调用(Forge 检查), 因此放在合并进 EntityKineticBullet 的方法里。 */
     @Unique
-    private static EntityDataAccessor<Boolean> taczfixes$trackingDisabled;
+    private static final EntityDataAccessor<Boolean> taczfixes$trackingDisabled =
+            SynchedEntityData.defineId(EntityKineticBullet.class, EntityDataSerializers.BOOLEAN);
 
-    @Inject(method = "<init>", at = @At("TAIL"), remap = false)
-    private void taczfixes$defineTrackingFlag(CallbackInfo ci) {
-        if (taczfixes$trackingDisabled == null) {
-            taczfixes$trackingDisabled = SynchedEntityData.defineId(EntityKineticBullet.class, EntityDataSerializers.BOOLEAN);
+    @Inject(method = "defineSynchedData", at = @At("TAIL"), remap = false)
+    private void taczfixes$defineTrackingFlag(SynchedEntityData.Builder builder, CallbackInfo ci) {
+        if (BulletTrackingFlag.TRACKING_DISABLED() == null) {
             BulletTrackingFlag.set(taczfixes$trackingDisabled);
         }
-        ((EntityKineticBullet) (Object) this).getEntityData().define(taczfixes$trackingDisabled, false);
+        builder.define(taczfixes$trackingDisabled, false);
     }
 }

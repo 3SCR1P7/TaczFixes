@@ -1,0 +1,22 @@
+{
+  "anvil_cost": 5,
+  "description": {
+    "translate": "enchantment.taczfixes.arcana_eden"
+  },
+  "effects": {},
+  "max_cost": {
+    "base": 16,
+    "per_level_above_first": 10
+  },
+  "max_level": 2,
+  "min_cost": {
+    "base": 6,
+    "per_level_above_first": 4
+  },
+  "primary_items": "#taczfixes:enchantable/gun",
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#taczfixes:enchantable/gun",
+  "weight": 1
+}

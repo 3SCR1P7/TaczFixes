@@ -25,15 +25,14 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.server.ServerStartedEvent;
-import net.minecraftforge.event.server.ServerStoppingEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.items.IItemHandler;
-import net.minecraftforge.network.PacketDistributor;
-import net.minecraftforge.server.ServerLifecycleHooks;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.event.server.ServerStartedEvent;
+import net.neoforged.neoforge.event.server.ServerStoppingEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.items.IItemHandler;
+import com.ssscript.taczfixes.common.network.PacketDistributor;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -47,7 +46,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
 public final class GunSmithTableAutoCraftHandler {
 
     private static final long CRAFT_TICK_MILLIS = 50L;
@@ -191,8 +190,8 @@ public final class GunSmithTableAutoCraftHandler {
     }
 
     @SubscribeEvent
-    public static void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || TASKS.isEmpty()) return;
+    public static void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (false || TASKS.isEmpty()) return;
         MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
         if (server == null) return;
         AutoCraftSavedData data = loadData(server);
@@ -370,7 +369,7 @@ public final class GunSmithTableAutoCraftHandler {
     }
 
     private static GunSmithTableRecipe resolveRecipe(ServerLevel level, ResourceLocation recipeId) {
-        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).orElse(null);
+        Recipe<?> recipe = level.getRecipeManager().byKey(recipeId).map(net.minecraft.world.item.crafting.RecipeHolder::value).orElse(null);
         return recipe instanceof GunSmithTableRecipe tableRecipe ? tableRecipe : null;
     }
 
@@ -503,10 +502,10 @@ public final class GunSmithTableAutoCraftHandler {
             if (entity == null || !seenEntities.add(entity)) {
                 continue;
             }
-            IItemHandler handler = entity.getCapability(ForgeCapabilities.ITEM_HANDLER, null).orElse(null);
+            IItemHandler handler = level.getCapability(Capabilities.ItemHandler.BLOCK, neighborPos, null);
             if (handler == null) {
                 for (Direction direction : Direction.values()) {
-                    handler = entity.getCapability(ForgeCapabilities.ITEM_HANDLER, direction).orElse(null);
+                    handler = level.getCapability(Capabilities.ItemHandler.BLOCK, neighborPos, direction);
                     if (handler != null) {
                         break;
                     }

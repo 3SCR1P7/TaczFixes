@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
@@ -14,7 +15,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.LinkedHashMap;
 import java.util.Locale;
@@ -69,11 +69,11 @@ public class ClientMessageLoadRefitPreset {
 
         for (AttachmentType type : AttachmentType.values()) {
             if (type == AttachmentType.NONE) continue;
-            ItemStack removed = gun.getAttachment(gunStack, type);
+            ItemStack removed = TaczItemCompat.getAttachment(gun, gunStack, type);
             if (removed.isEmpty()) continue;
             IAttachment removedAttachment = IAttachment.getIAttachmentOrNull(removed);
             ResourceLocation removedId = removedAttachment == null ? null : removedAttachment.getAttachmentId(removed);
-            gun.unloadAttachment(gunStack, type);
+            TaczItemCompat.unloadAttachment(gun, gunStack, type);
             if (type == AttachmentType.EXTENDED_MAG) {
                 gun.dropAllAmmo(player, gunStack);
             }
@@ -116,7 +116,7 @@ public class ClientMessageLoadRefitPreset {
         CustomSlotManager.cascadeUnloadOrphans(player, gunStack);
         AttachmentPropertyManager.postChangeEvent(player, gunStack);
         player.inventoryMenu.broadcastChanges();
-        com.tacz.guns.network.NetworkHandler.sendToClientPlayer(new com.tacz.guns.network.message.ServerMessageRefreshRefitScreen(), player);
+        com.tacz.guns.network.NetworkHandler.sendToClientPlayer(com.tacz.guns.network.message.ServerMessageRefreshRefitScreen.INSTANCE, player);
     }
 
     private static void installStandard(ServerPlayer player, IGun gun, ItemStack gunStack,
@@ -130,7 +130,7 @@ public class ClientMessageLoadRefitPreset {
             VirtualOemAttachment.mark(virtual);
             com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.markGenerated(virtual);
             ResourceLocation previousId = gun.getAttachmentId(gunStack, type);
-            gun.installAttachment(gunStack, virtual);
+            TaczItemCompat.installAttachment(gun, gunStack, virtual);
             com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.triggerChangeAttachment(player,
                     com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(previousId) ? null : previousId.toString(),
                     attachmentId.toString());
@@ -145,7 +145,7 @@ public class ClientMessageLoadRefitPreset {
             VirtualOemAttachment.mark(builtin);
             com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.markGenerated(builtin);
             ResourceLocation previousId = gun.getAttachmentId(gunStack, type);
-            gun.installAttachment(gunStack, builtin);
+            TaczItemCompat.installAttachment(gun, gunStack, builtin);
             com.ssscript.taczfixes.common.compat.ArcanaSkillBridge.triggerChangeAttachment(player,
                     com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(previousId) ? null : previousId.toString(),
                     attachmentId.toString());
@@ -154,7 +154,7 @@ public class ClientMessageLoadRefitPreset {
         Inventory source = player.getInventory();
         ItemStack item = findAndTake(player, source, attachmentId, gun, gunStack, null);
         if (item.isEmpty()) return;
-        gun.installAttachment(gunStack, item);
+        TaczItemCompat.installAttachment(gun, gunStack, item);
     }
 
     private static void installCustom(ServerPlayer player, IGun gun, ItemStack gunStack, ResourceLocation gunId,

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.client;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
@@ -24,8 +25,8 @@ import java.util.UUID;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class ClientOffhandState {
@@ -180,7 +181,7 @@ public final class ClientOffhandState {
         AttachmentCacheProperty cache = OffhandGunPropertyResolver.rebuild(player, stack, gun, this.propertyData);
         for (AttachmentType type : AttachmentType.values()) {
             if (type != AttachmentType.NONE) {
-                this.cachedAttachments[type.ordinal()] = gun.getAttachment(stack, type).copy();
+                this.cachedAttachments[type.ordinal()] = TaczItemCompat.getAttachment(gun, stack, type).copy();
             }
         }
         this.cachedGunId = gunId;
@@ -197,7 +198,7 @@ public final class ClientOffhandState {
     private boolean attachmentsMatch(ItemStack stack, IGun gun) {
         ItemStack cachedAttachment;
         for (AttachmentType type : AttachmentType.values()) {
-            if (type != AttachmentType.NONE && ((cachedAttachment = this.cachedAttachments[type.ordinal()]) == null || !ItemStack.matches(gun.getAttachment(stack, type), cachedAttachment))) {
+            if (type != AttachmentType.NONE && ((cachedAttachment = this.cachedAttachments[type.ordinal()]) == null || !ItemStack.matches(TaczItemCompat.getAttachment(gun, stack, type), cachedAttachment))) {
                 return false;
             }
         }

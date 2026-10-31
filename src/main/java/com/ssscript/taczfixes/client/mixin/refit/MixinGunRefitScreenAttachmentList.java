@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.refit;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
@@ -275,7 +276,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen implement
             try {
                 AttachmentType type = AttachmentType.valueOf(slotKey.toUpperCase(java.util.Locale.US));
                 IGun gun = IGun.getIGunOrNull(gunStack);
-                stack = gun == null ? ItemStack.EMPTY : gun.getAttachment(gunStack, type);
+                stack = gun == null ? ItemStack.EMPTY : TaczItemCompat.getAttachment(gun, gunStack, type);
             } catch (IllegalArgumentException ex) {
                 return 0;
             }

@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityKineticBullet.class)
 public class MixinEntityKineticBulletDecapitation {
-    @Inject(method = "m_8119_", at = @At("RETURN"), remap = false)
+    @Inject(method = "tick", at = @At("RETURN"), remap = false)
     private void taczfixes$onBulletTickEnd(CallbackInfo ci) {
         Entity self = (Entity) (Object) this;
         if (self.isRemoved()) {

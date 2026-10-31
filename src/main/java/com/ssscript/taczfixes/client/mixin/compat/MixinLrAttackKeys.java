@@ -8,7 +8,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.InputEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -29,7 +29,7 @@ public class MixinLrAttackKeys {
     }
 
     @Inject(method = "tick", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void taczfixes$blockTick(net.minecraftforge.event.TickEvent.ClientTickEvent event, CallbackInfo ci) {
+    private static void taczfixes$blockTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event, CallbackInfo ci) {
         taczfixes$block(ci, true);
     }
 

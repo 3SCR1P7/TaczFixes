@@ -27,7 +27,7 @@ public class MixinGunAttachmentSlotSelection {
     }
 
     /** 配件槽尺寸配置: 渲染时临时还原为 18px 原生尺寸, 再以槽位左上角为原点整体缩放, 避免纹理采样越界。 */
-    @Inject(method = "m_87963_", at = @At("HEAD"), remap = false)
+    @Inject(method = "renderWidget", at = @At("HEAD"), remap = false)
     private void taczfixes$pushSlotScale(GuiGraphics graphics, int mouseX, int mouseY, float partialTick,
                                          CallbackInfo ci) {
         taczfixes$slotScalePushed = false;
@@ -47,7 +47,7 @@ public class MixinGunAttachmentSlotSelection {
         taczfixes$slotScalePushed = true;
     }
 
-    @Inject(method = "m_87963_", at = @At("RETURN"), remap = false)
+    @Inject(method = "renderWidget", at = @At("RETURN"), remap = false)
     private void taczfixes$popSlotScale(GuiGraphics graphics, int mouseX, int mouseY, float partialTick,
                                         CallbackInfo ci) {
         if (!taczfixes$slotScalePushed) return;

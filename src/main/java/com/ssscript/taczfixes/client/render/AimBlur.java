@@ -5,6 +5,7 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -34,10 +35,10 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -51,7 +52,7 @@ import java.util.Optional;
  * 使靠近中心的模糊较弱、靠边缘的模糊较强; 强度按开镜进度渐入渐出。
  * 模糊范围随瞄准方块的距离变化: 远处最大, 近处趋近于无。
  */
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
 public final class AimBlur {
     private static ShaderInstance shader;
     private static com.mojang.blaze3d.shaders.AbstractUniform uMaskStart;
@@ -84,7 +85,7 @@ public final class AimBlur {
         if (!(player instanceof IClientPlayerGunOperator operator)) return;
         AimingParams params = resolveParams(player);
         if (!params.enabled()) return;
-        float progress = operator.getClientAimingProgress(mc.getFrameTime());
+        float progress = operator.getClientAimingProgress(mc.getTimer().getGameTimeDeltaPartialTick(false));
         if (progress <= 0.01f) return;
         float range = params.range() * distanceFactor(mc, player, params);
         float radius = params.strength() * progress;
@@ -201,7 +202,7 @@ public final class AimBlur {
 
     /** 模糊范围随瞄准目标(方块/实体)距离的系数: 0距离处为配置的最小比例, 远处为 1; 未命中(天空等)按最远处处理。 */
     private static float distanceFactor(Minecraft mc, LocalPlayer player, AimingParams params) {
-        float partial = mc.getFrameTime();
+        float partial = mc.getTimer().getGameTimeDeltaPartialTick(false);
         Vec3 eye = player.getEyePosition(partial);
         Vec3 view = player.getViewVector(partial);
         Vec3 end = eye.add(view.scale(RAY_DISTANCE));
@@ -274,15 +275,14 @@ public final class AimBlur {
 
     private static void ensureQuad() {
         if (quad != null) return;
-        BufferBuilder b = new BufferBuilder(128);
-        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        b.vertex(-1, -1, 0).uv(0, 0).endVertex();
-        b.vertex(1, -1, 0).uv(1, 0).endVertex();
-        b.vertex(1, 1, 0).uv(1, 1).endVertex();
-        b.vertex(-1, 1, 0).uv(0, 1).endVertex();
+        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        b.addVertex(-1, -1, 0).setUv(0, 0);
+        b.addVertex(1, -1, 0).setUv(1, 0);
+        b.addVertex(1, 1, 0).setUv(1, 1);
+        b.addVertex(-1, 1, 0).setUv(0, 1);
         quad = new VertexBuffer(VertexBuffer.Usage.STATIC);
         quad.bind();
-        quad.upload(b.end());
+        quad.upload(b.buildOrThrow());
     }
 
     private static void releaseTargets() {

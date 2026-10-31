@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 @Mixin(GunHudOverlay.class)
 public class MixinGunHudOverlayCharge {
 
-    @ModifyVariable(method = "render", at = @At("STORE"), index = 16, remap = false)
+    @ModifyVariable(method = "render", at = @At("STORE"), index = 15, remap = false)
     private int taczfixes$chargeHudCount(int value) {
         ItemStack stack = taczfixes$chargeHudStack();
         if (stack == null) {
@@ -24,13 +24,13 @@ public class MixinGunHudOverlayCharge {
         return Math.max(0, Math.round(cachedMax * (percent / 100.0f)));
     }
 
-    @ModifyVariable(method = "render", at = @At("STORE"), index = 19, remap = false)
+    @ModifyVariable(method = "render", at = @At("STORE"), index = 18, remap = false)
     private String taczfixes$chargeHudCountText(String value) {
         ItemStack stack = taczfixes$chargeHudStack();
         return stack == null ? value : String.format("%03d%%", Integer.valueOf(taczfixes$chargePercent(stack)));
     }
 
-    @ModifyVariable(method = "render", at = @At("STORE"), index = 20, remap = false)
+    @ModifyVariable(method = "render", at = @At("STORE"), index = 19, remap = false)
     private String taczfixes$chargeHudMaxText(String value) {
         return taczfixes$chargeHudStack() == null ? value : "";
     }

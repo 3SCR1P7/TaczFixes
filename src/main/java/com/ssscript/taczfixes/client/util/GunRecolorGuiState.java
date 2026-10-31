@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.network.ClientMessageGunColor;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
@@ -79,7 +81,7 @@ public final class GunRecolorGuiState {
         if (type != null && type != AttachmentType.NONE) {
             IGun igun = IGun.getIGunOrNull(gun);
             if (igun != null) {
-                ItemStack attachment = igun.getAttachment(gun, type);
+                ItemStack attachment = TaczItemCompat.getAttachment(igun, gun, type);
                 if (!attachment.isEmpty()) {
                     return attachment;
                 }
@@ -113,7 +115,7 @@ public final class GunRecolorGuiState {
         if (type != null && type != AttachmentType.NONE) {
             IGun igun = IGun.getIGunOrNull(gun);
             if (igun != null) {
-                ItemStack attachment = igun.getAttachment(gun, type);
+                ItemStack attachment = TaczItemCompat.getAttachment(igun, gun, type);
                 if (!attachment.isEmpty()) {
                     targetSlot = "t:" + type.name().toLowerCase(Locale.US);
                     targetItem = attachment;
@@ -175,16 +177,16 @@ public final class GunRecolorGuiState {
         if (targetSlot.startsWith("t:")) {
             // 标准配件槽: 直接写枪械的配件 NBT(绕过 allowAttachment 校验, 保证实时预览)
             String typeName = targetSlot.substring(2).toUpperCase(Locale.US);
-            CompoundTag tag = gun.getOrCreateTag();
+            CompoundTag tag = ItemNbt.getOrCreate(gun);
             CompoundTag attachmentTag = new CompoundTag();
-            targetItem.save(attachmentTag);
+            targetItem.save(com.ssscript.taczfixes.common.util.RegistryAccessHelper.provider(), attachmentTag);
             tag.put(com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + typeName, attachmentTag);
             return;
         }
-        CompoundTag tag = gun.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gun);
         CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
                 ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
-        slots.put(targetSlot, targetItem.save(new CompoundTag()));
+        slots.put(targetSlot, ItemNbt.saveStack(targetItem));
         tag.put(CustomSlotStorage.TAG_KEY, slots);
     }
 

@@ -5,12 +5,19 @@ import com.ssscript.taczfixes.TaczFixesMod;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobType;
+import net.minecraft.tags.EntityTypeTags;
+import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Holder;
+import net.minecraft.core.RegistryAccess;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.client.Minecraft;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -23,11 +30,11 @@ public class GunEnchantmentHelper {
         return Config.GUN_ENCHANTMENT_ENABLED.get();
     }
 
-    public static boolean isEnchantAllowed(Enchantment enchantment) {
+    public static boolean isEnchantAllowed(ResourceKey<Enchantment> enchantment) {
         if (enchantment == null) {
             return false;
         }
-        ResourceLocation key = ForgeRegistries.ENCHANTMENTS.getKey(enchantment);
+        ResourceLocation key = enchantment.location();
         if (key == null) {
             return false;
         }
@@ -35,17 +42,18 @@ public class GunEnchantmentHelper {
         return whitelist.contains(key.toString());
     }
 
-    public static int getLevel(ItemStack stack, Enchantment enchantment) {
+    public static int getLevel(ItemStack stack, ResourceKey<Enchantment> enchantment) {
         if (stack.isEmpty() || enchantment == null) {
             return 0;
         }
-        int base = EnchantmentHelper.getTagEnchantmentLevel(enchantment, stack);
+        int base = getRawLevel(stack, enchantment);
         if (base <= 0) {
             return 0;
         }
-        Enchantment eden = com.ssscript.taczfixes.TaczFixesMod.ARCANA_EDEN_ENCHANTMENT.get();
-        if (eden != null && enchantment != eden && enchantment.getMaxLevel() > 1) {
-            int edenLevel = EnchantmentHelper.getTagEnchantmentLevel(eden, stack);
+        ResourceKey<Enchantment> eden = com.ssscript.taczfixes.TaczFixesMod.ARCANA_EDEN_ENCHANTMENT.get();
+        Holder<Enchantment> holder = holder(enchantment);
+        if (holder != null && !enchantment.equals(eden) && holder.value().getMaxLevel() > 1) {
+            int edenLevel = getRawLevel(stack, eden);
             if (edenLevel > 0) {
                 base += edenLevel;
             }
@@ -53,11 +61,29 @@ public class GunEnchantmentHelper {
         return base;
     }
 
-    public static boolean hasEnchant(ItemStack stack, Enchantment enchantment) {
+    private static int getRawLevel(ItemStack stack, ResourceKey<Enchantment> enchantment) {
+        Holder<Enchantment> holder = holder(enchantment);
+        return holder == null ? 0 : EnchantmentHelper.getItemEnchantmentLevel(holder, stack);
+    }
+
+    @Nullable
+    private static Holder<Enchantment> holder(ResourceKey<Enchantment> key) {
+        RegistryAccess access = null;
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server != null) {
+            access = server.registryAccess();
+        } else if (Minecraft.getInstance().level != null) {
+            access = Minecraft.getInstance().level.registryAccess();
+        }
+        return access == null ? null : access.lookup(Registries.ENCHANTMENT)
+                .flatMap(registry -> registry.get(key)).orElse(null);
+    }
+
+    public static boolean hasEnchant(ItemStack stack, ResourceKey<Enchantment> enchantment) {
         return getLevel(stack, enchantment) > 0;
     }
 
-    public static int getLevelFromShooter(@Nullable LivingEntity shooter, Enchantment enchantment) {
+    public static int getLevelFromShooter(@Nullable LivingEntity shooter, ResourceKey<Enchantment> enchantment) {
         return getLevel(getGunStack(shooter), enchantment);
     }
 
@@ -90,7 +116,7 @@ public class GunEnchantmentHelper {
         return getGunStack(shooter);
     }
 
-    public static int getLevelFromShooter(@Nullable ResourceLocation gunId, @Nullable LivingEntity shooter, Enchantment enchantment) {
+    public static int getLevelFromShooter(@Nullable ResourceLocation gunId, @Nullable LivingEntity shooter, ResourceKey<Enchantment> enchantment) {
         return getLevel(getGunStack(gunId, shooter), enchantment);
     }
 
@@ -104,11 +130,11 @@ public class GunEnchantmentHelper {
         return isEnabled() && GUN_ENCHANTING.get();
     }
 
-    public static int getAnvilCostMultiplier(Enchantment enchantment) {
+    public static int getAnvilCostMultiplier(ResourceKey<Enchantment> enchantment) {
         if (enchantment == null) {
             return -1;
         }
-        ResourceLocation key = ForgeRegistries.ENCHANTMENTS.getKey(enchantment);
+        ResourceLocation key = enchantment.location();
         if (key == null || !key.getNamespace().equals(TaczFixesMod.MOD_ID)) {
             return -1;
         }
@@ -142,27 +168,27 @@ public class GunEnchantmentHelper {
         };
     }
 
-    public static boolean isConfiguredAnvilEnchantment(Enchantment enchantment) {
+    public static boolean isConfiguredAnvilEnchantment(ResourceKey<Enchantment> enchantment) {
         return getAnvilCostMultiplier(enchantment) > 0;
     }
 
-    public static boolean isUndead(MobType type) {
-        return type == MobType.UNDEAD;
+    public static boolean isUndead(EntityType<?> type) {
+        return type.is(EntityTypeTags.UNDEAD);
     }
 
-    public static boolean isArthropod(MobType type) {
-        return type == MobType.ARTHROPOD;
+    public static boolean isArthropod(EntityType<?> type) {
+        return type.is(EntityTypeTags.ARTHROPOD);
     }
 
     public static boolean isAquatic(LivingEntity target) {
-        return target.getMobType() == MobType.WATER || target.isInWater();
+        return target.getType().is(EntityTypeTags.AQUATIC) || target.isInWater();
     }
 
     public static int getGunLevel(ItemStack stack) {
         if (stack.isEmpty()) {
             return 0;
         }
-        return stack.getOrCreateTag().getInt("GunLevel");
+        return ItemNbt.getOrCreate(stack).getInt("GunLevel");
     }
 
     public static int getRiptideLevel(@Nullable LivingEntity shooter) {
@@ -202,7 +228,7 @@ public class GunEnchantmentHelper {
     }
 
     public static float getEfficiencyFireRateFactor(ItemStack gun) {
-        int level = getLevel(gun, Enchantments.BLOCK_EFFICIENCY);
+        int level = getLevel(gun, Enchantments.EFFICIENCY);
         if (level <= 0) {
             return 1.0f;
         }
@@ -210,7 +236,7 @@ public class GunEnchantmentHelper {
     }
 
     public static float getEfficiencyBoltTimeFactor(ItemStack gun) {
-        int level = getLevel(gun, Enchantments.BLOCK_EFFICIENCY);
+        int level = getLevel(gun, Enchantments.EFFICIENCY);
         if (level <= 0) {
             return 1.0f;
         }

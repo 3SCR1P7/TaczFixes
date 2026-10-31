@@ -65,7 +65,7 @@ public final class MovementRollTransform {
                 .translate(-pivot.x, -pivot.y, -pivot.z);
         Matrix4f local = new Matrix4f(base).invert().mul(screen).mul(base);
         pose.pushPose();
-        pose.mulPoseMatrix(local);
+        pose.mulPose(local);
         return true;
     }
 
@@ -75,6 +75,6 @@ public final class MovementRollTransform {
             return 0f;
         }
         return Math.max(0f, Math.min(1f, operator.getClientAimingProgress(
-                Minecraft.getInstance().getFrameTime())));
+                Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false))));
     }
 }

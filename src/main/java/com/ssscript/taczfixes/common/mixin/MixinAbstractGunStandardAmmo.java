@@ -13,8 +13,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.items.IItemHandler;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.items.IItemHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.spongepowered.asm.mixin.Mixin;
@@ -132,22 +132,21 @@ public class MixinAbstractGunStandardAmmo {
     }
 
     private boolean taczfixes$hasAnyAmmo(LivingEntity shooter) {
-        return shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null)
-                .map(handler -> {
-                    for (int i = 0; i < handler.getSlots(); i++) {
-                        ItemStack stack = handler.getStackInSlot(i);
-                        if (stack.isEmpty()) {
-                            continue;
-                        }
-                        if (stack.getItem() instanceof IAmmo) {
-                            return true;
-                        }
-                        if (stack.getItem() instanceof IAmmoBox ammoBox && ammoBox.getAmmoCount(stack) > 0) {
-                            return true;
-                        }
-                    }
-                    return false;
-                })
-                .orElse(Boolean.FALSE);
+        net.neoforged.neoforge.items.IItemHandler taczHandler =
+                shooter.getCapability(net.neoforged.neoforge.capabilities.Capabilities.ItemHandler.ENTITY);
+        if (taczHandler == null) return false;
+        for (int i = 0; i < taczHandler.getSlots(); i++) {
+            ItemStack stack = taczHandler.getStackInSlot(i);
+            if (stack.isEmpty()) {
+                continue;
+            }
+            if (stack.getItem() instanceof IAmmo) {
+                return true;
+            }
+            if (stack.getItem() instanceof IAmmoBox ammoBox && ammoBox.getAmmoCount(stack) > 0) {
+                return true;
+            }
+        }
+        return false;
     }
 }

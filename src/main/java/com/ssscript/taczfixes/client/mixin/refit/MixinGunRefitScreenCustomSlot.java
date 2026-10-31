@@ -287,7 +287,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
         return button;
     }
 
-    @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
+    @Inject(method = "onClose", at = @At("TAIL"), remap = false)
     private void taczfixes$onClose(CallbackInfo ci) {
         sendCustomSlotLaserColor();
         // 记录退出时选中的自定义槽: 收枪缓动期间仍需按该槽的 refit 路径(含 refit_view 回退)解析,

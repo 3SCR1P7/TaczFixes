@@ -7,10 +7,9 @@ import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ssscript.taczfixes.common.config.Config;
 import com.mojang.blaze3d.vertex.*;
+import com.mojang.blaze3d.vertex.MeshData;
 import com.ssscript.taczfixes.TaczFixesMod;
 
-import com.tacz.guns.compat.oculus.OculusCompat;
-import com.tacz.guns.compat.optifine.OptifineCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.DimensionSpecialEffects;
@@ -24,10 +23,10 @@ import net.minecraft.world.level.ClipContext;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL30;
 
@@ -37,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
@@ -113,7 +112,6 @@ public final class PbrRenderer {
                     return size() > TYPES_MAX;
                 }
             };
-    private static final Method OPTIFINE_SHADERS = findOptifine();
 
     private record Material(ResourceLocation specular, ResourceLocation normal) {}
 
@@ -392,25 +390,8 @@ public final class PbrRenderer {
         }
         return false;
     }
-    private static Method findOptifine() {
-        if (!OptifineCompat.isOptifineInstalled()) return null;
-        try {
-            return Class.forName("net.optifine.Config").getMethod("isShaders");
-        } catch (ReflectiveOperationException e) {
-            return null;
-        }
-    }
-
     public static boolean enabled() {
-        if (shader == null || !Config.PBR_ENABLED.get() || OculusCompat.isUsingRenderPack()) return false;
-        if (OptifineCompat.isOptifineInstalled()) {
-            if (OPTIFINE_SHADERS == null) return false;
-            try {
-                if ((boolean) OPTIFINE_SHADERS.invoke(null)) return false;
-            } catch (ReflectiveOperationException e) {
-                return false;
-            }
-        }
+        if (shader == null || !Config.PBR_ENABLED.get()) return false;
         // TaCZ's AR compatibility entry point selects conventional gun rendering
         // while this shader is active. Do not query it here: that would recurse.
         return true;
@@ -601,11 +582,7 @@ public final class PbrRenderer {
         }
 
         @Override
-        public void end(BufferBuilder builder, VertexSorting sorting) {
-            if (!builder.building()) return;
-            // Keep vanilla ordering for translucent gun skins, including on the emissive pass.
-            if (mode() == VertexFormat.Mode.QUADS) builder.setQuadSorting(sorting);
-            var data = builder.endOrDiscardIfEmpty();
+        public void draw(MeshData data) {
             if (data == null) return;
             if (mesh == null) mesh = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
             setupRenderState();

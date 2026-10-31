@@ -3,8 +3,7 @@
     "minVersion": "0.8",
     "plugin": "com.ssscript.taczfixes.common.mixin.TaczFixesMixinPlugin",
     "package": "com.ssscript.taczfixes.common.mixin",
-    "compatibilityLevel": "JAVA_17",
-    "refmap": "taczfixes.refmap.json",
+    "compatibilityLevel": "JAVA_21",
     "mixins": [
         "MixinAbstractGunDoBulletSpread",
         "MixinAbstractGunStandardAmmo",
@@ -31,10 +30,6 @@
         "MixinClientMessageUnloadAttachmentOrphanCleanup",
         "MixinCommonGunIndexAccessor",
         "MixinDualWieldEligibility",
-        "MixinEnchantmentGunCompatible",
-        "MixinEnchantmentGunWhitelist",
-        "MixinEnchantmentHelperGunSelect",
-        "MixinEnchantmentHelperGunValue",
         "MixinEntityDamageReducer",
         "MixinEntityKineticBullet",
         "MixinEntityKineticBulletAccessor",
@@ -67,6 +62,7 @@
         "MixinGunScriptAPIReduceAmmoUnbreaking",
         "MixinGunSmithTableBlockEntity",
         "MixinGunSmithTableMenu",
+        "MixinLootTableInjectionLegacyNbt",
         "MixinGunSmithTableRecipeTaczFixes",
         "MixinInaccuracyType",
         "MixinIronsAnvilContainer",
@@ -97,7 +93,6 @@
         "MixinShooterDataHolder",
         "MixinShootOnceIncrement",
         "MixinTableRecipeTaczFixes",
-        "MixinTaczPeekHeadshotLimit",
         "MixinTaczProjectileExplosion",
         "MixinTrackingDisableOnPenetration"
     ]

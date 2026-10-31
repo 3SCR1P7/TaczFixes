@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.common.data;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.google.gson.JsonElement;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.tacz.guns.api.item.IAttachment;
@@ -93,7 +95,7 @@ public class CustomSlotManager {
     /** 枪械 data + 已安装配件定义的槽位合并视图(槽 id 冲突时按安装位去重, 配件递归展开并去环)。 */
     public static Map<String, SlotEntry> getEntries(ItemStack gunStack) {
         if (gunStack == null || gunStack.isEmpty()) return Collections.emptyMap();
-        int tagHash = gunStack.getTag() == null ? 0 : gunStack.getTag().hashCode();
+        int tagHash = ItemNbt.get(gunStack) == null ? 0 : ItemNbt.get(gunStack).hashCode();
         if (gunStack == cachedEntriesStack && tagHash == cachedEntriesTagHash
                 && cachedEntriesStamp == dataStamp && cachedEntries != null) {
             return cachedEntries;
@@ -110,7 +112,7 @@ public class CustomSlotManager {
         Deque<Object[]> queue = new ArrayDeque<>();
         for (AttachmentType type : AttachmentType.values()) {
             if (type == AttachmentType.NONE) continue;
-            ItemStack item = gun.getAttachment(gunStack, type);
+            ItemStack item = TaczItemCompat.getAttachment(gun, gunStack, type);
             if (!item.isEmpty()) {
                 queue.add(new Object[]{item, type, null});
             }
@@ -366,7 +368,7 @@ public class CustomSlotManager {
             AttachmentType type = AttachmentType.valueOf(refId.toUpperCase());
             IGun gun = IGun.getIGunOrNull(gunStack);
             if (gun == null) return ItemStack.EMPTY;
-            return gun.getAttachment(gunStack, type);
+            return TaczItemCompat.getAttachment(gun, gunStack, type);
         } catch (IllegalArgumentException ex) {
             return ItemStack.EMPTY;
         }
@@ -416,7 +418,7 @@ public class CustomSlotManager {
     public static void cascadeUnloadOrphans(net.minecraft.server.level.ServerPlayer player, ItemStack gunStack) {
         if (player == null || gunStack == null || gunStack.isEmpty()) return;
         java.util.Set<String> stored = new java.util.LinkedHashSet<>();
-        net.minecraft.nbt.CompoundTag tag = gunStack.getTag();
+        net.minecraft.nbt.CompoundTag tag = ItemNbt.get(gunStack);
         if (tag != null) {
             collectStoredKeys(tag, CustomSlotStorage.TAG_KEY, stored);
             collectStoredKeys(tag, CustomSlotStorage.BUILTIN_TAG_KEY, stored);

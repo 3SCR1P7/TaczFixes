@@ -7,6 +7,7 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -57,7 +58,7 @@ public class MixinEntityKineticBulletLightData implements LightBulletAccess {
     }
 
     @Inject(method = "writeSpawnData", at = @At("TAIL"), remap = false)
-    private void taczfixes$writeLightConfig(FriendlyByteBuf buf, CallbackInfo ci) {
+    private void taczfixes$writeLightConfig(RegistryFriendlyByteBuf buf, CallbackInfo ci) {
         boolean captured = this.taczfixes$lightCaptured;
         boolean hasConfig = captured && this.taczfixes$lightConfig != null;
         buf.writeBoolean(captured);
@@ -72,7 +73,7 @@ public class MixinEntityKineticBulletLightData implements LightBulletAccess {
     }
 
     @Inject(method = "readSpawnData", at = @At("TAIL"), remap = false)
-    private void taczfixes$readLightConfig(FriendlyByteBuf buf, CallbackInfo ci) {
+    private void taczfixes$readLightConfig(RegistryFriendlyByteBuf buf, CallbackInfo ci) {
         boolean captured = buf.readBoolean();
         boolean hasConfig = buf.readBoolean();
         GunTaczFixesData.LightConfig config = null;

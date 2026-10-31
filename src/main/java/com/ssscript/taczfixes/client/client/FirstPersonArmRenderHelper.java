@@ -12,8 +12,8 @@ import net.minecraft.world.entity.HumanoidArm;
 import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Vector3f;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 /* 在枪械模型的当前节点位姿上渲染第一人称手臂。整枪镜像由模型基准矩阵承担(见 DualFirstPersonRenderer / MixinFirstPersonRenderGunEvent), 手臂随镜像模型一起变换。 */

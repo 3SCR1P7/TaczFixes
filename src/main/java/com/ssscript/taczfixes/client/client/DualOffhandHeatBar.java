@@ -13,9 +13,8 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class DualOffhandHeatBar {
@@ -26,7 +25,7 @@ public final class DualOffhandHeatBar {
     private DualOffhandHeatBar() {
     }
 
-    public static void render(ForgeGui gui, GuiGraphics graphics, int width, int height) {
+    public static void render(GuiGraphics graphics, int width, int height) {
         if (!RenderConfig.GUN_HUD_ENABLE.get().booleanValue()) {
             return;
         }
@@ -65,7 +64,7 @@ public final class DualOffhandHeatBar {
         NATIVE_HEAT_BAR.renderOverheat(percent, graphics,
                 (int) (width / heatScale),
                 (int) ((height + offsetY * 2.0f) / heatScale),
-                locked, gui.getGuiTicks());
+                locked, Minecraft.getInstance().gui.getGuiTicks());
         graphics.pose().popPose();
     }
 

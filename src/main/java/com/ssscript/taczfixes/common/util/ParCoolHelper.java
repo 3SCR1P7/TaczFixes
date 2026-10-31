@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.common.util;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 import java.lang.reflect.Method;
 
@@ -61,10 +61,12 @@ public class ParCoolHelper {
         try {
             Object parkourability = getParkourability(player);
             if (parkourability == null) return false;
-            Object action = getAction.invoke(parkourability, actionClass);
+            Object actionEntry = Class.forName("com.alrex.parcool.common.action.ParCoolActions")
+                    .getField(actionClass.getSimpleName().toUpperCase(java.util.Locale.ROOT)).get(null);
+            Object action = getAction.invoke(parkourability, actionEntry);
             if (action == null) return false;
             if (isDoing == null) {
-                isDoing = Class.forName("com.alrex.parcool.common.action.Action").getMethod("isDoing");
+                isDoing = Class.forName("com.alrex.parcool.api.action.ContinuableAction").getMethod("isDoing");
             }
             return (boolean) isDoing.invoke(action);
         } catch (Exception e) {
@@ -75,9 +77,9 @@ public class ParCoolHelper {
     private static Object getParkourability(Player player) {
         try {
             if (parkourabilityGet == null || getAction == null) {
-                Class<?> parkourabilityClass = Class.forName("com.alrex.parcool.common.capability.Parkourability");
+                Class<?> parkourabilityClass = Class.forName("com.alrex.parcool.common.Parkourability");
                 parkourabilityGet = parkourabilityClass.getMethod("get", Player.class);
-                getAction = parkourabilityClass.getMethod("get", Class.class);
+                getAction = parkourabilityClass.getMethod("get", Class.forName("com.alrex.parcool.api.action.ActionEntry"));
             }
             return parkourabilityGet.invoke(null, player);
         } catch (Exception e) {

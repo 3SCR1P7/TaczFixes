@@ -16,7 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = InventoryAttachmentSlot.class, remap = false)
 public abstract class MixinInventoryAttachmentSlotPreview {
 
-    @Inject(method = "m_87963_", at = @At("HEAD"), remap = false)
+    @Inject(method = "renderWidget", at = @At("HEAD"), remap = false)
     private void taczfixes$hoverPreview(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         AbstractWidget self = (AbstractWidget) (Object) this;
         if (!self.isHoveredOrFocused()) return;

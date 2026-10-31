@@ -113,7 +113,7 @@ public abstract class MixinBedrockGunModelCustomSlot {
         if (operator == null) return false;
         float progress = ScopeSwitchState.aimingProgressValue;
         if (progress < 0.001f) {
-            progress = operator.getClientAimingProgress(mc.getFrameTime());
+            progress = operator.getClientAimingProgress(mc.getTimer().getGameTimeDeltaPartialTick(false));
         }
         return progress > 0.5f;
     }

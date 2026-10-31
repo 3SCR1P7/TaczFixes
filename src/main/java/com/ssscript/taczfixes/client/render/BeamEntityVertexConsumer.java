@@ -4,11 +4,6 @@ import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 
-/**
- * 激光束换用 NEW_ENTITY 渲染类型后补齐缺失元素。
- * NEW_ENTITY 的元素顺序是 pos -> color -> uv -> overlay -> light -> normal,
- * 光束只写 pos/color/uv/light, 因此 overlay 必须在 light 之前补, normal 在最后补。
- */
 public final class BeamEntityVertexConsumer implements VertexConsumer {
     private final VertexConsumer delegate;
     private boolean colorSet;
@@ -27,112 +22,79 @@ public final class BeamEntityVertexConsumer implements VertexConsumer {
     }
 
     @Override
-    public VertexConsumer vertex(double x, double y, double z) {
-        delegate.vertex(x, y, z);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer color(int r, int g, int b, int a) {
-        this.colorSet = true;
-        delegate.color(r, g, b, a);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer uv(float u, float v) {
-        this.uvSet = true;
-        delegate.uv(u, v);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer overlayCoords(int u, int v) {
-        this.overlaySet = true;
-        delegate.overlayCoords(u, v);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer overlayCoords(int packedOverlay) {
-        this.overlaySet = true;
-        delegate.overlayCoords(packedOverlay);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer uv2(int u, int v) {
-        ensureBeforeLight();
-        this.lightSet = true;
-        delegate.uv2(u | 1, v);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer uv2(int packedLight) {
-        ensureBeforeLight();
-        this.lightSet = true;
-        delegate.uv2(packedLight | 1);
-        return this;
-    }
-
-    @Override
-    public VertexConsumer normal(float x, float y, float z) {
-        this.normalSet = true;
-        delegate.normal(x, y, z);
-        return this;
-    }
-
-    @Override
-    public void endVertex() {
-        ensureBeforeLight();
-        if (!this.lightSet) {
-            delegate.uv2(LightTexture.FULL_BRIGHT);
-        }
-        if (!this.normalSet) {
-            delegate.normal(0.0f, 0.0f, 1.0f);
-        }
+    public VertexConsumer addVertex(float x, float y, float z) {
         this.colorSet = false;
         this.uvSet = false;
         this.overlaySet = false;
         this.lightSet = false;
         this.normalSet = false;
-        delegate.endVertex();
+        delegate.addVertex(x, y, z);
+        return this;
     }
 
-    /** 必须在写 light 之前补齐 color/uv/overlay, 否则 BufferBuilder 的元素顺序会错位。 */
+    @Override
+    public VertexConsumer setColor(int r, int g, int b, int a) {
+        this.colorSet = true;
+        delegate.setColor(r, g, b, a);
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setUv(float u, float v) {
+        this.uvSet = true;
+        delegate.setUv(u, v);
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setUv1(int u, int v) {
+        this.overlaySet = true;
+        delegate.setUv1(u, v);
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setUv2(int u, int v) {
+        ensureBeforeLight();
+        this.lightSet = true;
+        delegate.setUv2(u | 1, v);
+        if (!this.normalSet) {
+            this.normalSet = true;
+            delegate.setNormal(0.0f, 0.0f, 1.0f);
+        }
+        return this;
+    }
+
+    @Override
+    public VertexConsumer setNormal(float x, float y, float z) {
+        this.normalSet = true;
+        delegate.setNormal(x, y, z);
+        return this;
+    }
+
     private void ensureBeforeLight() {
         if (!this.colorSet) {
             this.colorSet = true;
             if (this.hasDefaultColor) {
-                delegate.color(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
+                delegate.setColor(this.defaultR, this.defaultG, this.defaultB, this.defaultA);
             } else {
-                delegate.color(255, 255, 255, 255);
+                delegate.setColor(255, 255, 255, 255);
             }
         }
         if (!this.uvSet) {
             this.uvSet = true;
-            delegate.uv(0.0f, 0.0f);
+            delegate.setUv(0.0f, 0.0f);
         }
         if (!this.overlaySet) {
             this.overlaySet = true;
-            delegate.overlayCoords(OverlayTexture.NO_OVERLAY & 0xFFFF, (OverlayTexture.NO_OVERLAY >> 16) & 0xFFFF);
+            delegate.setUv1(OverlayTexture.NO_OVERLAY & 0xFFFF, (OverlayTexture.NO_OVERLAY >> 16) & 0xFFFF);
         }
     }
 
-    @Override
-    public void defaultColor(int r, int g, int b, int a) {
-        this.hasDefaultColor = true;
-        this.defaultR = r;
-        this.defaultG = g;
-        this.defaultB = b;
-        this.defaultA = a;
-        delegate.defaultColor(r, g, b, a);
-    }
-
-    @Override
-    public void unsetDefaultColor() {
-        this.hasDefaultColor = false;
-        delegate.unsetDefaultColor();
+    public void setLightIfMissing() {
+        if (!this.lightSet) {
+            this.lightSet = true;
+            delegate.setLight(LightTexture.FULL_BRIGHT);
+        }
     }
 }

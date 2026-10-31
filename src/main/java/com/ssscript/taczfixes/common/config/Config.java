@@ -2,366 +2,365 @@ package com.ssscript.taczfixes.common.config;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.fml.common.Mod;
 
 import java.util.List;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
-    public static final ForgeConfigSpec.BooleanValue PBR_ENABLED;
-    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM;
-    public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION;
-    public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION_AREA;
-    public static final ForgeConfigSpec.DoubleValue PBR_GLARE_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue PBR_EMISSION;
-    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
-    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
-    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
-    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
-    public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
-    public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_FULL_SPEED;
-    public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_MAX_ANGLE;
-    public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_FOLLOW_SPEED;
-    public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_AIM_MULTIPLIER;
-    private static ForgeConfigSpec.Builder BUILDER = new ForgeConfigSpec.Builder();
-    public static final java.util.Map<String, ForgeConfigSpec> SPECS = new java.util.LinkedHashMap<>();
-    public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_STANDING;
-    public static final ForgeConfigSpec.DoubleValue LIMB_THRESHOLD_SNEAKING;
-    public static final ForgeConfigSpec.DoubleValue CRAWL_HEADSHOT_LENGTH;
-    public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_ENABLED;
-    public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_SHOW_IN_CHARTS;
-    public static final ForgeConfigSpec.BooleanValue CRAWL_HITBOX_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue LIMB_FACTOR_DEFAULT;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BURST_BLOCK_ATTACHMENTS;
-    public static final ForgeConfigSpec.BooleanValue LIVING_ENTITY_LIMB_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue LIVING_ENTITY_LIMB_THRESHOLD;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> LIVING_ENTITY_LIMB_EXCLUDED;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_PISTOL;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_RIFLE;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_SNIPER;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_SHOTGUN;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_SMG;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_RPG;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_MG;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_DMR;
-    public static final ForgeConfigSpec.DoubleValue GUN_TYPE_OTHER;
-    public static final ForgeConfigSpec.BooleanValue CREATE_CONTRAPTION_BULLET_COLLISION;
-    public static final ForgeConfigSpec.BooleanValue BULLET_PIERCE_GLASS;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
-    public static final ForgeConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_TRACKING_AFTER_PENETRATION;
-    public static final ForgeConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
-    public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
-    public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
-    public static final ForgeConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
-    public static final ForgeConfigSpec.BooleanValue AUTO_CRAFT_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_BASE_SECONDS;
-    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_TYPE;
-    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_ITEM;
-    public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_COOLDOWN_SECONDS;
-    public static final ForgeConfigSpec.IntValue GUN_SMITH_TABLE_POWER_MAX;
-    public static final ForgeConfigSpec.IntValue GUN_SMITH_TABLE_AUTO_CONSUMPTION;
-    public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
-    public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
-    public static final ForgeConfigSpec.BooleanValue REFITSCREEN_SHOW_RECOLOR_BUTTON;
-    public static final ForgeConfigSpec.BooleanValue REFIT_POS_ALTER_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue REFIT_POS_ALTER_MAX;
-    public static final ForgeConfigSpec.DoubleValue REFIT_POS_ALTER_MIN;
-    public static final ForgeConfigSpec.DoubleValue REFIT_SLOT_SIZE;
-    public static final ForgeConfigSpec.BooleanValue SPREAD_RAMP_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
-    public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_FLAT_INCREMENT;
-    public static final ForgeConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
-    public static final ForgeConfigSpec.IntValue SPREAD_RAMP_DECAY_DELAY_MS;
-    public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_DECAY;
-    public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
-    public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
-    public static final ForgeConfigSpec.BooleanValue PREVENT_SHOOTING_UNDERWATER;
-    public static final ForgeConfigSpec.BooleanValue HIDE_UNAVAILABLE_DEFAULT_SLOTS;
-    public static final ForgeConfigSpec.EnumValue<VirtualAttachmentsMode> VIRTUAL_ATTACHMENTS;
-    public static final ForgeConfigSpec.DoubleValue RECOLOR_HUE_WEIGHT;
-    public static final ForgeConfigSpec.DoubleValue RECOLOR_SATURATION_WEIGHT;
-    public static final ForgeConfigSpec.DoubleValue RECOLOR_LIGHTNESS_WEIGHT;
-    public static final ForgeConfigSpec.BooleanValue BLOCKING_ENABLE;
-    public static final ForgeConfigSpec.BooleanValue BLOCKING_ENTITY_ENABLE;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MAX;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISTANCE_MIN;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_ANGLE;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_BACK_OFF;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_OFFSET_YAW;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_DEFLECTION;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISABLE_FIRE;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_DISABLE_AIMING;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_PISTOL;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_FACING_DUAL_WIELD;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MAX;
-    public static final ForgeConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MIN;
-    public static final ForgeConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
+    public static final ModConfigSpec.BooleanValue PBR_ENABLED;
+    public static final ModConfigSpec.BooleanValue PBR_BLOOM;
+    public static final ModConfigSpec.DoubleValue PBR_REFLECTION;
+    public static final ModConfigSpec.DoubleValue PBR_REFLECTION_AREA;
+    public static final ModConfigSpec.DoubleValue PBR_GLARE_STRENGTH;
+    public static final ModConfigSpec.DoubleValue PBR_EMISSION;
+    public static final ModConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
+    public static final ModConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
+    public static final ModConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
+    public static final ModConfigSpec.BooleanValue PBR_BLOOM_TRACER;
+    public static final ModConfigSpec.BooleanValue PBR_BLOOM_LASER;
+    public static final ModConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
+    public static final ModConfigSpec.DoubleValue MOVEMENT_ROLL_FULL_SPEED;
+    public static final ModConfigSpec.DoubleValue ROTATION_INERTIA_MAX_ANGLE;
+    public static final ModConfigSpec.DoubleValue ROTATION_INERTIA_FOLLOW_SPEED;
+    public static final ModConfigSpec.DoubleValue ROTATION_INERTIA_AIM_MULTIPLIER;
+    private static ModConfigSpec.Builder BUILDER = new ModConfigSpec.Builder();
+    public static final java.util.Map<String, ModConfigSpec> SPECS = new java.util.LinkedHashMap<>();
+    public static final ModConfigSpec.DoubleValue LIMB_THRESHOLD_STANDING;
+    public static final ModConfigSpec.DoubleValue LIMB_THRESHOLD_SNEAKING;
+    public static final ModConfigSpec.DoubleValue CRAWL_HEADSHOT_LENGTH;
+    public static final ModConfigSpec.BooleanValue LIMB_DAMAGE_ENABLED;
+    public static final ModConfigSpec.BooleanValue LIMB_DAMAGE_SHOW_IN_CHARTS;
+    public static final ModConfigSpec.BooleanValue CRAWL_HITBOX_ENABLED;
+    public static final ModConfigSpec.DoubleValue LIMB_FACTOR_DEFAULT;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> BURST_BLOCK_ATTACHMENTS;
+    public static final ModConfigSpec.BooleanValue LIVING_ENTITY_LIMB_ENABLED;
+    public static final ModConfigSpec.DoubleValue LIVING_ENTITY_LIMB_THRESHOLD;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> LIVING_ENTITY_LIMB_EXCLUDED;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_PISTOL;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_RIFLE;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_SNIPER;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_SHOTGUN;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_SMG;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_RPG;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_MG;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_DMR;
+    public static final ModConfigSpec.DoubleValue GUN_TYPE_OTHER;
+    public static final ModConfigSpec.BooleanValue CREATE_CONTRAPTION_BULLET_COLLISION;
+    public static final ModConfigSpec.BooleanValue BULLET_PIERCE_GLASS;
+    public static final ModConfigSpec.BooleanValue DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT;
+    public static final ModConfigSpec.BooleanValue PARCOOL_SLIDE_AS_MOVE_INACCURACY;
+    public static final ModConfigSpec.BooleanValue DISABLE_PARCOOL_CHARGE_JUMP_ANIMATION;
+    public static final ModConfigSpec.BooleanValue DISABLE_TRACKING_AFTER_PENETRATION;
+    public static final ModConfigSpec.DoubleValue PEEK_HEADSHOT_HEIGHT;
+    public static final ModConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
+    public static final ModConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
+    public static final ModConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
+    public static final ModConfigSpec.BooleanValue AUTO_CRAFT_ENABLED;
+    public static final ModConfigSpec.DoubleValue AUTO_CRAFT_BASE_SECONDS;
+    public static final ModConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_TYPE;
+    public static final ModConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_ITEM;
+    public static final ModConfigSpec.DoubleValue AUTO_CRAFT_COOLDOWN_SECONDS;
+    public static final ModConfigSpec.IntValue GUN_SMITH_TABLE_POWER_MAX;
+    public static final ModConfigSpec.IntValue GUN_SMITH_TABLE_AUTO_CONSUMPTION;
+    public static final ModConfigSpec.BooleanValue REFITSCREEN_SHOW_PRESET_BUTTONS;
+    public static final ModConfigSpec.BooleanValue REFITSCREEN_SHOW_SEARCH_BOX;
+    public static final ModConfigSpec.BooleanValue REFITSCREEN_SHOW_RECOLOR_BUTTON;
+    public static final ModConfigSpec.BooleanValue REFIT_POS_ALTER_ENABLED;
+    public static final ModConfigSpec.DoubleValue REFIT_POS_ALTER_MAX;
+    public static final ModConfigSpec.DoubleValue REFIT_POS_ALTER_MIN;
+    public static final ModConfigSpec.DoubleValue REFIT_SLOT_SIZE;
+    public static final ModConfigSpec.BooleanValue SPREAD_RAMP_ENABLED;
+    public static final ModConfigSpec.DoubleValue SPREAD_RAMP_INCREMENT;
+    public static final ModConfigSpec.DoubleValue SPREAD_RAMP_FLAT_INCREMENT;
+    public static final ModConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
+    public static final ModConfigSpec.IntValue SPREAD_RAMP_DECAY_DELAY_MS;
+    public static final ModConfigSpec.DoubleValue SPREAD_RAMP_DECAY;
+    public static final ModConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
+    public static final ModConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
+    public static final ModConfigSpec.BooleanValue PREVENT_SHOOTING_UNDERWATER;
+    public static final ModConfigSpec.BooleanValue HIDE_UNAVAILABLE_DEFAULT_SLOTS;
+    public static final ModConfigSpec.EnumValue<VirtualAttachmentsMode> VIRTUAL_ATTACHMENTS;
+    public static final ModConfigSpec.DoubleValue RECOLOR_HUE_WEIGHT;
+    public static final ModConfigSpec.DoubleValue RECOLOR_SATURATION_WEIGHT;
+    public static final ModConfigSpec.DoubleValue RECOLOR_LIGHTNESS_WEIGHT;
+    public static final ModConfigSpec.BooleanValue BLOCKING_ENABLE;
+    public static final ModConfigSpec.BooleanValue BLOCKING_ENTITY_ENABLE;
+    public static final ModConfigSpec.DoubleValue BLOCKING_DISTANCE_MAX;
+    public static final ModConfigSpec.DoubleValue BLOCKING_DISTANCE_MIN;
+    public static final ModConfigSpec.DoubleValue BLOCKING_ANGLE;
+    public static final ModConfigSpec.DoubleValue BLOCKING_BACK_OFF;
+    public static final ModConfigSpec.DoubleValue BLOCKING_OFFSET_YAW;
+    public static final ModConfigSpec.DoubleValue BLOCKING_DEFLECTION;
+    public static final ModConfigSpec.DoubleValue BLOCKING_DISABLE_FIRE;
+    public static final ModConfigSpec.DoubleValue BLOCKING_DISABLE_AIMING;
+    public static final ModConfigSpec.DoubleValue BLOCKING_FACING;
+    public static final ModConfigSpec.DoubleValue BLOCKING_FACING_PISTOL;
+    public static final ModConfigSpec.DoubleValue BLOCKING_FACING_DUAL_WIELD;
+    public static final ModConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MAX;
+    public static final ModConfigSpec.DoubleValue BLOCKING_SHOT_MULTIPLIER_MIN;
+    public static final ModConfigSpec.IntValue GUN_LIGHT_MAX_LIGHTS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> GUN_LIGHT_DISABLED_GUNS;
     public static final String[] GUN_LIGHT_TYPE_NAMES = {"pistol", "sniper", "rifle", "shotgun", "smg", "rpg", "mg", "dmr"};
     public static final java.util.Map<String, GunLightTypeConfig> GUN_LIGHT_TYPE_CONFIGS = new java.util.LinkedHashMap<>();
     public static final GunLightTypeConfig GUN_LIGHT_MUZZLE_ADJUST;
-    public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
-    public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
-    public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
-    public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH;
-    public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW;
-    public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_MIN_RPM;
-    public static final ForgeConfigSpec.IntValue GUN_LEVEL_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue GUN_LEVEL_BASE_KILLS;
-    public static final ForgeConfigSpec.IntValue GUN_LEVEL_INCREMENT;
-    public static final ForgeConfigSpec.BooleanValue BULLET_RICOCHET_ENABLE;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_MIN_ANGLE;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_MAX_ANGLE;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_CHANCE_MIN;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_CHANCE_MAX;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BULLET_RICOCHET_BLOCK_TAGS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BULLET_RICOCHET_DISABLED_GUNS;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_DAMAGE_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MIN;
-    public static final ForgeConfigSpec.DoubleValue BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MAX;
-    public static final ForgeConfigSpec.BooleanValue BULLET_RICOCHET_TOP_BOTTOM_ENABLE;
-    public static final ForgeConfigSpec.BooleanValue RECOIL_KNOCKBACK_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SNEAK_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SEMI_FACTOR;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> RECOIL_FIRE_RATE_DISABLED_GUNS;
-    public static final ForgeConfigSpec.IntValue REFIT_TOAST_DURATION_MS;
-    public static final ForgeConfigSpec.IntValue REFIT_TOAST_FADE_MS;
-    public static final ForgeConfigSpec.DoubleValue REFIT_BUTTON_OPACITY;
-    public static final ForgeConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MIN;
-    public static final ForgeConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MAX;
-    public static final ForgeConfigSpec.IntValue REFIT_POINT_DEFAULT_CONSUME;
+    public static final ModConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
+    public static final ModConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
+    public static final ModConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
+    public static final ModConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_PITCH;
+    public static final ModConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW;
+    public static final ModConfigSpec.IntValue RECOIL_FIRE_RATE_MIN_RPM;
+    public static final ModConfigSpec.IntValue GUN_LEVEL_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue GUN_LEVEL_BASE_KILLS;
+    public static final ModConfigSpec.IntValue GUN_LEVEL_INCREMENT;
+    public static final ModConfigSpec.BooleanValue BULLET_RICOCHET_ENABLE;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_MIN_ANGLE;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_MAX_ANGLE;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_CHANCE_MIN;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_CHANCE_MAX;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> BULLET_RICOCHET_BLOCK_TAGS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> BULLET_RICOCHET_DISABLED_GUNS;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_DAMAGE_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MIN;
+    public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_REFLECT_ANGLE_RATIO_MAX;
+    public static final ModConfigSpec.BooleanValue BULLET_RICOCHET_TOP_BOTTOM_ENABLE;
+    public static final ModConfigSpec.BooleanValue RECOIL_KNOCKBACK_ENABLED;
+    public static final ModConfigSpec.DoubleValue RECOIL_KNOCKBACK_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue RECOIL_KNOCKBACK_SNEAK_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue RECOIL_KNOCKBACK_SEMI_FACTOR;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> RECOIL_FIRE_RATE_DISABLED_GUNS;
+    public static final ModConfigSpec.IntValue REFIT_TOAST_DURATION_MS;
+    public static final ModConfigSpec.IntValue REFIT_TOAST_FADE_MS;
+    public static final ModConfigSpec.DoubleValue REFIT_BUTTON_OPACITY;
+    public static final ModConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MIN;
+    public static final ModConfigSpec.DoubleValue REFIT_VIEW_ZOOM_MAX;
+    public static final ModConfigSpec.IntValue REFIT_POINT_DEFAULT_CONSUME;
 
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> PENETRATION_BLOCKED_ENTITIES;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DAMAGE_REDUCTION_ENTITIES;
-    public static final ForgeConfigSpec.BooleanValue BULLET_IGNORE_ENTITY_ENABLE;
-    public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
-    public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> AMMO_EMC_BLACKLIST;
-    public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_X;
-    public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_Y;
-    public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_SIZE;
-    public static final ForgeConfigSpec.BooleanValue DYNAMIC_CROSSHAIR_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FACTOR;
-    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FIRE_EXPANSION;
-    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_RECOVER_SECONDS;
-    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_STILL_FACTOR;
-    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_MAX;
-    public static final ForgeConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_MAX_FACTOR;
-    public static final ForgeConfigSpec.BooleanValue BLOCKED_CROSSHAIR_ENABLED;
-    public static final ForgeConfigSpec.IntValue BLOCKED_CROSSHAIR_SIZE;
-    public static final ForgeConfigSpec.BooleanValue GUN_SPELL_ENABLED;
-    public static final ForgeConfigSpec.IntValue GUN_SPELL_COUNT;
-    public static final ForgeConfigSpec.DoubleValue GUN_SPELL_COOLDOWN;
-    public static final ForgeConfigSpec.DoubleValue GUN_SPELL_MANA_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue GUN_SPELL_COOLDOWN_MULTIPLIER;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> PENETRATION_BLOCKED_ENTITIES;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DAMAGE_REDUCTION_ENTITIES;
+    public static final ModConfigSpec.BooleanValue BULLET_IGNORE_ENTITY_ENABLE;
+    public static final ModConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
+    public static final ModConfigSpec.BooleanValue DISABLE_HITBOXES;
+    public static final ModConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> AMMO_EMC_BLACKLIST;
+    public static final ModConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_X;
+    public static final ModConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_Y;
+    public static final ModConfigSpec.IntValue GUN_PACK_BUTTON_SIZE;
+    public static final ModConfigSpec.BooleanValue DYNAMIC_CROSSHAIR_ENABLED;
+    public static final ModConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FACTOR;
+    public static final ModConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_FIRE_EXPANSION;
+    public static final ModConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_RECOVER_SECONDS;
+    public static final ModConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_STILL_FACTOR;
+    public static final ModConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_MAX;
+    public static final ModConfigSpec.DoubleValue DYNAMIC_CROSSHAIR_SPEED_MAX_FACTOR;
+    public static final ModConfigSpec.BooleanValue BLOCKED_CROSSHAIR_ENABLED;
+    public static final ModConfigSpec.IntValue BLOCKED_CROSSHAIR_SIZE;
+    public static final ModConfigSpec.BooleanValue GUN_SPELL_ENABLED;
+    public static final ModConfigSpec.IntValue GUN_SPELL_COUNT;
+    public static final ModConfigSpec.DoubleValue GUN_SPELL_COOLDOWN;
+    public static final ModConfigSpec.DoubleValue GUN_SPELL_MANA_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue GUN_SPELL_COOLDOWN_MULTIPLIER;
 
-    public static final ForgeConfigSpec.BooleanValue GUN_ENCHANTMENT_ENABLED;
-    public static final ForgeConfigSpec.IntValue GUN_ENCHANTMENT_VALUE;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> GUN_ENCHANT_WHITELIST;
-    public static final ForgeConfigSpec.BooleanValue GUN_ENCHANT_IGNORE_CONFLICT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_POWER_BULLET_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_SMITE_BULLET_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_BANE_BULLET_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_IMPALING_BULLET_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_PUNCH_BULLET_KNOCKBACK_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_PUNCH_BULLET_KNOCKBACK_FLAT;
-    public static final ForgeConfigSpec.IntValue ENCH_FLAME_IGNITE_TICKS;
-    public static final ForgeConfigSpec.IntValue ENCH_PIERCE_PER_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_UNBREAKING_NO_CONSUME_CHANCE;
-    public static final ForgeConfigSpec.IntValue ENCH_MENDING_AMMO_PER_KILL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_SHARPNESS_MELEE_DAMAGE;
-    public static final ForgeConfigSpec.DoubleValue ENCH_SWEEPING_DISTANCE_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_KNOCKBACK_MELEE_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_KNOCKBACK_MELEE_FLAT;
-    public static final ForgeConfigSpec.IntValue ENCH_FIRE_ASPECT_MELEE_TICKS;
-    public static final ForgeConfigSpec.IntValue ENCH_STEAL_LIGHTNING_COOLDOWN_MS;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHANNELING_TRIGGER_CHANCE;
-    public static final ForgeConfigSpec.BooleanValue ENCH_CHANNELING_ONLY_THUNDER;
-    public static final ForgeConfigSpec.IntValue ENCH_LOYALTY_RANGE_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_LOYALTY_ANGLE_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_MULTISHOT_EXTRA_COUNT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_MULTISHOT_TRIGGER_CHANCE;
-    public static final ForgeConfigSpec.DoubleValue ENCH_MULTISHOT_SPREAD_ANGLE;
-    public static final ForgeConfigSpec.IntValue ENCH_MULTISHOT_COOLDOWN_MS;
-    public static final ForgeConfigSpec.DoubleValue ENCH_RIPTIDE_SPEED_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_RIPTIDE_DAMAGE_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_QUICK_CHARGE_TIME_REDUCTION;
-    public static final ForgeConfigSpec.DoubleValue ENCH_EFFICIENCY_FIRE_RATE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_EFFICIENCY_BOLT_TIME_REDUCTION_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_OVERLOAD_DAMAGE_PERCENT;
-    public static final ForgeConfigSpec.IntValue ENCH_OVERLOAD_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_ANNIHILATION_DAMAGE_PERCENT;
-    public static final ForgeConfigSpec.IntValue ENCH_ANNIHILATION_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_STABILITY_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_ANTIGRAVITY_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_COIL_SPEED_PERCENT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_COIL_SPREAD_REDUCTION_PERCENT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_COIL_LIGHTNING_CHANCE_PERCENT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_COIL_LIGHTNING_DAMAGE_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_COIL_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_STANDARD_AMMO_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_FORTUNE_HEADSHOT_CHANCE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_NEUROTOXIN_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_NEUROTOXIN_TRIGGER_CHANCE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_NEUROTOXIN_DURATION_TICKS;
-    public static final ForgeConfigSpec.IntValue ENCH_CHAIN_EXPLOSION_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_BASE_CHANCE_PERCENT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_CHANCE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_RADIUS_MIN;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_RADIUS_SCALE_PER_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_DAMAGE_BASE;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_DAMAGE_SCALE_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_PREEMPTIVE_STRIKE_DAMAGE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_COLLECTOR_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_COLLECTOR_DAMAGE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_STANDARD_AMMO_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_EXPLOSION_EXPERT_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_LIFE_LEECH_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_LIFE_LEECH_HEAL_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_SNIPER_ELITE_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_SNIPER_ELITE_HEADSHOT_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_PANDORA_PARADOX_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_NEUROTOXIN_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_CHAIN_EXPLOSION_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_PREEMPTIVE_STRIKE_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_ANNIHILATION_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_COIL_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_ANTIGRAVITY_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_STABILITY_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_OVERLOAD_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_COLLECTOR_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_EXPLOSION_EXPERT_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_LIFE_LEECH_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_SNIPER_ELITE_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_PANDORA_PARADOX_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_SMART_SCOPE_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_SMART_SCOPE_MAX_DISTANCE;
-    public static final ForgeConfigSpec.IntValue ENCH_DEEP_LEARNING_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_DEEP_LEARNING_DAMAGE_PERCENT_PER_GUN_LEVEL_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_EQUALIZER_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_EQUALIZER_TRIGGER_CHANCE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_RANDOM_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_RANDOM_EFFECT_DURATION_TICKS;
-    public static final ForgeConfigSpec.IntValue ENCH_DECAPITATION_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_DECAPITATION_HEADSHOT_BONUS_PERCENT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_SMART_SCOPE_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_DEEP_LEARNING_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_EQUALIZER_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_RANDOM_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_DECAPITATION_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_CHARGE_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_CHARGE_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_ABYSSGAZER_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_ABYSSGAZER_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_DOUBLE_SHOT_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_DOUBLE_SHOT_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_FOCUSED_AMMO_MAX_LEVEL;
-    public static final ForgeConfigSpec.DoubleValue ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_FOCUSED_AMMO_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_ARCANA_EDEN_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_ARCANA_EDEN_ANVIL_MULT;
-    public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_MAX_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_DELAY_MS;
-    public static final ForgeConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
-    public static final ForgeConfigSpec.IntValue ENCH_PATIENCE_ANVIL_MULT;
+    public static final ModConfigSpec.BooleanValue GUN_ENCHANTMENT_ENABLED;
+    public static final ModConfigSpec.IntValue GUN_ENCHANTMENT_VALUE;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> GUN_ENCHANT_WHITELIST;
+    public static final ModConfigSpec.BooleanValue GUN_ENCHANT_IGNORE_CONFLICT;
+    public static final ModConfigSpec.DoubleValue ENCH_POWER_BULLET_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_SMITE_BULLET_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_BANE_BULLET_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_IMPALING_BULLET_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_PUNCH_BULLET_KNOCKBACK_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_PUNCH_BULLET_KNOCKBACK_FLAT;
+    public static final ModConfigSpec.IntValue ENCH_FLAME_IGNITE_TICKS;
+    public static final ModConfigSpec.IntValue ENCH_PIERCE_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_UNBREAKING_NO_CONSUME_CHANCE;
+    public static final ModConfigSpec.IntValue ENCH_MENDING_AMMO_PER_KILL;
+    public static final ModConfigSpec.DoubleValue ENCH_SHARPNESS_MELEE_DAMAGE;
+    public static final ModConfigSpec.DoubleValue ENCH_SWEEPING_DISTANCE_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_KNOCKBACK_MELEE_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_KNOCKBACK_MELEE_FLAT;
+    public static final ModConfigSpec.IntValue ENCH_FIRE_ASPECT_MELEE_TICKS;
+    public static final ModConfigSpec.IntValue ENCH_STEAL_LIGHTNING_COOLDOWN_MS;
+    public static final ModConfigSpec.DoubleValue ENCH_CHANNELING_TRIGGER_CHANCE;
+    public static final ModConfigSpec.BooleanValue ENCH_CHANNELING_ONLY_THUNDER;
+    public static final ModConfigSpec.IntValue ENCH_LOYALTY_RANGE_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_LOYALTY_ANGLE_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_MULTISHOT_EXTRA_COUNT;
+    public static final ModConfigSpec.DoubleValue ENCH_MULTISHOT_TRIGGER_CHANCE;
+    public static final ModConfigSpec.DoubleValue ENCH_MULTISHOT_SPREAD_ANGLE;
+    public static final ModConfigSpec.IntValue ENCH_MULTISHOT_COOLDOWN_MS;
+    public static final ModConfigSpec.DoubleValue ENCH_RIPTIDE_SPEED_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_RIPTIDE_DAMAGE_MULT;
+    public static final ModConfigSpec.DoubleValue ENCH_QUICK_CHARGE_TIME_REDUCTION;
+    public static final ModConfigSpec.DoubleValue ENCH_EFFICIENCY_FIRE_RATE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_EFFICIENCY_BOLT_TIME_REDUCTION_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_OVERLOAD_DAMAGE_PERCENT;
+    public static final ModConfigSpec.IntValue ENCH_OVERLOAD_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_ANNIHILATION_DAMAGE_PERCENT;
+    public static final ModConfigSpec.IntValue ENCH_ANNIHILATION_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_STABILITY_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_ANTIGRAVITY_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_COIL_SPEED_PERCENT;
+    public static final ModConfigSpec.DoubleValue ENCH_COIL_SPREAD_REDUCTION_PERCENT;
+    public static final ModConfigSpec.DoubleValue ENCH_COIL_LIGHTNING_CHANCE_PERCENT;
+    public static final ModConfigSpec.DoubleValue ENCH_COIL_LIGHTNING_DAMAGE_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_COIL_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_STANDARD_AMMO_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_FORTUNE_HEADSHOT_CHANCE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_NEUROTOXIN_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_NEUROTOXIN_TRIGGER_CHANCE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_NEUROTOXIN_DURATION_TICKS;
+    public static final ModConfigSpec.IntValue ENCH_CHAIN_EXPLOSION_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_BASE_CHANCE_PERCENT;
+    public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_CHANCE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_RADIUS_MIN;
+    public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_RADIUS_SCALE_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_DAMAGE_BASE;
+    public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_DAMAGE_SCALE_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_PREEMPTIVE_STRIKE_DAMAGE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_COLLECTOR_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_COLLECTOR_DAMAGE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_STANDARD_AMMO_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_EXPLOSION_EXPERT_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_LIFE_LEECH_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_LIFE_LEECH_HEAL_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_SNIPER_ELITE_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_SNIPER_ELITE_HEADSHOT_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_PANDORA_PARADOX_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_NEUROTOXIN_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_CHAIN_EXPLOSION_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_PREEMPTIVE_STRIKE_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_ANNIHILATION_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_COIL_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_ANTIGRAVITY_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_STABILITY_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_OVERLOAD_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_COLLECTOR_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_EXPLOSION_EXPERT_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_LIFE_LEECH_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_SNIPER_ELITE_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_PANDORA_PARADOX_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_SMART_SCOPE_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_SMART_SCOPE_MAX_DISTANCE;
+    public static final ModConfigSpec.IntValue ENCH_DEEP_LEARNING_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_DEEP_LEARNING_DAMAGE_PERCENT_PER_GUN_LEVEL_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_EQUALIZER_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_EQUALIZER_TRIGGER_CHANCE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_RANDOM_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_RANDOM_EFFECT_DURATION_TICKS;
+    public static final ModConfigSpec.IntValue ENCH_DECAPITATION_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_DECAPITATION_HEADSHOT_BONUS_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_SMART_SCOPE_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_DEEP_LEARNING_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_EQUALIZER_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_RANDOM_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_DECAPITATION_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_CHARGE_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_CHARGE_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_ABYSSGAZER_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_ABYSSGAZER_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_DOUBLE_SHOT_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_DOUBLE_SHOT_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_FOCUSED_AMMO_MAX_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_FOCUSED_AMMO_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_ARCANA_EDEN_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_ARCANA_EDEN_ANVIL_MULT;
+    public static final ModConfigSpec.IntValue ENCH_PATIENCE_MAX_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_PATIENCE_DELAY_MS;
+    public static final ModConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
+    public static final ModConfigSpec.IntValue ENCH_PATIENCE_ANVIL_MULT;
 
-    public static final ForgeConfigSpec.BooleanValue AIMING_STAMINA_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MAX;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_RECOVERY;
-    public static final ForgeConfigSpec.IntValue AIMING_STAMINA_RECOVERY_DELAY_MS;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MIN_TO_AIM;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_HOLD_BREATH_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_WEIGHT_PER_KG;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_AMPLITUDE;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_SPEED;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_LOW_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_HOLD_BREATH_LOW_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_SNEAK_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SWAY_CRAWL_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_MELEE_COST;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_SHOOT_COST;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_LR_MELEE_LIGHT_COST;
-    public static final ForgeConfigSpec.DoubleValue AIMING_STAMINA_LR_MELEE_HEAVY_COST;
-    public static final ForgeConfigSpec.IntValue AIMING_STAMINA_SWAY_CALM_MS;
-    public static final ForgeConfigSpec.EnumValue<AimingStaminaBarMode> AIMING_STAMINA_BAR_MODE;
+    public static final ModConfigSpec.BooleanValue AIMING_STAMINA_ENABLED;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_MAX;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_RECOVERY;
+    public static final ModConfigSpec.IntValue AIMING_STAMINA_RECOVERY_DELAY_MS;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_MIN_TO_AIM;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_HOLD_BREATH_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_WEIGHT_PER_KG;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SWAY_AMPLITUDE;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SWAY_SPEED;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SWAY_LOW_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SWAY_HOLD_BREATH_LOW_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SWAY_SNEAK_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SWAY_CRAWL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_MELEE_COST;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_SHOOT_COST;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_LR_MELEE_LIGHT_COST;
+    public static final ModConfigSpec.DoubleValue AIMING_STAMINA_LR_MELEE_HEAVY_COST;
+    public static final ModConfigSpec.IntValue AIMING_STAMINA_SWAY_CALM_MS;
+    public static final ModConfigSpec.EnumValue<AimingStaminaBarMode> AIMING_STAMINA_BAR_MODE;
 
-    public static final ForgeConfigSpec.BooleanValue STAMINA_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_MAX;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_RECOVERY;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_CONSUMPTION_MULTIPLIER;
-    public static final ForgeConfigSpec.IntValue STAMINA_RECOVERY_DELAY_MS;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_WALK_RECOVERY_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_JUMP_COST;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_SPRINT_CONSUMPTION_PER_SECOND;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_WEIGHT_CONSUMPTION_PER_KG;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_EXHAUSTION_END;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_EXHAUSTION_RECOVERY_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue STAMINA_SLIDE_COST;
-    public static final ForgeConfigSpec.EnumValue<AimingStaminaBarMode> STAMINA_BAR_MODE;
+    public static final ModConfigSpec.BooleanValue STAMINA_ENABLED;
+    public static final ModConfigSpec.DoubleValue STAMINA_MAX;
+    public static final ModConfigSpec.DoubleValue STAMINA_RECOVERY;
+    public static final ModConfigSpec.DoubleValue STAMINA_CONSUMPTION_MULTIPLIER;
+    public static final ModConfigSpec.IntValue STAMINA_RECOVERY_DELAY_MS;
+    public static final ModConfigSpec.DoubleValue STAMINA_WALK_RECOVERY_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue STAMINA_JUMP_COST;
+    public static final ModConfigSpec.DoubleValue STAMINA_SPRINT_CONSUMPTION_PER_SECOND;
+    public static final ModConfigSpec.DoubleValue STAMINA_WEIGHT_CONSUMPTION_PER_KG;
+    public static final ModConfigSpec.DoubleValue STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue STAMINA_EXHAUSTION_END;
+    public static final ModConfigSpec.DoubleValue STAMINA_EXHAUSTION_RECOVERY_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue STAMINA_SLIDE_COST;
+    public static final ModConfigSpec.EnumValue<AimingStaminaBarMode> STAMINA_BAR_MODE;
 
-    public static final ForgeConfigSpec.BooleanValue GUN_BOTTLE_ENABLED;
-    public static final ForgeConfigSpec.IntValue GUN_BOTTLE_EXP_PER_BOTTLE;
-    public static final ForgeConfigSpec.IntValue GUN_BOTTLE_COST;
+    public static final ModConfigSpec.BooleanValue GUN_BOTTLE_ENABLED;
+    public static final ModConfigSpec.IntValue GUN_BOTTLE_EXP_PER_BOTTLE;
+    public static final ModConfigSpec.IntValue GUN_BOTTLE_COST;
 
-    public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_CTRL_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_ALT_MULTIPLIER;
-    public static final ForgeConfigSpec.BooleanValue STEPLESS_ZOOM_GLOBAL_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue STEPLESS_ZOOM_GLOBAL_SPEED;
-    public static final ForgeConfigSpec.BooleanValue AIM_BLUR_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_RANGE;
-    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_FAR_DISTANCE;
-    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_MIN_FACTOR;
-    public static final ForgeConfigSpec.BooleanValue SUPPRESSION_ENABLED;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DETECTION_RANGE;
-    public static final ForgeConfigSpec.BooleanValue SUPPRESSION_INCLUDE_OWN_BULLETS;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_EXPOSURE_STRENGTH;
-    public static final ForgeConfigSpec.IntValue SUPPRESSION_EXPOSURE_DURATION_MS;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_BLUR_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_BLUR_RANGE;
-    public static final ForgeConfigSpec.IntValue SUPPRESSION_BLUR_DURATION_MS;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DARKEN_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DARKEN_RANGE;
-    public static final ForgeConfigSpec.IntValue SUPPRESSION_DARKEN_DURATION_MS;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue STEPLESS_ZOOM_ENABLED;
+    public static final ModConfigSpec.DoubleValue STEPLESS_ZOOM_CTRL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue STEPLESS_ZOOM_ALT_MULTIPLIER;
+    public static final ModConfigSpec.BooleanValue STEPLESS_ZOOM_GLOBAL_ENABLED;
+    public static final ModConfigSpec.DoubleValue STEPLESS_ZOOM_GLOBAL_SPEED;
+    public static final ModConfigSpec.BooleanValue AIM_BLUR_ENABLED;
+    public static final ModConfigSpec.DoubleValue AIM_BLUR_RANGE;
+    public static final ModConfigSpec.DoubleValue AIM_BLUR_STRENGTH;
+    public static final ModConfigSpec.DoubleValue AIM_BLUR_FAR_DISTANCE;
+    public static final ModConfigSpec.DoubleValue AIM_BLUR_MIN_FACTOR;
+    public static final ModConfigSpec.BooleanValue SUPPRESSION_ENABLED;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_DETECTION_RANGE;
+    public static final ModConfigSpec.BooleanValue SUPPRESSION_INCLUDE_OWN_BULLETS;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_EXPOSURE_STRENGTH;
+    public static final ModConfigSpec.IntValue SUPPRESSION_EXPOSURE_DURATION_MS;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_BLUR_STRENGTH;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_BLUR_RANGE;
+    public static final ModConfigSpec.IntValue SUPPRESSION_BLUR_DURATION_MS;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_DARKEN_STRENGTH;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_DARKEN_RANGE;
+    public static final ModConfigSpec.IntValue SUPPRESSION_DARKEN_DURATION_MS;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER;
 
-    public static final ForgeConfigSpec.BooleanValue DUAL_WIELD_ALLOW_OTHER_GUN_TYPES;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_TYPES;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_GUNS;
-    public static final ForgeConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_DENIED_GUNS;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RECOIL_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_INACCURACY_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_LEFT_X_OFFSET;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_RIGHT_X_OFFSET;
-    public static final ForgeConfigSpec.DoubleValue DUAL_WIELD_MELEE_SWITCH_PERCENT;
+    public static final ModConfigSpec.BooleanValue DUAL_WIELD_ALLOW_OTHER_GUN_TYPES;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_TYPES;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_ALLOWED_GUNS;
+    public static final ModConfigSpec.ConfigValue<List<? extends String>> DUAL_WIELD_DENIED_GUNS;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_RECOIL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_INACCURACY_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_RECOIL_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_FOCUS_AIM_INACCURACY_MULTIPLIER;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_LEFT_X_OFFSET;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_RIGHT_X_OFFSET;
+    public static final ModConfigSpec.DoubleValue DUAL_WIELD_MELEE_SWITCH_PERCENT;
 
     static {
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("gun_level");
         GUN_LEVEL_MAX_LEVEL = BUILDER
                 .comment("枪械的等级上限。默认值：500")
@@ -384,7 +383,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("gun_level", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("limb_damage_multiplier");
 
         LIMB_DAMAGE_ENABLED = BUILDER
@@ -458,7 +457,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("limb_damage_multiplier", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("recoil_modifier");
         RECOIL_FIRE_RATE_REDUCTION_ENABLED = BUILDER
                 .comment("是否启用首发后坐力倍率。默认值：false")
@@ -485,7 +484,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("recoil_modifier", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("inaccuracy_modifier");
         SPREAD_RAMP_ENABLED = BUILDER
                 .comment("是否启用连射惩罚。默认值：false")
@@ -514,7 +513,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("inaccuracy_modifier", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("bullet_ricochet");
         BULLET_RICOCHET_ENABLE = BUILDER
                 .comment("是否启用跳弹。默认值：true")
@@ -554,7 +553,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("bullet_ricochet", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("recoil_knockback");
         RECOIL_KNOCKBACK_ENABLED = BUILDER
                 .comment("是否启用开火击退。默认值：false")
@@ -592,7 +591,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("recoil_knockback", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("gun_light");
         GUN_LIGHT_MAX_LIGHTS = BUILDER
                 .comment("枪械动态光照的最大同时存在光源数量。默认值：1024")
@@ -615,7 +614,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("gun_light", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("gun_spell");
         GUN_SPELL_ENABLED = BUILDER
                 .comment("是否允许通过奥术铁砧为枪械注入 Iron's Spells 'n Spellbooks 的法术。",
@@ -636,7 +635,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("gun_spell", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("stepless_zoom");
 
         STEPLESS_ZOOM_ENABLED = BUILDER
@@ -659,7 +658,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("stepless_zoom", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("dynamic_crosshair");
         DYNAMIC_CROSSHAIR_ENABLED = BUILDER
                 .comment("是否启用动态准星。默认值：true")
@@ -691,7 +690,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("dynamic_crosshair", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("refit");
 
         REFIT_POS_ALTER_ENABLED = BUILDER
@@ -766,7 +765,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("refit", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("auto_craft");
         AUTO_CRAFT_ENABLED = BUILDER
                 .comment("是否开启工作台自动合成功能。默认值：true")
@@ -792,7 +791,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("auto_craft", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("blocking");
         BLOCKING_ENABLE = BUILDER
                 .comment("是否启用方块阻挡开火。默认值：true")
@@ -845,7 +844,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("blocking", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("compat");
         CREATE_CONTRAPTION_BULLET_COLLISION = BUILDER
                 .comment("是否让 TaCZ 子弹被机械动力动态结构阻挡。默认值：true",
@@ -908,7 +907,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("compat", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("gun_enchantment");
         GUN_ENCHANTMENT_ENABLED = BUILDER
                 .comment("是否启用枪械附魔。默认值：true")
@@ -1400,7 +1399,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("gun_enchantment", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("aiming_stamina");
         AIMING_STAMINA_ENABLED = BUILDER
                 .comment("是否启用上肢耐力系统。默认值：true")
@@ -1470,7 +1469,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("aiming_stamina", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("stamina");
         STAMINA_ENABLED = BUILDER
                 .comment("是否启用耐力系统。默认值：false")
@@ -1517,7 +1516,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("stamina", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("dual_wield");
         DUAL_WIELD_ALLOW_OTHER_GUN_TYPES = BUILDER
                 .comment("是否允许所有枪械双持。默认值：false")
@@ -1564,7 +1563,7 @@ public class Config {
         BUILDER.pop();
         SPECS.put("dual_wield", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         MOVEMENT_ROLL_MAX_ANGLE = BUILDER
                 .comment("左右移动时枪械桶滚的最大角度。默认值：15.0")
                 .defineInRange("max_movement_roll_angle", 15.0, 0.0, 45.0);
@@ -1615,7 +1614,7 @@ public class Config {
                 .define("bloom_tracer", false);
         SPECS.put("visual_effect", BUILDER.build());
 
-        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER = new ModConfigSpec.Builder();
         BUILDER.push("aim_blur");
         AIM_BLUR_ENABLED = BUILDER
                 .comment("是否启用开镜模糊。默认值：false")
@@ -1694,22 +1693,22 @@ public class Config {
 
     /** 某种枪械类型的全局光照值(data 中未配置 light 的该类型枪械使用; time 为 0 表示该类不发光)。 */
     public static final class GunLightTypeConfig {
-        public final ForgeConfigSpec.IntValue fireTime;
-        public final ForgeConfigSpec.IntValue fireLevelMax;
-        public final ForgeConfigSpec.IntValue fireLevelMin;
-        public final ForgeConfigSpec.IntValue explosionTime;
-        public final ForgeConfigSpec.IntValue explosionLevelMax;
-        public final ForgeConfigSpec.IntValue explosionLevelMin;
-        public final ForgeConfigSpec.IntValue bulletTime;
-        public final ForgeConfigSpec.IntValue bulletLevelMax;
-        public final ForgeConfigSpec.IntValue bulletLevelMin;
+        public final ModConfigSpec.IntValue fireTime;
+        public final ModConfigSpec.IntValue fireLevelMax;
+        public final ModConfigSpec.IntValue fireLevelMin;
+        public final ModConfigSpec.IntValue explosionTime;
+        public final ModConfigSpec.IntValue explosionLevelMax;
+        public final ModConfigSpec.IntValue explosionLevelMin;
+        public final ModConfigSpec.IntValue bulletTime;
+        public final ModConfigSpec.IntValue bulletLevelMax;
+        public final ModConfigSpec.IntValue bulletLevelMin;
 
-        GunLightTypeConfig(ForgeConfigSpec.Builder builder) {
+        GunLightTypeConfig(ModConfigSpec.Builder builder) {
             this(builder, false);
         }
 
         /** adjust=true 时为增量调整(可为负), false 时为该类型的绝对值。 */
-        GunLightTypeConfig(ForgeConfigSpec.Builder builder, boolean adjust) {
+        GunLightTypeConfig(ModConfigSpec.Builder builder, boolean adjust) {
             int timeMin = adjust ? -60000 : 0;
             int levelMin = adjust ? -15 : 0;
             this.fireTime = builder
@@ -1753,7 +1752,7 @@ public class Config {
 
     /** Save all per-section config files. */
     public static void saveAll() {
-        for (ForgeConfigSpec spec : SPECS.values()) {
+        for (ModConfigSpec spec : SPECS.values()) {
             spec.save();
         }
     }

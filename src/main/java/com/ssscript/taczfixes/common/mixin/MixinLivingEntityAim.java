@@ -26,7 +26,7 @@ public class MixinLivingEntityAim {
                 com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager.resolveAimingStamina(shooter.getMainHandItem());
         float threshold = aimCfg.min_stamina_to_aim.floatValue();
         if (threshold <= 0f) return;
-        float max = (float) shooter.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
+        float max = (float) shooter.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE);
         if (AimingStaminaState.getStamina(shooter.getUUID(), max) < threshold) {
             ci.cancel();
         }

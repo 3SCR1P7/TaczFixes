@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.network.PacketDistributor;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.network.ServerMessageStamina;
 import com.ssscript.taczfixes.common.config.Config;
@@ -8,32 +9,33 @@ import com.ssscript.taczfixes.common.util.ParCoolStaminaHelper;
 import com.ssscript.taczfixes.common.util.StaminaHelper;
 import com.ssscript.taczfixes.common.util.StaminaState;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.core.Holder;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
+import net.minecraft.resources.ResourceLocation;
 import java.util.UUID;
 
 /** 服务端: 耐力消耗(原版疾跑/游泳/跳跃/ParCool)、恢复、同步。 */
 public class StaminaHandler {
 
-    private static final UUID MAX_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f11");
-    private static final UUID RECOVERY_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f12");
-    private static final UUID CONSUMPTION_MODIFIER_ID = UUID.fromString("6b3f5d1e-8a2c-4e6f-9d10-2c7a4b8e5f13");
+    private static final ResourceLocation MAX_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("taczfixes", "max_modifier_id");
+    private static final ResourceLocation RECOVERY_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("taczfixes", "recovery_modifier_id");
+    private static final ResourceLocation CONSUMPTION_MODIFIER_ID = ResourceLocation.fromNamespaceAndPath("taczfixes", "consumption_modifier_id");
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        if (!(event.player instanceof ServerPlayer player)) return;
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false) return;
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!Config.STAMINA_ENABLED.get()) return;
 
         UUID uuid = player.getUUID();
-        float max = (float) player.getAttributeValue(TaczFixesMod.STAMINA_ATTRIBUTE.get());
+        float max = (float) player.getAttributeValue(TaczFixesMod.STAMINA_ATTRIBUTE);
         if (max <= 0f) max = 1f;
-        float recovery = (float) player.getAttributeValue(TaczFixesMod.STAMINA_RECOVERY_ATTRIBUTE.get());
+        float recovery = (float) player.getAttributeValue(TaczFixesMod.STAMINA_RECOVERY_ATTRIBUTE);
         long gameTime = player.level().getGameTime();
         float stamina = StaminaState.getStamina(uuid, max);
         if (stamina > max) stamina = max;
@@ -87,7 +89,7 @@ public class StaminaHandler {
         if (Float.isNaN(lastSynced) || Math.abs(lastSynced - stamina) > 0.005f) {
             StaminaState.setLastSynced(uuid, stamina);
             NetworkHandler.CHANNEL.send(
-                    net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
+                    PacketDistributor.PLAYER.with(() -> player),
                     new ServerMessageStamina(stamina, max, StaminaState.isExhausted(uuid)));
         }
     }
@@ -96,10 +98,10 @@ public class StaminaHandler {
     public void onPlayerLoggedIn(PlayerEvent.PlayerLoggedInEvent event) {
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         applyConfigModifiers(player);
-        float max = (float) player.getAttributeValue(TaczFixesMod.STAMINA_ATTRIBUTE.get());
+        float max = (float) player.getAttributeValue(TaczFixesMod.STAMINA_ATTRIBUTE);
         StaminaState.setStamina(player.getUUID(), max);
         NetworkHandler.CHANNEL.send(
-                net.minecraftforge.network.PacketDistributor.PLAYER.with(() -> player),
+                PacketDistributor.PLAYER.with(() -> player),
                 new ServerMessageStamina(max, max, false));
     }
 
@@ -117,25 +119,25 @@ public class StaminaHandler {
     }
 
     private static void applyConfigModifiers(ServerPlayer player) {
-        applyModifier(player, TaczFixesMod.STAMINA_ATTRIBUTE.get(), MAX_MODIFIER_ID, Config.STAMINA_MAX.get());
-        applyModifier(player, TaczFixesMod.STAMINA_RECOVERY_ATTRIBUTE.get(), RECOVERY_MODIFIER_ID,
+        applyModifier(player, TaczFixesMod.STAMINA_ATTRIBUTE, MAX_MODIFIER_ID, Config.STAMINA_MAX.get());
+        applyModifier(player, TaczFixesMod.STAMINA_RECOVERY_ATTRIBUTE, RECOVERY_MODIFIER_ID,
                 Config.STAMINA_RECOVERY.get());
-        applyModifier(player, TaczFixesMod.STAMINA_CONSUMPTION_ATTRIBUTE.get(), CONSUMPTION_MODIFIER_ID,
+        applyModifier(player, TaczFixesMod.STAMINA_CONSUMPTION_ATTRIBUTE, CONSUMPTION_MODIFIER_ID,
                 Config.STAMINA_CONSUMPTION_MULTIPLIER.get());
     }
 
-    private static void applyModifier(ServerPlayer player, Attribute attribute, UUID id, double configured) {
+    private static void applyModifier(ServerPlayer player, Holder<Attribute> attribute, ResourceLocation id, double configured) {
         AttributeInstance instance = player.getAttribute(attribute);
         if (instance == null) return;
         double delta = configured - instance.getBaseValue();
         AttributeModifier existing = instance.getModifier(id);
         if (existing != null) {
-            if (Math.abs(existing.getAmount() - delta) < 1.0E-6) return;
+            if (Math.abs(existing.amount() - delta) < 1.0E-6) return;
             instance.removeModifier(existing);
         }
         if (Math.abs(delta) > 1.0E-6) {
-            instance.addTransientModifier(new AttributeModifier(id, "taczfixes_config_default", delta,
-                    AttributeModifier.Operation.ADDITION));
+            instance.addTransientModifier(new AttributeModifier(id, delta,
+                    AttributeModifier.Operation.ADD_VALUE));
         }
     }
 

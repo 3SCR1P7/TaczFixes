@@ -11,8 +11,8 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.HumanoidArm;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.Pose;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 public final class DualThirdPersonArmPose {
@@ -50,7 +50,7 @@ public final class DualThirdPersonArmPose {
         leftArm.yRot = (2.0f * head.yRot) - rightArm.yRot;
         leftArm.zRot = -rightArm.zRot;
         if (entity.swinging && entity.swingingArm == InteractionHand.OFF_HAND) {
-            float attack = entity.getAttackAnim(Minecraft.getInstance().getFrameTime());
+            float attack = entity.getAttackAnim(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
             if (attack > 0.0F) {
                 float f1 = 1.0F - attack;
                 f1 *= f1;

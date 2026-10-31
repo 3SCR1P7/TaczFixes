@@ -6,7 +6,7 @@ import com.ssscript.taczfixes.client.hud.CustomHudManager;
 import com.ssscript.taczfixes.client.hud.CustomHudRenderer;
 import com.tacz.guns.client.gui.overlay.HeatBarOverlay;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraftforge.client.gui.overlay.ForgeGui;
+import net.minecraft.client.DeltaTracker;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -24,8 +24,9 @@ public class MixinHeatBarOverlayCustomHud {
     private boolean taczfixes$heatBarShifted = false;
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$shiftHeatBar(ForgeGui gui, GuiGraphics graphics, float partialTick,
-                                        int width, int height, CallbackInfo ci) {
+    private void taczfixes$shiftHeatBar(GuiGraphics graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
+        int width = graphics.guiWidth();
+        int height = graphics.guiHeight();
         this.taczfixes$heatBarShifted = false;
         CustomHudDefinition def = CustomHudManager.activeHud();
         if (def == null) return;
@@ -50,8 +51,7 @@ public class MixinHeatBarOverlayCustomHud {
     }
 
     @Inject(method = "render", at = @At("RETURN"), remap = false)
-    private void taczfixes$restoreHeatBar(ForgeGui gui, GuiGraphics graphics, float partialTick,
-                                          int width, int height, CallbackInfo ci) {
+    private void taczfixes$restoreHeatBar(GuiGraphics graphics, DeltaTracker deltaTracker, CallbackInfo ci) {
         if (this.taczfixes$heatBarShifted) {
             graphics.pose().popPose();
             this.taczfixes$heatBarShifted = false;

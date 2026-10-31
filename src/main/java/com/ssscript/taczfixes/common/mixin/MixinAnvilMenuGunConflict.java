@@ -5,8 +5,11 @@ import com.tacz.guns.api.item.IGun;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.inventory.AnvilMenu;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.core.Holder;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
+import net.minecraft.world.item.enchantment.ItemEnchantments;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -14,7 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
+import net.neoforged.fml.util.ObfuscationReflectionHelper;
 
 import java.lang.reflect.Field;
 import java.util.Map;
@@ -32,7 +35,7 @@ public class MixinAnvilMenuGunConflict {
         try {
             if (taczfixes$costField == null) {
                 try {
-                    taczfixes$costField = ObfuscationReflectionHelper.findField(AnvilMenu.class, "f_39002_");
+                    taczfixes$costField = ObfuscationReflectionHelper.findField(AnvilMenu.class, "cost");
                 } catch (Throwable ignored) {
                     taczfixes$costField = ObfuscationReflectionHelper.findField(AnvilMenu.class, "cost");
                 }
@@ -63,16 +66,6 @@ public class MixinAnvilMenuGunConflict {
     }
 
     @Redirect(method = "createResult",
-            at = @At(value = "INVOKE",
-                    target = "Lnet/minecraft/world/item/enchantment/Enchantment;getRarity()Lnet/minecraft/world/item/enchantment/Enchantment$Rarity;"))
-    private Enchantment.Rarity taczfixes$gunEnchantmentRarityForAnvilCost(Enchantment enchantment) {
-        if (GunEnchantmentHelper.isGunEnchanting() && GunEnchantmentHelper.isConfiguredAnvilEnchantment(enchantment)) {
-            return Enchantment.Rarity.COMMON;
-        }
-        return enchantment.getRarity();
-    }
-
-    @Redirect(method = "createResult",
             at = @At(value = "FIELD",
                     target = "Lnet/minecraft/world/entity/player/Abilities;instabuild:Z",
                     opcode = Opcodes.GETFIELD))
@@ -86,7 +79,7 @@ public class MixinAnvilMenuGunConflict {
         if (abilities.instabuild) {
             return true;
         }
-        int gunLevel = target.getOrCreateTag().getInt("GunLevel");
+        int gunLevel = GunEnchantmentHelper.getGunLevel(target);
         return menu.getCost() <= gunLevel + 39;
     }
 
@@ -101,27 +94,28 @@ public class MixinAnvilMenuGunConflict {
             GunEnchantmentHelper.setGunEnchanting(false);
             return;
         }
-        Map<Enchantment, Integer> sacrificeEnchants = EnchantmentHelper.getEnchantments(sacrifice);
-        Map<Enchantment, Integer> targetEnchants = EnchantmentHelper.getEnchantments(target);
-        Map<Enchantment, Integer> resultEnchants = EnchantmentHelper.getEnchantments(result);
+        ItemEnchantments sacrificeEnchants = EnchantmentHelper.getEnchantmentsForCrafting(sacrifice);
+        ItemEnchantments targetEnchants = EnchantmentHelper.getEnchantmentsForCrafting(target);
+        ItemEnchantments resultEnchants = EnchantmentHelper.getEnchantmentsForCrafting(result);
         int bonus = 0;
-        for (Map.Entry<Enchantment, Integer> entry : sacrificeEnchants.entrySet()) {
-            Enchantment enchantment = entry.getKey();
-            int multiplier = GunEnchantmentHelper.getAnvilCostMultiplier(enchantment);
-            if (multiplier <= 1 || !resultEnchants.containsKey(enchantment)) {
+        for (var entry : sacrificeEnchants.entrySet()) {
+            Holder<Enchantment> enchantment = entry.getKey();
+            ResourceKey<Enchantment> key = enchantment.unwrapKey().orElse(null);
+            int multiplier = GunEnchantmentHelper.getAnvilCostMultiplier(key);
+            if (multiplier <= 1 || resultEnchants.getLevel(enchantment) <= 0) {
                 continue;
             }
-            int sacrificeLevel = entry.getValue();
-            int targetLevel = targetEnchants.getOrDefault(enchantment, 0);
+            int sacrificeLevel = entry.getIntValue();
+            int targetLevel = targetEnchants.getLevel(enchantment);
             int mergedLevel = sacrificeLevel == targetLevel ? sacrificeLevel + 1 : Math.max(sacrificeLevel, targetLevel);
-            mergedLevel = Math.min(mergedLevel, enchantment.getMaxLevel());
+            mergedLevel = Math.min(mergedLevel, enchantment.value().getMaxLevel());
             bonus += (multiplier - 1) * mergedLevel;
         }
         if (bonus > 0) {
             taczfixes$setCost((AnvilMenu) (Object) this, taczfixes$getCost((AnvilMenu) (Object) this) + bonus);
         }
         if (!this.taczfixes$gunCreative
-                && taczfixes$getCost((AnvilMenu) (Object) this) > target.getOrCreateTag().getInt("GunLevel") + 39) {
+                && taczfixes$getCost((AnvilMenu) (Object) this) > GunEnchantmentHelper.getGunLevel(target) + 39) {
             menu.getSlot(2).set(ItemStack.EMPTY);
         }
         this.taczfixes$gunCreative = false;

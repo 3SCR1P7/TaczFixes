@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.handler;
 
+import com.ssscript.taczfixes.common.network.PacketDistributor;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
@@ -20,7 +21,6 @@ import io.redspace.ironsspellbooks.capabilities.magic.TargetEntityCastData;
 import io.redspace.ironsspellbooks.entity.mobs.IMagicSummon;
 import io.redspace.ironsspellbooks.network.casting.CancelCastPacket;
 import io.redspace.ironsspellbooks.network.casting.UpdateCastingStatePacket;
-import io.redspace.ironsspellbooks.setup.PacketDistributor;
 import io.redspace.ironsspellbooks.spells.blood.SacrificeSpell;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -35,8 +35,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /** 枪械被注入 Iron's Spellbooks 法术后, 开火时随机发动一个满足条件的法术; 需要锁定目标的法术在子弹命中实体时发动。 */
 public class GunSpellHandler {
@@ -190,8 +189,8 @@ public class GunSpellHandler {
 
     /** 持续施法期间切枪/换手/切换物品栏时终止施法(开火造成的自身变化不受影响)。 */
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
         ContinuousCastGuard.Guard guard = ContinuousCastGuard.get(player);
@@ -312,7 +311,7 @@ public class GunSpellHandler {
             spell.onServerPreCast(player.level(), data.getLevel(), player, magicData);
             ContinuousCastGuard.track(player, offhand, castingGunId);
             // 只同步施法状态(不发 OnCastStartedPacket): 客户端据此渲染持续法术的光束等, 但不播放施法动画。
-            PacketDistributor.sendToPlayer(player, new UpdateCastingStatePacket(
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayer(player, new UpdateCastingStatePacket(
                     spell.getSpellId(), data.getLevel(), duration, CastSource.SWORD, MAIN_HAND));
             return true;
         }

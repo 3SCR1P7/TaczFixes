@@ -26,6 +26,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
+import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -33,7 +34,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.LightningBolt;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.AttributeModifier;
@@ -50,12 +51,10 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingHurtEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.items.ItemHandlerHelper;
-import net.minecraftforge.registries.ForgeRegistries;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.items.ItemHandlerHelper;
 
 import java.util.List;
 import java.util.Map;
@@ -65,8 +64,8 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class GunEnchantmentHandler {
-    private static final UUID LOYALTY_RANGE_UUID = UUID.fromString("4a6e9c9f-8b3e-4f5e-9f0a-1b2c3d4e5f01");
-    private static final UUID LOYALTY_ANGLE_UUID = UUID.fromString("4a6e9c9f-8b3e-4f5e-9f0a-1b2c3d4e5f02");
+    private static final ResourceLocation LOYALTY_RANGE_UUID = ResourceLocation.fromNamespaceAndPath("taczfixes", "loyalty_range");
+    private static final ResourceLocation LOYALTY_ANGLE_UUID = ResourceLocation.fromNamespaceAndPath("taczfixes", "loyalty_angle");
 
     private static final Map<UUID, Long> LAST_LIGHTNING = new ConcurrentHashMap<>();
 
@@ -82,7 +81,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
-        int power = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.POWER_ARROWS);
+        int power = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.POWER);
         int smite = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.SMITE);
         int bane = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.BANE_OF_ARTHROPODS);
         int impaling = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.IMPALING);
@@ -91,10 +90,10 @@ public class GunEnchantmentHandler {
         if (power > 0) {
             mult += Config.ENCH_POWER_BULLET_MULT.get().floatValue() * power;
         }
-        if (smite > 0 && GunEnchantmentHelper.isUndead(target.getMobType())) {
+        if (smite > 0 && GunEnchantmentHelper.isUndead(target.getType())) {
             mult += Config.ENCH_SMITE_BULLET_MULT.get().floatValue() * smite;
         }
-        if (bane > 0 && GunEnchantmentHelper.isArthropod(target.getMobType())) {
+        if (bane > 0 && GunEnchantmentHelper.isArthropod(target.getType())) {
             mult += Config.ENCH_BANE_BULLET_MULT.get().floatValue() * bane;
         }
         if (impaling > 0 && GunEnchantmentHelper.isAquatic(target)) {
@@ -168,7 +167,7 @@ public class GunEnchantmentHandler {
         if (gun.isEmpty() || !(gun.getItem() instanceof IGun)) {
             return;
         }
-        int level = GunEnchantmentHelper.getLevel(gun, Enchantments.BLOCK_FORTUNE);
+        int level = GunEnchantmentHelper.getLevel(gun, Enchantments.FORTUNE);
         if (level <= 0 || event.isHeadShot()) {
             return;
         }
@@ -229,7 +228,7 @@ public class GunEnchantmentHandler {
             return;
         }
         long otherCount = 0L;
-        for (var enchantment : EnchantmentHelper.getEnchantments(gun).keySet()) {
+        for (var enchantment : EnchantmentHelper.getEnchantmentsForCrafting(gun).keySet()) {
             if (enchantment != TaczFixesMod.COLLECTOR_ENCHANTMENT.get()) otherCount++;
         }
         if (otherCount <= 0) {
@@ -266,7 +265,7 @@ public class GunEnchantmentHandler {
         boostEffect(target, MobEffects.POISON, duration);
     }
 
-    private void boostEffect(LivingEntity target, MobEffect effect, int duration) {
+    private void boostEffect(LivingEntity target, Holder<MobEffect> effect, int duration) {
         MobEffectInstance existing = target.getEffect(effect);
         int amplifier = (existing == null) ? 0 : existing.getAmplifier() + 1;
         target.addEffect(new MobEffectInstance(effect, duration, amplifier, false, true));
@@ -341,7 +340,7 @@ public class GunEnchantmentHandler {
     private static final Map<UUID, Float> PENDING_BULLET_DAMAGE = new ConcurrentHashMap<>();
 
     @SubscribeEvent
-    public void onLivingHurtAnnihilation(LivingHurtEvent event) {
+    public void onLivingHurtAnnihilation(LivingIncomingDamageEvent event) {
         if (!GunEnchantmentHelper.isEnabled()) {
             return;
         }
@@ -553,7 +552,7 @@ public class GunEnchantmentHandler {
         double effectChance = Config.ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL.get() * level / 100.0;
         if (effectChance >= 1.0 || shooter.getRandom().nextDouble() < effectChance) {
             if (!RANDOM_EFFECTS.isEmpty()) {
-                MobEffect effect = RANDOM_EFFECTS.get(target.getRandom().nextInt(RANDOM_EFFECTS.size()));
+                Holder<MobEffect> effect = RANDOM_EFFECTS.get(target.getRandom().nextInt(RANDOM_EFFECTS.size()));
                 int duration = effect == MobEffects.HARM
                         ? 1
                         : Config.ENCH_RANDOM_EFFECT_DURATION_TICKS.get();
@@ -595,7 +594,7 @@ public class GunEnchantmentHandler {
         }
     }
 
-    private static final List<MobEffect> RANDOM_EFFECTS = List.of(
+    private static final List<Holder<MobEffect>> RANDOM_EFFECTS = List.of(
             MobEffects.MOVEMENT_SLOWDOWN, MobEffects.DIG_SLOWDOWN, MobEffects.HARM, MobEffects.CONFUSION,
             MobEffects.BLINDNESS, MobEffects.HUNGER, MobEffects.WEAKNESS, MobEffects.POISON,
             MobEffects.WITHER, MobEffects.UNLUCK, MobEffects.BAD_OMEN, MobEffects.DARKNESS,
@@ -627,11 +626,11 @@ public class GunEnchantmentHandler {
     private static final Map<UUID, PlayerSpeedTracker> CHARGE_PLAYER_SPEED = new ConcurrentHashMap<>();
 
     @SubscribeEvent
-    public void onPlayerTickChargeSpeed(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public void onPlayerTickChargeSpeed(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false) {
             return;
         }
-        Player player = event.player;
+        Player player = event.getEntity();
         if (player.level().isClientSide) {
             return;
         }
@@ -684,8 +683,8 @@ public class GunEnchantmentHandler {
     }
 
     @SubscribeEvent
-    public void onClientTickSmartScope(TickEvent.ClientTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public void onClientTickSmartScope(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        if (false) {
             return;
         }
         Minecraft mc = Minecraft.getInstance();
@@ -826,9 +825,8 @@ public class GunEnchantmentHandler {
             return;
         }
         ItemStack ammoStack = AmmoItemBuilder.create().setId(ammoId).setCount(count).build();
-        ItemStack remaining = shooter.getCapability(ForgeCapabilities.ITEM_HANDLER, null)
-                .map(handler -> ItemHandlerHelper.insertItemStacked(handler, ammoStack, false))
-                .orElse(ammoStack);
+        net.neoforged.neoforge.items.IItemHandler handler = shooter.getCapability(Capabilities.ItemHandler.ENTITY);
+        ItemStack remaining = handler == null ? ammoStack : ItemHandlerHelper.insertItemStacked(handler, ammoStack, false);
         if (!remaining.isEmpty() && !shooter.level().isClientSide) {
             shooter.spawnAtLocation(remaining);
         }
@@ -870,17 +868,17 @@ public class GunEnchantmentHandler {
     }
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false) {
             return;
         }
-        if (event.player.level().isClientSide) {
+        if (event.getEntity().level().isClientSide) {
             return;
         }
-        Player player = event.player;
+        Player player = event.getEntity();
         int loyalty = GunEnchantmentHelper.getLevelFromShooter(player, Enchantments.LOYALTY);
-        Attribute range = ForgeRegistries.ATTRIBUTES.getValue(ResourceLocation.fromNamespaceAndPath("gunsmithlib", "aim_lock_range"));
-        Attribute angle = ForgeRegistries.ATTRIBUTES.getValue(ResourceLocation.fromNamespaceAndPath("gunsmithlib", "aim_lock_angle"));
+        net.minecraft.core.Holder<Attribute> range = net.minecraft.core.registries.BuiltInRegistries.ATTRIBUTE.getHolder(ResourceLocation.fromNamespaceAndPath("gunsmithlib", "aim_lock_range")).orElse(null);
+        net.minecraft.core.Holder<Attribute> angle = net.minecraft.core.registries.BuiltInRegistries.ATTRIBUTE.getHolder(ResourceLocation.fromNamespaceAndPath("gunsmithlib", "aim_lock_angle")).orElse(null);
         if (range == null || angle == null) {
             return;
         }
@@ -888,14 +886,14 @@ public class GunEnchantmentHandler {
         applyLoyaltyModifier(player, angle, LOYALTY_ANGLE_UUID, loyalty * Config.ENCH_LOYALTY_ANGLE_PER_LEVEL.get());
     }
 
-    private void applyLoyaltyModifier(Player player, Attribute attribute, UUID uuid, double amount) {
+    private void applyLoyaltyModifier(Player player, net.minecraft.core.Holder<Attribute> attribute, ResourceLocation uuid, double amount) {
         AttributeInstance instance = player.getAttribute(attribute);
         if (instance == null) {
             return;
         }
         instance.removeModifier(uuid);
         if (amount > 0) {
-            instance.addTransientModifier(new AttributeModifier(uuid, "taczfixes:loyalty", amount, AttributeModifier.Operation.ADDITION));
+            instance.addTransientModifier(new AttributeModifier(uuid, amount, AttributeModifier.Operation.ADD_VALUE));
         }
     }
 
@@ -974,22 +972,22 @@ public class GunEnchantmentHandler {
     }
 
     @SubscribeEvent
-    public void onPlayerTickPatience(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) {
+    public void onPlayerTickPatience(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false) {
             return;
         }
-        com.ssscript.taczfixes.common.util.PatienceHelper.onPlayerTick(event.player);
+        com.ssscript.taczfixes.common.util.PatienceHelper.onPlayerTick(event.getEntity());
     }
 
     @SubscribeEvent
-    public void onPlayerLoggedOut(net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
+    public void onPlayerLoggedOut(net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedOutEvent event) {
         UUID id = event.getEntity().getUUID();
         LAST_LIGHTNING.remove(id);
         CHARGE_PLAYER_SPEED.remove(id);
     }
 
     @SubscribeEvent
-    public void onBulletLeaveLevel(net.minecraftforge.event.entity.EntityLeaveLevelEvent event) {
+    public void onBulletLeaveLevel(net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent event) {
         if (event.getEntity() instanceof com.tacz.guns.entity.EntityKineticBullet bullet) {
             BULLET_PENETRATION.remove(bullet.getUUID());
         }

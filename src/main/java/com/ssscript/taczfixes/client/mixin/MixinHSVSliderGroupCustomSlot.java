@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.client.util.CustomSlotGuiState;
@@ -90,10 +91,10 @@ public class MixinHSVSliderGroupCustomSlot {
     @Unique
     private void taczfixes$writeBack(ItemStack item) {
         ItemStack gun = this.inventory.getItem(this.gunItemIndex);
-        CompoundTag tag = gun.getOrCreateTag();
+        CompoundTag tag = ItemNbt.getOrCreate(gun);
         CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
                 ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
-        slots.put(CustomSlotGuiState.get(), item.save(new CompoundTag()));
+        slots.put(CustomSlotGuiState.get(), ItemNbt.saveStack(item));
         tag.put(CustomSlotStorage.TAG_KEY, slots);
     }
 }

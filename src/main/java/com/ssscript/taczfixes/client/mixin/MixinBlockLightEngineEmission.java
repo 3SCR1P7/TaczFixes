@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 @Mixin(BlockLightEngine.class)
 public abstract class MixinBlockLightEngineEmission {
 
-    @Inject(method = "m_284436_", at = @At("RETURN"), cancellable = true, remap = false)
+    @Inject(method = "getEmission", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczfixes$gunLightEmission(long packedPos, BlockState state, CallbackInfoReturnable<Integer> callback) {
         int level = ClientGunLightManager.emissionAt(packedPos);
         if (level > callback.getReturnValueI()) {

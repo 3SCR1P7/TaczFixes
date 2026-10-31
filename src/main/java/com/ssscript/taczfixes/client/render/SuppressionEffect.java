@@ -5,6 +5,7 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
@@ -21,10 +22,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.client.event.RegisterShadersEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
@@ -40,7 +41,7 @@ import java.util.Set;
  * 并叠加径向色散与边缘变暗; 三者在子弹飞过的瞬间达到最大值后线性淡出。
  * sniper/rpg 类型武器的子弹持续时长与检测范围按配置倍率放大; 单把枪可在 taczfixes.suppression 中逐项覆盖。
  */
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
 public final class SuppressionEffect {
     private static ShaderInstance shader;
     private static com.mojang.blaze3d.shaders.AbstractUniform uMaskStart, uMaskStartWeak, uBlurOpacity;
@@ -94,7 +95,7 @@ public final class SuppressionEffect {
     }
 
     /**
-     * 由 Entity.m_20343_ 注入调用(仅对子弹实体): 位置变化时对“上一位置 → 新位置”线段做扫掠检测。
+     * 由 Entity.setPosRaw 注入调用(仅对子弹实体): 位置变化时对“上一位置 → 新位置”线段做扫掠检测。
      * 客户端子弹自身不移动(onBulletTick 仅服务端执行), 位置完全由同步包驱动。
      */
     public static void onBulletPositionSet(EntityKineticBullet bullet, double x, double y, double z) {
@@ -385,15 +386,14 @@ public final class SuppressionEffect {
 
     private static void ensureQuad() {
         if (quad != null) return;
-        BufferBuilder b = new BufferBuilder(128);
-        b.begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        b.vertex(-1, -1, 0).uv(0, 0).endVertex();
-        b.vertex(1, -1, 0).uv(1, 0).endVertex();
-        b.vertex(1, 1, 0).uv(1, 1).endVertex();
-        b.vertex(-1, 1, 0).uv(0, 1).endVertex();
+        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        b.addVertex(-1, -1, 0).setUv(0, 0);
+        b.addVertex(1, -1, 0).setUv(1, 0);
+        b.addVertex(1, 1, 0).setUv(1, 1);
+        b.addVertex(-1, 1, 0).setUv(0, 1);
         quad = new VertexBuffer(VertexBuffer.Usage.STATIC);
         quad.bind();
-        quad.upload(b.end());
+        quad.upload(b.buildOrThrow());
     }
 
     private static void releaseTargets() {

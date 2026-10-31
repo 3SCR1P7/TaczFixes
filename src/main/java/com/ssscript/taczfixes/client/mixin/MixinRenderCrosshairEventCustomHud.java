@@ -10,8 +10,8 @@ import com.tacz.guns.client.event.RenderCrosshairEvent;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.player.LocalPlayer;
-import net.minecraftforge.client.event.RenderGuiOverlayEvent;
-import net.minecraftforge.client.gui.overlay.VanillaGuiOverlay;
+import net.neoforged.neoforge.client.event.RenderGuiLayerEvent;
+import net.neoforged.neoforge.client.gui.VanillaGuiLayers;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -34,9 +34,9 @@ public class MixinRenderCrosshairEventCustomHud {
      * TACZ only replaces the crosshair when the main hand holds a gun. When the
      * gun is in the offhand, draw the same TACZ crosshair instead of vanilla's.
      */
-    @Inject(method = "onRenderOverlay", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void taczfixes$renderOffhandGunCrosshair(RenderGuiOverlayEvent.Pre event, CallbackInfo ci) {
-        if (!event.getOverlay().id().equals(VanillaGuiOverlay.CROSSHAIR.id())) {
+    @Inject(method = "onRenderCrosshair", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void taczfixes$renderOffhandGunCrosshair(RenderGuiLayerEvent.Pre event, CallbackInfo ci) {
+        if (!event.getName().equals(VanillaGuiLayers.CROSSHAIR)) {
             return;
         }
         LocalPlayer player = Minecraft.getInstance().player;
@@ -51,7 +51,7 @@ public class MixinRenderCrosshairEventCustomHud {
             return;
         }
         event.setCanceled(true);
-        renderCrosshair(event.getGuiGraphics(), event.getWindow());
+        renderCrosshair(event.getGuiGraphics(), Minecraft.getInstance().getWindow());
         ci.cancel();
     }
 
@@ -71,7 +71,7 @@ public class MixinRenderCrosshairEventCustomHud {
     }
 
     /** 双持: 主手换弹时只有副手也在换弹才隐藏准星。 */
-    @ModifyExpressionValue(method = "onRenderOverlay", at = @At(value = "INVOKE",
+    @ModifyExpressionValue(method = "onRenderCrosshair", at = @At(value = "INVOKE",
             target = "Lcom/tacz/guns/api/entity/ReloadState$StateType;isReloading()Z"), remap = false)
     private static boolean taczfixes$dualReloadCrosshair(boolean reloading) {
         if (!reloading) {
@@ -85,7 +85,7 @@ public class MixinRenderCrosshairEventCustomHud {
     }
 
     /** 双持: 主手动画要求隐藏准星时, 同样仅副手也在换弹才隐藏。 */
-    @ModifyExpressionValue(method = "lambda$onRenderOverlay$0", at = @At(value = "INVOKE",
+    @ModifyExpressionValue(method = "lambda$onRenderCrosshair$0", at = @At(value = "INVOKE",
             target = "Lcom/tacz/guns/api/client/animation/statemachine/AnimationStateContext;shouldHideCrossHair()Z"), remap = false)
     private static boolean taczfixes$dualAnimationCrosshair(boolean hide) {
         if (!hide) {

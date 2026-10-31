@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  */
 @Mixin(LocalPlayer.class)
 public abstract class MixinLocalPlayerKeepOffhandUse {
-    @Inject(method = {"m_5810_", "stopUsingItem"}, at = @At("HEAD"), cancellable = true,
+    @Inject(method = {"stopUsingItem", "stopUsingItem"}, at = @At("HEAD"), cancellable = true,
             require = 0, remap = false)
     private void taczfixes$keepOffhandUse(CallbackInfo callback) {
         LocalPlayer player = (LocalPlayer) (Object) this;

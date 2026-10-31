@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
@@ -76,7 +77,7 @@ public final class CustomScopeViewShift {
         }
         float progress = ScopeSwitchState.aimingProgressValue;
         if (progress < 0.001f) {
-            float opProgress = operator.getClientAimingProgress(Minecraft.getInstance().getFrameTime());
+            float opProgress = operator.getClientAimingProgress(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
             if (opProgress > progress) {
                 progress = opProgress;
             }
@@ -232,7 +233,7 @@ public final class CustomScopeViewShift {
 
     public static ItemStack readStandardScope(ItemStack gun) {
         if (gun == null) return ItemStack.EMPTY;
-        CompoundTag tag = gun.getTag();
+        CompoundTag tag = ItemNbt.get(gun);
         int hash = tag == null ? 0 : tag.hashCode();
         if (gun == stdScopeCacheGun && hash == stdScopeCacheHash) {
             return stdScopeCache;
@@ -241,7 +242,7 @@ public final class CustomScopeViewShift {
         if (tag != null) {
             String key = com.tacz.guns.api.item.nbt.GunItemDataAccessor.GUN_ATTACHMENT_BASE + AttachmentType.SCOPE.name();
             if (tag.contains(key, 10)) {
-                ItemStack scope = ItemStack.of(tag.getCompound(key));
+                ItemStack scope = ItemNbt.parseStack(tag.getCompound(key));
                 if (!scope.isEmpty()) result = scope;
             }
         }
@@ -348,8 +349,8 @@ public final class CustomScopeViewShift {
         if (viewIndex < 0) {
             viewIndex = 0;
             int[] views = index.getViews();
-            if (views != null && views.length > 0 && attachmentItem.getTag() != null) {
-                int zoom = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor.getZoomNumberFromTag(attachmentItem.getTag());
+            if (views != null && views.length > 0 && ItemNbt.get(attachmentItem) != null) {
+                int zoom = com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor.getZoomNumberFromTag(ItemNbt.get(attachmentItem));
                 viewIndex = views[zoom % views.length] - 1;
                 if (viewIndex < 0) viewIndex = 0;
             }

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.compat.arcana;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.ssscript.taczfixes.client.util.ScopeViewHelper;
@@ -13,7 +14,6 @@ import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.item.ModernKineticGunItem;
 import group.taczexpands.common.accessor.IAccessorAttachmentData;
 import group.taczexpands.dist.YKThsud9;
-import group.taczexpands.dist.oARXeJn4;
 import net.minecraft.client.Minecraft;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
@@ -44,21 +44,18 @@ public class MixinArcanaScopeGate {
                     ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(actId).orElse(null);
                     if (index != null && index.isScope()) {
                         // 与标准槽一致: 组合瞄具切到 sight 视图时按配置关闭镜内放大。
-                        CompoundTag customTag = activeItem.getTag();
+                        CompoundTag customTag = ItemNbt.get(activeItem);
                         if (Config.DISABLE_ARCANA_MAGNIFICATION_FOR_SIGHT.get()
                                 && taczfixes$disablesMagnification(index, customTag)) {
                             return false;
                         }
                         // 镜内放大状态跟随当前瞄具自身的 advanced_rendering 设置;
                         // 未配置时沿用全局默认值。
-                        if (!oARXeJn4.vvsWkp6U.wsK63xlE().get()) {
-                            return false;
-                        }
-                        YKThsud9 data = IAccessorAttachmentData.Iauo30Fz(actId);
+                                                YKThsud9 data = IAccessorAttachmentData.Iauo30Fz(actId);
                         if (data != null) {
                             return data.aInPX54D != null
                                     ? data.aInPX54D
-                                    : oARXeJn4.vvsWkp6U.OfFXaRZm().get();
+                                    : true;
                         }
                         return true;
                     }

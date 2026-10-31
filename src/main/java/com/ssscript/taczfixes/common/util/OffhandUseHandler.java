@@ -9,12 +9,11 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.ShieldItem;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.common.Mod;
 
-@Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.FORGE)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.GAME)
 public final class OffhandUseHandler {
     private static final Map<UUID, ActiveUse> ACTIVE = new ConcurrentHashMap<>();
 
@@ -32,16 +31,16 @@ public final class OffhandUseHandler {
             ACTIVE.remove(id);
             return;
         }
-        if (offhand.getUseDuration() == 0) {
+        if (offhand.getUseDuration(player) == 0) {
             player.gameMode.useItem(player, player.serverLevel(), offhand, InteractionHand.OFF_HAND);
             return;
         }
-        ACTIVE.put(id, new ActiveUse(offhand.copy(), Math.max(1, offhand.getUseDuration())));
+        ACTIVE.put(id, new ActiveUse(offhand.copy(), Math.max(1, offhand.getUseDuration(player))));
     }
 
     @SubscribeEvent
-    public static void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END || !(event.player instanceof ServerPlayer player)) {
+    public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false || !(event.getEntity() instanceof ServerPlayer player)) {
             return;
         }
         ActiveUse active = ACTIVE.get(player.getUUID());
@@ -49,7 +48,7 @@ public final class OffhandUseHandler {
             return;
         }
         ItemStack offhand = player.getOffhandItem();
-        if (!canUse(player, offhand) || !ItemStack.isSameItemSameTags(offhand, active.stack)) {
+        if (!canUse(player, offhand) || !ItemStack.isSameItemSameComponents(offhand, active.stack)) {
             ACTIVE.remove(player.getUUID());
             return;
         }

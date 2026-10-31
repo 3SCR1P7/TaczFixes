@@ -118,7 +118,7 @@ public class GunDataEditorHelper {
         ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
         if (dataId == null) return null;
         try {
-            java.nio.file.Path taczDir = net.minecraftforge.fml.loading.FMLPaths.GAMEDIR.get().resolve("tacz");
+            java.nio.file.Path taczDir = net.neoforged.fml.loading.FMLPaths.GAMEDIR.get().resolve("tacz");
             if (!java.nio.file.Files.isDirectory(taczDir)) return null;
             String rel = "data/" + dataId.getNamespace() + "/data/guns/" + dataId.getPath() + ".json";
             try (java.util.stream.Stream<java.nio.file.Path> entries = java.nio.file.Files.list(taczDir)) {

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.refit;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
@@ -355,7 +356,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         Map<String, ResourceLocation> preset = new LinkedHashMap<>();
         for (AttachmentType type : AttachmentType.values()) {
             if (type == AttachmentType.NONE) continue;
-            ItemStack item = gun.getAttachment(gunStack, type);
+            ItemStack item = TaczItemCompat.getAttachment(gun, gunStack, type);
             IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
             if (attachment != null) {
                 preset.put(type.name(), attachment.getAttachmentId(item));
@@ -457,7 +458,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         taczfixes$toastUntil = System.currentTimeMillis() + Config.REFIT_TOAST_DURATION_MS.get();
     }
 
-    @Inject(method = "m_88315_", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void taczfixes$preRenderSearch(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_SEARCH_BOX.get()) {
             taczfixes$syncSearchBox();
@@ -467,13 +468,12 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         }
     }
 
-    @Inject(method = "m_88315_", at = @At("TAIL"), remap = false)
+    @Inject(method = "render", at = @At("TAIL"), remap = false)
     private void taczfixes$renderOverlay(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, CallbackInfo ci) {
         if (taczfixes$searchBox != null) {
             long now = System.currentTimeMillis();
             if (now - taczfixes$lastTickMs >= 50) {
-                taczfixes$searchBox.tick();
-                taczfixes$lastTickMs = now;
+                        taczfixes$lastTickMs = now;
             }
         }
         taczfixes$drawOverlay(graphics);
@@ -510,7 +510,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         }
     }
 
-    @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
+    @Inject(method = "onClose", at = @At("TAIL"), remap = false)
     private void taczfixes$onCloseClearSearch(CallbackInfo ci) {
         if (taczfixes$searchBox != null) {
             taczfixes$searchBox.setValue("");

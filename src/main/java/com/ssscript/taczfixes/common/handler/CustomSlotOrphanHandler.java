@@ -4,17 +4,16 @@ import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 /** 兜底清理: 来源配件移除后遗留的孤儿自定义槽(每秒扫描一次玩家背包中的枪械)。 */
 public class CustomSlotOrphanHandler {
     private static final int INTERVAL = 20;
 
     @SubscribeEvent
-    public void onPlayerTick(TickEvent.PlayerTickEvent event) {
-        if (event.phase != TickEvent.Phase.END) return;
-        if (!(event.player instanceof ServerPlayer player)) return;
+    public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
+        if (false) return;
+        if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.tickCount % INTERVAL != 0) return;
         for (ItemStack stack : player.getInventory().items) {
             clean(player, stack);

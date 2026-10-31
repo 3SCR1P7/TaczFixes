@@ -1,22 +1,22 @@
 package com.ssscript.taczfixes.common.handler;
 
-import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.compat.ChargeCapabilityProvider;
-import com.ssscript.taczfixes.common.util.ChargeStorage;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.event.AttachCapabilitiesEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import com.tacz.guns.api.item.IGun;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.world.item.Item;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
 
-/** 给带 charge 配置的枪械物品挂载 FE 能量能力。 */
 public class ChargeCapabilityHandler {
+    private static final ChargeCapabilityProvider PROVIDER = new ChargeCapabilityProvider();
 
     @SubscribeEvent
-    public void onAttachItemStackCapabilities(AttachCapabilitiesEvent<ItemStack> event) {
-        ItemStack stack = event.getObject();
-        if (stack == null || stack.isEmpty() || !ChargeStorage.isChargeGun(stack)) {
-            return;
+    public void onRegisterCapabilities(RegisterCapabilitiesEvent event) {
+        for (Item item : BuiltInRegistries.ITEM) {
+            if (item instanceof IGun) {
+                event.registerItem(Capabilities.EnergyStorage.ITEM, PROVIDER, item);
+            }
         }
-        event.addCapability(ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "charge"), new ChargeCapabilityProvider(stack));
     }
 }

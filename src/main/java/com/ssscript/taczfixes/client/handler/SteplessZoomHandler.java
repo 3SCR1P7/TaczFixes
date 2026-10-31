@@ -21,8 +21,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.client.event.InputEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.Optional;
 
@@ -45,7 +45,7 @@ public class SteplessZoomHandler {
         SteplessConfig cfg = getConfigFor(stack);
         if (cfg == null) return;
 
-        double delta = event.getScrollDelta();
+        double delta = event.getScrollDeltaY();
         if (delta == 0) return;
 
         float dir = delta > 0 ? 1.0f : -1.0f;

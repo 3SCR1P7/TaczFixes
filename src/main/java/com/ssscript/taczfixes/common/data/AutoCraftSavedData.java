@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.Level;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.world.level.saveddata.SavedData;
 
 import java.util.HashMap;
@@ -21,13 +22,12 @@ public final class AutoCraftSavedData extends SavedData {
 
     public static AutoCraftSavedData get(MinecraftServer server) {
         return server.overworld().getDataStorage().computeIfAbsent(
-                AutoCraftSavedData::load,
-                AutoCraftSavedData::new,
+                new SavedData.Factory<>(AutoCraftSavedData::new, AutoCraftSavedData::load),
                 DATA_NAME
         );
     }
 
-    public static AutoCraftSavedData load(CompoundTag tag) {
+    public static AutoCraftSavedData load(CompoundTag tag, HolderLookup.Provider registries) {
         AutoCraftSavedData data = new AutoCraftSavedData();
         ListTag list = tag.getList("tasks", Tag.TAG_COMPOUND);
         for (int i = 0; i < list.size(); i++) {
@@ -57,7 +57,7 @@ public final class AutoCraftSavedData extends SavedData {
     }
 
     @Override
-    public CompoundTag save(CompoundTag tag) {
+    public CompoundTag save(CompoundTag tag, HolderLookup.Provider registries) {
         ListTag list = new ListTag();
         for (Map.Entry<TableKey, Task> mapEntry : tasks.entrySet()) {
             TableKey key = mapEntry.getKey();

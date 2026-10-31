@@ -3,25 +3,15 @@ package com.ssscript.taczfixes.common.compat;
 import com.ssscript.taczfixes.common.util.GunSmithTableEnergy;
 import com.tacz.guns.block.entity.GunSmithTableBlockEntity;
 import net.minecraft.core.Direction;
-import net.minecraftforge.common.capabilities.Capability;
-import net.minecraftforge.common.capabilities.ForgeCapabilities;
-import net.minecraftforge.common.capabilities.ICapabilityProvider;
-import net.minecraftforge.common.util.LazyOptional;
-import net.minecraftforge.energy.IEnergyStorage;
-import org.jetbrains.annotations.NotNull;
+import net.neoforged.neoforge.capabilities.ICapabilityProvider;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import org.jetbrains.annotations.Nullable;
 
-public final class GunSmithTableEnergyProvider implements ICapabilityProvider {
-    private final LazyOptional<IEnergyStorage> storage;
-
-    public GunSmithTableEnergyProvider(GunSmithTableBlockEntity table) {
-        this.storage = LazyOptional.of(() -> new Storage(table));
-    }
-
+public final class GunSmithTableEnergyProvider
+        implements ICapabilityProvider<GunSmithTableBlockEntity, Direction, IEnergyStorage> {
     @Override
-    public <T> @NotNull LazyOptional<T> getCapability(@NotNull Capability<T> capability,
-                                                      @Nullable Direction side) {
-        return capability == ForgeCapabilities.ENERGY ? this.storage.cast() : LazyOptional.empty();
+    public @Nullable IEnergyStorage getCapability(GunSmithTableBlockEntity table, Direction side) {
+        return new Storage(table);
     }
 
     private static final class Storage implements IEnergyStorage {

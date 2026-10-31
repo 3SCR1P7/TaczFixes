@@ -32,7 +32,7 @@ public abstract class MixinMouseHandlerRefitViewInput {
     private static java.lang.reflect.Method taczfixes$pickerPanelBottom;
     private static java.lang.reflect.Method taczfixes$anchorActive;
 
-    @Inject(method = "m_91530_", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "onPress", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$refitModelPress(long windowPointer, int button, int action, int mods, CallbackInfo ci) {
         Screen screen = Minecraft.getInstance().screen;
         if (!(screen instanceof GunRefitScreen refitScreen)) return;
@@ -92,7 +92,7 @@ public abstract class MixinMouseHandlerRefitViewInput {
         }
     }
 
-    @Inject(method = "m_91526_", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "onScroll", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$refitModelScroll(long windowPointer, double xOffset, double yOffset, CallbackInfo ci) {
         Screen screen = Minecraft.getInstance().screen;
         if (!(screen instanceof GunRefitScreen refitScreen)) return;
@@ -106,7 +106,7 @@ public abstract class MixinMouseHandlerRefitViewInput {
         ci.cancel();
     }
 
-    @Inject(method = "m_91561_", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "onMove", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$refitModelMove(long windowPointer, double xpos, double ypos, CallbackInfo ci) {
         if (!(Minecraft.getInstance().screen instanceof GunRefitScreen)) return;
         double gx = taczfixes$refitToGuiX(xpos);

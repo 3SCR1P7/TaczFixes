@@ -52,14 +52,13 @@ import net.minecraft.world.entity.ai.attributes.AttributeModifier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.living.LivingDeathEvent;
-import net.minecraftforge.event.entity.player.PlayerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.LogicalSide;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.network.PacketDistributor;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
+import net.neoforged.neoforge.event.entity.player.PlayerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.LogicalSide;
+import net.neoforged.fml.common.Mod;
+import com.ssscript.taczfixes.common.network.PacketDistributor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 
@@ -145,7 +144,7 @@ final class OffhandShooter {
             if (gunId == null || stackId == null || gun == null) {
                 return;
             }
-            // 只有新 ID 或绑定目标变化时才扫描背包查重复, 避免每 tick / 每次副手动作全背包扫描。
+            // 鍙湁鏂?ID 鎴栫粦瀹氱洰鏍囧彉鍖栨椂鎵嶆壂鎻忚儗鍖呮煡閲嶅, 閬垮厤姣?tick / 姣忔鍓墜鍔ㄤ綔鍏ㄨ儗鍖呮壂鎻忋€?            
             boolean rebind = existingId == null || this.boundStackId == null
                     || !stackId.equals(this.boundStackId) || !gunId.equals(this.boundGunId);
             if (rebind) {
@@ -268,7 +267,7 @@ final class OffhandShooter {
             boolean changed = false;
             for (AttachmentType type : AttachmentType.values()) {
                 if (type != AttachmentType.NONE) {
-                    ItemStack attachment = gun.getAttachment(stack, type);
+                    ItemStack attachment = TaczItemCompat.getAttachment(gun, stack, type);
                     int index = type.ordinal();
                     ItemStack boundAttachment = this.boundAttachments[index];
                     if (boundAttachment == null || !ItemStack.matches(attachment, boundAttachment)) {
@@ -901,7 +900,7 @@ final class OffhandShooter {
             OffhandShooterManager.pushActiveData(this.data);
             try {
                 GunFireSelectEvent event = new GunFireSelectEvent(this.player, stack, LogicalSide.SERVER);
-                if (!MinecraftForge.EVENT_BUS.post(event)) {
+                if (!NeoForge.EVENT_BUS.post(event).isCanceled()) {
                     NetworkHandler.sendToTrackingEntity(new ServerMessageGunFireSelect(this.player.getId(), stack), this.player);
                     gunItem.fireSelect(this.data, stack);
                     rebuildCache();

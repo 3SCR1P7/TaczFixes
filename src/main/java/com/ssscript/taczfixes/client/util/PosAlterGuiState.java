@@ -210,7 +210,7 @@ public final class PosAlterGuiState {
     }
 
     private static class PosAlterSlider extends AbstractSliderButton {
-        private static final ResourceLocation SLIDER_LOCATION = new ResourceLocation("textures/gui/slider.png");
+        private static final ResourceLocation SLIDER_LOCATION = ResourceLocation.withDefaultNamespace("textures/gui/slider.png");
         private final ItemStack gunStack;
         private final String slotKey;
         private final float min;
@@ -254,19 +254,7 @@ public final class PosAlterGuiState {
 
         @Override
         public void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-            Minecraft minecraft = Minecraft.getInstance();
-            graphics.setColor(1.0F, 1.0F, 1.0F, this.alpha);
-            RenderSystem.enableBlend();
-            RenderSystem.defaultBlendFunc();
-            RenderSystem.enableDepthTest();
-            graphics.blitNineSliced(SLIDER_LOCATION, this.getX(), this.getY(), this.getWidth(), this.getHeight(),
-                    20, 4, 200, 20, 0, (this.isFocused() && !PosAlterGuiState.dragging) ? 20 : 0);
-            graphics.blitNineSliced(SLIDER_LOCATION,
-                    this.getX() + (int) (this.value * (double) (this.width - 8)), this.getY(),
-                    8, this.getHeight(), 20, 4, 200, 20, 0, (this.isHovered ? 60 : 40));
-            graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
-            int i = this.active ? 16777215 : 10526880;
-            this.renderScrollingString(graphics, minecraft.font, 2, i | Mth.ceil(this.alpha * 255.0F) << 24);
+            super.renderWidget(graphics, mouseX, mouseY, partialTick);
         }
 
         void dragToX(double mouseX) {

@@ -14,7 +14,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(targets = "io.redspace.ironsspellbooks.gui.arcane_anvil.ArcaneAnvilMenu", remap = false)
 public class MixinIronsAnvilContainer {
 
-    @Redirect(method = "m_6640_",
+    @Redirect(method = "createResult",
             at = @At(value = "INVOKE",
                     target = "Lio/redspace/ironsspellbooks/api/spells/ISpellContainer;getOrCreate(Lnet/minecraft/world/item/ItemStack;)Lio/redspace/ironsspellbooks/api/spells/ISpellContainer;"),
             remap = false)

@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.util.GunSmithTableEnergy;
 import com.ssscript.taczfixes.common.util.GunSmithTableEnergyAccess;
 import com.ssscript.taczfixes.common.util.GunSmithTablePosAccess;
 import com.tacz.guns.block.entity.GunSmithTableBlockEntity;
+import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -22,7 +23,7 @@ public abstract class MixinGunSmithTableBlockEntity implements GunSmithTableEner
     @Unique
     private int taczfixes$energy;
 
-    @Inject(method = "m_7208_", at = @At("RETURN"), remap = false)
+    @Inject(method = "createMenu", at = @At("RETURN"), remap = false)
     private void taczfixes$attachTablePos(int id, Inventory inventory, Player player,
                                           CallbackInfoReturnable<AbstractContainerMenu> cir) {
         AbstractContainerMenu menu = cir.getReturnValue();
@@ -31,13 +32,13 @@ public abstract class MixinGunSmithTableBlockEntity implements GunSmithTableEner
         }
     }
 
-    @Inject(method = "m_142466_", at = @At("RETURN"), remap = false)
-    private void taczfixes$loadEnergy(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "load", at = @At("RETURN"), remap = false)
+    private void taczfixes$loadEnergy(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         this.taczfixes$energy = Math.max(0, tag.getInt(GunSmithTableEnergy.TAG_KEY));
     }
 
-    @Inject(method = "m_183515_", at = @At("RETURN"), remap = false)
-    private void taczfixes$saveEnergy(CompoundTag tag, CallbackInfo ci) {
+    @Inject(method = "saveAdditional", at = @At("RETURN"), remap = false)
+    private void taczfixes$saveEnergy(CompoundTag tag, HolderLookup.Provider registries, CallbackInfo ci) {
         tag.putInt(GunSmithTableEnergy.TAG_KEY, Math.max(0, this.taczfixes$energy));
     }
 

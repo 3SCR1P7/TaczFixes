@@ -89,6 +89,6 @@ public class MixinModernKineticGunMeleeEnchant {
         if (ticks <= 0) {
             return;
         }
-        target.setSecondsOnFire(ticks / 20);
+        target.igniteForSeconds(ticks / 20.0f);
     }
 }

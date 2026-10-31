@@ -18,13 +18,13 @@ public abstract class MixinGunRefitScreenPosAlter extends Screen {
         super(Component.literal(""));
     }
 
-    @Inject(method = "m_88315_", at = @At("HEAD"), remap = false)
+    @Inject(method = "render", at = @At("HEAD"), remap = false)
     private void taczfixes$updateAndRenderPosAlterSlider(GuiGraphics graphics, int mouseX, int mouseY,
                                                          float partialTick, CallbackInfo ci) {
         PosAlterGuiState.tickAndRender((Screen) (Object) this, graphics, mouseX, mouseY, partialTick);
     }
 
-    @Inject(method = "m_7379_", at = @At("TAIL"), remap = false)
+    @Inject(method = "onClose", at = @At("TAIL"), remap = false)
     private void taczfixes$posAlterOnClose(CallbackInfo ci) {
         PosAlterGuiState.reset();
     }

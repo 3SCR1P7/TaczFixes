@@ -7,7 +7,7 @@ import me.shedaniel.clothconfig2.api.ConfigCategory;
 import me.shedaniel.clothconfig2.api.ConfigEntryBuilder;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraftforge.common.ForgeConfigSpec;
+import net.neoforged.neoforge.common.ModConfigSpec;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,7 +146,7 @@ public class ConfigScreen {
     }
 
     private static <T extends Enum<T>> void enum_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
-                                                  ForgeConfigSpec.EnumValue<T> v) {
+                                                  ModConfigSpec.EnumValue<T> v) {
         cat.addEntry(entry.startEnumSelector(entry(slug), v.get().getDeclaringClass(), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -154,7 +154,7 @@ public class ConfigScreen {
     }
 
     private static <T extends Enum<T>> void enum_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry,
-                                                  String slug, ForgeConfigSpec.EnumValue<T> v) {
+                                                  String slug, ModConfigSpec.EnumValue<T> v) {
         entries.add(entry.startEnumSelector(entry(slug), v.get().getDeclaringClass(), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -596,7 +596,7 @@ public class ConfigScreen {
         target.add(entry.startSubCategory(cat(slug), entries).build());
     }
 
-    private static void bool_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ForgeConfigSpec.BooleanValue v) {
+    private static void bool_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ModConfigSpec.BooleanValue v) {
         cat.addEntry(entry.startBooleanToggle(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -604,14 +604,14 @@ public class ConfigScreen {
     }
 
     private static void bool_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry, String slug,
-                              ForgeConfigSpec.BooleanValue v) {
+                              ModConfigSpec.BooleanValue v) {
         entries.add(entry.startBooleanToggle(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
                 .build());
     }
 
-    private static void dbl_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ForgeConfigSpec.DoubleValue v) {
+    private static void dbl_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ModConfigSpec.DoubleValue v) {
         cat.addEntry(entry.startDoubleField(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -619,14 +619,14 @@ public class ConfigScreen {
     }
 
     private static void dbl_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry, String slug,
-                             ForgeConfigSpec.DoubleValue v) {
+                             ModConfigSpec.DoubleValue v) {
         entries.add(entry.startDoubleField(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
                 .build());
     }
 
-    private static void int_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ForgeConfigSpec.IntValue v) {
+    private static void int_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ModConfigSpec.IntValue v) {
         cat.addEntry(entry.startIntField(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -634,7 +634,7 @@ public class ConfigScreen {
     }
 
     private static void int_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry, String slug,
-                             ForgeConfigSpec.IntValue v) {
+                             ModConfigSpec.IntValue v) {
         entries.add(entry.startIntField(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -650,7 +650,7 @@ public class ConfigScreen {
     }
 
     private static void lst_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
-                             ForgeConfigSpec.ConfigValue<List<? extends String>> v) {
+                             ModConfigSpec.ConfigValue<List<? extends String>> v) {
         cat.addEntry(entry.startStrList(entry(slug), new ArrayList<>(v.get()))
                 .setDefaultValue(new ArrayList<>(v.getDefault()))
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
@@ -658,7 +658,7 @@ public class ConfigScreen {
     }
 
     private static void lst_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry, String slug,
-                             ForgeConfigSpec.ConfigValue<List<? extends String>> v) {
+                             ModConfigSpec.ConfigValue<List<? extends String>> v) {
         entries.add(entry.startStrList(entry(slug), new ArrayList<>(v.get()))
                 .setDefaultValue(new ArrayList<>(v.getDefault()))
                 .setSaveConsumer(v::set)

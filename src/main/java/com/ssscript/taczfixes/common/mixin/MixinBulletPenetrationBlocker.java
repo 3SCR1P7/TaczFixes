@@ -4,7 +4,6 @@ import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.util.TacHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraftforge.registries.ForgeRegistries;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -19,7 +18,7 @@ public class MixinBulletPenetrationBlocker {
     @Inject(method = "onHitEntity", at = @At("RETURN"), remap = false)
     private void taczfixes$blockPenetration(TacHitResult result, Vec3 startVec, Vec3 endVec, CallbackInfo ci) {
         if (!Config.PENETRATION_BLOCKED_ENTITIES.get().contains(
-                ForgeRegistries.ENTITY_TYPES.getKey(result.getEntity().getType()).toString())) {
+                net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(result.getEntity().getType()).toString())) {
             return;
         }
         this.pierce = 0;

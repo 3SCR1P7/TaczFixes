@@ -8,6 +8,7 @@ import com.ssscript.taczfixes.common.network.ClientMessageAutoCraftStateRequest;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.tacz.guns.client.gui.GunSmithTableScreen;
 import com.tacz.guns.crafting.GunSmithTableRecipe;
+import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
@@ -30,7 +31,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
 
     @Shadow(remap = false)
     @Nullable
-    private GunSmithTableRecipe selectedRecipe;
+    private RecipeHolder<GunSmithTableRecipe> selectedRecipe;
 
     @Unique
     private boolean taczfixes$autoCraft;
@@ -68,8 +69,8 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
         super(Component.literal(""));
     }
 
-    @Inject(method = "m_7856_", at = @At("TAIL"), remap = false)
-    private void taczfixes$requestAutoCraftState(CallbackInfo ci) {
+    @Override
+    public void taczfixes$onScreenClosed() {
         if (taczfixes$stateRequested) {
             return;
         }
@@ -87,10 +88,10 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
             if (selectedRecipe == null) {
                 taczfixes$clearAutoCraft(true);
             } else {
-                ResourceLocation recipeId = selectedRecipe.m_6423_();
+                ResourceLocation recipeId = selectedRecipe.id();
                 if (!recipeId.equals(taczfixes$autoRecipeId)) {
                     taczfixes$autoRecipeId = recipeId;
-                    taczfixes$autoCraftName = selectedRecipe.getOutput().getHoverName();
+                    taczfixes$autoCraftName = selectedRecipe.value().getOutput().getHoverName();
                     taczfixes$enoughMaterials = false;
                     taczfixes$coolingDown = false;
                     taczfixes$progress = 0.0F;
@@ -120,11 +121,14 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
             taczfixes$coolingDown = false;
             taczfixes$powerPaused = false;
             taczfixes$progress = 0.0F;
-            taczfixes$autoRecipeId = selectedRecipe.m_6423_();
-            taczfixes$autoCraftName = selectedRecipe.getOutput().getHoverName();
+            taczfixes$autoRecipeId = selectedRecipe.id();
+            taczfixes$autoCraftName = selectedRecipe.value().getOutput().getHoverName();
             taczfixes$send(true);
         }
-        ((GunSmithTableScreen) (Object) this).m_7856_();
+        if (taczfixes$autoButton != null) {
+            taczfixes$autoButton.setStatus(taczfixes$autoCraft, taczfixes$enoughMaterials,
+                    taczfixes$coolingDown, taczfixes$powerPaused);
+        }
     }
 
     @Unique
@@ -180,7 +184,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
         if (recipeChanged || taczfixes$autoCraftName == null) {
             taczfixes$autoRecipeId = recipeId;
             taczfixes$autoCraftName = taczfixes$resolveRecipeName(recipeId);
-            if (selectedRecipe == null || !recipeId.equals(selectedRecipe.m_6423_())) {
+            if (selectedRecipe == null || !recipeId.equals(selectedRecipe.id())) {
                 ((GunSmithTableScreen) (Object) this).getMenu().requestRecipeSelection(recipeId);
             }
             taczfixes$refreshScreen();
@@ -199,7 +203,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
     private void taczfixes$refreshScreen() {
         taczfixes$applyingServerState = true;
         try {
-            ((GunSmithTableScreen) (Object) this).m_7856_();
+            ((GunSmithTableScreen) (Object) this).init();
         } finally {
             taczfixes$applyingServerState = false;
         }
@@ -209,7 +213,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
     private static Component taczfixes$resolveRecipeName(ResourceLocation recipeId) {
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.level != null) {
-            Recipe<?> recipe = minecraft.level.getRecipeManager().byKey(recipeId).orElse(null);
+            Recipe<?> recipe = minecraft.level.getRecipeManager().byKey(recipeId).map(net.minecraft.world.item.crafting.RecipeHolder::value).orElse(null);
             if (recipe instanceof GunSmithTableRecipe tableRecipe) {
                 return tableRecipe.getOutput().getHoverName();
             }
@@ -217,7 +221,7 @@ public abstract class MixinGunSmithTableScreenAutoCraft extends Screen implement
         return Component.literal(recipeId.toString());
     }
 
-    @Inject(method = "m_88315_", at = @At("TAIL"), remap = false)
+    @Inject(method = "render", at = @At("TAIL"), remap = false)
     private void taczfixes$renderAutoCraftStatus(GuiGraphics graphics, int mouseX, int mouseY,
                                                   float partialTick, CallbackInfo ci) {
         Minecraft minecraft = Minecraft.getInstance();

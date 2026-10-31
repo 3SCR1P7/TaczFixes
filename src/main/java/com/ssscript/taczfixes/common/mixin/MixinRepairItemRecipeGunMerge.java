@@ -2,8 +2,8 @@ package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.util.DurabilityStorage;
-import net.minecraft.core.RegistryAccess;
-import net.minecraft.world.inventory.CraftingContainer;
+import net.minecraft.core.HolderLookup;
+import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.crafting.RepairItemRecipe;
 import net.minecraft.world.item.enchantment.Enchantment;
@@ -22,7 +22,7 @@ import java.util.Map;
 public class MixinRepairItemRecipeGunMerge {
 
     @Inject(method = "matches", at = @At("HEAD"), cancellable = true)
-    private void taczfixes$matchesGunMerge(CraftingContainer container, Level level,
+    private void taczfixes$matchesGunMerge(CraftingInput container, Level level,
                                            CallbackInfoReturnable<Boolean> cir) {
         ItemStack[] pair = taczfixes$pair(container);
         if (pair != null && taczfixes$canMerge(pair[0], pair[1])) {
@@ -31,7 +31,7 @@ public class MixinRepairItemRecipeGunMerge {
     }
 
     @Inject(method = "assemble", at = @At("HEAD"), cancellable = true)
-    private void taczfixes$assembleGunMerge(CraftingContainer container, RegistryAccess access,
+    private void taczfixes$assembleGunMerge(CraftingInput container, HolderLookup.Provider access,
                                             CallbackInfoReturnable<ItemStack> cir) {
         ItemStack[] pair = taczfixes$pair(container);
         if (pair == null || !taczfixes$canMerge(pair[0], pair[1])) {
@@ -42,23 +42,25 @@ public class MixinRepairItemRecipeGunMerge {
                 + max * 5 / 100);
         ItemStack result = pair[0].copyWithCount(1);
         DurabilityStorage.set(result, merged);
-        result.setRepairCost(0);
+        result.set(net.minecraft.core.component.DataComponents.REPAIR_COST, 0);
         // 同原版修复配方: 仅保留诅咒附魔
-        Map<Enchantment, Integer> curses = new HashMap<>();
-        for (Map.Entry<Enchantment, Integer> entry : EnchantmentHelper.getEnchantments(result).entrySet()) {
-            if (entry.getKey().isCurse()) {
-                curses.put(entry.getKey(), entry.getValue());
+        net.minecraft.world.item.enchantment.ItemEnchantments.Mutable curses =
+                new net.minecraft.world.item.enchantment.ItemEnchantments.Mutable(
+                        net.minecraft.world.item.enchantment.ItemEnchantments.EMPTY);
+        for (var entry : EnchantmentHelper.getEnchantmentsForCrafting(result).entrySet()) {
+            if (entry.getKey().is(net.minecraft.tags.EnchantmentTags.CURSE)) {
+                curses.set(entry.getKey(), entry.getIntValue());
             }
         }
-        EnchantmentHelper.setEnchantments(curses, result);
+        EnchantmentHelper.setEnchantments(result, curses.toImmutable());
         cir.setReturnValue(result);
     }
 
     /** 取出容器中的两件物品; 非恰好两件返回 null。 */
-    private static ItemStack[] taczfixes$pair(CraftingContainer container) {
+    private static ItemStack[] taczfixes$pair(CraftingInput container) {
         ItemStack first = null;
         ItemStack second = null;
-        for (int i = 0; i < container.getContainerSize(); i++) {
+        for (int i = 0; i < container.size(); i++) {
             ItemStack stack = container.getItem(i);
             if (stack.isEmpty()) {
                 continue;

@@ -1,13 +1,12 @@
 package com.ssscript.taczfixes.common.handler;
 
 import com.ssscript.taczfixes.common.util.JumpInaccuracyState;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class JumpInaccuracyHandler {
     @SubscribeEvent
-    public void onServerTick(TickEvent.ServerTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
+    public void onServerTick(net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) {
+        if (true) {
             JumpInaccuracyState.tick();
         }
     }

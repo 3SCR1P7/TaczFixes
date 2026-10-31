@@ -1,6 +1,9 @@
 package com.ssscript.taczfixes.common.data;
 
+import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.PackLocationInfo;
+import net.minecraft.server.packs.repository.PackSource;
 import net.minecraft.server.packs.FilePackResources;
 import net.minecraft.server.packs.PackResources;
 import net.minecraft.server.packs.PackType;
@@ -29,9 +32,10 @@ public class GunPackResources implements PackResources {
 
     public GunPackResources(String packId, Path path, Path iconPath, ResourceLocation logo) {
         this.packId = "taczfixes_gunpack_" + packId;
+        PackLocationInfo location = location();
         this.delegate = Files.isDirectory(path)
-                ? new PathPackResources(packId, path, false)
-                : new FilePackResources(packId, path.toFile(), false);
+                ? new PathPackResources(location, path)
+                : new FilePackResources(location, new FilePackResources.SharedZipFileAccess(path.toFile()), "");
         this.iconPath = iconPath;
         this.logo = logo;
     }
@@ -91,13 +95,8 @@ public class GunPackResources implements PackResources {
     }
 
     @Override
-    public String packId() {
-        return packId;
-    }
-
-    @Override
-    public boolean isBuiltin() {
-        return false;
+    public PackLocationInfo location() {
+        return new PackLocationInfo(packId, Component.literal(packId), PackSource.DEFAULT, java.util.Optional.empty());
     }
 
     @Override

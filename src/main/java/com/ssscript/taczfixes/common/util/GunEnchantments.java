@@ -1,192 +1,93 @@
 package com.ssscript.taczfixes.common.util;
 
 import com.ssscript.taczfixes.common.config.Config;
+import java.util.function.IntSupplier;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.enchantment.Enchantment;
 
-/**
- * 全部枪械附魔; 各自只有数值差异, 合并为一个文件便于维护。
- * 注册见 {@code TaczFixesMod}。
- */
 public final class GunEnchantments {
+    public static final class Def {
+        private final ResourceKey<Enchantment> key;
+        private final IntSupplier maxLevel;
+        private final int weight;
+        private final int minCostBase;
+        private final int minCostStep;
+        private final int maxCostStep;
+        private final boolean tradeable;
+
+        private Def(String path, IntSupplier maxLevel, int weight,
+                    int minCostBase, int minCostStep, int maxCostStep, boolean tradeable) {
+            this.key = ResourceKey.create(Registries.ENCHANTMENT,
+                    ResourceLocation.fromNamespaceAndPath("taczfixes", path));
+            this.maxLevel = maxLevel;
+            this.weight = weight;
+            this.minCostBase = minCostBase;
+            this.minCostStep = minCostStep;
+            this.maxCostStep = maxCostStep;
+            this.tradeable = tradeable;
+        }
+
+        public ResourceKey<Enchantment> get() {
+            return key;
+        }
+
+        public ResourceKey<Enchantment> key() {
+            return key;
+        }
+
+        public int maxLevel() {
+            return maxLevel.getAsInt();
+        }
+
+        public int weight() {
+            return weight;
+        }
+
+        public int minCostBase() {
+            return minCostBase;
+        }
+
+        public int minCostStep() {
+            return minCostStep;
+        }
+
+        public int maxCostStep() {
+            return maxCostStep;
+        }
+
+        public boolean tradeable() {
+            return tradeable;
+        }
+    }
+
+    public static final Def OVERLOAD = new Def("overload", Config.ENCH_OVERLOAD_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def ANNIHILATION = new Def("annihilation", Config.ENCH_ANNIHILATION_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def STABILITY = new Def("stability", Config.ENCH_STABILITY_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def ANTI_GRAVITY = new Def("anti_gravity", Config.ENCH_ANTIGRAVITY_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def ELECTROMAGNETIC_COIL = new Def("electromagnetic_coil", Config.ENCH_COIL_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def STANDARD_AMMO = new Def("standard_ammo", Config.ENCH_STANDARD_AMMO_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def NEUROTOXIN = new Def("neurotoxin", Config.ENCH_NEUROTOXIN_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def CHAIN_EXPLOSION = new Def("chain_explosion", Config.ENCH_CHAIN_EXPLOSION_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def PREEMPTIVE_STRIKE = new Def("preemptive_strike", Config.ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL::get, 2, 6, 8, 6, true);
+    public static final Def COLLECTOR = new Def("collector", Config.ENCH_COLLECTOR_MAX_LEVEL::get, 1, 8, 8, 6, true);
+    public static final Def EXPLOSION_EXPERT = new Def("explosion_expert", Config.ENCH_EXPLOSION_EXPERT_MAX_LEVEL::get, 1, 8, 8, 6, true);
+    public static final Def LIFE_LEECH = new Def("life_leech", Config.ENCH_LIFE_LEECH_MAX_LEVEL::get, 1, 8, 8, 6, true);
+    public static final Def SNIPER_ELITE = new Def("sniper_elite", Config.ENCH_SNIPER_ELITE_MAX_LEVEL::get, 1, 8, 8, 6, true);
+    public static final Def PANDORA_PARADOX = new Def("pandora_paradox", Config.ENCH_PANDORA_PARADOX_MAX_LEVEL::get, 1, 8, 8, 6, true);
+    public static final Def SMART_SCOPE = new Def("smart_scope", Config.ENCH_SMART_SCOPE_MAX_LEVEL::get, 1, 20, 10, 8, true);
+    public static final Def DEEP_LEARNING = new Def("deep_learning", Config.ENCH_DEEP_LEARNING_MAX_LEVEL::get, 1, 5, 5, 4, true);
+    public static final Def EQUALIZER = new Def("equalizer", Config.ENCH_EQUALIZER_MAX_LEVEL::get, 1, 12, 8, 6, true);
+    public static final Def RANDOM = new Def("random", Config.ENCH_RANDOM_MAX_LEVEL::get, 1, 10, 8, 6, true);
+    public static final Def DECAPITATION = new Def("decapitation", Config.ENCH_DECAPITATION_MAX_LEVEL::get, 1, 10, 8, 6, true);
+    public static final Def CHARGE = new Def("charge", Config.ENCH_CHARGE_MAX_LEVEL::get, 1, 5, 5, 4, false);
+    public static final Def ABYSS_GAZER = new Def("abyssgazer", Config.ENCH_ABYSSGAZER_MAX_LEVEL::get, 1, 10, 8, 8, false);
+    public static final Def DOUBLE_SHOT = new Def("double_shot", Config.ENCH_DOUBLE_SHOT_MAX_LEVEL::get, 2, 5, 2, 4, false);
+    public static final Def FOCUSED_AMMO = new Def("focused_ammo", Config.ENCH_FOCUSED_AMMO_MAX_LEVEL::get, 2, 5, 2, 4, false);
+    public static final Def ARCANA_EDEN = new Def("arcana_eden", Config.ENCH_ARCANA_EDEN_MAX_LEVEL::get, 1, 6, 4, 6, false);
+    public static final Def PATIENCE = new Def("patience", Config.ENCH_PATIENCE_MAX_LEVEL::get, 2, 5, 2, 4, false);
+
     private GunEnchantments() {
-    }
-
-    public static class Overload extends BaseGunEnchantment {
-        public Overload() {
-            super(Rarity.RARE, Config.ENCH_OVERLOAD_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class Annihilation extends BaseGunEnchantment {
-        public Annihilation() {
-            super(Rarity.RARE, Config.ENCH_ANNIHILATION_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class Stability extends BaseGunEnchantment {
-        public Stability() {
-            super(Rarity.RARE, Config.ENCH_STABILITY_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class AntiGravity extends BaseGunEnchantment {
-        public AntiGravity() {
-            super(Rarity.RARE, Config.ENCH_ANTIGRAVITY_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class ElectromagneticCoil extends BaseGunEnchantment {
-        public ElectromagneticCoil() {
-            super(Rarity.RARE, Config.ENCH_COIL_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class StandardAmmo extends BaseGunEnchantment {
-        public StandardAmmo() {
-            super(Rarity.RARE, Config.ENCH_STANDARD_AMMO_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class Neurotoxin extends BaseGunEnchantment {
-        public Neurotoxin() {
-            super(Rarity.RARE, Config.ENCH_NEUROTOXIN_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class ChainExplosion extends BaseGunEnchantment {
-        public ChainExplosion() {
-            super(Rarity.RARE, Config.ENCH_CHAIN_EXPLOSION_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class PreemptiveStrike extends BaseGunEnchantment {
-        public PreemptiveStrike() {
-            super(Rarity.RARE, Config.ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL::get, 6, 8, 6);
-        }
-    }
-
-    public static class Collector extends BaseGunEnchantment {
-        public Collector() {
-            super(Rarity.VERY_RARE, Config.ENCH_COLLECTOR_MAX_LEVEL::get, 8, 8, 6);
-        }
-    }
-
-    public static class ExplosionExpert extends BaseGunEnchantment {
-        public ExplosionExpert() {
-            super(Rarity.VERY_RARE, Config.ENCH_EXPLOSION_EXPERT_MAX_LEVEL::get, 8, 8, 6);
-        }
-    }
-
-    public static class LifeLeech extends BaseGunEnchantment {
-        public LifeLeech() {
-            super(Rarity.VERY_RARE, Config.ENCH_LIFE_LEECH_MAX_LEVEL::get, 8, 8, 6);
-        }
-    }
-
-    public static class SniperElite extends BaseGunEnchantment {
-        public SniperElite() {
-            super(Rarity.VERY_RARE, Config.ENCH_SNIPER_ELITE_MAX_LEVEL::get, 8, 8, 6);
-        }
-    }
-
-    public static class PandoraParadox extends BaseGunEnchantment {
-        public PandoraParadox() {
-            super(Rarity.VERY_RARE, Config.ENCH_PANDORA_PARADOX_MAX_LEVEL::get, 8, 8, 6);
-        }
-    }
-
-    public static class SmartScope extends BaseGunEnchantment {
-        public SmartScope() {
-            super(Rarity.VERY_RARE, Config.ENCH_SMART_SCOPE_MAX_LEVEL::get, 20, 10, 8);
-        }
-    }
-
-    public static class DeepLearning extends BaseGunEnchantment {
-        public DeepLearning() {
-            super(Rarity.VERY_RARE, Config.ENCH_DEEP_LEARNING_MAX_LEVEL::get, 5, 5, 4);
-        }
-    }
-
-    public static class Equalizer extends BaseGunEnchantment {
-        public Equalizer() {
-            super(Rarity.VERY_RARE, Config.ENCH_EQUALIZER_MAX_LEVEL::get, 12, 8, 6);
-        }
-    }
-
-    public static class Random extends BaseGunEnchantment {
-        public Random() {
-            super(Rarity.VERY_RARE, Config.ENCH_RANDOM_MAX_LEVEL::get, 10, 8, 6);
-        }
-    }
-
-    public static class Decapitation extends BaseGunEnchantment {
-        public Decapitation() {
-            super(Rarity.VERY_RARE, Config.ENCH_DECAPITATION_MAX_LEVEL::get, 10, 8, 6);
-        }
-    }
-
-    public static class Charge extends BaseGunEnchantment {
-        public Charge() {
-            super(Rarity.VERY_RARE, Config.ENCH_CHARGE_MAX_LEVEL::get, 5, 5, 4);
-        }
-
-        @Override
-        public boolean isTradeable() {
-            return false;
-        }
-    }
-
-    public static class AbyssGazer extends BaseGunEnchantment {
-        public AbyssGazer() {
-            super(Rarity.VERY_RARE, Config.ENCH_ABYSSGAZER_MAX_LEVEL::get, 10, 8, 8);
-        }
-
-        @Override
-        public boolean isTradeable() {
-            return false;
-        }
-    }
-
-    public static class DoubleShot extends BaseGunEnchantment {
-        public DoubleShot() {
-            super(Rarity.RARE, Config.ENCH_DOUBLE_SHOT_MAX_LEVEL::get, 5, 2, 4);
-        }
-
-        @Override
-        public boolean isTradeable() {
-            return false;
-        }
-    }
-
-    public static class FocusedAmmo extends BaseGunEnchantment {
-        public FocusedAmmo() {
-            super(Rarity.RARE, Config.ENCH_FOCUSED_AMMO_MAX_LEVEL::get, 5, 2, 4);
-        }
-
-        @Override
-        public boolean isTradeable() {
-            return false;
-        }
-    }
-
-    public static class ArcanaEden extends BaseGunEnchantment {
-        public ArcanaEden() {
-            super(Rarity.VERY_RARE, Config.ENCH_ARCANA_EDEN_MAX_LEVEL::get, 6, 4, 6);
-        }
-
-        @Override
-        public boolean isTradeable() {
-            return false;
-        }
-    }
-
-    public static class Patience extends BaseGunEnchantment {
-        public Patience() {
-            super(Rarity.RARE, Config.ENCH_PATIENCE_MAX_LEVEL::get, 5, 2, 4);
-        }
-
-        @Override
-        public boolean isTradeable() {
-            return false;
-        }
     }
 }

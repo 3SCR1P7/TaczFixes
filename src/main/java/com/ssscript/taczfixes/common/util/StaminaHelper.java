@@ -13,7 +13,7 @@ public final class StaminaHelper {
     public static float max(Player player) {
         if (player == null) return 1f;
         return Math.max(1f, (float) player.getAttributeValue(
-                com.ssscript.taczfixes.TaczFixesMod.STAMINA_ATTRIBUTE.get()));
+                com.ssscript.taczfixes.TaczFixesMod.STAMINA_ATTRIBUTE));
     }
 
     public static float current(Player player) {
@@ -41,7 +41,7 @@ public final class StaminaHelper {
         com.ssscript.taczfixes.common.data.GunTaczFixesData.StaminaConfig cfg =
                 com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager.resolveStamina(player.getMainHandItem());
         float dataMultiplier = cfg == null || cfg.consumption_multiplier == null ? 1f : cfg.consumption_multiplier.floatValue();
-        float attributeMultiplier = (float) player.getAttributeValue(com.ssscript.taczfixes.TaczFixesMod.STAMINA_CONSUMPTION_ATTRIBUTE.get());
+        float attributeMultiplier = (float) player.getAttributeValue(com.ssscript.taczfixes.TaczFixesMod.STAMINA_CONSUMPTION_ATTRIBUTE);
         return dataMultiplier * attributeMultiplier;
     }
 
@@ -58,7 +58,7 @@ public final class StaminaHelper {
         if (!player.level().isClientSide) {
             return current(player) < cost;
         }
-        return net.minecraftforge.fml.DistExecutor.unsafeRunForDist(
+        return com.ssscript.taczfixes.common.util.DistExecutor.unsafeRunForDist(
                 () -> () -> com.ssscript.taczfixes.client.util.StaminaClientState.isInsufficient(cost),
                 () -> () -> false);
     }

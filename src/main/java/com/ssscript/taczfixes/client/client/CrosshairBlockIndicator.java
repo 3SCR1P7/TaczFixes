@@ -14,14 +14,14 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 /** 水下或因方块阻挡无法开枪时, 用红色禁止符号替代准星。 */
 @OnlyIn(Dist.CLIENT)
 public final class CrosshairBlockIndicator {
     private static final ResourceLocation TEXTURE =
-        new ResourceLocation(TaczFixesMod.MOD_ID, "textures/gui/blocked_crosshair.png");
+        ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "textures/gui/blocked_crosshair.png");
 
     private CrosshairBlockIndicator() {
     }

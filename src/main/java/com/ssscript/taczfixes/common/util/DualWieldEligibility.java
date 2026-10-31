@@ -11,7 +11,7 @@ import java.util.Objects;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.ModList;
+import net.neoforged.fml.ModList;
 
 public final class DualWieldEligibility {
     private static final String EMBEDDED_DUAL_SMG_ID = "eos:eos_m_57cw_t2x2";

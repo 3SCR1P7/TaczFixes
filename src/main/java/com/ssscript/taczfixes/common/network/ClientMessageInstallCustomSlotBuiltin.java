@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.google.gson.JsonElement;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
@@ -12,7 +13,6 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.network.NetworkEvent;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -115,7 +115,7 @@ public class ClientMessageInstallCustomSlotBuiltin {
         AttachmentPropertyManager.postChangeEvent(player, gunStack);
         player.inventoryMenu.broadcastChanges();
         com.tacz.guns.network.NetworkHandler.sendToClientPlayer(
-                new com.tacz.guns.network.message.ServerMessageRefreshRefitScreen(), player);
+                com.tacz.guns.network.message.ServerMessageRefreshRefitScreen.INSTANCE, player);
     }
 
     private static int refitPointInSlot(ItemStack gunStack, IGun gun, String refId) {
@@ -124,7 +124,7 @@ public class ClientMessageInstallCustomSlotBuiltin {
             try {
                 com.tacz.guns.api.item.attachment.AttachmentType type =
                         com.tacz.guns.api.item.attachment.AttachmentType.valueOf(refId.toUpperCase());
-                stack = gun.getAttachment(gunStack, type);
+                stack = TaczItemCompat.getAttachment(gun, gunStack, type);
             } catch (IllegalArgumentException ex) {
                 return 0;
             }
@@ -136,9 +136,9 @@ public class ClientMessageInstallCustomSlotBuiltin {
         try {
             com.tacz.guns.api.item.attachment.AttachmentType type =
                     com.tacz.guns.api.item.attachment.AttachmentType.valueOf(refId.toUpperCase());
-            ItemStack removed = gun.getAttachment(gunStack, type);
+            ItemStack removed = TaczItemCompat.getAttachment(gun, gunStack, type);
             if (removed.isEmpty()) return ItemStack.EMPTY;
-            gun.unloadAttachment(gunStack, type);
+            TaczItemCompat.unloadAttachment(gun, gunStack, type);
             return removed;
         } catch (IllegalArgumentException ex) {
             return ItemStack.EMPTY;

@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.data.CustomSlotDefinition;
 import com.ssscript.taczfixes.common.data.CustomSlotManager;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
@@ -109,7 +110,7 @@ public final class ScopeSwitchState {
                 if (!DefaultAssets.isEmptyAttachmentId(id)) {
                     float[] zooms = TimelessAPI.getClientAttachmentIndex(id).map(ClientAttachmentIndex::getZoom).orElse(null);
                     if (zooms != null) {
-                        int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(scope.getTag());
+                        int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(ItemNbt.get(scope));
                         custom = zooms[zoomNumber % zooms.length];
                     }
                 }
@@ -135,7 +136,7 @@ public final class ScopeSwitchState {
         ResourceLocation id = attachment.getAttachmentId(item);
         if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return null;
         return TimelessAPI.getClientAttachmentIndex(id)
-                .map(index -> index.isScope() && ScopeViewHelper.isScopeView(index, item.getTag()) ? id : null)
+                .map(index -> index.isScope() && ScopeViewHelper.isScopeView(index, ItemNbt.get(item)) ? id : null)
                 .orElse(null);
     }
 
@@ -210,7 +211,7 @@ public final class ScopeSwitchState {
             String active = getActiveSlot(gun);
             if (active != null) {
                 ItemStack scope = CustomSlotStorage.get(gun, active);
-                if (!scope.isEmpty() && scope.getTag() != null) return scope.getTag();
+                if (!scope.isEmpty() && ItemNbt.get(scope) != null) return ItemNbt.get(scope);
             }
         }
         return iGun.getAttachmentTag(gun, type);

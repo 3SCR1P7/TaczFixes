@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.client;
 
 import com.ssscript.taczfixes.client.client.DualRenderContext;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 import org.jetbrains.annotations.Nullable;
 import org.joml.Vector3f;
 

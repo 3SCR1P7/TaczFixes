@@ -6,9 +6,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.network.NetworkEvent;
+import net.neoforged.api.distmarker.Dist;
+import com.ssscript.taczfixes.common.util.DistExecutor;
 
 public final class ServerMessageDualWieldEligibility {
     private static final int MAX_LIST_SIZE = 4096;

@@ -8,7 +8,6 @@ import java.util.List;
 import java.util.Set;
 
 public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
-    private static final boolean GD656PEEK_PRESENT;
     private static final boolean PARCOOL_PRESENT;
     private static final boolean LRTACTICAL_PRESENT;
     private static final boolean TOUHOU_LITTLE_MAID_PRESENT;
@@ -18,7 +17,6 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean CREATE_PRESENT;
 
     static {
-        GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
         PARCOOL_PRESENT = hasResource("com/alrex/parcool/client/hud/impl/StaminaHUDController.class");
         LRTACTICAL_PRESENT = hasResource("me/xjqsh/lrtactical/item/MeleeItem.class");
         TOUHOU_LITTLE_MAID_PRESENT = hasResource("com/github/tartaricacid/touhoulittlemaid/TouhouLittleMaid.class");
@@ -38,9 +36,6 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
 
     @Override
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
-        if ("com.ssscript.taczfixes.common.mixin.MixinTaczPeekHeadshotLimit".equals(mixinClassName)) {
-            return GD656PEEK_PRESENT;
-        }
         if ("com.ssscript.taczfixes.common.mixin.MixinEntityKineticBulletCreateCollision".equals(mixinClassName)) {
             return CREATE_PRESENT;
         }

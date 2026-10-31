@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.common.data;
 
-import net.minecraftforge.event.AddReloadListenerEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.neoforged.neoforge.event.AddReloadListenerEvent;
+import net.neoforged.bus.api.SubscribeEvent;
 
 public class TaczFixesDataHandler {
     @SubscribeEvent

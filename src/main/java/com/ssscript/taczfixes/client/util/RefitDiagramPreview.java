@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
@@ -108,8 +109,8 @@ public final class RefitDiagramPreview {
                 CustomSlotStorage.install(preview, slotKey, attachment.copy());
             } else {
                 AttachmentType type = AttachmentType.valueOf(slotKey.toUpperCase(Locale.ROOT));
-                igun.unloadAttachment(preview, type);
-                igun.installAttachment(preview, attachment.copy());
+                TaczItemCompat.unloadAttachment(igun, preview, type);
+                com.ssscript.taczfixes.common.util.TaczItemCompat.installAttachment(igun, preview, attachment.copy());
             }
             AttachmentCacheProperty property = new AttachmentCacheProperty();
             property.eval(preview, gunData);

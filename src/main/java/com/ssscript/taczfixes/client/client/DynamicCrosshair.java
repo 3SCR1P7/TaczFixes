@@ -33,8 +33,8 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.api.distmarker.OnlyIn;
 
 import java.util.Map;
 
@@ -235,7 +235,7 @@ public final class DynamicCrosshair {
         float base = current == null ? 0.0f : current.floatValue();
         if (aim != null) {
             float aimingProgress = IClientPlayerGunOperator.fromLocalPlayer(player)
-                    .getClientAimingProgress(Minecraft.getInstance().getFrameTime());
+                    .getClientAimingProgress(Minecraft.getInstance().getTimer().getGameTimeDeltaPartialTick(false));
             if (aimingProgress > 0.0f) {
                 base = Mth.lerp(aimingProgress, base, aim.floatValue());
             }

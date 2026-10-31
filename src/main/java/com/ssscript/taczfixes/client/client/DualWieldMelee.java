@@ -19,7 +19,7 @@ import com.ssscript.taczfixes.common.util.DualWieldStackId;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.fml.LogicalSide;
+import net.neoforged.fml.LogicalSide;
 
 /** 双持近战: 两把枪都支持时奇数次主手、偶数次副手; 冷却切换比例与主手共享判定。 */
 public final class DualWieldMelee {
@@ -137,7 +137,7 @@ public final class DualWieldMelee {
             return false;
         }
         GunMeleeEvent event = new GunMeleeEvent(player, stack, LogicalSide.CLIENT);
-        if (net.minecraftforge.common.MinecraftForge.EVENT_BUS.post(event)) {
+        if (net.neoforged.neoforge.common.NeoForge.EVENT_BUS.post(event).isCanceled()) {
             return false;
         }
         lastOffhandMeleeTimestamp = now;

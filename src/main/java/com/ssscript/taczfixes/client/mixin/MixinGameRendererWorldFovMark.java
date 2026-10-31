@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.GameRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -12,8 +12,8 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(GameRenderer.class)
 public class MixinGameRendererWorldFovMark {
 
-    @Inject(method = "m_109089_", at = @At("HEAD"))
-    private void taczfixes$markWorldFov(float partialTicks, long nanoTime, PoseStack poseStack, CallbackInfo ci) {
+    @Inject(method = "renderLevel", at = @At("HEAD"))
+    private void taczfixes$markWorldFov(DeltaTracker deltaTracker, CallbackInfo ci) {
         ScopeFovTransitionHandler.markWorldFovCall();
     }
 }

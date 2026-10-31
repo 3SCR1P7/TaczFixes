@@ -2,14 +2,12 @@ package com.ssscript.taczfixes.common.util;
 
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.fml.DistExecutor;
+import net.neoforged.api.distmarker.Dist;
+import com.ssscript.taczfixes.common.util.DistExecutor;
 
 /**
- * 供 common mixin 调用的客户端分发入口。
- * common mixin 内不得直接引用任何客户端类(含 lambda/方法体), 否则 Mixin 在专用服务器
- * 预处理时会解析客户端类元数据并抛 ClassMetadataNotFoundException, 整个类加载失败。
- */
+ * 渚?common mixin 璋冪敤鐨勫鎴风鍒嗗彂鍏ュ彛銆? * common mixin 鍐呬笉寰楃洿鎺ュ紩鐢ㄤ换浣曞鎴风绫?鍚?lambda/鏂规硶浣?, 鍚﹀垯 Mixin 鍦ㄤ笓鐢ㄦ湇鍔″櫒
+ * 棰勫鐞嗘椂浼氳В鏋愬鎴风绫诲厓鏁版嵁骞舵姏 ClassMetadataNotFoundException, 鏁翠釜绫诲姞杞藉け璐ャ€? */
 public final class ClientOnlyDispatch {
 
     private ClientOnlyDispatch() {

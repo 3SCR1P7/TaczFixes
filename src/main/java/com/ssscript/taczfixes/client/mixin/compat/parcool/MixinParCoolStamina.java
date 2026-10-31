@@ -9,14 +9,14 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** ParCool 耐力消耗改为消耗本模组耐力(ParCoolStamina)。 */
-@Mixin(targets = "com.alrex.parcool.common.capability.stamina.ParCoolStamina", remap = false)
+@Mixin(targets = "com.alrex.parcool.common.stamina.impl.ParCoolStamina", remap = false)
 public class MixinParCoolStamina {
     @Shadow(remap = false)
-    private Player player;
+    private Player owner;
 
     @Inject(method = "consume", at = @At("HEAD"), cancellable = true, remap = false)
-    private void taczfixes$consumeOurStamina(int amount, CallbackInfo ci) {
-        if (ParCoolStaminaConsumeHelper.handle(player, amount)) {
+    private void taczfixes$consumeOurStamina(double amount, CallbackInfo ci) {
+        if (ParCoolStaminaConsumeHelper.handle(owner, amount)) {
             ci.cancel();
         }
     }

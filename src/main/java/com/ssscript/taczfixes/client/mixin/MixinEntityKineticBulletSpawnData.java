@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.client.render.SuppressionEffect;
 import com.tacz.guns.entity.EntityKineticBullet;
-import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.RegistryFriendlyByteBuf;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = EntityKineticBullet.class, remap = false)
 public abstract class MixinEntityKineticBulletSpawnData {
     @Inject(method = "readSpawnData", at = @At("TAIL"), remap = false)
-    private void taczfixes$suppressionDataReady(FriendlyByteBuf buffer, CallbackInfo ci) {
+    private void taczfixes$suppressionDataReady(RegistryFriendlyByteBuf buffer, CallbackInfo ci) {
         SuppressionEffect.onBulletDataReady((EntityKineticBullet) (Object) this);
     }
 }
