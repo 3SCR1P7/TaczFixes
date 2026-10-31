@@ -887,11 +887,11 @@ public final class DualWieldClient {
         }
         if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem)) {
             net.minecraft.world.InteractionResult result = gameMode.useItem(player, InteractionHand.MAIN_HAND);
-            boolean consume = result.consumesAction();
-            boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
-                    && stack.getUseDuration() > 0;
-            if (consume || overridden) {
-                if (stack.getUseDuration() > 0 && !player.isUsingItem()) {
+            if (result.consumesAction()) {
+                return true;
+            }
+            if (stack.getUseDuration() > 0) {
+                if (!player.isUsingItem()) {
                     player.startUsingItem(InteractionHand.MAIN_HAND);
                 }
                 return true;
