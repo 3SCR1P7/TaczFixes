@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.compat;
 
 import com.ssscript.taczfixes.client.client.DualWieldAnimatorContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;

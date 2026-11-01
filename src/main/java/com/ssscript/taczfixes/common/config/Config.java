@@ -20,6 +20,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
+    public static final ForgeConfigSpec.DoubleValue GUN_ENCHANT_GLINT_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
     public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_FULL_SPEED;
     public static final ForgeConfigSpec.DoubleValue ROTATION_INERTIA_MAX_ANGLE;
@@ -144,6 +145,7 @@ public class Config {
     public static final ForgeConfigSpec.IntValue BULLET_IGNORE_ENTITY_COOLDOWN_MS;
     public static final ForgeConfigSpec.BooleanValue DISABLE_HITBOXES;
     public static final ForgeConfigSpec.BooleanValue DISABLE_THIRD_PERSON;
+    public static final ForgeConfigSpec.BooleanValue GUN_TRANSLUCENT_RENDER;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> AMMO_EMC_BLACKLIST;
     public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_X;
     public static final ForgeConfigSpec.IntValue GUN_PACK_BUTTON_OFFSET_Y;
@@ -892,6 +894,9 @@ public class Config {
         DISABLE_THIRD_PERSON = BUILDER
                 .comment("禁用切换第三人称视角。默认值：false")
                 .define("disable_third_person", false);
+        GUN_TRANSLUCENT_RENDER = BUILDER
+                .comment("允许枪械和配件使用半透明渲染。开启后可能影响渲染性能与透明排序。默认值：false")
+                .define("gun_translucent_render", false);
         AMMO_EMC_BLACKLIST = BUILDER
                 .comment("不计入枪械弹匣 EMC 的弹药 ID 列表。默认值：[\"ts:battery_us\"]")
                 .defineListAllowEmpty("ammo_emc_blacklist", List.of("ts:battery_us"),
@@ -1467,7 +1472,7 @@ public class Config {
                 .comment("按下屏息后，准星晃动完全平息所需的时间(毫秒)。默认值：1000")
                 .defineInRange("sway_hold_breath_calm_ms", 1000, 0, 60000);
         AIMING_STAMINA_BAR_MODE = BUILDER
-                .comment("上肢耐力条显示模式。always=始终显示, never=从不显示, smart=耐力不满时显示/满后0.5秒逐渐隐藏。默认值：smart")
+                .comment("上肢耐力条显示模式。默认值：smart")
                 .defineEnum("bar_mode", AimingStaminaBarMode.SMART);
         BUILDER.pop();
         SPECS.put("aiming_stamina", BUILDER.build());
@@ -1621,6 +1626,9 @@ public class Config {
         PBR_BLOOM_TRACER = BUILDER
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
+        GUN_ENCHANT_GLINT_STRENGTH = BUILDER
+                .comment("附魔光效强度。默认值：1.0")
+                .defineInRange("enchantment_glint_strength", 1.0, 0.0, 2.0);
         SPECS.put("visual_effect", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();

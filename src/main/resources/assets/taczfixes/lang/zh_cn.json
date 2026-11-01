@@ -325,7 +325,8 @@
     "config.taczfixes.entry.compat.auto_aim_when_peeking":  "探头自动开镜",
     "config.taczfixes.entry.compat.disable_hitboxes":  "禁用实体碰撞箱显示",
     "config.taczfixes.entry.compat.disable_third_person":  "禁用切换第三人称视角",
-    "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",
+    "config.taczfixes.entry.compat.gun_translucent_render":  "允许枪械半透明渲染",
+  "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",
     "config.taczfixes.entry.compat.create_contraption_bullet_collision":  "动态结构子弹碰撞修复",
     "config.taczfixes.entry.compat.bullet_pierce_glass":  "子弹穿透玻璃",
     "config.taczfixes.entry.compat.gun_pack.button_offset_x":  "按钮水平偏移（像素）",
@@ -399,6 +400,7 @@
     "config.taczfixes.entry.visual_effect.bloom_resolution": "泛光分辨率倍率",
     "config.taczfixes.entry.visual_effect.bloom_tracer": "曳光弹泛光",
     "config.taczfixes.entry.visual_effect.bloom_laser": "镭射泛光",
+    "config.taczfixes.entry.visual_effect.enchantment_glint_strength": "附魔光效强度",
 
     "config.taczfixes.entry.aim_blur.enabled": "开镜模糊",
     "config.taczfixes.entry.aim_blur.range": "开镜模糊范围",

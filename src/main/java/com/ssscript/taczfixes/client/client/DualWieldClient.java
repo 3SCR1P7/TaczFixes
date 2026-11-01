@@ -53,7 +53,7 @@ import com.ssscript.taczfixes.common.network.ClientMessageOffhandShoot;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandShieldState;
 import com.ssscript.taczfixes.common.network.ClientMessageOffhandUseState;
 import com.ssscript.taczfixes.client.mixin.MixinMinecraftStartUseInvoker;
-import com.ssscript.taczfixes.client.mixin.MixinItemInHandRendererHeightAccessor;
+import com.ssscript.taczfixes.client.mixin.renderer.MixinItemInHandRendererHeightAccessor;
 
 import it.unimi.dsi.fastutil.Pair;
 import java.util.Iterator;
