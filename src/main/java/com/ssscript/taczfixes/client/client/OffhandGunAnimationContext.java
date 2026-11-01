@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.client;
 
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.model.functional.ShellRender;
@@ -90,5 +92,24 @@ public final class OffhandGunAnimationContext extends GunAnimationStateContext {
     public void updateItem(ItemStack stack, float partialTick) {
         setPartialTicks(partialTick);
         setCurrentGunItem(stack);
+    }
+
+    @Override
+    public boolean shouldSlide() {
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player != null && player.isCrouching()) {
+            ItemStack mainHandItem = player.getMainHandItem();
+            IGun mainGun = IGun.getIGunOrNull(mainHandItem);
+            if (mainGun != null && !isPistol(mainGun, mainHandItem)) {
+                return false;
+            }
+        }
+        return super.shouldSlide();
+    }
+
+    private static boolean isPistol(IGun gun, ItemStack stack) {
+        return TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
+                .map(index -> "pistol".equalsIgnoreCase(index.getType()))
+                .orElse(false);
     }
 }
