@@ -13,6 +13,7 @@ import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.tacz.guns.api.GunProperties;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
@@ -130,7 +131,7 @@ public final class DynamicCrosshair {
         float movementFactor = updateSpeedFactor(player, dt);
         float targetRatio = 0.0f;
         if (player != null) {
-            targetRatio = spreadRatio(player, player.getMainHandItem());
+            targetRatio = spreadRatio(player, activeGunStack(player));
         }
         float alpha = 1.0f - (float) Math.exp(-dt / SMOOTH_TAU_SECONDS);
         displayedRatio += (targetRatio - displayedRatio) * alpha;
@@ -179,7 +180,7 @@ public final class DynamicCrosshair {
     private static void updateJumpFactor(LocalPlayer player, float dt) {
         float target = 1.0f;
         if (player != null && !player.onGround()) {
-            ItemStack stack = player.getMainHandItem();
+            ItemStack stack = activeGunStack(player);
             IGun gun = IGun.getIGunOrNull(stack);
             if (gun != null) {
                 ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gun.getGunId(stack));
@@ -195,6 +196,18 @@ public final class DynamicCrosshair {
         jumpFactor += (target - jumpFactor) * alpha;
     }
 
+    private static ItemStack activeGunStack(LocalPlayer player) {
+        if (player == null) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack mainHandItem = player.getMainHandItem();
+        if (IGun.getIGunOrNull(mainHandItem) != null || !DualWieldEligibility.isDualWielding(player)) {
+            return mainHandItem;
+        }
+        ItemStack offhandItem = player.getOffhandItem();
+        return IGun.getIGunOrNull(offhandItem) != null ? offhandItem : mainHandItem;
+    }
+
     private static float spreadRatio(LocalPlayer player, ItemStack stack) {
         if (player == null || stack == null || stack.isEmpty()) {
             return 0.0f;
@@ -206,7 +219,8 @@ public final class DynamicCrosshair {
         InaccuracyType type = InaccuracyType.getInaccuracyType(player);
         Map<InaccuracyType, Float> table = null;
         IGunOperator operator = IGunOperator.fromLivingEntity(player);
-        AttachmentCacheProperty cache = operator == null ? null : operator.getCacheProperty();
+        AttachmentCacheProperty cache = stack == player.getMainHandItem() && operator != null
+                ? operator.getCacheProperty() : null;
         if (cache != null) {
             try {
                 table = cache.getCache(GunProperties.INACCURACY);

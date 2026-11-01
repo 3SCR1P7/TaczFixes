@@ -91,8 +91,10 @@ public final class DualFirstPersonRenderer {
             poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
             mirroredModel = DualRenderContext.offhandHandPos().mirror();
             AnimateGeoItemRenderer.applyFirstPersonPositioningTransform(poseStack, model, stack);
-            poseStack.translate(0.0d, 0.0d, -com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
-                    stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
+            if (IGun.getIGunOrNull(player.getMainHandItem()) != null) {
+                poseStack.translate(0.0d, 0.0d, -com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
+                        stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
+            }
             if (mirroredModel) {
                 poseStack.scale(-1.0f, 1.0f, 1.0f);
             }
