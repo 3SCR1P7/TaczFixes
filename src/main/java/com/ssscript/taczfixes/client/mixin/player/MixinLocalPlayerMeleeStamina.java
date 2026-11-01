@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.player;
 
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.ssscript.taczfixes.client.client.DualWieldMelee;

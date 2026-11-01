@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.compat;
 
 import com.ssscript.taczfixes.client.client.DualWieldAnimatorContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
@@ -11,7 +11,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(targets = {"com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat"}, remap = false)
-/* 标记当前第三人称动画请求是否来自双持实体, 供 GunDisplayInstance 替换动画资源。 */
+/* 鏍囪褰撳墠绗笁浜虹О鍔ㄧ敾璇锋眰鏄惁鏉ヨ嚜鍙屾寔瀹炰綋, 渚?GunDisplayInstance 鏇挎崲鍔ㄧ敾璧勬簮銆?*/
 public abstract class MixinPlayerAnimatorCompat {
 
     @Inject(method = {"hasPlayerAnimator3rd"}, at = {@At("HEAD")}, remap = false)
@@ -34,3 +34,4 @@ public abstract class MixinPlayerAnimatorCompat {
         DualWieldAnimatorContext.end();
     }
 }
+

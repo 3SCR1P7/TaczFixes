@@ -18,8 +18,10 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import org.joml.Quaternionf;
+import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -156,9 +158,13 @@ public abstract class MixinBedrockGunModelViewRotate {
             float px = panX * zoomScale;
             float py = panY * zoomScale;
             Matrix4f mat = pose.last().pose();
-            pose.translate(mat.m00() * px - mat.m01() * py,
-                    mat.m10() * px - mat.m11() * py,
-                    mat.m20() * px - mat.m21() * py);
+            net.minecraft.client.Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+            Vector3f screenRight = new Vector3f(camera.getLeftVector()).negate();
+            Vector3f screenDown = new Vector3f(camera.getUpVector()).negate();
+            Vector3f screenOffset = new Vector3f(screenRight).mul(px)
+                    .add(new Vector3f(screenDown).mul(py));
+            Vector3f offset = new Matrix3f(mat).invert().transform(screenOffset);
+            pose.translate(offset.x, offset.y, offset.z);
         }
         taczfixes$viewTransformPushed = true;
     }

@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.renderer;
 
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import org.spongepowered.asm.mixin.Mixin;

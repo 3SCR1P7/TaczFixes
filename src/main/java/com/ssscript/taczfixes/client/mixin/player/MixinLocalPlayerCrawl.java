@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.player;
 
 import com.ssscript.taczfixes.common.util.ParCoolHelper;
 import com.tacz.guns.api.item.IGun;

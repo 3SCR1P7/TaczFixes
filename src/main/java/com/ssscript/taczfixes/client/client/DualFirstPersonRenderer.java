@@ -17,7 +17,7 @@ import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.common.compat.CharmsOffhandRenderCompat;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
-import com.ssscript.taczfixes.client.mixin.MixinGunItemRendererWrapperAccessor;
+import com.ssscript.taczfixes.client.mixin.renderer.MixinGunItemRendererWrapperAccessor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;

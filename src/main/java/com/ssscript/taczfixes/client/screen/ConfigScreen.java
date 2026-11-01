@@ -60,6 +60,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "visual_effect.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
         bool_(cat, entry, "visual_effect.bloom_tracer", Config.PBR_BLOOM_TRACER);
         bool_(cat, entry, "visual_effect.bloom_laser", Config.PBR_BLOOM_LASER);
+        dbl_(cat, entry, "visual_effect.enchantment_glint_strength", Config.GUN_ENCHANT_GLINT_STRENGTH);
     }
 
     private static void buildSuppression(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -378,6 +379,7 @@ public class ConfigScreen {
         bool_(cat, entry, "compat.prevent_sprint_reengage_when_tilt", Config.PREVENT_SPRINT_REENGAGE_WHEN_TILT);
         bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);
+        bool_(cat, entry, "compat.gun_translucent_render", Config.GUN_TRANSLUCENT_RENDER);
         lst_(cat, entry, "compat.ammo_emc_blacklist", Config.AMMO_EMC_BLACKLIST);
         sub(cat, entry, "gun_pack", e -> {
             int_(e, entry, "compat.gun_pack.button_offset_x", Config.GUN_PACK_BUTTON_OFFSET_X);

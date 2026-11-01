@@ -19,6 +19,8 @@ public class Config {
     public static final ModConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
     public static final ModConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ModConfigSpec.BooleanValue PBR_BLOOM_LASER;
+    public static final ModConfigSpec.DoubleValue GUN_ENCHANT_GLINT_STRENGTH;
+    public static final ModConfigSpec.BooleanValue GUN_TRANSLUCENT_RENDER;
     public static final ModConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
     public static final ModConfigSpec.DoubleValue MOVEMENT_ROLL_FULL_SPEED;
     public static final ModConfigSpec.DoubleValue ROTATION_INERTIA_MAX_ANGLE;
@@ -881,6 +883,9 @@ public class Config {
         DISABLE_THIRD_PERSON = BUILDER
                 .comment("禁用切换第三人称视角。默认值：false")
                 .define("disable_third_person", false);
+        GUN_TRANSLUCENT_RENDER = BUILDER
+                .comment("是否允许枪械半透明渲染。默认值：false")
+                .define("gun_translucent_render", false);
         AMMO_EMC_BLACKLIST = BUILDER
                 .comment("不计入枪械弹匣 EMC 的弹药 ID 列表。默认值：[\"ts:battery_us\"]")
                 .defineListAllowEmpty("ammo_emc_blacklist", List.of("ts:battery_us"),
@@ -1610,6 +1615,9 @@ public class Config {
         PBR_BLOOM_TRACER = BUILDER
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
+        GUN_ENCHANT_GLINT_STRENGTH = BUILDER
+                .comment("附魔光效强度。默认值：1.0")
+                .defineInRange("enchantment_glint_strength", 1.0, 0.0, 2.0);
         SPECS.put("visual_effect", BUILDER.build());
 
         BUILDER = new ModConfigSpec.Builder();

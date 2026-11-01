@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.renderer;
 
 import com.ssscript.taczfixes.client.client.DualWieldClient;
 import net.minecraft.client.renderer.ItemInHandRenderer;
