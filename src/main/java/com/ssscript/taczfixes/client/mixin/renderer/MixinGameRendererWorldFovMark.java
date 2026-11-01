@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.renderer;
 
 import com.ssscript.taczfixes.client.handler.ScopeFovTransitionHandler;
 import net.minecraft.client.DeltaTracker;

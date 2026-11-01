@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.player;
 
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;

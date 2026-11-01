@@ -1,4 +1,4 @@
-package com.ssscript.taczfixes.client.mixin;
+package com.ssscript.taczfixes.client.mixin.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.client.DualWieldClient;

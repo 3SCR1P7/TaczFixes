@@ -46,7 +46,9 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         if (mixinClassName.contains(".MixinParCool")) {
             return PARCOOL_PRESENT;
         }
-        if (mixinClassName.contains(".MixinAccelerated")) {
+        if (mixinClassName.contains(".MixinAccelerated")
+                || mixinClassName.contains("MixinGlintSourceAccelerated")
+                || mixinClassName.contains("MixinGunGlintVertexConsumerAccelerated")) {
             return ACCELERATED_PRESENT;
         }
         if (mixinClassName.contains(".MixinLr")) {

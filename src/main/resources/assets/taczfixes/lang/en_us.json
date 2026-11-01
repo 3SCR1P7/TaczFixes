@@ -321,7 +321,8 @@
 
     "config.taczfixes.entry.compat.disable_hitboxes": "Disable Entity Hitbox Display",
     "config.taczfixes.entry.compat.disable_third_person": "Disable Third-Person Switching",
-    "config.taczfixes.entry.compat.ammo_emc_blacklist": "Ammo Types Excluded from Magazine EMC",
+    "config.taczfixes.entry.compat.gun_translucent_render": "Allow Translucent Gun Rendering",
+  "config.taczfixes.entry.compat.ammo_emc_blacklist": "Ammo Types Excluded from Magazine EMC",
     "config.taczfixes.entry.compat.create_contraption_bullet_collision": "Contraption Bullet Collision Fix",
     "config.taczfixes.entry.compat.bullet_pierce_glass": "Bullets Pierce Glass",
     "config.taczfixes.entry.compat.gun_pack.button_offset_x": "Button X Offset (px)",
@@ -389,6 +390,7 @@
     "config.taczfixes.entry.visual_effect.reflection_area": "Reflection Area",
     "config.taczfixes.entry.visual_effect.glare_strength": "Glare Strength",
     "config.taczfixes.entry.visual_effect.emission_strength": "Emission Strength",
+    "config.taczfixes.entry.visual_effect.enchantment_glint_strength": "Enchantment Glint Strength",
     "config.taczfixes.entry.visual_effect.bloom": "Enable Bloom",
     "config.taczfixes.entry.visual_effect.bloom_strength": "Bloom Strength",
     "config.taczfixes.entry.visual_effect.bloom_radius": "Bloom Radius",
