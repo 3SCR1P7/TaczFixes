@@ -35,8 +35,10 @@ public class MixinFirstPersonRenderGunEvent {
             poseStack.scale(-1.0f, 1.0f, 1.0f);
         }
         if (DualWieldClient.isDualMode(player)) {
-            poseStack.translate(0.0d, 0.0d, -com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
-                    stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
+            double forwardOffset = com.ssscript.taczfixes.client.client.ForwardOffsetSmoothing.mainHand(
+                    com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
+                            stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
+            poseStack.translate(0.0d, 0.0d, -forwardOffset);
         }
         CustomScopeViewShift.apply(poseStack, model, ItemDisplayContext.FIRST_PERSON_RIGHT_HAND);
     }

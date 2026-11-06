@@ -8,6 +8,4 @@ public class AimingBlurConfig {
     public Boolean aim_blur_enabled;
     public Float aim_blur_range;
     public Float aim_blur_strength;
-    public Float aim_blur_far_distance;
-    public Float aim_blur_min_factor;
 }
