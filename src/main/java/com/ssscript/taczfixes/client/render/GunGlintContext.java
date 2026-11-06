@@ -15,7 +15,9 @@ import net.minecraft.world.item.ItemStack;
 public final class GunGlintContext {
     private static final float GLINT_SCALE = 0.22F;
     private static final float GLINT_FLOW = 0.05F;
+    private static final BufferBuilder EMPTY_BUILDER = new BufferBuilder(1);
     private static final ThreadLocal<Deque<State>> STATES = new ThreadLocal<>();
+    private static final ThreadLocal<Deque<GlintWorker>> WORKERS = ThreadLocal.withInitial(ArrayDeque::new);
     private static final ThreadLocal<Integer> SUPPRESS = new ThreadLocal<>();
 
     private GunGlintContext() {
@@ -29,11 +31,13 @@ public final class GunGlintContext {
             states = new ArrayDeque<>();
             STATES.set(states);
         }
-        states.push(new State(active, active ? (float) configured : 0.0F));
+        State state = new State(active, active ? (float) configured : 0.0F);
         if (active) {
-            State state = states.peek();
-            state.glintSource = MultiBufferSource.immediate(new BufferBuilder(1536));
-            state.glint = state.glintSource.getBuffer(RenderType.entityGlint());
+            state.worker = acquireWorker();
+            state.glint = state.worker.glintSource.getBuffer(RenderType.entityGlint());
+        }
+        states.push(state);
+        if (active) {
             ClientArGate.pushForcedVanilla();
         }
     }
@@ -43,10 +47,11 @@ public final class GunGlintContext {
             return source;
         }
         State state = current();
-        if (state == null || !state.active) {
+        if (state == null || !state.active || state.worker == null) {
             return source;
         }
-        return new GlintSource(source);
+        state.worker.wrapper.delegate = source;
+        return state.worker.wrapper;
     }
 
     public static void suppress() {
@@ -68,6 +73,11 @@ public final class GunGlintContext {
         return states == null ? null : states.peek();
     }
 
+    private static GlintWorker acquireWorker() {
+        GlintWorker worker = WORKERS.get().poll();
+        return worker != null ? worker : new GlintWorker();
+    }
+
     private static VertexConsumer wrap(MultiBufferSource source, RenderType type) {
         VertexConsumer base = source.getBuffer(type);
         State state = current();
@@ -87,25 +97,39 @@ public final class GunGlintContext {
         if (states.isEmpty()) {
             STATES.remove();
         }
-        if (!state.active) {
+        if (!state.active || state.worker == null) {
             return;
         }
         ClientArGate.popForcedVanilla();
         float previousAlpha = RenderSystem.getShaderGlintAlpha();
         try {
             RenderSystem.setShaderGlintAlpha(previousAlpha * state.strength);
-            state.glintSource.endBatch();
+            state.worker.glintSource.endBatch();
         } finally {
             RenderSystem.setShaderGlintAlpha(previousAlpha);
+            state.worker.wrapper.delegate = null;
+            state.glint = null;
+            WORKERS.get().push(state.worker);
+        }
+    }
+
+    private static final class GlintWorker {
+        private final MultiBufferSource.BufferSource glintSource;
+        private final GlintSource wrapper;
+
+        private GlintWorker() {
+            this.glintSource = MultiBufferSource.immediate(new BufferBuilder(1536));
+            this.wrapper = new GlintSource(this);
         }
     }
 
     private static final class GlintSource extends MultiBufferSource.BufferSource {
-        private final MultiBufferSource delegate;
+        private final GlintWorker worker;
+        private MultiBufferSource delegate;
 
-        private GlintSource(MultiBufferSource delegate) {
-            super(new BufferBuilder(256), Collections.<RenderType, BufferBuilder>emptyMap());
-            this.delegate = delegate;
+        private GlintSource(GlintWorker worker) {
+            super(EMPTY_BUILDER, Collections.<RenderType, BufferBuilder>emptyMap());
+            this.worker = worker;
         }
 
         @Override
@@ -138,7 +162,7 @@ public final class GunGlintContext {
     private static final class State {
         private final boolean active;
         private final float strength;
-        private MultiBufferSource.BufferSource glintSource;
+        private GlintWorker worker;
         private VertexConsumer glint;
 
         private State(boolean active, float strength) {
