@@ -11,10 +11,10 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 @Mixin(value = AttachmentRender.class, remap = false)
 public abstract class MixinAttachmentRenderTransparency {
     private static final String RENDER_ATTACHMENT_LAMBDA =
-            "lambda$renderAttachment$0(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
+            "lambda$renderAttachment$1(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
             + "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lnet/minecraft/resources/ResourceLocation;"
-            + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;II"
-            + "Lnet/minecraft/client/renderer/MultiBufferSource;"
+            + "Ljava/util/function/Consumer;Lnet/minecraft/world/item/ItemDisplayContext;"
+            + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II"
             + "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;)V";
 
     @Redirect(method = RENDER_ATTACHMENT_LAMBDA,
