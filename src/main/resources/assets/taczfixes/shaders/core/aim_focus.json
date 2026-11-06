@@ -1,0 +1,42 @@
+{
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "fragment": "taczfixes:aim_focus",
+  "vertex": "taczfixes:pbr_screen",
+  "uniforms": [
+    {
+      "type": "float",
+      "count": 1,
+      "name": "NearPlane",
+      "values": [ 0.05 ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "FarPlane",
+      "values": [ 512.0 ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "Blend",
+      "values": [ 1.0 ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "Initialized",
+      "values": [ 0.0 ]
+    }
+  ],
+  "samplers": [
+    {
+      "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    }
+  ]
+}

@@ -2,6 +2,7 @@
 
 uniform sampler2D Sampler0;
 uniform sampler2D Sampler1;
+uniform sampler2D Sampler2;
 uniform float NearPlane;
 uniform float FarPlane;
 uniform float MaxRadius;
@@ -15,6 +16,11 @@ float linearDepth(float depth) {
     return (2.0 * NearPlane * FarPlane) / (FarPlane + NearPlane - z * (FarPlane - NearPlane));
 }
 
+float decode16(vec2 enc) {
+    float v = floor(enc.r * 255.0 + 0.5) + floor(enc.g * 255.0 + 0.5) * 256.0;
+    return clamp(v / 65535.0, 0.0, 1.0);
+}
+
 void main() {
     vec3 sharp = texture(Sampler0, texCoord).rgb;
     if (MaxRadius <= 0.0 || Progress <= 0.0) {
@@ -22,7 +28,7 @@ void main() {
         return;
     }
 
-    float focus = linearDepth(texture(Sampler1, vec2(0.5)).r);
+    float focus = decode16(texture(Sampler2, vec2(0.5)).rg) * FarPlane;
     focus = max(focus, 0.05);
     float depth = linearDepth(texture(Sampler1, texCoord).r);
 

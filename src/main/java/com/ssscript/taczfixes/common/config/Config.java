@@ -329,6 +329,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue AIM_BLUR_ENABLED;
     public static final ForgeConfigSpec.DoubleValue AIM_BLUR_RANGE;
     public static final ForgeConfigSpec.DoubleValue AIM_BLUR_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_FOCUS_TRANSITION;
     public static final ForgeConfigSpec.BooleanValue SUPPRESSION_ENABLED;
     public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DETECTION_RANGE;
     public static final ForgeConfigSpec.BooleanValue SUPPRESSION_INCLUDE_OWN_BULLETS;
@@ -1638,8 +1639,11 @@ public class Config {
                 .comment("景深光圈倍率。默认值：1.0")
                 .defineInRange("range", 1.0, 0.0, 2.0);
         AIM_BLUR_STRENGTH = BUILDER
-                .comment("景深强度（最大模糊半径）。默认值：4.0")
-                .defineInRange("strength", 4.0, 0.0, 20.0);
+                .comment("景深强度（最大模糊半径）。默认值：2.0")
+                .defineInRange("strength", 2.0, 0.0, 20.0);
+        AIM_BLUR_FOCUS_TRANSITION = BUILDER
+                .comment("焦点过渡平滑时间（秒）。设为 0 可关闭平滑。默认值：0.1")
+                .defineInRange("focus_transition", 0.1, 0.0, 2.0);
         BUILDER.pop();
         BUILDER.push("suppression");
         SUPPRESSION_ENABLED = BUILDER

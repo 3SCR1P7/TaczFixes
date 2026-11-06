@@ -41,6 +41,7 @@
     "config.taczfixes.category.auto_craft":  "自动合成",
     "config.taczfixes.category.suppression": "压制机制",
     "config.taczfixes.category.visual_effect": "视觉效果",
+    "config.taczfixes.category.gun_movement": "枪械移动",
     "config.taczfixes.category.gun_level":  "枪械等级",
     "config.taczfixes.category.stepless_zoom":  "无极变倍",
     "config.taczfixes.category.limb_damage":  "四肢伤害",
@@ -405,6 +406,7 @@
     "config.taczfixes.entry.aim_blur.enabled": "开镜景深",
     "config.taczfixes.entry.aim_blur.range": "景深光圈",
     "config.taczfixes.entry.aim_blur.strength": "景深强度",
+    "config.taczfixes.entry.aim_blur.focus_transition": "焦点过渡时间（秒）",
 
     "config.taczfixes.entry.suppression.enabled": "启用压制效果",
     "config.taczfixes.entry.suppression.exposure_strength": "色散强度",

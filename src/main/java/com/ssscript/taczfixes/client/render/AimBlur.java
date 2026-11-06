@@ -41,18 +41,28 @@ import org.lwjgl.opengl.GL14;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class AimBlur {
     private static ShaderInstance shader;
+    private static ShaderInstance focusShader;
     private static AbstractUniform uNearPlane;
     private static AbstractUniform uFarPlane;
     private static AbstractUniform uMaxRadius;
     private static AbstractUniform uProgress;
+    private static AbstractUniform uFocusNear;
+    private static AbstractUniform uFocusFar;
+    private static AbstractUniform uFocusBlend;
+    private static AbstractUniform uFocusInitialized;
     private static RenderTarget dof;
+    private static RenderTarget focusFront;
+    private static RenderTarget focusBack;
     private static VertexBuffer quad;
+    private static boolean focusHistoryValid;
+    private static long lastFocusNanos;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         release();
         shader = null;
+        focusShader = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath("taczfixes", "aim_blur"), DefaultVertexFormat.POSITION_TEX),
                 s -> {
@@ -62,35 +72,51 @@ public final class AimBlur {
                     uMaxRadius = s.safeGetUniform("MaxRadius");
                     uProgress = s.safeGetUniform("Progress");
                 });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "aim_focus"), DefaultVertexFormat.POSITION_TEX),
+                s -> {
+                    focusShader = s;
+                    uFocusNear = s.safeGetUniform("NearPlane");
+                    uFocusFar = s.safeGetUniform("FarPlane");
+                    uFocusBlend = s.safeGetUniform("Blend");
+                    uFocusInitialized = s.safeGetUniform("Initialized");
+                });
     }
 
     public static void composite() {
         if (shader == null) {
+            resetFocus();
             return;
         }
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (!(player instanceof IClientPlayerGunOperator operator)) {
+            resetFocus();
             return;
         }
         AimingParams params = resolveParams(player);
         if (!params.enabled()) {
+            resetFocus();
             return;
         }
         float progress = operator.getClientAimingProgress(mc.getFrameTime());
         if (progress <= 0.01f) {
+            resetFocus();
             return;
         }
         float maxRadius = params.strength() * 2.5f * params.range() * progress;
         if (maxRadius < 0.35f) {
+            resetFocus();
             return;
         }
         RenderTarget main = mc.getMainRenderTarget();
         if (main == null) {
+            resetFocus();
             return;
         }
         ensureTargets(main);
-        if (dof == null) {
+        if (dof == null || focusShader == null || focusFront == null || focusBack == null) {
+            resetFocus();
             return;
         }
 
@@ -115,7 +141,7 @@ public final class AimBlur {
         int dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
         float[] shaderColor = RenderSystem.getShaderColor().clone();
         PbrBlendCache.save();
-        int[] textures = new int[2];
+        int[] textures = new int[3];
         for (int i = 0; i < textures.length; i++) {
             textures[i] = RenderSystem.getShaderTexture(i);
         }
@@ -133,11 +159,12 @@ public final class AimBlur {
             uFarPlane.set(far);
             uMaxRadius.set(maxRadius);
             uProgress.set(progress);
-            draw(dof, main.getColorTextureId(), main.getDepthTextureId());
+            updateFocus(main.getDepthTextureId(), near, far, params.focusTransition());
+            draw(dof, main.getColorTextureId(), main.getDepthTextureId(), focusFront.getColorTextureId());
 
             uMaxRadius.set(0.0f);
             uProgress.set(0.0f);
-            draw(main, dof.getColorTextureId(), 0);
+            draw(main, dof.getColorTextureId(), 0, focusFront.getColorTextureId());
         } finally {
             VertexBuffer.unbind();
             main.bindWrite(true);
@@ -170,7 +197,7 @@ public final class AimBlur {
         }
     }
 
-    private record AimingParams(boolean enabled, float range, float strength) {
+    private record AimingParams(boolean enabled, float range, float strength, float focusTransition) {
     }
 
     private static AimingParams resolveParams(LocalPlayer player) {
@@ -184,7 +211,8 @@ public final class AimBlur {
         float strength = cfg != null && cfg.aim_blur_strength != null
                 ? cfg.aim_blur_strength.floatValue()
                 : Config.AIM_BLUR_STRENGTH.get().floatValue();
-        return new AimingParams(enabled, range, strength);
+        float focusTransition = Config.AIM_BLUR_FOCUS_TRANSITION.get().floatValue();
+        return new AimingParams(enabled, range, strength, focusTransition);
     }
 
     private static AimingBlurConfig resolveDisplayConfig(LocalPlayer player) {
@@ -230,17 +258,76 @@ public final class AimBlur {
 
     private static void ensureTargets(RenderTarget main) {
         if (dof != null && dof.width == main.width && dof.height == main.height) {
+            ensureFocusTargets();
             return;
         }
         releaseTargets();
         dof = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
         dof.setFilterMode(GL11.GL_LINEAR);
+        ensureFocusTargets();
     }
 
-    private static void draw(RenderTarget output, int colorTexture, int depthTexture) {
+    private static void ensureFocusTargets() {
+        if (focusFront != null && focusBack != null) {
+            return;
+        }
+        if (focusFront != null) {
+            focusFront.destroyBuffers();
+            focusFront = null;
+        }
+        if (focusBack != null) {
+            focusBack.destroyBuffers();
+            focusBack = null;
+        }
+        focusFront = new TextureTarget(1, 1, false, Minecraft.ON_OSX);
+        focusFront.setFilterMode(GL11.GL_NEAREST);
+        focusBack = new TextureTarget(1, 1, false, Minecraft.ON_OSX);
+        focusBack.setFilterMode(GL11.GL_NEAREST);
+        resetFocus();
+    }
+
+    private static void updateFocus(int depthTexture, float near, float far, float transitionSeconds) {
+        long now = System.nanoTime();
+        float blend;
+        if (!focusHistoryValid || transitionSeconds <= 0.001f) {
+            blend = 1.0f;
+        } else {
+            float dt = (now - lastFocusNanos) / 1.0e9f;
+            if (dt > 0.25f) {
+                blend = 1.0f;
+            } else {
+                blend = 1.0f - (float) Math.exp(-Math.max(dt, 0.0f) / transitionSeconds);
+            }
+        }
+        lastFocusNanos = now;
+        uFocusNear.set(near);
+        uFocusFar.set(far);
+        uFocusBlend.set(blend);
+        uFocusInitialized.set(focusHistoryValid ? 1.0f : 0.0f);
+
+        focusBack.bindWrite(true);
+        RenderSystem.setShaderTexture(0, focusFront.getColorTextureId());
+        RenderSystem.setShaderTexture(1, depthTexture);
+        RenderSystem.setShader(() -> focusShader);
+        quad.bind();
+        quad.drawWithShader(IDENTITY, IDENTITY, focusShader);
+
+        RenderTarget temp = focusFront;
+        focusFront = focusBack;
+        focusBack = temp;
+        focusHistoryValid = true;
+    }
+
+    private static void resetFocus() {
+        focusHistoryValid = false;
+        lastFocusNanos = 0L;
+    }
+
+    private static void draw(RenderTarget output, int colorTexture, int depthTexture, int focusTexture) {
         output.bindWrite(true);
         RenderSystem.setShaderTexture(0, colorTexture);
         RenderSystem.setShaderTexture(1, depthTexture);
+        RenderSystem.setShaderTexture(2, focusTexture);
         RenderSystem.setShader(() -> shader);
         quad.bind();
         quad.drawWithShader(IDENTITY, IDENTITY, shader);
@@ -264,8 +351,17 @@ public final class AimBlur {
     private static void releaseTargets() {
         if (dof != null) {
             dof.destroyBuffers();
+            dof = null;
         }
-        dof = null;
+        if (focusFront != null) {
+            focusFront.destroyBuffers();
+            focusFront = null;
+        }
+        if (focusBack != null) {
+            focusBack.destroyBuffers();
+            focusBack = null;
+        }
+        resetFocus();
     }
 
     public static void release() {
