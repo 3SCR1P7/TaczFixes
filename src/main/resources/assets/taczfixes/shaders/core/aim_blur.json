@@ -9,15 +9,37 @@
     {
       "type": "float",
       "count": 1,
-      "name": "MaskStart",
-      "values": [
-        0.65
-      ]
+      "name": "NearPlane",
+      "values": [ 0.05 ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "FarPlane",
+      "values": [ 512.0 ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "MaxRadius",
+      "values": [ 0.0 ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "Progress",
+      "values": [ 0.0 ]
     }
   ],
   "samplers": [
     {
       "name": "Sampler0"
+    },
+    {
+      "name": "Sampler1"
+    },
+    {
+      "name": "Sampler2"
     }
   ]
 }

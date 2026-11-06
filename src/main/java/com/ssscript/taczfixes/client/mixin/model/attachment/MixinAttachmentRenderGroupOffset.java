@@ -47,11 +47,12 @@ public abstract class MixinAttachmentRenderGroupOffset {
         GunRecolorManager.popRenderStack();
     }
 
-    @Inject(method = "lambda$renderAttachment$0", at = @At("HEAD"), remap = false)
+    @Inject(method = "lambda$renderAttachment$1", at = @At("HEAD"), remap = false)
     private static void taczfixes$applyAttachmentOffset(ItemStack attachmentStack, ItemStack gunStack,
-                                                        AttachmentType type, ResourceLocation id, PoseStack poseStack,
-                                                        ItemDisplayContext displayContext, int light, int overlay,
-                                                        MultiBufferSource bufferSource,
+                                                        AttachmentType type, ResourceLocation id,
+                                                        java.util.function.Consumer<?> consumer,
+                                                        ItemDisplayContext displayContext, PoseStack poseStack,
+                                                        MultiBufferSource bufferSource, int light, int overlay,
                                                         ClientAttachmentIndex attachmentIndex, CallbackInfo ci) {
         if (type == null || gunStack == null || gunStack.isEmpty()) return;
         String slotKey = type.name().toLowerCase(Locale.ROOT);

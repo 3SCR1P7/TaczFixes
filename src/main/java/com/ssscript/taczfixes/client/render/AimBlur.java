@@ -5,8 +5,8 @@ import com.mojang.blaze3d.pipeline.TextureTarget;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
-import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
+import com.mojang.blaze3d.vertex.Tesselator;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.ssscript.taczfixes.TaczFixesMod;
@@ -24,126 +24,181 @@ import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.resource.ClientAssetsManager;
 import com.tacz.guns.client.resource.pojo.display.attachment.AttachmentDisplay;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
+import java.io.IOException;
+import java.util.Optional;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.ShaderInstance;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
-import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.phys.AABB;
-import net.minecraft.world.phys.EntityHitResult;
-import net.minecraft.world.phys.HitResult;
-import net.minecraft.world.phys.Vec3;
 import net.neoforged.api.distmarker.Dist;
-import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.neoforge.client.event.RegisterShadersEvent;
 import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
-import java.io.IOException;
-import java.util.Optional;
-
-/**
- * 开镜模糊: 在 renderLevel 结束后对主帧缓冲做高斯模糊, 只作用于屏幕边缘。
- * 模糊分两层叠加(弱模糊 + 在其之上的强模糊), 通过随边缘距离渐增的遮罩混合,
- * 使靠近中心的模糊较弱、靠边缘的模糊较强; 强度按开镜进度渐入渐出。
- * 模糊范围随瞄准方块的距离变化: 远处最大, 近处趋近于无。
- */
-@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
 public final class AimBlur {
     private static ShaderInstance shader;
-    private static com.mojang.blaze3d.shaders.AbstractUniform uMaskStart;
-    private static RenderTarget horizontal, vertical;
+    private static ShaderInstance focusShader;
+    private static AbstractUniform uNearPlane;
+    private static AbstractUniform uFarPlane;
+    private static AbstractUniform uMaxRadius;
+    private static AbstractUniform uProgress;
+    private static AbstractUniform uFocusNear;
+    private static AbstractUniform uFocusFar;
+    private static AbstractUniform uFocusBlend;
+    private static AbstractUniform uFocusInitialized;
+    private static RenderTarget dof;
+    private static RenderTarget focusFront;
+    private static RenderTarget focusBack;
     private static VertexBuffer quad;
+    private static boolean focusHistoryValid;
+    private static long lastFocusNanos;
     private static final Matrix4f IDENTITY = new Matrix4f();
-    /** 视线检测的最远距离(格)。 */
-    private static final double RAY_DISTANCE = 128.0;
-    /** 瞄准距离小于等于该值时模糊范围衰减为 0。 */
-    private static final double RANGE_NEAR_DISTANCE = 2.0;
 
     @SubscribeEvent
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         release();
         shader = null;
-        uMaskStart = null;
+        focusShader = null;
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath("taczfixes", "aim_blur"), DefaultVertexFormat.POSITION_TEX),
                 s -> {
                     shader = s;
-                    uMaskStart = s.safeGetUniform("MaskStart");
+                    uNearPlane = s.safeGetUniform("NearPlane");
+                    uFarPlane = s.safeGetUniform("FarPlane");
+                    uMaxRadius = s.safeGetUniform("MaxRadius");
+                    uProgress = s.safeGetUniform("Progress");
+                });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "aim_focus"), DefaultVertexFormat.POSITION_TEX),
+                s -> {
+                    focusShader = s;
+                    uFocusNear = s.safeGetUniform("NearPlane");
+                    uFocusFar = s.safeGetUniform("FarPlane");
+                    uFocusBlend = s.safeGetUniform("Blend");
+                    uFocusInitialized = s.safeGetUniform("Initialized");
                 });
     }
 
-    /** 在 renderLevel 结束时调用: 模糊已绘制完的世界与手部, 不影响之后绘制的 HUD。 */
     public static void composite() {
-        if (shader == null || PbrRenderer.blurShader == null) return;
+        if (shader == null) {
+            resetFocus();
+            return;
+        }
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
-        if (!(player instanceof IClientPlayerGunOperator operator)) return;
+        if (!(player instanceof IClientPlayerGunOperator operator)) {
+            resetFocus();
+            return;
+        }
         AimingParams params = resolveParams(player);
-        if (!params.enabled()) return;
+        if (!params.enabled()) {
+            resetFocus();
+            return;
+        }
         float progress = operator.getClientAimingProgress(mc.getTimer().getGameTimeDeltaPartialTick(false));
-        if (progress <= 0.01f) return;
-        float range = params.range() * distanceFactor(mc, player, params);
-        float radius = params.strength() * progress;
-        if (range <= 0.002f || radius < 0.1f) return;
+        if (progress <= 0.01f) {
+            resetFocus();
+            return;
+        }
+        float maxRadius = params.strength() * 2.5f * params.range() * progress;
+        if (maxRadius < 0.35f) {
+            resetFocus();
+            return;
+        }
         RenderTarget main = mc.getMainRenderTarget();
-        if (main == null) return;
+        if (main == null) {
+            resetFocus();
+            return;
+        }
         ensureTargets(main);
-        if (horizontal == null || vertical == null) return;
+        if (dof == null || focusShader == null || focusFront == null || focusBack == null) {
+            resetFocus();
+            return;
+        }
 
-        boolean depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        Matrix4f projection = RenderSystem.getProjectionMatrix();
+        float m22 = projection.m22();
+        float m23 = projection.m23();
+        float near = m23 / (m22 - 1.0f);
+        float far = m23 / (m22 + 1.0f);
+        if (!Float.isFinite(near) || !Float.isFinite(far) || near <= 0.0f || far <= near) {
+            near = 0.05f;
+            far = 512.0f;
+        }
+
+        boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
         boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
         boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
         boolean stencil = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
         boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-        int srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB), dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
-        int srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA), dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+        int srcRgb = GL11.glGetInteger(GL14.GL_BLEND_SRC_RGB);
+        int dstRgb = GL11.glGetInteger(GL14.GL_BLEND_DST_RGB);
+        int srcAlpha = GL11.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+        int dstAlpha = GL11.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+        float[] shaderColor = RenderSystem.getShaderColor().clone();
         PbrBlendCache.save();
         int[] textures = new int[3];
-        for (int i = 0; i < textures.length; i++) textures[i] = RenderSystem.getShaderTexture(i);
+        for (int i = 0; i < textures.length; i++) {
+            textures[i] = RenderSystem.getShaderTexture(i);
+        }
         ShaderInstance previous = RenderSystem.getShader();
         try {
             RenderSystem.disableDepthTest();
             RenderSystem.depthMask(false);
             RenderSystem.disableCull();
             RenderSystem.disableBlend();
+            RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
             GL11.glDisable(GL11.GL_STENCIL_TEST);
             ensureQuad();
-            // 第一层: 弱模糊(半径 = 总强度的一半), 覆盖范围带的内侧
-            float halfRadius = radius * 0.5f;
-            PbrRenderer.setBlurDirection(halfRadius / main.width, 0f);
-            draw(horizontal, main.getColorTextureId(), PbrRenderer.blurShader);
-            PbrRenderer.setBlurDirection(0f, halfRadius / main.height);
-            draw(vertical, horizontal.getColorTextureId(), PbrRenderer.blurShader);
-            compositeMasked(main, vertical, 1.0f - range);
-            // 第二层: 在第一层结果上继续模糊(累计半径 ≈ 总强度), 覆盖范围带的外侧
-            float addRadius = radius * 0.866f;
-            PbrRenderer.setBlurDirection(addRadius / main.width, 0f);
-            draw(horizontal, vertical.getColorTextureId(), PbrRenderer.blurShader);
-            PbrRenderer.setBlurDirection(0f, addRadius / main.height);
-            draw(vertical, horizontal.getColorTextureId(), PbrRenderer.blurShader);
-            compositeMasked(main, vertical, 1.0f - range * 0.5f);
+
+            uNearPlane.set(near);
+            uFarPlane.set(far);
+            uMaxRadius.set(maxRadius);
+            uProgress.set(progress);
+            updateFocus(main.getDepthTextureId(), near, far, params.focusTransition());
+            draw(dof, main.getColorTextureId(), main.getDepthTextureId(), focusFront.getColorTextureId());
+
+            uMaxRadius.set(0.0f);
+            uProgress.set(0.0f);
+            draw(main, dof.getColorTextureId(), 0, focusFront.getColorTextureId());
         } finally {
             VertexBuffer.unbind();
             main.bindWrite(true);
-            for (int i = 0; i < textures.length; i++) RenderSystem.setShaderTexture(i, textures[i]);
+            for (int i = 0; i < textures.length; i++) {
+                RenderSystem.setShaderTexture(i, textures[i]);
+            }
             RenderSystem.setShader(() -> previous);
-            if (depth) RenderSystem.enableDepthTest(); else RenderSystem.disableDepthTest();
-            if (cull) RenderSystem.enableCull(); else RenderSystem.disableCull();
-            if (blend) RenderSystem.enableBlend(); else RenderSystem.disableBlend();
+            RenderSystem.setShaderColor(shaderColor[0], shaderColor[1], shaderColor[2], shaderColor[3]);
+            if (depthTest) {
+                RenderSystem.enableDepthTest();
+            } else {
+                RenderSystem.disableDepthTest();
+            }
+            if (cull) {
+                RenderSystem.enableCull();
+            } else {
+                RenderSystem.disableCull();
+            }
+            if (blend) {
+                RenderSystem.enableBlend();
+            } else {
+                RenderSystem.disableBlend();
+            }
             RenderSystem.blendFuncSeparate(srcRgb, dstRgb, srcAlpha, dstAlpha);
             PbrBlendCache.restore();
             RenderSystem.depthMask(depthMask);
-            if (stencil) GL11.glEnable(GL11.GL_STENCIL_TEST);
+            if (stencil) {
+                GL11.glEnable(GL11.GL_STENCIL_TEST);
+            }
         }
     }
 
-    /** 开镜模糊参数: 瞄具 display 的 aiming_blur 优先, 未配置项回退配置文件。 */
-    private record AimingParams(boolean enabled, float range, float strength, double farDistance, float minFactor) {
+    private record AimingParams(boolean enabled, float range, float strength, float focusTransition) {
     }
 
     private static AimingParams resolveParams(LocalPlayer player) {
@@ -157,21 +212,16 @@ public final class AimBlur {
         float strength = cfg != null && cfg.aim_blur_strength != null
                 ? cfg.aim_blur_strength.floatValue()
                 : Config.AIM_BLUR_STRENGTH.get().floatValue();
-        double far = cfg != null && cfg.aim_blur_far_distance != null
-                ? cfg.aim_blur_far_distance.doubleValue()
-                : Config.AIM_BLUR_FAR_DISTANCE.get();
-        float min = cfg != null && cfg.aim_blur_min_factor != null
-                ? cfg.aim_blur_min_factor.floatValue()
-                : Config.AIM_BLUR_MIN_FACTOR.get().floatValue();
-        return new AimingParams(enabled, range, strength, far, min);
+        float focusTransition = Config.AIM_BLUR_FOCUS_TRANSITION.get().floatValue();
+        return new AimingParams(enabled, range, strength, focusTransition);
     }
 
-    /** 当前生效瞄具(或切换到的自定义槽瞄具)的 display 上的 aiming_blur 配置, 无则 null。 */
     private static AimingBlurConfig resolveDisplayConfig(LocalPlayer player) {
         ItemStack gunStack = player.getMainHandItem();
         IGun gun = IGun.getIGunOrNull(gunStack);
-        if (gun == null) return null;
-
+        if (gun == null) {
+            return null;
+        }
         ResourceLocation slotId = null;
         String active = ScopeSwitchState.getActiveSlot(gunStack);
         if (active != null) {
@@ -189,111 +239,137 @@ public final class AimBlur {
         if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) {
             slotId = gun.getBuiltInAttachmentId(gunStack, AttachmentType.SCOPE);
         }
-        if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) return null;
-
+        if (slotId == null || DefaultAssets.isEmptyAttachmentId(slotId)) {
+            return null;
+        }
         Optional<CommonAttachmentIndex> indexOpt = TimelessAPI.getCommonAttachmentIndex(slotId);
-        if (indexOpt.isEmpty()) return null;
+        if (indexOpt.isEmpty()) {
+            return null;
+        }
         ResourceLocation displayId = indexOpt.get().getPojo().getDisplay();
-        if (displayId == null) return null;
+        if (displayId == null) {
+            return null;
+        }
         AttachmentDisplay display = ClientAssetsManager.INSTANCE.getAttachmentDisplay(displayId);
-        if (!(display instanceof AimingBlurDisplayAccessor accessor)) return null;
+        if (!(display instanceof AimingBlurDisplayAccessor accessor)) {
+            return null;
+        }
         return accessor.getAimingBlur();
     }
 
-    /** 模糊范围随瞄准目标(方块/实体)距离的系数: 0距离处为配置的最小比例, 远处为 1; 未命中(天空等)按最远处处理。 */
-    private static float distanceFactor(Minecraft mc, LocalPlayer player, AimingParams params) {
-        float partial = mc.getTimer().getGameTimeDeltaPartialTick(false);
-        Vec3 eye = player.getEyePosition(partial);
-        Vec3 view = player.getViewVector(partial);
-        Vec3 end = eye.add(view.scale(RAY_DISTANCE));
-        double distance = RAY_DISTANCE;
-        HitResult blockHit = player.pick(RAY_DISTANCE, partial, false);
-        if (blockHit.getType() != HitResult.Type.MISS) {
-            distance = Math.min(distance, eye.distanceTo(blockHit.getLocation()));
-        }
-        AABB area = player.getBoundingBox().expandTowards(view.scale(RAY_DISTANCE)).inflate(1.0);
-        EntityHitResult entityHit = ProjectileUtil.getEntityHitResult(player, eye, end, area,
-                entity -> !entity.isSpectator() && entity.isPickable(), RAY_DISTANCE * RAY_DISTANCE);
-        if (entityHit != null) {
-            distance = Math.min(distance, eye.distanceTo(entityHit.getLocation()));
-        }
-        double far = Math.max(RANGE_NEAR_DISTANCE + 0.001, params.farDistance());
-        float factor = Mth.clamp(
-                (float) ((distance - RANGE_NEAR_DISTANCE) / (far - RANGE_NEAR_DISTANCE)),
-                0.0f, 1.0f);
-        // 非线性: 近距离即有明显模糊, 随距离快速上升后逐渐饱和(sqrt 曲线)
-        float min = params.minFactor();
-        return min + (1.0f - min) * (float) Math.sqrt(factor);
-    }
-
     private static void ensureTargets(RenderTarget main) {
-        if (horizontal != null && horizontal.width == main.width && horizontal.height == main.height) {
+        if (dof != null && dof.width == main.width && dof.height == main.height) {
+            ensureFocusTargets();
             return;
         }
         releaseTargets();
-        horizontal = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
-        vertical = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
-        horizontal.setFilterMode(GL11.GL_LINEAR);
-        vertical.setFilterMode(GL11.GL_LINEAR);
+        dof = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+        dof.setFilterMode(GL11.GL_LINEAR);
+        ensureFocusTargets();
     }
 
-    private static void draw(RenderTarget output, int inputTexture, ShaderInstance shader) {
+    private static void ensureFocusTargets() {
+        if (focusFront != null && focusBack != null) {
+            return;
+        }
+        if (focusFront != null) {
+            focusFront.destroyBuffers();
+            focusFront = null;
+        }
+        if (focusBack != null) {
+            focusBack.destroyBuffers();
+            focusBack = null;
+        }
+        focusFront = new TextureTarget(1, 1, false, Minecraft.ON_OSX);
+        focusFront.setFilterMode(GL11.GL_NEAREST);
+        focusBack = new TextureTarget(1, 1, false, Minecraft.ON_OSX);
+        focusBack.setFilterMode(GL11.GL_NEAREST);
+        resetFocus();
+    }
+
+    private static void updateFocus(int depthTexture, float near, float far, float transitionSeconds) {
+        long now = System.nanoTime();
+        float blend;
+        if (!focusHistoryValid || transitionSeconds <= 0.001f) {
+            blend = 1.0f;
+        } else {
+            float dt = (now - lastFocusNanos) / 1.0e9f;
+            if (dt > 0.25f) {
+                blend = 1.0f;
+            } else {
+                blend = 1.0f - (float) Math.exp(-Math.max(dt, 0.0f) / transitionSeconds);
+            }
+        }
+        lastFocusNanos = now;
+        uFocusNear.set(near);
+        uFocusFar.set(far);
+        uFocusBlend.set(blend);
+        uFocusInitialized.set(focusHistoryValid ? 1.0f : 0.0f);
+
+        focusBack.bindWrite(true);
+        RenderSystem.setShaderTexture(0, focusFront.getColorTextureId());
+        RenderSystem.setShaderTexture(1, depthTexture);
+        RenderSystem.setShader(() -> focusShader);
+        quad.bind();
+        quad.drawWithShader(IDENTITY, IDENTITY, focusShader);
+
+        RenderTarget temp = focusFront;
+        focusFront = focusBack;
+        focusBack = temp;
+        focusHistoryValid = true;
+    }
+
+    private static void resetFocus() {
+        focusHistoryValid = false;
+        lastFocusNanos = 0L;
+    }
+
+    private static void draw(RenderTarget output, int colorTexture, int depthTexture, int focusTexture) {
         output.bindWrite(true);
-        RenderSystem.setShaderTexture(0, inputTexture);
+        RenderSystem.setShaderTexture(0, colorTexture);
+        RenderSystem.setShaderTexture(1, depthTexture);
+        RenderSystem.setShaderTexture(2, focusTexture);
         RenderSystem.setShader(() -> shader);
         quad.bind();
         quad.drawWithShader(IDENTITY, IDENTITY, shader);
     }
 
-    /** 将模糊结果按边缘遮罩叠加到主帧缓冲: MaskStart 处开始出现该层模糊。 */
-    private static void compositeMasked(RenderTarget main, RenderTarget input, float maskStart) {
-        if (uMaskStart != null) uMaskStart.set(maskStart);
-        RenderSystem.enableBlend();
-        RenderSystem.blendEquation(GL14.GL_FUNC_ADD);
-        RenderSystem.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA,
-                GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
-        main.bindWrite(true);
-        compositeToMain(input, shader);
-    }
-
-    private static void compositeToMain(RenderTarget input, ShaderInstance shader) {
-        shader.setSampler("Sampler0", input.getColorTextureId());
-        quad.bind();
-        shader.apply();
-        try {
-            RenderSystem.disableDepthTest();
-            RenderSystem.disableCull();
-            RenderSystem.enableBlend();
-            RenderSystem.blendEquation(GL14.GL_FUNC_ADD);
-            RenderSystem.blendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA,
-                    GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
-            quad.draw();
-        } finally {
-            shader.clear();
-        }
-    }
-
     private static void ensureQuad() {
-        if (quad != null) return;
-        BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
-        b.addVertex(-1, -1, 0).setUv(0, 0);
-        b.addVertex(1, -1, 0).setUv(1, 0);
-        b.addVertex(1, 1, 0).setUv(1, 1);
-        b.addVertex(-1, 1, 0).setUv(0, 1);
+        if (quad != null) {
+            return;
+        }
+        BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        builder.addVertex(-1, -1, 0).setUv(0, 0);
+        builder.addVertex(1, -1, 0).setUv(1, 0);
+        builder.addVertex(1, 1, 0).setUv(1, 1);
+        builder.addVertex(-1, 1, 0).setUv(0, 1);
         quad = new VertexBuffer(VertexBuffer.Usage.STATIC);
         quad.bind();
-        quad.upload(b.buildOrThrow());
+        quad.upload(builder.buildOrThrow());
     }
 
     private static void releaseTargets() {
-        if (horizontal != null) horizontal.destroyBuffers();
-        if (vertical != null) vertical.destroyBuffers();
-        horizontal = vertical = null;
+        if (dof != null) {
+            dof.destroyBuffers();
+            dof = null;
+        }
+        if (focusFront != null) {
+            focusFront.destroyBuffers();
+            focusFront = null;
+        }
+        if (focusBack != null) {
+            focusBack.destroyBuffers();
+            focusBack = null;
+        }
+        resetFocus();
     }
 
     public static void release() {
         releaseTargets();
-        if (quad != null) { quad.close(); quad = null; }
+        if (quad != null) {
+            quad.close();
+            quad = null;
+        }
     }
 
     private AimBlur() {

@@ -5,6 +5,7 @@ import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
+import com.tacz.guns.client.model.IFunctionalRenderer;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
@@ -16,6 +17,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
@@ -36,10 +38,10 @@ public abstract class MixinAttachmentRender {
 
     @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("HEAD")}, remap = false)
     private static void taczfixes$pushScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
-                                                  ResourceLocation location, PoseStack poseStack,
-                                                  ItemDisplayContext transformType, int light, int overlay,
-                                                  MultiBufferSource bufferSource, ClientAttachmentIndex index,
-                                                  CallbackInfo callback) {
+                                                  ResourceLocation location, Consumer<IFunctionalRenderer> consumer,
+                                                  ItemDisplayContext transformType, PoseStack poseStack,
+                                                  MultiBufferSource bufferSource, int light, int overlay,
+                                                  ClientAttachmentIndex index, CallbackInfo callback) {
         taczfixes$scopeBloomPushed = type == AttachmentType.SCOPE && index != null && index.isScope();
         if (taczfixes$scopeBloomPushed) {
             PbrRenderer.pushScopeAttachment();
@@ -48,10 +50,10 @@ public abstract class MixinAttachmentRender {
 
     @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("TAIL")}, remap = false)
     private static void taczfixes$popScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
-                                                 ResourceLocation location, PoseStack poseStack,
-                                                 ItemDisplayContext transformType, int light, int overlay,
-                                                 MultiBufferSource bufferSource, ClientAttachmentIndex index,
-                                                 CallbackInfo callback) {
+                                                 ResourceLocation location, Consumer<IFunctionalRenderer> consumer,
+                                                 ItemDisplayContext transformType, PoseStack poseStack,
+                                                 MultiBufferSource bufferSource, int light, int overlay,
+                                                 ClientAttachmentIndex index, CallbackInfo callback) {
         if (taczfixes$scopeBloomPushed) {
             taczfixes$scopeBloomPushed = false;
             PbrRenderer.popScopeAttachment();
@@ -59,10 +61,10 @@ public abstract class MixinAttachmentRender {
     }
 
     private static final String RENDER_ATTACHMENT_LAMBDA =
-            "lambda$renderAttachment$0(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
+            "lambda$renderAttachment$1(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"
             + "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lnet/minecraft/resources/ResourceLocation;"
-            + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;II"
-            + "Lnet/minecraft/client/renderer/MultiBufferSource;"
+            + "Ljava/util/function/Consumer;Lnet/minecraft/world/item/ItemDisplayContext;"
+            + "Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II"
             + "Lcom/tacz/guns/client/resource/index/ClientAttachmentIndex;)V";
 
     @Inject(method = "renderSlotAdapter", at = {@At("HEAD")}, remap = false)
@@ -85,8 +87,8 @@ public abstract class MixinAttachmentRender {
     private static Pair<BedrockAttachmentModel, ResourceLocation> dualWield$forceThirdPersonFullAttachmentModel(
             ClientAttachmentIndex invokedIndex,
             ItemStack attachmentStack, ItemStack gunStack, AttachmentType type, ResourceLocation location,
-            PoseStack poseStack, ItemDisplayContext transformType, int light, int overlay,
-            MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) {
+            Consumer<IFunctionalRenderer> consumer, ItemDisplayContext transformType, PoseStack poseStack,
+            MultiBufferSource bufferSource, int light, int overlay, ClientAttachmentIndex lambdaIndex) {
         if (transformType == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND
                 || transformType == ItemDisplayContext.THIRD_PERSON_LEFT_HAND) {
             return null;
@@ -106,8 +108,9 @@ public abstract class MixinAttachmentRender {
             MultiBufferSource callBufferSource,
             Operation<Void> original,
             ItemStack lambdaAttachmentStack, ItemStack lambdaGunStack, AttachmentType type, ResourceLocation location,
-            PoseStack lambdaPoseStack, ItemDisplayContext lambdaTransformType, int lambdaLight, int lambdaOverlay,
-            MultiBufferSource bufferSource, ClientAttachmentIndex lambdaIndex) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+            Consumer<IFunctionalRenderer> consumer, ItemDisplayContext lambdaTransformType, PoseStack lambdaPoseStack,
+            MultiBufferSource lambdaBufferSource, int lambdaLight, int lambdaOverlay,
+            ClientAttachmentIndex lambdaIndex) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException {
         if (!dualWield$isOffhandFirstPerson(transformType) || (!model.isScope() && !model.isSight())) {
             original.call(new Object[]{model, attachmentStack, gunStack, poseStack, transformType, renderType, Integer.valueOf(light), Integer.valueOf(overlay), Float.valueOf(partialTicks), callBufferSource});
             return;
