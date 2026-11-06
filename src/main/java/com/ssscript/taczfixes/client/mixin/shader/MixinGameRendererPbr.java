@@ -22,9 +22,13 @@ public abstract class MixinGameRendererPbr {
         PbrBloom.endFrame();
     }
 
+    @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(IZ)V", shift = At.Shift.BEFORE))
+    private void taczfixes$aimDepthOfField(float tick, long time, PoseStack pose, CallbackInfo ci) {
+        com.ssscript.taczfixes.client.render.AimBlur.composite();
+    }
+
     @Inject(method = "render", at = @At("RETURN"))
     private void taczfixes$pbrEnd(float tick, long time, boolean renderLevel, CallbackInfo ci) {
-        com.ssscript.taczfixes.client.render.AimBlur.composite();
         com.ssscript.taczfixes.client.render.SuppressionEffect.composite();
     }
 }

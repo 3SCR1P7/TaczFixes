@@ -329,8 +329,6 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue AIM_BLUR_ENABLED;
     public static final ForgeConfigSpec.DoubleValue AIM_BLUR_RANGE;
     public static final ForgeConfigSpec.DoubleValue AIM_BLUR_STRENGTH;
-    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_FAR_DISTANCE;
-    public static final ForgeConfigSpec.DoubleValue AIM_BLUR_MIN_FACTOR;
     public static final ForgeConfigSpec.BooleanValue SUPPRESSION_ENABLED;
     public static final ForgeConfigSpec.DoubleValue SUPPRESSION_DETECTION_RANGE;
     public static final ForgeConfigSpec.BooleanValue SUPPRESSION_INCLUDE_OWN_BULLETS;
@@ -1634,20 +1632,14 @@ public class Config {
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("aim_blur");
         AIM_BLUR_ENABLED = BUILDER
-                .comment("是否启用开镜模糊。默认值：false")
+                .comment("是否启用开镜景深。默认值：false")
                 .define("enabled", false);
         AIM_BLUR_RANGE = BUILDER
-                .comment("开镜模糊范围。默认值：1.0")
+                .comment("景深光圈倍率。默认值：1.0")
                 .defineInRange("range", 1.0, 0.0, 2.0);
         AIM_BLUR_STRENGTH = BUILDER
-                .comment("开镜模糊强度。默认值：4.0")
+                .comment("景深强度（最大模糊半径）。默认值：4.0")
                 .defineInRange("strength", 4.0, 0.0, 20.0);
-        AIM_BLUR_FAR_DISTANCE = BUILDER
-                .comment("开镜模糊范围达到最大值的距离。默认值：32.0")
-                .defineInRange("far_distance", 32.0, 0.0, 256.0);
-        AIM_BLUR_MIN_FACTOR = BUILDER
-                .comment("开镜模糊最小范围倍率。默认值：0.3")
-                .defineInRange("min_factor", 0.3, 0.0, 1.0);
         BUILDER.pop();
         BUILDER.push("suppression");
         SUPPRESSION_ENABLED = BUILDER

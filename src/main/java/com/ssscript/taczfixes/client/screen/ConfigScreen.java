@@ -394,8 +394,6 @@ public class ConfigScreen {
         bool_(cat, entry, "aim_blur.enabled", Config.AIM_BLUR_ENABLED);
         dbl_(cat, entry, "aim_blur.range", Config.AIM_BLUR_RANGE);
         dbl_(cat, entry, "aim_blur.strength", Config.AIM_BLUR_STRENGTH);
-        dbl_(cat, entry, "aim_blur.far_distance", Config.AIM_BLUR_FAR_DISTANCE);
-        dbl_(cat, entry, "aim_blur.min_factor", Config.AIM_BLUR_MIN_FACTOR);
     }
 
 
