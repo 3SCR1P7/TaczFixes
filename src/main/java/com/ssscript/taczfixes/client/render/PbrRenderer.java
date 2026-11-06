@@ -207,8 +207,10 @@ public final class PbrRenderer {
         setUniform(uSkyAmbient, light.ambient());
         // A bounded ray catches ceilings and walls in the light's actual direction.
         var end = origin.add(new Vec3(light.x(), light.y(), 0).scale(96));
-        boolean visible = level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE, camera.getEntity())).getType() == HitResult.Type.MISS;
+        var cameraEntity = camera.getEntity();
+        boolean visible = cameraEntity == null
+                || level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
+                ClipContext.Fluid.NONE, cameraEntity)).getType() == HitResult.Type.MISS;
         setUniform(uCelestialVisibility, updateCelestialVisibility(visible ? 1f : 0f, dt));
         setUniform(uLocalSkyExposure, level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f);
         float targetWetness = 0f;
