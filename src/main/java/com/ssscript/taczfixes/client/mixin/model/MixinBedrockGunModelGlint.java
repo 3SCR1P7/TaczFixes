@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.mixin.model;
 
-import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.ssscript.taczfixes.client.render.GunGlintContext;
 import com.tacz.guns.client.model.BedrockGunModel;
@@ -11,6 +10,7 @@ import net.minecraft.world.item.ItemStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(BedrockGunModel.class)
@@ -28,30 +28,16 @@ public abstract class MixinBedrockGunModelGlint {
         GunGlintContext.begin(gunStack);
     }
 
+    @ModifyVariable(method = RENDER, at = @At("HEAD"), argsOnly = true, index = 11, remap = false)
+    private MultiBufferSource taczfixes$wrapGlintSource(MultiBufferSource source) {
+        return GunGlintContext.wrapSource(source);
+    }
+
     @Inject(method = RENDER, at = @At("TAIL"), remap = false)
-    private void taczfixes$renderGlintPass(PoseStack pose, ItemStack gunStack,
-                                           ItemDisplayContext context, RenderType renderType,
-                                           int light, int overlay, float red, float green, float blue,
-                                           float alpha, MultiBufferSource bufferSource, CallbackInfo ci) {
-        boolean active = GunGlintContext.isActive();
+    private void taczfixes$endGlint(PoseStack pose, ItemStack gunStack,
+                                    ItemDisplayContext context, RenderType renderType,
+                                    int light, int overlay, float red, float green, float blue,
+                                    float alpha, MultiBufferSource bufferSource, CallbackInfo ci) {
         GunGlintContext.end();
-        if (!active || GunGlintContext.isGlintPass() || GunGlintContext.isSuppressed()) {
-            return;
-        }
-        if (bufferSource instanceof MultiBufferSource.BufferSource buffers) {
-            buffers.endBatch();
-        }
-        MultiBufferSource.BufferSource glintBuffer =
-                MultiBufferSource.immediate(new BufferBuilder(1536));
-        GunGlintContext.begin(gunStack);
-        GunGlintContext.setGlintPass(true);
-        try {
-            ((BedrockGunModel) (Object) this).render(pose, gunStack, context,
-                    RenderType.entityGlint(), light, overlay, red, green, blue, alpha, glintBuffer);
-            glintBuffer.endBatch();
-        } finally {
-            GunGlintContext.setGlintPass(false);
-            GunGlintContext.end();
-        }
     }
 }

@@ -11,6 +11,8 @@
         "compat.MixinHeldGunCustomScopeAR",
         "compat.MixinLrAttackKeys",
         "compat.MixinPeekHandler",
+        "compat.ar.MixinGlintSourceAccelerated",
+        "compat.ar.MixinGunGlintVertexConsumerAccelerated",
         "compat.create.MixinHitSurfaceParticleSpawner",
         "compat.arcana.MixinArcanaAttachmentData",
         "compat.arcana.MixinArcanaFlashlightLamp",
