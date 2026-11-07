@@ -17,6 +17,9 @@ import org.spongepowered.asm.mixin.injection.At;
 
 @Mixin(value = GunItemRendererWrapper.class, remap = false)
 public abstract class MixinGunSlotTextureGlint {
+    private static final ThreadLocal<MultiBufferSource.BufferSource> SLOT_GLINT_SOURCE =
+            ThreadLocal.withInitial(() -> MultiBufferSource.immediate(new ByteBufferBuilder(1536)));
+
     @WrapOperation(method = "renderSlotTexture",
             at = @At(value = "INVOKE",
                     target = "Lcom/tacz/guns/client/model/SlotModel;renderToBuffer(Lcom/mojang/blaze3d/vertex/PoseStack;Lcom/mojang/blaze3d/vertex/VertexConsumer;III)V"),
@@ -30,7 +33,7 @@ public abstract class MixinGunSlotTextureGlint {
             return;
         }
         buffers.endBatch();
-        MultiBufferSource.BufferSource glintSource = MultiBufferSource.immediate(new ByteBufferBuilder(1536));
+        MultiBufferSource.BufferSource glintSource = SLOT_GLINT_SOURCE.get();
         VertexConsumer glint = new SlotGlintVertexConsumer(glintSource.getBuffer(SlotGlintRenderType.get()));
         model.renderToBuffer(poseStack, glint, light, overlay, color);
         glintSource.endBatch();
