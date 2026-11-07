@@ -47,7 +47,7 @@ import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
 import java.util.concurrent.CompletableFuture;
 
 @OnlyIn(Dist.CLIENT)
-@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
 public final class OffhandDisplayManager {
     private static final long MAX_PUT_AWAY_TIME_MS = 60000;
     private static GunDisplayInstance display;

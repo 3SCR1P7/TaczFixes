@@ -20,7 +20,7 @@ import net.neoforged.neoforge.event.entity.player.PlayerEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.Mod;
 
-@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.GAME)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID)
 public final class OffhandShieldHandler {
     private static final Map<UUID, Boolean> RAISED = new ConcurrentHashMap<>();
 

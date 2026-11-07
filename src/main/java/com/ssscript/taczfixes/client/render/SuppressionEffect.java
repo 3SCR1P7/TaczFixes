@@ -41,7 +41,7 @@ import java.util.Set;
  * 并叠加径向色散与边缘变暗; 三者在子弹飞过的瞬间达到最大值后线性淡出。
  * sniper/rpg 类型武器的子弹持续时长与检测范围按配置倍率放大; 单把枪可在 taczfixes.suppression 中逐项覆盖。
  */
-@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT)
 public final class SuppressionEffect {
     private static ShaderInstance shader;
     private static com.mojang.blaze3d.shaders.AbstractUniform uMaskStart, uMaskStartWeak, uBlurOpacity;

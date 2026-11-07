@@ -100,7 +100,7 @@ public abstract class MixinGunPackLoader {
         }
         String key = namespace + "|" + taczRange;
         if (TACZFIXES$WARNED.add(key)) {
-            TaczFixesMod.LOGGER.warn("枪包 '{}' 声明依赖 TaCZ {}, 当前版本 {}: 版本不匹配, 仅警告并继续加载",
+            TaczFixesMod.LOGGER.warn("Gun pack '{}' requires TaCZ {} but current version is {}: version mismatch, warning only and continuing to load",
                     namespace, taczRange, currentVersion);
         }
         cir.setReturnValue(true);

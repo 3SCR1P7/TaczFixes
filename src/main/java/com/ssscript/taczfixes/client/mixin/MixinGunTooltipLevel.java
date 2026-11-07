@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.common.config.Config;
+import com.ssscript.taczfixes.common.util.GunLevelFormula;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.tooltip.ClientGunTooltip;
 import net.minecraft.ChatFormatting;
@@ -23,22 +24,7 @@ public class MixinGunTooltipLevel {
     private void taczfixes$fixLevelPercentage(CallbackInfo ci) {
         int exp = iGun.getExp(gun);
         int maxLevel = Config.GUN_LEVEL_MAX_LEVEL.get();
-        int base = Config.GUN_LEVEL_BASE_KILLS.get();
-        int inc = Config.GUN_LEVEL_INCREMENT.get();
-
-        int level;
-        if (exp <= 0 || exp < base) {
-            level = 0;
-        } else if (inc == 0) {
-            level = exp / base;
-            if (level > maxLevel) level = maxLevel;
-        } else {
-            double disc = 1.0 + 8.0 * (double) (exp - base) / (double) inc;
-            level = disc < 0 ? 0 : (int) Math.floor((1.0 + Math.sqrt(disc)) / 2.0);
-            if (level > maxLevel) level = maxLevel;
-        }
-
-        int expForLevel = level <= 0 ? 0 : (inc == 0 ? base * level : base + inc * level * (level - 1) / 2);
+        int level = exp <= 0 ? 0 : GunLevelFormula.levelForXp(exp);
 
         String text;
         MutableComponent styled;
@@ -47,9 +33,11 @@ public class MixinGunTooltipLevel {
             styled = Component.translatable("tooltip.tacz.gun.level")
                 .append(Component.literal(text).withStyle(ChatFormatting.DARK_PURPLE));
         } else {
-            int expForNextLevel = (inc == 0) ? base * (level + 1) : base + inc * (level + 1) * level / 2;
-            int totalForLevel = expForNextLevel - expForLevel;
+            int expForLevel = GunLevelFormula.xpForLevel(level);
+            int expForNextLevel = GunLevelFormula.xpForLevel(level + 1);
+            int totalForLevel = Math.max(0, expForNextLevel - expForLevel);
             float pct = totalForLevel > 0 ? (float) (exp - expForLevel) / totalForLevel * 100.0f : 0.0f;
+            pct = Math.max(0.0f, Math.min(100.0f, pct));
             text = String.format("%d (%.1f%%)", level, pct);
             styled = Component.translatable("tooltip.tacz.gun.level")
                 .append(Component.literal(text).withStyle(ChatFormatting.YELLOW));

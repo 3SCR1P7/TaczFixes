@@ -115,6 +115,11 @@
     "config.taczfixes.category.patience": "Patience",
 
     "config.taczfixes.entry.gun_level.max_level": "Maximum Gun Level",
+    "config.taczfixes.entry.gun_level.xp_formula": "Gun Level XP Formula (Lua, x = level, y = total XP)",
+    "config.taczfixes.entry.gun_level.kill_xp_min": "Minimum Gun XP per Kill",
+    "config.taczfixes.entry.gun_level.kill_xp_max": "Maximum Gun XP per Kill",
+    "config.taczfixes.entry.gun_level.player_xp_bonus_min": "Minimum Extra Gun XP per 1 Player XP Dropped",
+    "config.taczfixes.entry.gun_level.player_xp_bonus_max": "Maximum Extra Gun XP per 1 Player XP Dropped",
     "config.taczfixes.entry.gun_level.base_kills": "Kills Required for Level 0 to 1",
     "config.taczfixes.entry.gun_level.increment": "Extra Kills per Additional Level",
     "config.taczfixes.entry.gun_level.bottle_enabled": "Use Bottle o' Enchanting on Anvil for Gun XP",

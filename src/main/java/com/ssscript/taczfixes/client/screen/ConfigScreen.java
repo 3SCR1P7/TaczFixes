@@ -181,8 +181,11 @@ public class ConfigScreen {
 
     private static void buildGunLevel(ConfigCategory cat, ConfigEntryBuilder entry) {
         int_(cat, entry, "gun_level.max_level", Config.GUN_LEVEL_MAX_LEVEL);
-        int_(cat, entry, "gun_level.base_kills", Config.GUN_LEVEL_BASE_KILLS);
-        int_(cat, entry, "gun_level.increment", Config.GUN_LEVEL_INCREMENT);
+        str_(cat, entry, "gun_level.xp_formula", Config.GUN_LEVEL_XP_FORMULA);
+        int_(cat, entry, "gun_level.kill_xp_min", Config.GUN_KILL_XP_MIN);
+        int_(cat, entry, "gun_level.kill_xp_max", Config.GUN_KILL_XP_MAX);
+        int_(cat, entry, "gun_level.player_xp_bonus_min", Config.GUN_PLAYER_XP_BONUS_MIN);
+        int_(cat, entry, "gun_level.player_xp_bonus_max", Config.GUN_PLAYER_XP_BONUS_MAX);
         bool_(cat, entry, "gun_level.bottle_enabled", Config.GUN_BOTTLE_ENABLED);
         int_(cat, entry, "gun_level.bottle_exp_per_bottle", Config.GUN_BOTTLE_EXP_PER_BOTTLE);
         int_(cat, entry, "gun_level.bottle_cost", Config.GUN_BOTTLE_COST);
@@ -628,6 +631,14 @@ public class ConfigScreen {
 
     private static void int_(ConfigCategory cat, ConfigEntryBuilder entry, String slug, ModConfigSpec.IntValue v) {
         cat.addEntry(entry.startIntField(entry(slug), v.get())
+                .setDefaultValue(v.getDefault())
+                .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .build());
+    }
+
+    private static void str_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
+                             ModConfigSpec.ConfigValue<String> v) {
+        cat.addEntry(entry.startStrField(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
                 .build());
