@@ -39,6 +39,13 @@ public abstract class MixinLeftHandRender {
         }
         DualWieldOverrides.HandPos handPos = offhand ? DualRenderContext.offhandHandPos() : DualRenderContext.mainHandPos();
         if (handPos.anchor() == DualWieldOverrides.ArmAnchor.UNSET) {
+            if (!handPos.mirror()) {
+                return;
+            }
+            callback.cancel();
+            if (this.bedrockGunModel.getRenderHand()) {
+                FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND ? HumanoidArm.LEFT : HumanoidArm.RIGHT, null, true, DualRenderContext.getPhase() == DualRenderContext.HandPhase.MAIN);
+            }
             return;
         }
         callback.cancel();
@@ -47,6 +54,6 @@ public abstract class MixinLeftHandRender {
         if (!render || !this.bedrockGunModel.getRenderHand()) {
             return;
         }
-        FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, HumanoidArm.LEFT, handPos.offset());
+        FirstPersonArmRenderHelper.render(this.bedrockGunModel, poseStack, bufferSource, light, DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND ? HumanoidArm.LEFT : HumanoidArm.RIGHT, handPos.offset(), handPos.mirror(), DualRenderContext.getPhase() == DualRenderContext.HandPhase.MAIN);
     }
 }
