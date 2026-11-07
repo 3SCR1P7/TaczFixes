@@ -1434,8 +1434,8 @@ public class Config {
                 .comment("上肢耐力消耗倍率的默认值。默认值：1.0")
                 .defineInRange("consumption_multiplier", 1.0, 0.0, 100000.0);
         AIMING_STAMINA_RECOVERY = BUILDER
-                .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：40")
-                .defineInRange("recovery_per_second", 40.0, 0.0, 100000.0);
+                .comment("上肢耐力恢复速度的默认值，每秒恢复。默认值：20")
+                .defineInRange("recovery_per_second", 20.0, 0.0, 100000.0);
         AIMING_STAMINA_RECOVERY_DELAY_MS = BUILDER
                 .comment("未开镜持续多少毫秒后开始恢复上肢耐力。默认值：1000")
                 .defineInRange("recovery_delay_ms", 1000, 0, 600000);
