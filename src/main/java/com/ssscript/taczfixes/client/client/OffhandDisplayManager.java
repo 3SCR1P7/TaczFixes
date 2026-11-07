@@ -291,7 +291,7 @@ public final class OffhandDisplayManager {
         keepOffhandDisplay = offhandUnchanged || offhandSwitchedAhead;
         boolean mainUnchanged = !handSwap && resumeDual && sameLogicalStack(putAwayMainStack, putAwayNextMainStack);
         restartMainAfterPutAway = handSwap
-                ? sameLogicalStack(putAwayMainStack, putAwayNextMainStack)
+                ? true
                 : (!mainUnchanged && requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack));
         GunItemRendererWrapper mainRenderer = getGunRenderer(putAwayMainStack);
         long mainPutAwayTime = mainUnchanged ? 0L : getMainPutAwayTime(mainRenderer, putAwayMainStack);

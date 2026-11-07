@@ -57,8 +57,6 @@ public final class DualFirstPersonRenderer {
         boolean posePushed = false;
         boolean renderHandSaved = false;
         boolean renderHandValue = false;
-        boolean mirroredModel = false;
-        boolean cullWasEnabled = false;
         boolean recolorPushed = false;
         boolean charmsFrame = false;
         boolean selfFlagsSet = false;
@@ -89,16 +87,12 @@ public final class DualFirstPersonRenderer {
             }
             poseStack.translate(0.0d, 1.5d, 0.0d);
             poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
-            mirroredModel = DualRenderContext.offhandHandPos().mirror();
             AnimateGeoItemRenderer.applyFirstPersonPositioningTransform(poseStack, model, stack);
             double forwardOffset = IGun.getIGunOrNull(player.getMainHandItem()) != null
                     ? com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
                             stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get())
                     : 0.0d;
             poseStack.translate(0.0d, 0.0d, -ForwardOffsetSmoothing.offhand(forwardOffset));
-            if (mirroredModel) {
-                poseStack.scale(-1.0f, 1.0f, 1.0f);
-            }
             DualFocusAimState.applyFirstPersonOffhandLowReady(poseStack, partialTick);
             DualRenderContext.captureOffhandModelBase(model, poseStack.last().pose());
             MuzzleFlashRender.isSelf = true;
@@ -113,17 +107,8 @@ public final class DualFirstPersonRenderer {
             recolorPushed = true;
             RenderType renderType = display.enablesTransparency() ? RenderType.entityTranslucent(display.getModelTexture()) : RenderType.entityCutout(display.getModelTexture());
             charmsFrame = CharmsOffhandRenderCompat.beginFrame(stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, bufferSource, light, OverlayTexture.NO_OVERLAY, partialTick);
-            if (mirroredModel) {
-                MultiBufferSource.BufferSource sink = net.minecraft.client.Minecraft.getInstance().renderBuffers().bufferSource();
-                sink.endBatch();
-                cullWasEnabled = GL11.glIsEnabled(GL11.GL_CULL_FACE);
-                RenderSystem.enableCull();
-                GL11.glFrontFace(GL11.GL_CW);
-                model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
-                sink.endBatch();
-            } else {
-                model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
-            }
+            model.render(poseStack, stack, ItemDisplayContext.FIRST_PERSON_LEFT_HAND, renderType, light, OverlayTexture.NO_OVERLAY);
+
             com.ssscript.taczfixes.client.util.GunRecolorManager.popRenderStack();
             recolorPushed = false;
             if (charmsFrame) {
@@ -149,14 +134,7 @@ public final class DualFirstPersonRenderer {
             if (recolorPushed) {
                 com.ssscript.taczfixes.client.util.GunRecolorManager.popRenderStack();
             }
-            if (mirroredModel) {
-                if (cullWasEnabled) {
-                    RenderSystem.enableCull();
-                } else {
-                    RenderSystem.disableCull();
-                }
-                GL11.glFrontFace(GL11.GL_CCW);
-            }
+
             if (selfFlagsSet) {
                 MuzzleFlashRender.isSelf = false;
                 ShellRender.isSelf = false;
