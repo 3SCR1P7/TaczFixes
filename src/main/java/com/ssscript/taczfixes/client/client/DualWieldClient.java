@@ -121,10 +121,72 @@ public final class DualWieldClient {
     private static final int MAX_SHOT_VISUAL_RESERVATIONS = 256;
     private static ItemStack lastDualMainStack = ItemStack.EMPTY;
     private static ItemStack lastDualOffhandStack = ItemStack.EMPTY;
+    /** 服务端在 F 换手后下发的换手信号, 用于在网络同步后准确识别"双手互换"。 */
+    private static volatile boolean handSwapSignal;
     private static final Object OFFHAND_SHOT_LOCK = new Object();
     private static final LinkedHashMap<ShotRequestKey, ShotVisualReservation> SHOT_VISUAL_RESERVATIONS = new LinkedHashMap<>();
 
     private DualWieldClient() {
+    }
+
+    /**
+     * TaCZ 在服务端 F 换手后下发的客户端事件。NeoForge 的 payload handler 在主线程执行
+     * (runAllTasks 早于本帧 tick 与渲染), 因此可以在这里立刻开始换手过渡, 避免"换手包已到、
+     * 下一个 tick 还没跑"的那几帧里副手新枪瞬现/旧枪瞬没。
+     */
+    @SubscribeEvent
+    public static void onTaczSwapItemWithOffHand(com.tacz.guns.api.client.event.SwapItemWithOffHand event) {
+        handleHandSwapSignal();
+    }
+
+    /** SimpleBedrockModel 自带的同款换手事件; 两个都监听以覆盖不同加载顺序。 */
+    @SubscribeEvent
+    public static void onSimpleBedrockModelSwapItemWithOffHand(com.github.mcmodderanchor.simplebedrockmodel.v1.client.event.SwapItemWithOffHand event) {
+        handleHandSwapSignal();
+    }
+
+    private static void handleHandSwapSignal() {
+        handSwapSignal = true;
+        Minecraft minecraft = Minecraft.getInstance();
+        LocalPlayer player = minecraft.player;
+        if (player == null || minecraft.level == null || minecraft.screen != null) {
+            return;
+        }
+        try {
+            if (!isDualMode(player) || OffhandDisplayManager.isPuttingAway()) {
+                return;
+            }
+            ItemStack previousMain = lastDualMainStack;
+            ItemStack previousOffhand = lastDualOffhandStack;
+            ItemStack currentMain = player.getMainHandItem();
+            ItemStack currentOffhand = player.getOffhandItem();
+            boolean offhandGun = IGun.getIGunOrNull(currentOffhand) != null || IGun.getIGunOrNull(previousOffhand) != null;
+            if (!offhandGun) {
+                return;
+            }
+            boolean crossMatched = taczfixes$looksLikeHandSwap(previousMain, previousOffhand, currentMain, currentOffhand);
+            if (!crossMatched && !(previousMain.isEmpty() && previousOffhand.isEmpty() && !dualWasActive)) {
+                return;
+            }
+            prepareHandSwapInterruption(player, previousMain);
+            DualWieldStackId.getOrCreate(currentMain);
+            DualWieldStackId.getOrCreate(currentOffhand);
+            OffhandDisplayManager.beginHandSwap(player, previousMain, previousOffhand, currentMain, currentOffhand);
+            lastDualMainStack = currentMain.copy();
+            lastDualOffhandStack = currentOffhand.copy();
+        } catch (RuntimeException exception) {
+            TaczFixesMod.LOGGER.error("Failed to start hand-swap animation from swap signal", exception);
+        }
+    }
+
+    private static void prepareHandSwapInterruption(LocalPlayer player, ItemStack previousMain) {
+        DualWieldMelee.reset();
+        DualReloadAnimationManager.clear();
+        MainhandMovementAnimation.resetMovementBoundary(previousMain);
+        cancelPendingOffhandShot();
+        waitLeftReleaseAfterScreen = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
+        waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
+        resetFocusAimImmediately(player);
     }
 
     static boolean isOffhandShotPending() {
@@ -202,6 +264,7 @@ public final class DualWieldClient {
             return;
         }
         if (!dual) {
+            handSwapSignal = false;
             if (lastOffhandShieldRaised) {
                 lastOffhandShieldRaised = false;
                 NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandShieldState(false));
@@ -224,7 +287,7 @@ public final class DualWieldClient {
                 if (player == null || player.isSpectator() || player.isDeadOrDying()) {
                     OffhandDisplayManager.clear();
                 } else {
-                    OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, player.getMainHandItem(), player.getOffhandItem(), false, false);
+                    OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack, player.getMainHandItem(), player.getOffhandItem(), false);
                 }
             }
             if (player != null) {
@@ -249,10 +312,13 @@ public final class DualWieldClient {
         }
         boolean dualStarted = !dualWasActive;
         if (dualStarted) {
-            if (IGun.getIGunOrNull(player.getOffhandItem()) == null) {
-                OffhandDisplayManager.clear();
-            } else {
-                OffhandDisplayManager.cancelPutAway(player, player.getMainHandItem(), player.getOffhandItem());
+            // 事件里已经开始的 F 换手过渡不能被"进入双持"的清理逻辑打断。
+            if (!OffhandDisplayManager.isHandSwapActive()) {
+                if (IGun.getIGunOrNull(player.getOffhandItem()) == null) {
+                    OffhandDisplayManager.clear();
+                } else {
+                    OffhandDisplayManager.cancelPutAway(player, player.getMainHandItem(), player.getOffhandItem());
+                }
             }
             resetFocusAimImmediately(player);
             MainhandMovementAnimation.resetMovementBoundary(player.getMainHandItem());
@@ -263,25 +329,27 @@ public final class DualWieldClient {
         DualWieldStackId.getOrCreate(currentMainStack);
         DualWieldStackId.getOrCreate(currentOffhandStack);
         boolean currentOffhandGun = IGun.getIGunOrNull(currentOffhandStack) != null;
+        boolean previousOffhandGun = IGun.getIGunOrNull(lastDualOffhandStack) != null;
         boolean stackPairChanged = (dualStarted || (sameLogicalStack(lastDualMainStack, currentMainStack) && sameLogicalStack(lastDualOffhandStack, currentOffhandStack))) ? false : true;
-        if (stackPairChanged && currentOffhandGun && !OffhandDisplayManager.isPuttingAway()) {
-            DualWieldMelee.reset();
-            DualReloadAnimationManager.clear();
-            MainhandMovementAnimation.resetMovementBoundary(lastDualMainStack);
-            cancelPendingOffhandShot();
-            waitLeftReleaseAfterScreen = ShootKey.SHOOT_KEY.isDown() || controllerShootDown;
-            waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
-            resetFocusAimImmediately(player);
-            boolean handSwap = taczfixes$isHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack);
-            OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
-                    currentMainStack, currentOffhandStack, true, handSwap);
+        boolean swapSignal = handSwapSignal;
+        handSwapSignal = false;
+        if (stackPairChanged && (currentOffhandGun || previousOffhandGun) && !OffhandDisplayManager.isPuttingAway()) {
+            prepareHandSwapInterruption(player, lastDualMainStack);
+            boolean handSwap = taczfixes$isHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack)
+                    || (swapSignal && taczfixes$looksLikeHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack));
+            if (handSwap) {
+                OffhandDisplayManager.beginHandSwap(player, lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack);
+            } else {
+                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
+                        currentMainStack, currentOffhandStack, true);
+            }
         }
-        if (currentOffhandGun && OffhandDisplayManager.isPuttingAway()) {
+        if (OffhandDisplayManager.isPuttingAway()) {
             OffhandDisplayManager.updatePutAwayTarget(currentMainStack, currentOffhandStack, true);
             OffhandDisplayManager.tickPutAway(player);
             lastDualMainStack = currentMainStack.copy();
             lastDualOffhandStack = currentOffhandStack.copy();
-            if (currentOffhandGun && OffhandDisplayManager.isPuttingAway()) {
+            if (OffhandDisplayManager.isPuttingAway()) {
                 lastLeftDown = false;
                 lastRightDown = false;
                 lastLeftShootSuccess = false;
@@ -679,6 +747,10 @@ public final class DualWieldClient {
         if (event.getHand() != InteractionHand.OFF_HAND || (player = Minecraft.getInstance().player) == null) {
             return;
         }
+        if (OffhandDisplayManager.isHandSwapActive()) {
+            renderHandSwapOffhand(event, player);
+            return;
+        }
         boolean dual = isDualMode(player);
         boolean puttingAway = OffhandDisplayManager.isPuttingAway();
         if (!dual && !puttingAway) {
@@ -691,6 +763,10 @@ public final class DualWieldClient {
 
         if (puttingAway) {
             itemStackM_21206_ = OffhandDisplayManager.getPutAwayStack();
+            if (itemStackM_21206_.isEmpty()) {
+                event.setCanceled(true);
+                return;
+            }
         } else {
             itemStackM_21206_ = player.getOffhandItem();
         }
@@ -717,6 +793,25 @@ public final class DualWieldClient {
         }
         if (rendered) {
             event.setCanceled(true);
+        }
+    }
+
+    /**
+     * F 换手过渡: 副手只渲染"离开副手的旧枪"的 put_away, 新副手物品在过渡结束前完全不渲染,
+     * 因此不会出现新枪瞬现/闪烁的一帧。
+     */
+    private static void renderHandSwapOffhand(RenderHandEvent event, LocalPlayer player) {
+        event.setCanceled(true);
+        ItemStack renderStack = OffhandDisplayManager.getHandSwapOffhandRenderStack();
+        if (renderStack.isEmpty() || !(renderStack.getItem() instanceof IGun)) {
+            return;
+        }
+        PoseStack poseStack = event.getPoseStack();
+        poseStack.pushPose();
+        try {
+            DualFirstPersonRenderer.renderOffhand(player, renderStack, poseStack, event.getMultiBufferSource(), event.getPackedLight(), event.getPartialTick());
+        } finally {
+            poseStack.popPose();
         }
     }
 
@@ -791,8 +886,11 @@ public final class DualWieldClient {
                 && player.getCooldowns().isOnCooldown(Items.SHIELD)) {
             return false;
         }
-        if ((!ShootKey.SHOOT_KEY.isDown() && !Minecraft.getInstance().mouseHandler.isLeftPressed())
-                || player.getUseItemRemainingTicks() <= 1) {
+        if (!ShootKey.SHOOT_KEY.isDown() && !Minecraft.getInstance().mouseHandler.isLeftPressed()) {
+            return false;
+        }
+        // 使用已经完成(剩余 tick 为 0)后不能再拦截 stop/release, 否则会卡在 using 状态反复结算.
+        if (player.getUseItemRemainingTicks() <= 0) {
             return false;
         }
         return true;
@@ -918,11 +1016,11 @@ public final class DualWieldClient {
 
     private static void startOffhandUse(LocalPlayer player) {
         ItemStack stack = player.getOffhandItem();
-        if (stack.getUseDuration(player) > 0) {
+        // 盾牌仍然走原版 "举起" 流程; 其它物品一律交给 item 自己的 use() 决定:
+        // 喷溅/滞留药水会丢出, 食物/饮用型药水会自己进入 startUsingItem, 不能在这里按 getUseDuration 一刀切.
+        if (stack.getItem() instanceof ShieldItem) {
             if (!player.isUsingItem()) {
-                if (stack.getItem() instanceof ShieldItem) {
-                    primeOffhandShieldRaise();
-                }
+                primeOffhandShieldRaise();
                 player.startUsingItem(InteractionHand.OFF_HAND);
             }
             return;
@@ -944,25 +1042,15 @@ public final class DualWieldClient {
                 return;
             }
         }
-        if (hand == InteractionHand.OFF_HAND && stack.getUseDuration(player) > 0) {
-            if (Minecraft.getInstance().getConnection() != null) {
-                Minecraft.getInstance().getConnection().send(
-                        new net.minecraft.network.protocol.game.ServerboundUseItemPacket(hand, 0, player.getYRot(), player.getXRot()));
-            }
-            if (!player.isUsingItem()) {
-                player.startUsingItem(hand);
-            }
-            return;
-        }
+
         net.minecraft.world.InteractionResult result = stack.getItem() instanceof net.minecraft.world.item.BlockItem
                 ? net.minecraft.world.InteractionResult.FAIL
                 : Minecraft.getInstance().gameMode.useItem(player, hand);
-        boolean consume = result.consumesAction();
-        boolean overridden = !consume && result != net.minecraft.world.InteractionResult.FAIL
-                && stack.getUseDuration(player) > 0;
-        if (consume || overridden) {
-            if (stack.getUseDuration(player) > 0 && !player.isUsingItem()) {
-                player.startUsingItem(hand);
+        if (result.consumesAction()) {
+            // 与 vanilla startUseItem 一致: 是否开始使用/丢出由物品自己的 use() 决定,
+            // 这里只负责动作摆动; 不再手动 startUsingItem, 避免把喷溅药水当成饮用.
+            if (result.shouldSwing()) {
+                player.swing(hand, true);
             }
             return;
         }
@@ -1119,6 +1207,31 @@ public final class DualWieldClient {
         return sameSwapStack(previousMain, currentOffhand)
                 && sameSwapStack(previousOffhand, currentMain)
                 && !sameSwapStack(previousMain, previousOffhand);
+    }
+
+    /**
+     * 依照服务端换手信号做弱匹配: 网络同步会重建 ItemStack 并可能丢掉客户端的 stack id,
+     * 因此这里只比较"物品/枪械种类"(F 换手必然满足交叉匹配), 用于兜底识别双手互换。
+     */
+    private static boolean taczfixes$looksLikeHandSwap(ItemStack previousMain, ItemStack previousOffhand,
+                                                       ItemStack currentMain, ItemStack currentOffhand) {
+        return sameItemKind(previousMain, currentOffhand) && sameItemKind(previousOffhand, currentMain);
+    }
+
+    private static boolean sameItemKind(ItemStack first, ItemStack second) {
+        if (first == null || second == null) {
+            return false;
+        }
+        if (first.isEmpty() || second.isEmpty()) {
+            return first.isEmpty() && second.isEmpty();
+        }
+        IGun firstGun = IGun.getIGunOrNull(first);
+        IGun secondGun = IGun.getIGunOrNull(second);
+        if (firstGun != null || secondGun != null) {
+            return firstGun != null && secondGun != null && first.getItem() == second.getItem()
+                    && firstGun.getGunId(first).equals(secondGun.getGunId(second));
+        }
+        return ItemStack.isSameItem(first, second);
     }
 
     private static boolean sameSwapStack(ItemStack first, ItemStack second) {

@@ -336,4 +336,16 @@ public abstract class MixinGunItemRendererWrapper {
             DUAL_WIELD_RENDER_INVOCATION_DEPTH.set(Integer.valueOf(invocationDepth - 1));
         }
     }
+
+    /**
+     * F 换手过渡: 主手原本没有枪可收、换进来的主手是枪时, TaCZ 会立刻开始 draw。
+     * 为了让"副手旧枪 put_away -> 主手新枪 draw"有先后顺序, 过渡期间先不渲染该主手枪,
+     * 等过渡结束后由 OffhandHandSwap 补一次 draw。
+     */
+    @Inject(method = {"renderFirstPerson"}, at = {@At("HEAD")}, cancellable = true, remap = false)
+    private void taczfixes$suppressEnteringMainGunDuringHandSwap(LocalPlayer player, ItemStack stack, ItemDisplayContext context, PoseStack poseStack, MultiBufferSource bufferSource, int light, float partialTick, CallbackInfo callback) {
+        if (OffhandDisplayManager.shouldSuppressMainHandRender(stack)) {
+            callback.cancel();
+        }
+    }
 }
