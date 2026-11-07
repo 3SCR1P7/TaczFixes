@@ -180,7 +180,8 @@ public final class PbrRenderer {
     }
 
     public static void updateCelestialLight(float partialTick) {
-        if (shader == null) return;
+        // 光影启用时 PBR 已被强制关闭, 不再更新 PBR uniform
+        if (!enabled()) return;
         var level = Minecraft.getInstance().level;
         if (level == null) return;
         var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
@@ -404,7 +405,8 @@ public final class PbrRenderer {
     }
 
     public static boolean enabled() {
-        if (shader == null || !Config.PBR_ENABLED.get() || OculusCompat.isUsingRenderPack()) return false;
+        if (shader == null || !Config.PBR_ENABLED.get() || OculusCompat.isUsingRenderPack()
+                || com.ssscript.taczfixes.client.util.IrisShaderCompat.isShaderPackInUse()) return false;
         if (OptifineCompat.isOptifineInstalled()) {
             if (OPTIFINE_SHADERS == null) return false;
             try {
