@@ -153,10 +153,10 @@ public abstract class MixinBedrockGunModelViewRotate {
         float panX = RefitViewMode.getPanX();
         float panY = RefitViewMode.getPanY();
         if (panX != 0f || panY != 0f) {
-            // 保持原版平移方向(沿模型旋转后的本地轴), 仅让灵敏度随缩放变大而降低
-            float zoomScale = distance == 0f ? 1f : 1f / (distance * distance);
-            float px = panX * zoomScale;
-            float py = panY * zoomScale;
+            // 平移量本身按屏幕像素累积; pose 反变换后最终屏幕位移与模型缩放无关,
+            // 因此不能再乘 distance 相关系数(否则缩小视角时过快、放大时过慢)。
+            float px = panX;
+            float py = panY;
             Matrix4f mat = pose.last().pose();
             net.minecraft.client.Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
             Vector3f screenRight = new Vector3f(camera.getLeftVector()).negate();
