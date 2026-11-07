@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(BlendMode.class)
 public interface PbrBlendModeAccessor {
-    @Accessor(value = "lastApplied", remap = false)
+    @Accessor("lastApplied")
     static BlendMode taczfixes$getLastApplied() { throw new AssertionError(); }
 
-    @Accessor(value = "lastApplied", remap = false)
+    @Accessor("lastApplied")
     static void taczfixes$setLastApplied(BlendMode value) { throw new AssertionError(); }
 }
