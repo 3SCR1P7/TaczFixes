@@ -96,7 +96,7 @@ tasks.named('jar', Jar).configure {
 
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
-    options.compilerArgs.addAll(['-Xmaxerrs', '2000', '-Xmaxwarns', '10000'])
+    options.compilerArgs.addAll(['-Xmaxerrs', '2000'])
 }
 
 publishing {

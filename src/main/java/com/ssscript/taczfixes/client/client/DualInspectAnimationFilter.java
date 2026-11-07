@@ -39,6 +39,7 @@ import org.joml.Quaternionf;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class DualInspectAnimationFilter {
     private static final long INSPECT_START_GRACE_MS = 250;
     private static final long INSPECT_CONTINUATION_GRACE_MS = 100;

@@ -17,6 +17,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public class AttachmentTaczFixesReloadListener implements PreparableReloadListener {
     private static final Logger LOGGER = LogManager.getLogger("taczfixes");
     private static final Gson GSON = new Gson();

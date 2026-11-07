@@ -7,6 +7,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 /** 水下开火限制。玩家眼部浸入水中时按配置与枪械 data 判定是否禁止开火。 */
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class UnderwaterShooting {
 
     private UnderwaterShooting() {

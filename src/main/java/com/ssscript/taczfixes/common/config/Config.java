@@ -7,6 +7,7 @@ import net.neoforged.fml.common.Mod;
 
 import java.util.List;
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public class Config {
     public static final ModConfigSpec.BooleanValue PBR_ENABLED;
     public static final ModConfigSpec.BooleanValue PBR_BLOOM;

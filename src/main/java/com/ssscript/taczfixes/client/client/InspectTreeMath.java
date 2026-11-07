@@ -9,6 +9,7 @@ import java.util.Map;
 import java.util.Set;
 
 /** 检视动画过滤用的节点树路径/层级计算(纯函数)。 */
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 final class InspectTreeMath {
     private InspectTreeMath() {
     }

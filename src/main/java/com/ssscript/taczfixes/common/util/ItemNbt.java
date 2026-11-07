@@ -8,6 +8,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.CustomData;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class ItemNbt {
     private ItemNbt() {
     }

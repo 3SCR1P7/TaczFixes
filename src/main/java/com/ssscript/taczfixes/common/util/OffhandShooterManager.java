@@ -62,6 +62,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 
 @net.neoforged.fml.common.EventBusSubscriber
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class OffhandShooterManager {
     static final long MANUAL_ACTION_RETRY_TIMEOUT_MS = 5000;
     static final long MAX_SERVER_BOLT_DURATION_MS = 10000;

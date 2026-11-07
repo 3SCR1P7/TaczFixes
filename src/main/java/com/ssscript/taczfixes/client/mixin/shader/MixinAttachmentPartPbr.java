@@ -19,6 +19,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 @Mixin(BedrockAttachmentModel.class)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public abstract class MixinAttachmentPartPbr {
     private static final String RENDER_TEMP_PART_8 =
             "renderTempPart(Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/world/item/ItemDisplayContext;"
