@@ -19,7 +19,10 @@ public final class IrisShaderCompat {
     private static final long CHECK_INTERVAL_NANOS = 1_000_000_000L;
 
     private static volatile boolean shaderPackInUse;
-    private static volatile long lastCheckNanos = Long.MIN_VALUE;
+    // 注意: 不能用 Long.MIN_VALUE 作哨兵(nanoTime - Long.MIN_VALUE 会溢出为负数, 导致永远不检测)
+    private static volatile long lastCheckNanos = -CHECK_INTERVAL_NANOS;
+    /** 首次检测时输出一条日志, 方便确认检测逻辑确实在运行。 */
+    private static volatile boolean notified;
 
     private IrisShaderCompat() {
     }
@@ -30,12 +33,16 @@ public final class IrisShaderCompat {
         if (now - lastCheckNanos >= CHECK_INTERVAL_NANOS) {
             lastCheckNanos = now;
             boolean current = detect();
+            if (!notified) {
+                notified = true;
+                TaczFixesMod.LOGGER.info("Iris/Oculus detection started: shader pack in use = {}", current);
+            }
             if (current != shaderPackInUse) {
                 shaderPackInUse = current;
                 if (current) {
-                    TaczFixesMod.LOGGER.info("检测到 Iris/Oculus 光影已启用, 已强制禁用枪械 PBR(避免与光影管线冲突)");
+                    TaczFixesMod.LOGGER.info("Iris/Oculus shader pack is in use; gun PBR disabled to avoid shader pipeline conflicts");
                 } else {
-                    TaczFixesMod.LOGGER.info("光影已关闭, 恢复枪械 PBR");
+                    TaczFixesMod.LOGGER.info("Iris/Oculus shader pack disabled; gun PBR re-enabled");
                 }
             }
         }
