@@ -19,7 +19,6 @@ public class InputSyncHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.player == null) {
             lastSent = Collections.emptySet();

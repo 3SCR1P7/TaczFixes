@@ -12,7 +12,6 @@ public class CustomSlotOrphanHandler {
 
     @SubscribeEvent
     public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (false) return;
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (player.tickCount % INTERVAL != 0) return;
         for (ItemStack stack : player.getInventory().items) {

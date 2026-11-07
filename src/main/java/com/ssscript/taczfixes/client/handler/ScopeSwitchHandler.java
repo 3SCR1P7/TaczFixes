@@ -20,7 +20,6 @@ public class ScopeSwitchHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         boolean down = SWITCH_SCOPE_KEY.isDown();
         if (down && !wasDown) {
             Minecraft mc = Minecraft.getInstance();

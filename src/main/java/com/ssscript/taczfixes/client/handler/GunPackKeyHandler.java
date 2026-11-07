@@ -21,7 +21,6 @@ public class GunPackKeyHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         com.ssscript.taczfixes.client.util.PendingResourceReload.tick();
         while (GUN_PACK_KEY.consumeClick()) {
             Minecraft mc = Minecraft.getInstance();

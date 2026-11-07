@@ -56,9 +56,6 @@ public class GunLightHandler {
 
     @SubscribeEvent
     public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         ClientGunLightManager.tick();
     }
 

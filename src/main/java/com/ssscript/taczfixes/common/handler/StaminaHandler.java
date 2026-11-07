@@ -28,7 +28,6 @@ public class StaminaHandler {
 
     @SubscribeEvent
     public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (false) return;
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!Config.STAMINA_ENABLED.get()) return;
 

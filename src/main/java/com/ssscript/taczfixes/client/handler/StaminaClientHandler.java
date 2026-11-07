@@ -18,7 +18,6 @@ public class StaminaClientHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null) {
             StaminaClientState.reset();
