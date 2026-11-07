@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 由枪械触发的法术不播放施法(玩家)动画。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "io.redspace.ironsspellbooks.render.animation.AnimationHelper", remap = false)
 public class MixinIronsCastAnimation {
 

@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.gameplay.LocalPlayerAim", remap = false)
 public class MixinLocalPlayerAim {
     @Shadow(remap = false)

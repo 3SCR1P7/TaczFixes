@@ -48,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD, value = {Dist.CLIENT})
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class OffhandDisplayManager {
     private static final long MAX_PUT_AWAY_TIME_MS = 60000;
     private static GunDisplayInstance display;

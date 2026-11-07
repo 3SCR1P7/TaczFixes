@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * offhand. The dual-wield layout puts them there, so allow the normal use path
  * to start when the item is actually held in the offhand.
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = {
         "me.xjqsh.lrtactical.item.ConsumableItem",
         "me.xjqsh.lrtactical.item.ThrowableItem"

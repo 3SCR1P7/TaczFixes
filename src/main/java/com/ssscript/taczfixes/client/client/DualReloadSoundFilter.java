@@ -29,6 +29,7 @@ import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class DualReloadSoundFilter {
     private static final Map<AnimationController, ReloadSession> SESSIONS = Collections.synchronizedMap(new WeakHashMap());
     private static final ThreadLocal<Deque<ReloadCapture>> CAPTURES = new ThreadLocal<>();

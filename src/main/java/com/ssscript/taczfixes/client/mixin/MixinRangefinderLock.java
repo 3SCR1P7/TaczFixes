@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * updateImpactPrediction 基于 getCurrentFov 的投影计算在自定义槽瞄具下会错位/乱飞,
  * 此处强制 impactProjectionY=0(屏幕中心/准星), showImpactPrediction 保持原判定。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.resource.pojo.display.gun.RangefinderManager", remap = false)
 public class MixinRangefinderLock {
 

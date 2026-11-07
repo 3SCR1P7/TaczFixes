@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** 允许枪械在奥术铁砧上被注入 Iron's Spellbooks 法术(枪械 data 的 imbuement.enable 优先)。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "io.redspace.ironsspellbooks.api.util.Utils", remap = false)
 public class MixinIronsCanImbue {
 

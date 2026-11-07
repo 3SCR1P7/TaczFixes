@@ -36,7 +36,7 @@ public abstract class MixinEntityKineticBullet implements OffhandBulletSource {
         LimbDamageHelper.storeHitPosition(((EntityKineticBullet) (Object) this).getId(), result.getLocation());
     }
 
-    @Shadow
+    @Shadow(remap = false)
     private Vec3 startPos;
 
     @Unique

@@ -39,6 +39,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(value = {GunItemRendererWrapper.class}, remap = false)
 public abstract class MixinGunItemRendererWrapper {
 
@@ -83,7 +84,7 @@ public abstract class MixinGunItemRendererWrapper {
         GunRecolorManager.popRenderStack();
     }
 
-    @Redirect(method = {"renderByItem"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/TimelessAPI;getGunDisplay(Lnet/minecraft/world/item/ItemStack;)Ljava/util/Optional;", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = true)
+    @Redirect(method = {"m_108829_(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemDisplayContext;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;II)V"}, at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/TimelessAPI;getGunDisplay(Lnet/minecraft/world/item/ItemStack;)Ljava/util/Optional;", remap = false), require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private Optional<GunDisplayInstance> dualWield$useIndependentThirdPersonOffhandDisplay(ItemStack stack) {
         UUID uuid;
         GunDisplayInstance independent;

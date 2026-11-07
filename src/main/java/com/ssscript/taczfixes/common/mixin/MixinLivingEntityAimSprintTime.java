@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * 作为冲刺开火冷却的上限, 配件的 taczfixes/sprint_time 修饰符按倍率缩放该值。
  * 与 reload_time/manual_action_time 同一模式: 各配件修饰符对基准值求值, 再乘回基准值。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.entity.shooter.LivingEntityAim", remap = false)
 public abstract class MixinLivingEntityAimSprintTime {
 

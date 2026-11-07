@@ -7,6 +7,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = CommonGunIndex.class, remap = false)
 public interface MixinCommonGunIndexAccessor {
-    @Accessor("gunData")
+    @Accessor(value = "gunData", remap = false)
     void taczfixes$setGunData(GunData gunData);
 }

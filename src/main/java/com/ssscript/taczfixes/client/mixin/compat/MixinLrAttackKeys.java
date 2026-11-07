@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** lrtactical 近战攻击输入: 上肢耐力不足时不触发攻击动作。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "me.xjqsh.lrtactical.client.input.AttackKeys", remap = false)
 public class MixinLrAttackKeys {
 

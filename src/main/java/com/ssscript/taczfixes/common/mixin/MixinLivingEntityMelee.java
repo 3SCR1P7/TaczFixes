@@ -15,6 +15,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 枪械近战消耗上肢耐力。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.entity.shooter.LivingEntityMelee", remap = false)
 public class MixinLivingEntityMelee {
 

@@ -25,6 +25,7 @@ import java.util.Locale;
 import java.util.Optional;
 
 /** group_offset 平移了瞄具的渲染位置, 必须同步计入开镜瞄准定位(否则镜片中心与瞄准点错位)。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.event.FirstPersonRenderGunEvent", remap = false)
 public class MixinFirstPersonRenderGunEventAimScope {
 

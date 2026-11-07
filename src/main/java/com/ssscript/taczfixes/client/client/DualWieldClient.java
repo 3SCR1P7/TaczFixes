@@ -86,6 +86,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ShieldItem;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class DualWieldClient {
     private static boolean lastLeftDown;
     private static boolean lastOffhandItemUseDown;

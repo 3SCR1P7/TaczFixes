@@ -10,9 +10,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = {AnimationController.class}, remap = false)
 public interface MixinAnimationControllerAccessor {
-    @Accessor("prototypes")
+    @Accessor(value = "prototypes", remap = false)
     Map<String, ObjectAnimation> dualWield$getPrototypes();
 
-    @Accessor("currentRunners")
+    @Accessor(value = "currentRunners", remap = false)
     ArrayList<ObjectAnimationRunner> dualWield$getCurrentRunners();
 }

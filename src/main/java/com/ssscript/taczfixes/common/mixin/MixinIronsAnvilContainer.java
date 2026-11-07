@@ -11,6 +11,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /** 奥术铁砧给枪械注入法术时, 创建可施法但不进入法术列表、且容量为配置数量的容器。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "io.redspace.ironsspellbooks.gui.arcane_anvil.ArcaneAnvilMenu", remap = false)
 public class MixinIronsAnvilContainer {
 

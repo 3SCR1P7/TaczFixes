@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 标准槽配件卸下后清理来源配件移除导致的孤儿自定义槽。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.network.message.ClientMessageUnloadAttachment", remap = false)
 public class MixinClientMessageUnloadAttachmentOrphanCleanup {
     @Inject(method = "lambda$handle$0", at = @At("RETURN"), remap = false)

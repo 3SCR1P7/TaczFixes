@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types", "unchecked", "deprecation", "removal", "rawtypes"})
 @Mixin(BedrockAttachmentModel.class)
 public abstract class MixinAttachmentPartPbr {
     private static final String RENDER_TEMP_PART_8 =
@@ -29,12 +30,12 @@ public abstract class MixinAttachmentPartPbr {
             + "Lnet/minecraft/client/renderer/RenderType;IILjava/util/List;"
             + "Lnet/minecraft/client/renderer/MultiBufferSource;)V";
 
-    @Invoker("renderTempPart")
+    @Invoker(value = "renderTempPart", remap = false)
     abstract void taczfixes$renderTempPart8(PoseStack pose, ItemDisplayContext context, RenderType type,
                                             int light, int overlay, List<BedrockPart> path, float partialTick,
                                             MultiBufferSource source);
 
-    @Invoker("renderTempPart")
+    @Invoker(value = "renderTempPart", remap = false)
     abstract void taczfixes$renderTempPart6(PoseStack pose, ItemDisplayContext context, RenderType type,
                                             int light, int overlay, List<BedrockPart> path,
                                             MultiBufferSource source);

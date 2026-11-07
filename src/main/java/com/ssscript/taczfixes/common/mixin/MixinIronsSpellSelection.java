@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 枪械上的法术不加入法术列表: 使其不出现在法术轮盘, 也不能通过施法键发动。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "io.redspace.ironsspellbooks.api.magic.SpellSelectionManager", remap = false)
 public class MixinIronsSpellSelection {
 

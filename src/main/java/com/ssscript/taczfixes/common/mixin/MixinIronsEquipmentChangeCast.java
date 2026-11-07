@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 仅当变化发生在施法手、仍是同一把枪、且未切换快捷栏时, 忽略这次装备变化;
  * 切枪/换手/切换物品栏照常取消。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "io.redspace.ironsspellbooks.player.ServerPlayerEvents", remap = false)
 public class MixinIronsEquipmentChangeCast {
 

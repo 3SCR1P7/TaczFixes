@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /** Arcana 世界手电: 查找手电配置时兜底自定义槽位。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "group/taczexpands/dist/B0UzWSV4", remap = false)
 public class MixinArcanaFlashlightWorld {
 

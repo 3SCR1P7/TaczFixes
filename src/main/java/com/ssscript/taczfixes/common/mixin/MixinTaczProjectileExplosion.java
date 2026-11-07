@@ -8,6 +8,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.util.block.ProjectileExplosion", remap = false)
 public class MixinTaczProjectileExplosion {
     private static final ThreadLocal<Entity> taczfixes$currentEntity = new ThreadLocal<>();

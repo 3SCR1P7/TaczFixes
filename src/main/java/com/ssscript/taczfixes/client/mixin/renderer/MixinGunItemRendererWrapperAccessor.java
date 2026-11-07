@@ -8,7 +8,7 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(value = {GunItemRendererWrapper.class}, remap = false)
 public interface MixinGunItemRendererWrapperAccessor {
-    @Invoker("cacheMuzzlePosition")
+    @Invoker(value = "cacheMuzzlePosition", remap = false)
     static void dualWield$cacheMuzzlePosition(PoseStack poseStack, BedrockGunModel model) {
         throw new AssertionError("Mixin invoker was not applied");
     }

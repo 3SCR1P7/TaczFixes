@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(EntityRenderDispatcher.class)
 public class MixinHitboxDisabler {
-    @Shadow
+    @Shadow(remap = false)
     private boolean renderHitBoxes;
 
     @Inject(method = "render", at = @At("HEAD"))

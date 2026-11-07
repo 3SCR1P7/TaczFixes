@@ -7,6 +7,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = GunData.class, remap = false)
 public interface MixinGunDataBurstAccessor {
-    @Accessor("burstData")
+    @Accessor(value = "burstData", remap = false)
     void taczfixes$setBurstData(BurstData burstData);
 }

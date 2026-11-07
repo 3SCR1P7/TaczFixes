@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 启用本模组耐力系统时隐藏 ParCool 的耐力条。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.alrex.parcool.client.hud.impl.StaminaHUDController", remap = false)
 public class MixinParCoolStaminaHud {
 

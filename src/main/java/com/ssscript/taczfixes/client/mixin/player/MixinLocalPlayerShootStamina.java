@@ -12,6 +12,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** 上肢耐力不足时客户端直接拦截开火(不播放开火动作)。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.gameplay.LocalPlayerShoot", remap = false)
 public class MixinLocalPlayerShootStamina {
 

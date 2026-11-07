@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** ParCool 耐力消耗改为消耗本模组耐力(ParCoolStaminaOther)。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.alrex.parcool.common.capability.stamina.OtherStamina", remap = false)
 public class MixinParCoolStaminaOther {
     @Shadow(remap = false)

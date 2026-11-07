@@ -38,16 +38,17 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(value = {ModernKineticGunScriptAPI.class}, remap = false)
 public abstract class MixinModernKineticGunScriptAPI {
 
-    @Shadow
+    @Shadow(remap = false)
     private ItemStack itemStack;
 
-    @Shadow
+    @Shadow(remap = false)
     private LivingEntity shooter;
 
-    @Shadow
+    @Shadow(remap = false)
     private ShooterDataHolder dataHolder;
 
     @Unique

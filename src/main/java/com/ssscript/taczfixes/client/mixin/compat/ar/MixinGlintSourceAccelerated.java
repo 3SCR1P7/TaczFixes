@@ -9,7 +9,7 @@ import org.spongepowered.asm.mixin.Shadow;
 
 @Mixin(targets = "com.ssscript.taczfixes.client.render.GunGlintContext$GlintSource", remap = false)
 public abstract class MixinGlintSourceAccelerated implements IAcceleratableBufferSource {
-    @Shadow
+    @Shadow(remap = false)
     private MultiBufferSource delegate;
 
     @Override

@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /** 读取 lrtactical 近战武器 index 中的 taczfixes.stamina_consume。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "me.xjqsh.lrtactical.item.index.MeleeWeaponIndex", remap = false)
 public class MixinLrMeleeWeaponIndex {
 

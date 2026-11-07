@@ -6,6 +6,6 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = {ObjectAnimation.class}, remap = false)
 public interface MixinObjectAnimationAccessor {
-    @Accessor("maxEndTimeS")
+    @Accessor(value = "maxEndTimeS", remap = false)
     void dualWield$setMaxEndTimeS(float f);
 }

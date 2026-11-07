@@ -9,6 +9,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Redirect;
 
 /** TaCZ: Arcana 的高级镭射光束渲染同样接入 PBR 泛光。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "group/taczexpands/dist/zekNTmYV", remap = false)
 public class MixinArcanaBeamPbr {
 

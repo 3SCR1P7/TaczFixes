@@ -9,10 +9,11 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 标记 GameRenderer#renderLevel 即将进行的世界层 getFov 调用, 供 FOV 过渡只作用于世界层。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(GameRenderer.class)
 public class MixinGameRendererWorldFovMark {
 
-    @Inject(method = "m_109089_", at = @At("HEAD"))
+    @Inject(method = "renderLevel(FJLcom/mojang/blaze3d/vertex/PoseStack;)V", at = @At("HEAD"))
     private void taczfixes$markWorldFov(float partialTicks, long nanoTime, PoseStack poseStack, CallbackInfo ci) {
         ScopeFovTransitionHandler.markWorldFovCall();
     }

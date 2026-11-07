@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 /**
  * 双持时隐藏主手枪械模型的支撑手(左手), 使主手只保留右手手臂。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = {"com.tacz.guns.client.renderer.item.GunItemRendererWrapper"}, remap = false)
 public abstract class MixinMainHandSupportArm {
 

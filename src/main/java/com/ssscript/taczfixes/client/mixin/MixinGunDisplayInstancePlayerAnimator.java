@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = {"com.tacz.guns.client.resource.GunDisplayInstance"}, remap = false)
 /* 双持时把 minigun 类型动画的枪械按普通枪械处理 (第三人称 player_animation 资源换成 rifle_default)。 */
 public abstract class MixinGunDisplayInstancePlayerAnimator {
@@ -18,11 +19,11 @@ public abstract class MixinGunDisplayInstancePlayerAnimator {
     private static final String TACZFIXES$MINIGUN = "minigun";
     private static final String TACZFIXES$DEFAULT_THIRD_PERSON_ANIMATION = "default";
 
-    @Shadow
+    @Shadow(remap = false)
     @Final
     private ResourceLocation playerAnimator3rd;
 
-    @Shadow
+    @Shadow(remap = false)
     private String thirdPersonAnimation;
 
     @Inject(method = {"getPlayerAnimator3rd"}, at = {@At("HEAD")}, cancellable = true, remap = false)

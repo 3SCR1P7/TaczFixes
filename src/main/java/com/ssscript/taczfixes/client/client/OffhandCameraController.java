@@ -38,6 +38,7 @@ import org.joml.Quaternionf;
 
 @OnlyIn(Dist.CLIENT)
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class OffhandCameraController {
     private static final float MODEL_RECOIL_GAIN = 3.0f;
     private static final float MODEL_PITCH_ROTATION_SCALE = 0.65f;

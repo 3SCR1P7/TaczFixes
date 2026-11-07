@@ -15,6 +15,7 @@ import com.ssscript.taczfixes.common.util.DualWieldOverrides;
 import com.ssscript.taczfixes.common.util.OffhandBulletSource;
 import net.minecraft.world.item.ItemStack;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(value = {ModernKineticGunItem.class}, remap = false)
 public abstract class MixinModernKineticGunItemSpread {
     @Inject(method = {"lambda$doBulletSpread$33(Lcom/tacz/guns/entity/EntityKineticBullet;Lnet/minecraft/world/entity/LivingEntity;FFFF)V"}, at = {@At("HEAD")}, cancellable = true, require = ServerMessageOffhandActionResult.ACTION_RELOAD)

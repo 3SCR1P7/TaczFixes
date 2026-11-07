@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = {AnimationController.class}, remap = false)
 public abstract class MixinAnimationController {
 
-    @Shadow
+    @Shadow(remap = false)
     @Final
     private AnimationListenerSupplier listenerSupplier;
 

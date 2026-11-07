@@ -21,6 +21,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** charge: 客户端连发预测按剩余电量截断; 电量不足的那一发不播开火动画/音效, 改为在原本该开火的时刻播放 dry_fire。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(LocalPlayerShoot.class)
 public class MixinLocalPlayerShootChargeBurst {
 

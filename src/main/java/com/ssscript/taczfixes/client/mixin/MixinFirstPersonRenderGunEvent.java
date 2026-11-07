@@ -17,6 +17,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.event.FirstPersonRenderGunEvent", remap = false)
 public class MixinFirstPersonRenderGunEvent {
     @Inject(method = "applyFirstPersonPositioningTransform", at = @At("HEAD"), remap = false)

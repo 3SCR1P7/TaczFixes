@@ -14,6 +14,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
  * SCOPE 槽的瞄具。自定义槽的 scope 激活时, 把该判断重定向到自定义瞄具, 使其
  * 也能绘制镜内画面。是否开启仍由 VR4u5uBF() 按当前瞄具视图决定。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "group/taczexpands/dist/cMBgIfn3", remap = false)
 public class MixinArcanaLensLayerGate {
 

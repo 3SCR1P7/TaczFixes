@@ -18,6 +18,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.util.List;
 
 /** lrtactical 近战武器攻击消耗上肢耐力(轻击/重击, 支持 index 内 taczfixes.stamina_consume 覆盖)。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "me.xjqsh.lrtactical.item.MeleeItem", remap = false)
 public class MixinLrMeleeItemAttack {
 

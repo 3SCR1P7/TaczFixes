@@ -13,10 +13,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 
 /** 枪械 data 的 enchantment_ability 覆盖配置文件中的附魔能力值(附魔台消耗/可选附魔)。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(EnchantmentHelper.class)
 public class MixinEnchantmentHelperGunValue {
 
-    @WrapOperation(method = {"m_220287_", "m_220297_"},
+    @WrapOperation(method = {"getEnchantmentCost(Lnet/minecraft/util/RandomSource;IILnet/minecraft/world/item/ItemStack;)I", "selectEnchantment(Lnet/minecraft/util/RandomSource;Lnet/minecraft/world/item/ItemStack;IZ)Ljava/util/List;"},
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/item/Item;m_6473_()I"), require = 0)
     private static int taczfixes$gunEnchantmentValue(Item item, Operation<Integer> original,
                                                      @Local(argsOnly = true) ItemStack stack) {

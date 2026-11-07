@@ -21,6 +21,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Vector3f;
 
 @OnlyIn(Dist.CLIENT)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class YsmDualWieldCompat {
     private static final String[] ENTITY_GETTERS = {"getEntity", "OO00OOOOo0Ooo0oo0o0Oo0OO"};
     private static final String[] MODEL_GETTERS = {"getCurrentModel", "OOOoOO000000o0o0oOooo0o0"};

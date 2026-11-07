@@ -20,6 +20,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * 2. 标准与自定义两把火控瞄具同装时, RangefinderManager 全局标志会让两框都绘制,
  *    此处仅在瞄准场景(aimingScene)放行, 备用镜/standby 附件一律抑制, 消除第二个框。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.model.functional.RangefinderImpactPredictionRender", remap = false)
 public class MixinRangefinderProjection {
 

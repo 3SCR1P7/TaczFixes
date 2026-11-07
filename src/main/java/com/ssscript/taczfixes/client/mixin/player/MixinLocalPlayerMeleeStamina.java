@@ -13,6 +13,7 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 /** 上肢耐力不足时客户端直接拦截近战(不播放近战动作); 副手近战冷却中主手也不能近战。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.gameplay.LocalPlayerMelee", remap = false)
 public class MixinLocalPlayerMeleeStamina {
 

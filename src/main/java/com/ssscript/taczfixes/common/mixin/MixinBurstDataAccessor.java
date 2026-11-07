@@ -6,15 +6,15 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = BurstData.class, remap = false)
 public interface MixinBurstDataAccessor {
-    @Accessor("continuousShoot")
+    @Accessor(value = "continuousShoot", remap = false)
     void taczfixes$setContinuousShoot(boolean value);
 
-    @Accessor("count")
+    @Accessor(value = "count", remap = false)
     void taczfixes$setCount(int value);
 
-    @Accessor("bpm")
+    @Accessor(value = "bpm", remap = false)
     void taczfixes$setBpm(int value);
 
-    @Accessor("minInterval")
+    @Accessor(value = "minInterval", remap = false)
     void taczfixes$setMinInterval(double value);
 }

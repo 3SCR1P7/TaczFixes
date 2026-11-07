@@ -15,6 +15,7 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 import org.joml.Matrix4f;
 
 @OnlyIn(Dist.CLIENT)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class OffhandArmPoseResolver {
     private static final Map<BedrockAnimatedModel, BedrockPart> CARRIER_CACHE = Collections.synchronizedMap(new IdentityHashMap());
 

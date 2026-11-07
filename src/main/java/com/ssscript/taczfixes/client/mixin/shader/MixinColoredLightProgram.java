@@ -20,6 +20,7 @@ import java.util.Set;
 /**
  * 把彩色光代码注入原版着色器源码(移植自 Shimmer, MIT)。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(Program.class)
 public abstract class MixinColoredLightProgram {
 

@@ -210,7 +210,7 @@ public final class PosAlterGuiState {
     }
 
     private static class PosAlterSlider extends AbstractSliderButton {
-        private static final ResourceLocation SLIDER_LOCATION = new ResourceLocation("textures/gui/slider.png");
+        private static final ResourceLocation SLIDER_LOCATION = ResourceLocation.tryParse("textures/gui/slider.png");
         private final ItemStack gunStack;
         private final String slotKey;
         private final float min;

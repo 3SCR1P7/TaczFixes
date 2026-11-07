@@ -10,9 +10,9 @@ import java.util.EnumMap;
 
 @Mixin(value = GunData.class, remap = false)
 public interface MixinGunDataAdjustAccessor {
-    @Accessor("fireModeAdjust")
+    @Accessor(value = "fireModeAdjust", remap = false)
     EnumMap<FireMode, GunFireModeAdjustData> taczfixes$getFireModeAdjust();
 
-    @Accessor("fireModeAdjust")
+    @Accessor(value = "fireModeAdjust", remap = false)
     void taczfixes$setFireModeAdjust(EnumMap<FireMode, GunFireModeAdjustData> map);
 }

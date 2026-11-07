@@ -127,7 +127,7 @@ public final class CurseForgeImages {
 
     private static void register(String url, byte[] data) throws IOException {
         NativeImage image = NativeImage.read(data);
-        ResourceLocation location = new ResourceLocation("taczfixes", "curseforge/" + hash(url));
+        ResourceLocation location = ResourceLocation.tryBuild("taczfixes", "curseforge/" + hash(url));
         DynamicTexture texture = new DynamicTexture(image);
         Minecraft.getInstance().getTextureManager().register(location, texture);
         LOADED.put(url, new Icon(location, image.getWidth(), image.getHeight()));

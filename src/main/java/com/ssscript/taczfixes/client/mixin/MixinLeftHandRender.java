@@ -22,7 +22,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = {LeftHandRender.class}, remap = false)
 public abstract class MixinLeftHandRender {
 
-    @Shadow
+    @Shadow(remap = false)
     @Final
     private BedrockAnimatedModel bedrockGunModel;
 

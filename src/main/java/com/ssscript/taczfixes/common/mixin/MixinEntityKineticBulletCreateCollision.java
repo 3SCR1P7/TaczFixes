@@ -24,27 +24,28 @@ import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(EntityKineticBullet.class)
 public class MixinEntityKineticBulletCreateCollision {
-    @Shadow
+    @Shadow(remap = false)
     private boolean explosion;
-    @Shadow
+    @Shadow(remap = false)
     private float explosionDamage;
-    @Shadow
+    @Shadow(remap = false)
     private float explosionRadius;
-    @Shadow
+    @Shadow(remap = false)
     private boolean explosionKnockback;
-    @Shadow
+    @Shadow(remap = false)
     private boolean explosionDestroyBlock;
-    @Shadow
+    @Shadow(remap = false)
     private boolean igniteBlock;
-    @Shadow
+    @Shadow(remap = false)
     private ResourceLocation ammoId;
-    @Shadow
+    @Shadow(remap = false)
     private ResourceLocation gunId;
-    @Shadow
+    @Shadow(remap = false)
     private ResourceLocation gunDisplayId;
-    @Shadow
+    @Shadow(remap = false)
     private boolean igniteEntity;
 
     @Unique

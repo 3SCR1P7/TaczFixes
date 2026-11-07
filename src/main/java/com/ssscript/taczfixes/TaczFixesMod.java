@@ -110,6 +110,7 @@ public class TaczFixesMod {
     public static final RegistryObject<Enchantment> PATIENCE_ENCHANTMENT =
             ENCHANTMENTS.register("patience", GunEnchantments.Patience::new);
 
+    @SuppressWarnings("removal")
     public TaczFixesMod() {
         for (java.util.Map.Entry<String, net.minecraftforge.common.ForgeConfigSpec> entry : Config.SPECS.entrySet()) {
             ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, entry.getValue(),

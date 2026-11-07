@@ -6,8 +6,9 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 
 /** 读取瞄具各视图的眼罩类型(scope/sight), 用于组合瞄具按视图判定镜内放大。 */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(BedrockAttachmentModel.class)
 public interface MixinAttachmentModelAccessor {
-    @Accessor("isScopeOcular")
+    @Accessor(value = "isScopeOcular", remap = false)
     List<Boolean> taczfixes$getIsScopeOcular();
 }

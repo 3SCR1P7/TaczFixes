@@ -13,52 +13,53 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 import java.util.List;
 
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(BedrockAttachmentModel.class)
 public interface MixinBedrockAttachmentModelScopeSuppress {
 
-    @Accessor("scopeViewPaths")
+    @Accessor(value = "scopeViewPaths", remap = false)
     List<List<BedrockPart>> taczfixes$scopeViewPaths();
 
-    @Accessor("ocularNodePaths")
+    @Accessor(value = "ocularNodePaths", remap = false)
     List<List<BedrockPart>> taczfixes$ocularNodePaths();
 
-    @Accessor("isScopeOcular")
+    @Accessor(value = "isScopeOcular", remap = false)
     List<Boolean> taczfixes$isScopeOcular();
 
-    @Accessor("isScopeOcular")
+    @Accessor(value = "isScopeOcular", remap = false)
     void taczfixes$setIsScopeOcular(List<Boolean> flags);
 
-    @Accessor("divisionNodePaths")
+    @Accessor(value = "divisionNodePaths", remap = false)
     List<List<BedrockPart>> taczfixes$divisionNodePaths();
 
-    @Accessor("currentGunItem")
+    @Accessor(value = "currentGunItem", remap = false)
     void taczfixes$setCurrentGunItem(ItemStack gun);
 
-    @Accessor("attachmentItem")
+    @Accessor(value = "attachmentItem", remap = false)
     ItemStack taczfixes$attachmentItem();
 
-    @Accessor("attachmentItem")
+    @Accessor(value = "attachmentItem", remap = false)
     void taczfixes$setAttachmentItem(ItemStack item);
 
-    @Accessor("scopeBodyPath")
+    @Accessor(value = "scopeBodyPath", remap = false)
     List<BedrockPart> taczfixes$scopeBodyPath();
 
-    @Accessor("ocularRingPath")
+    @Accessor(value = "ocularRingPath", remap = false)
     List<BedrockPart> taczfixes$ocularRingPath();
 
-    @Accessor("isScope")
+    @Accessor(value = "isScope", remap = false)
     boolean taczfixes$isScope();
 
-    @Accessor("isScope")
+    @Accessor(value = "isScope", remap = false)
     void taczfixes$setIsScope(boolean isScope);
 
-    @Accessor("isSight")
+    @Accessor(value = "isSight", remap = false)
     boolean taczfixes$isSight();
 
-    @Accessor("isSight")
+    @Accessor(value = "isSight", remap = false)
     void taczfixes$setIsSight(boolean isSight);
 
-    @Invoker("renderTempPart")
+    @Invoker(value = "renderTempPart", remap = false)
     void taczfixes$renderTempPart(PoseStack poseStack, ItemDisplayContext displayContext,
                                   RenderType renderType, int light, int overlay,
                                   List<BedrockPart> path, MultiBufferSource bufferSource);

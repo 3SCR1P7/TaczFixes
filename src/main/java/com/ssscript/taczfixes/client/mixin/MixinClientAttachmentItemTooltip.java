@@ -28,11 +28,11 @@ public class MixinClientAttachmentItemTooltip {
     private static final Style BAD = Style.EMPTY.withColor(ChatFormatting.RED);
     private static final Style YELLOW = Style.EMPTY.withColor(ChatFormatting.YELLOW);
 
-    @Shadow
+    @Shadow(remap = false)
     @Final
     private ResourceLocation attachmentId;
 
-    @Shadow
+    @Shadow(remap = false)
     @Final
     private List<Component> components;
 

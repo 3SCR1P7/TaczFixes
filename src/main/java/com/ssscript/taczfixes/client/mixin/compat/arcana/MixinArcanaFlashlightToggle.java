@@ -16,6 +16,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
  * TaCZ: Arcana 的战术手电开关记录在单把枪械的 NBT 上, 双持时只会切换主手。
  * 副手手电渲染读取开关时改用主手枪械的状态, 使开关对双手同时生效。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "group/taczexpands/dist/wDqHZ7qY", remap = false)
 public class MixinArcanaFlashlightToggle {
 

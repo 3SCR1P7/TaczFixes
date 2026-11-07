@@ -35,6 +35,7 @@ import java.util.Locale;
  * 实现: 拦截 getSprintTime 计算修饰值; 拦截文本 String.format 替换为带差值的字符串;
  * 拦截 base 条绘制 m_280509_ 改画 default+diff 两段。
  */
+@SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(targets = "com.tacz.guns.client.gui.components.refit.GunPropertyDiagrams", remap = false)
 public class MixinGunPropertyDiagrams {
 

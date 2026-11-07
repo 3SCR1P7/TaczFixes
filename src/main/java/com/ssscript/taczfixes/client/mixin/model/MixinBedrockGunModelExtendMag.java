@@ -28,7 +28,7 @@ public class MixinBedrockGunModelExtendMag {
     @Unique
     private static final int TACZFIXES_MAX_EXTEND_GROUP = 64;
 
-    @Shadow
+    @Shadow(remap = false)
     private int currentExtendMagLevel;
 
     @Unique

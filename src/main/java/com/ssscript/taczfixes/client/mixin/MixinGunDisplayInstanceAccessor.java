@@ -8,12 +8,12 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(value = {GunDisplayInstance.class}, remap = false)
 public interface MixinGunDisplayInstanceAccessor {
-    @Accessor("animationStateMachine")
+    @Accessor(value = "animationStateMachine", remap = false)
     void dualWield$setAnimationStateMachine(LuaAnimationStateMachine<GunAnimationStateContext> luaAnimationStateMachine);
 
-    @Accessor("thirdPersonAnimation")
+    @Accessor(value = "thirdPersonAnimation", remap = false)
     String dualWield$getThirdPersonAnimationRaw();
 
-    @Accessor("display")
+    @Accessor(value = "display", remap = false)
     com.tacz.guns.client.resource.pojo.display.gun.GunDisplay dualWield$getDisplayRaw();
 }
