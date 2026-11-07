@@ -91,7 +91,6 @@ public final class OffhandShooterManager {
         shooter.melee();
     }
 
-    /** 鍓墜杩戞垬鍐峰嵈鏄惁浠嶉樆鎸′富鎵嬭繎鎴?鍐峰嵈杩涜鍒伴厤缃瘮渚嬪悗涓嶅啀闃绘尅)銆?*/
     public static boolean isOffhandMeleeBlockingMainHand(ServerPlayer player) {
         OffhandShooter shooter = getValidated(player);
         return shooter != null && shooter.meleeBlocksMainHand();
@@ -162,7 +161,6 @@ public final class OffhandShooterManager {
         return dataHolder != null && OFFHAND_DATA.contains(dataHolder);
     }
 
-    /** 褰撳墠绾跨▼鑻ユ澶勪簬璇ュ疄浣撶殑鍓墜澶勭悊涓婁笅鏂? 杩斿洖鍏跺壇鎵嬫灙姊? 鍚﹀垯杩斿洖绌恒€?*/
     public static ItemStack getActiveOffhandGunStack(LivingEntity entity) {
         if (entity == null) {
             return ItemStack.EMPTY;

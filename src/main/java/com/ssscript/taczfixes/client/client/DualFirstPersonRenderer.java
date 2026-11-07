@@ -85,6 +85,7 @@ public final class DualFirstPersonRenderer {
                 root.additionalQuaternion.mul(Axis.XP.rotationDegrees(xRot2 * 0.05f));
                 root.additionalQuaternion.mul(Axis.YN.rotationDegrees(yRot2 * 0.05f));
             }
+            OffhandJumpSway.apply(model, partialTick);
             poseStack.translate(0.0d, 1.5d, 0.0d);
             poseStack.mulPose(Axis.ZP.rotationDegrees(180.0f));
             AnimateGeoItemRenderer.applyFirstPersonPositioningTransform(poseStack, model, stack);

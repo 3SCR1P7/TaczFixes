@@ -144,8 +144,7 @@ final class OffhandShooter {
                     : (gunId == null ? null : DualWieldStackId.getOrCreate(stack));
             if (gunId == null || stackId == null || gun == null) {
                 return;
-            }
-            // 鍙湁鏂?ID 鎴栫粦瀹氱洰鏍囧彉鍖栨椂鎵嶆壂鎻忚儗鍖呮煡閲嶅, 閬垮厤姣?tick / 姣忔鍓墜鍔ㄤ綔鍏ㄨ儗鍖呮壂鎻忋€?            
+            }       
             boolean rebind = existingId == null || this.boundStackId == null
                     || !stackId.equals(this.boundStackId) || !gunId.equals(this.boundGunId);
             if (rebind) {

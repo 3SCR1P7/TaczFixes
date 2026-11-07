@@ -20,24 +20,17 @@ public final class OffhandUseHandler {
     private OffhandUseHandler() {
     }
 
+    /**
+     * 副手物品使用完全交给 vanilla 的 ServerboundUseItemPacket / release 流程.
+     * 这里只清理旧的 active 记录, 不能再次调用 gameMode.useItem / finishUsingItem:
+     * 那会导致鸡蛋/雪球丢出两次, 或把喷溅/滞留药水当成饮用型药水结算.
+     */
     public static void setUsing(ServerPlayer player, boolean using) {
-        UUID id = player.getUUID();
-        if (!using) {
-            ACTIVE.remove(id);
+        if (player == null) {
             return;
         }
-        ItemStack offhand = player.getOffhandItem();
-        if (!canUse(player, offhand)) {
-            ACTIVE.remove(id);
-            return;
-        }
-        if (offhand.getUseDuration(player) == 0) {
-            player.gameMode.useItem(player, player.serverLevel(), offhand, InteractionHand.OFF_HAND);
-            return;
-        }
-        ACTIVE.put(id, new ActiveUse(offhand.copy(), Math.max(1, offhand.getUseDuration(player))));
+        ACTIVE.remove(player.getUUID());
     }
-
     @SubscribeEvent
     public static void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
         if (false || !(event.getEntity() instanceof ServerPlayer player)) {
