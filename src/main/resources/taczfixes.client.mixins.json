@@ -114,6 +114,7 @@
         "MixinAimKey",
         "MixinAnimationController",
         "MixinAnimationControllerAccessor",
+        "MixinObjectAnimationRunnerAccessor",
         "MixinAnvilScreenGunCost",
         "MixinAttachmentDisplayStepless",
         "MixinBlockLightEngineEmission",

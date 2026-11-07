@@ -32,9 +32,7 @@ public class MixinFirstPersonRenderGunEvent {
     private static void taczfixes$pushCustomScopeViewShift(LocalPlayer player, ItemStack stack, PoseStack poseStack,
                                                            BedrockGunModel model, float partialTick, CallbackInfo ci) {
         if (model == null) return;
-        if (DualRenderContext.getPhase() == DualRenderContext.HandPhase.MAIN && DualRenderContext.mainHandPos().mirror()) {
-            poseStack.scale(-1.0f, 1.0f, 1.0f);
-        }
+
         if (DualWieldClient.isDualMode(player)) {
             double forwardOffset = com.ssscript.taczfixes.client.client.ForwardOffsetSmoothing.mainHand(
                     com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(

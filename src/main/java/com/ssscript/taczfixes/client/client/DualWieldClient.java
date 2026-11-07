@@ -277,13 +277,8 @@ public final class DualWieldClient {
             waitRightReleaseAfterScreen = AimKey.AIM_KEY.isDown() || controllerAimDown;
             resetFocusAimImmediately(player);
             boolean handSwap = taczfixes$isHandSwap(lastDualMainStack, lastDualOffhandStack, currentMainStack, currentOffhandStack);
-            if (handSwap) {
-                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
-                        currentMainStack, currentOffhandStack, true, true);
-            } else {
-                OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
-                        currentMainStack, currentOffhandStack, true, false);
-            }
+            OffhandDisplayManager.beginPutAway(player, lastDualMainStack, lastDualOffhandStack,
+                    currentMainStack, currentOffhandStack, true, handSwap);
         }
         if (currentOffhandGun && OffhandDisplayManager.isPuttingAway()) {
             OffhandDisplayManager.updatePutAwayTarget(currentMainStack, currentOffhandStack, true);
