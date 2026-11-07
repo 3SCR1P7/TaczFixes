@@ -17,6 +17,7 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.neoforge.common.NeoForge;
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class OffhandGunPropertyResolver {
     private static final ThreadLocal<Deque<ShooterDataHolder>> ACTIVE_DATA = new ThreadLocal<>();
 

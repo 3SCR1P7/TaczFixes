@@ -22,6 +22,7 @@ import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import javax.annotation.Nullable;
 import java.util.List;
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public class GunEnchantmentHelper {
     private GunEnchantmentHelper() {
     }

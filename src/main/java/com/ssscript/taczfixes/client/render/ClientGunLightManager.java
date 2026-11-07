@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 由 Shimmer 的彩色光照着色管线真实照亮方块/实体/粒子。
  */
 @OnlyIn(Dist.CLIENT)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class ClientGunLightManager {
     private static final Map<Long, ActiveLight> LIGHTS = new ConcurrentHashMap<>();
     private static final Map<Integer, TrackedBullet> BULLETS = new ConcurrentHashMap<>();

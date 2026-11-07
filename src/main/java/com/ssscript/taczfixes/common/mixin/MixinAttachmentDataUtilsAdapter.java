@@ -21,6 +21,7 @@ import java.util.function.Consumer;
 
 /** 让槽位适配器的原生 data 像配件一样参与属性计算(缓存/柱状图/弹药伤害等)。 */
 @Mixin(value = AttachmentDataUtils.class, remap = false)
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public class MixinAttachmentDataUtilsAdapter {
 
     @ModifyReturnValue(method = "getModifiers", at = @At("RETURN"), remap = false)

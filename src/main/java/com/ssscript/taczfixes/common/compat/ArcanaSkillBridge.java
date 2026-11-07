@@ -28,6 +28,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *    使 Arcana 在副手开火/换弹/拉栓/近战/子弹事件中的技能求值作用于副手枪;
  * 2. 依据 Arcana 主手状态机语义为副手枪补发 ON_MAIN_HAND (装备/切换 forward, 卸下/切换 reverse)。
  */
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class ArcanaSkillBridge {
 
     private static final String MANAGER_CLASS = "group.taczexpands.dist.mwicXaw4";

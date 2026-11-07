@@ -63,6 +63,7 @@ import net.minecraft.world.item.Item;
 import net.minecraft.world.entity.player.Player;
 
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 final class OffhandShooter {
         final ServerPlayer player;
         final LivingEntityDrawGun draw;

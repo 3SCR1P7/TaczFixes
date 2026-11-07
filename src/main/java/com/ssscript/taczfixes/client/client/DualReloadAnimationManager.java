@@ -27,6 +27,7 @@ import net.neoforged.api.distmarker.OnlyIn;
 
 @OnlyIn(Dist.CLIENT)
 /* 双持换弹视觉: 播放 put_away, 结束后隐藏手臂, 等待 (feed - put_away) 后播放 draw。 */
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class DualReloadAnimationManager {
     private static final long MAX_VISUAL_DURATION_MS = 120000;
     private static final long MAX_DRAW_DURATION_MS = 10000;

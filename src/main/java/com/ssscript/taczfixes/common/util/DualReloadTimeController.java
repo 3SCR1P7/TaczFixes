@@ -9,6 +9,7 @@ import java.util.WeakHashMap;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
+@SuppressWarnings({"unchecked", "deprecation", "removal", "rawtypes"})
 public final class DualReloadTimeController {
     private static final Map<ShooterDataHolder, ReloadSession> SESSIONS = Collections.synchronizedMap(new WeakHashMap());
 
