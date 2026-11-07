@@ -7,5 +7,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(RenderType.CompositeState.class)
 public interface PbrStateAccessor {
-    @Accessor(value = "textureState", remap = false) RenderStateShard.EmptyTextureStateShard taczfixes$pbrTexture();
+    @Accessor("textureState") RenderStateShard.EmptyTextureStateShard taczfixes$pbrTexture();
 }

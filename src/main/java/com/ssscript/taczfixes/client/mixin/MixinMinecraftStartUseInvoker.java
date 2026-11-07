@@ -6,6 +6,6 @@ import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(Minecraft.class)
 public interface MixinMinecraftStartUseInvoker {
-    @Invoker(value = "startUseItem", remap = false)
+    @Invoker("startUseItem")
     void taczfixes$startUseItem();
 }

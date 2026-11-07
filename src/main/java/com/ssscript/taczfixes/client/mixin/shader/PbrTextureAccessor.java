@@ -8,5 +8,5 @@ import java.util.Optional;
 
 @Mixin(RenderStateShard.EmptyTextureStateShard.class)
 public interface PbrTextureAccessor {
-    @Invoker(value = "cutoutTexture", remap = false) Optional<ResourceLocation> taczfixes$pbrTextureLocation();
+    @Invoker("cutoutTexture") Optional<ResourceLocation> taczfixes$pbrTextureLocation();
 }

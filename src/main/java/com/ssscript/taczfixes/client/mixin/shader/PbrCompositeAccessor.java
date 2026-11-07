@@ -6,5 +6,5 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(targets = "net.minecraft.client.renderer.RenderType$CompositeRenderType")
 public interface PbrCompositeAccessor {
-    @Accessor(value = "state", remap = false) RenderType.CompositeState taczfixes$pbrState();
+    @Accessor("state") RenderType.CompositeState taczfixes$pbrState();
 }

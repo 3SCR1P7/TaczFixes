@@ -6,9 +6,9 @@ import org.spongepowered.asm.mixin.gen.Accessor;
 
 @Mixin(ItemInHandRenderer.class)
 public interface MixinItemInHandRendererHeightAccessor {
-    @Accessor(value = "offHandHeight", remap = false)
+    @Accessor("offHandHeight")
     void taczfixes$setOffHandHeight(float height);
 
-    @Accessor(value = "oOffHandHeight", remap = false)
+    @Accessor("oOffHandHeight")
     void taczfixes$setOOffHandHeight(float height);
 }
