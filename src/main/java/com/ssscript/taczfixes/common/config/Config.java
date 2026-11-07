@@ -112,8 +112,11 @@ public class Config {
     public static final ModConfigSpec.DoubleValue RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW;
     public static final ModConfigSpec.IntValue RECOIL_FIRE_RATE_MIN_RPM;
     public static final ModConfigSpec.IntValue GUN_LEVEL_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue GUN_LEVEL_BASE_KILLS;
-    public static final ModConfigSpec.IntValue GUN_LEVEL_INCREMENT;
+    public static final ModConfigSpec.ConfigValue<String> GUN_LEVEL_XP_FORMULA;
+    public static final ModConfigSpec.IntValue GUN_KILL_XP_MIN;
+    public static final ModConfigSpec.IntValue GUN_KILL_XP_MAX;
+    public static final ModConfigSpec.IntValue GUN_PLAYER_XP_BONUS_MIN;
+    public static final ModConfigSpec.IntValue GUN_PLAYER_XP_BONUS_MAX;
     public static final ModConfigSpec.BooleanValue BULLET_RICOCHET_ENABLE;
     public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_MIN_ANGLE;
     public static final ModConfigSpec.DoubleValue BULLET_RICOCHET_MAX_ANGLE;
@@ -366,18 +369,28 @@ public class Config {
         GUN_LEVEL_MAX_LEVEL = BUILDER
                 .comment("枪械的等级上限。默认值：500")
                 .defineInRange("max_level", 500, 1, 10000);
-        GUN_LEVEL_BASE_KILLS = BUILDER
-                .comment("从0级到1级所需的击杀数。默认值：1")
-                .defineInRange("base_kills", 1, 1, 100000);
-        GUN_LEVEL_INCREMENT = BUILDER
-                .comment("每升1级，升级额外所需的击杀数。默认值：5")
-                .defineInRange("level_increment", 5, 0, 100000);
+        GUN_LEVEL_XP_FORMULA = BUILDER
+                .comment("升到 x 级所需的枪械经验值 y。",
+                        "默认值: y = 100 * x ^ 2 + 600 * x - 600")
+                .define("xp_formula", com.ssscript.taczfixes.common.util.GunLevelFormula.DEFAULT_EXPRESSION);
+        GUN_KILL_XP_MIN = BUILDER
+                .comment("每次用枪械击杀实体获得的枪械经验最小值。默认值：75")
+                .defineInRange("kill_xp_min", 75, 0, 1000000);
+        GUN_KILL_XP_MAX = BUILDER
+                .comment("每次用枪械击杀实体获得的枪械经验最大值。默认值：125")
+                .defineInRange("kill_xp_max", 125, 0, 1000000);
+        GUN_PLAYER_XP_BONUS_MIN = BUILDER
+                .comment("每掉落 1 点经验, 额外获得的枪械经验最小值。默认值：15")
+                .defineInRange("player_xp_bonus_min", 15, 0, 1000000);
+        GUN_PLAYER_XP_BONUS_MAX = BUILDER
+                .comment("每掉落 1 点经验, 额外获得的枪械经验最大值。默认值：25")
+                .defineInRange("player_xp_bonus_max", 25, 0, 1000000);
         GUN_BOTTLE_ENABLED = BUILDER
                 .comment("是否启用铁砧使用附魔之瓶为枪械增加经验。默认值：true")
                 .define("bottle_enabled", true);
         GUN_BOTTLE_EXP_PER_BOTTLE = BUILDER
-                .comment("每瓶附魔之瓶增加的枪械经验值。默认值：5")
-                .defineInRange("bottle_exp_per_bottle", 5, 1, 10000);
+                .comment("每瓶附魔之瓶增加的枪械经验值。默认值：500")
+                .defineInRange("bottle_exp_per_bottle", 500, 1, 1000000);
         GUN_BOTTLE_COST = BUILDER
                 .comment("铁砧使用附魔之瓶消耗的玩家经验等级。默认值：1")
                 .defineInRange("bottle_cost", 1, 0, 100);

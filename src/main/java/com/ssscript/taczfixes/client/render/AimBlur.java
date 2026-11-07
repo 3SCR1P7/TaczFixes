@@ -39,7 +39,7 @@ import org.joml.Matrix4f;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
-@EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = EventBusSubscriber.Bus.MOD)
+@EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT)
 public final class AimBlur {
     private static ShaderInstance shader;
     private static ShaderInstance focusShader;

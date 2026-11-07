@@ -117,6 +117,11 @@
     "config.taczfixes.category.patience":  "耐心",
 
     "config.taczfixes.entry.gun_level.max_level":  "枪械等级上限",
+    "config.taczfixes.entry.gun_level.xp_formula":  "枪械升级经验公式 (Lua，x 为等级，y 为累计经验)",
+    "config.taczfixes.entry.gun_level.kill_xp_min":  "每次击杀获得枪械经验最小值",
+    "config.taczfixes.entry.gun_level.kill_xp_max":  "每次击杀获得枪械经验最大值",
+    "config.taczfixes.entry.gun_level.player_xp_bonus_min":  "目标每掉落1点玩家经验额外获得枪械经验最小值",
+    "config.taczfixes.entry.gun_level.player_xp_bonus_max":  "目标每掉落1点玩家经验额外获得枪械经验最大值",
     "config.taczfixes.entry.gun_level.base_kills":  "0级到1级所需击杀数",
     "config.taczfixes.entry.gun_level.increment":  "每升1级额外所需击杀数",
     "config.taczfixes.entry.gun_level.bottle_enabled":  "铁砧使用附魔之瓶增加枪械经验",

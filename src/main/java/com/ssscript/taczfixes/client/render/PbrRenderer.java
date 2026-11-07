@@ -36,7 +36,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
-@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader;
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;

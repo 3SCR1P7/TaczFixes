@@ -37,7 +37,7 @@ import net.neoforged.fml.common.Mod;
 import org.jetbrains.annotations.Nullable;
 import net.minecraft.world.item.Item;
 
-@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT}, bus = net.neoforged.fml.common.EventBusSubscriber.Bus.MOD)
+@net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = {Dist.CLIENT})
 public final class OffhandGunHudOverlay implements net.minecraft.client.gui.LayeredDraw.Layer {
     private static final int MAX_AMMO_COUNT = 9999;
     private static final int HUD_LEFT = 18;

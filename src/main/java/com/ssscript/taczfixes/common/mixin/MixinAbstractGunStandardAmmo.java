@@ -71,7 +71,7 @@ public class MixinAbstractGunStandardAmmo {
             }
             cir.setReturnValue(needAmmoCount - needLeft);
         } catch (Exception e) {
-            LOGGER.error("[标准弹药] 抽取弹药时发生异常，已回退原版逻辑", e);
+            LOGGER.error("[Standard Ammo] Exception while extracting ammo, falling back to vanilla logic", e);
         }
     }
 
@@ -127,7 +127,7 @@ public class MixinAbstractGunStandardAmmo {
                 cir.setReturnValue(Boolean.TRUE);
             }
         } catch (Exception e) {
-            LOGGER.error("[标准弹药] canReload 判定异常", e);
+            LOGGER.error("[Standard Ammo] Exception while evaluating canReload", e);
         }
     }
 
