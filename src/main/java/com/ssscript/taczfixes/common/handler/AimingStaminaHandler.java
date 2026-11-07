@@ -27,7 +27,6 @@ public class AimingStaminaHandler {
 
     @SubscribeEvent
     public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (false) return;
         if (!(event.getEntity() instanceof ServerPlayer player)) return;
         if (!Config.AIMING_STAMINA_ENABLED.get()) return;
 

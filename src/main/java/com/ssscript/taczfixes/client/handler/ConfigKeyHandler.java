@@ -23,7 +23,6 @@ public class ConfigKeyHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) {
             wasDown = false;

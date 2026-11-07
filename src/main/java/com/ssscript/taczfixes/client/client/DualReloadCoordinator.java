@@ -71,9 +71,6 @@ public final class DualReloadCoordinator {
 
     @SubscribeEvent(priority = EventPriority.LOWEST)
     public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         if (DualWieldClient.isDualMode(player) && !OffhandDisplayManager.isPuttingAway() && minecraft.screen == null && player.tickCount % 5 == 0 && KeyConfig.AUTO_RELOAD != null && Boolean.TRUE.equals(KeyConfig.AUTO_RELOAD.get())) {

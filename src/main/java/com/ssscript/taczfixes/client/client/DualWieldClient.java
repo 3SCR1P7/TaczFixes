@@ -177,9 +177,6 @@ public final class DualWieldClient {
 
     @SubscribeEvent
     public static void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         Minecraft minecraft = Minecraft.getInstance();
         LocalPlayer player = minecraft.player;
         OffhandCameraController.applyPendingRecoil(player);

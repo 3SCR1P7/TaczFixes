@@ -78,7 +78,6 @@ public class AimSwayHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         prevYaw = curYaw;
         prevPitch = curPitch;
 

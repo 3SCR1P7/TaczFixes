@@ -23,7 +23,6 @@ public class HoldBreathKeyHandler {
 
     @SubscribeEvent
     public void onClientTick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) return;
         Minecraft mc = Minecraft.getInstance();
         LocalPlayer player = mc.player;
         if (player == null) {

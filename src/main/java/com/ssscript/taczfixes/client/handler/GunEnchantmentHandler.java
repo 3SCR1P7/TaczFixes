@@ -627,9 +627,6 @@ public class GunEnchantmentHandler {
 
     @SubscribeEvent
     public void onPlayerTickChargeSpeed(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         Player player = event.getEntity();
         if (player.level().isClientSide) {
             return;
@@ -684,9 +681,6 @@ public class GunEnchantmentHandler {
 
     @SubscribeEvent
     public void onClientTickSmartScope(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         Minecraft mc = Minecraft.getInstance();
         if (mc.level == null || mc.player == null) {
             return;
@@ -869,9 +863,6 @@ public class GunEnchantmentHandler {
 
     @SubscribeEvent
     public void onPlayerTick(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         if (event.getEntity().level().isClientSide) {
             return;
         }
@@ -973,9 +964,6 @@ public class GunEnchantmentHandler {
 
     @SubscribeEvent
     public void onPlayerTickPatience(net.neoforged.neoforge.event.tick.PlayerTickEvent.Post event) {
-        if (false) {
-            return;
-        }
         com.ssscript.taczfixes.common.util.PatienceHelper.onPlayerTick(event.getEntity());
     }
 
