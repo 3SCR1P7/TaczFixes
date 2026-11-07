@@ -182,6 +182,7 @@
         "MixinMainHandSupportArm",
         "MixinMeleeKey",
         "MixinMinecraftStartUseInvoker",
+        "MixinMultiPlayerGameModeReleaseUse",
         "MixinMouseHandlerPosAlter",
         "MixinMouseHandlerZoomSensitivity",
         "MixinMuzzleFlashHandScope",

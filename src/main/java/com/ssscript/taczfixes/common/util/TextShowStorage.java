@@ -3,14 +3,12 @@ package com.ssscript.taczfixes.common.util;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.item.ItemStack;
 
-/** 枪械 NBT 中的 text_show 自定义占位符值。 */
 public final class TextShowStorage {
     public static final String TAG_KEY = "TaczFixesTextShow";
 
     private TextShowStorage() {
     }
 
-    /** 去掉首尾的 % 并修剪空白。 */
     public static String normalizeName(String name) {
         if (name == null) {
             return "";

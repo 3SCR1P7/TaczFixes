@@ -63,7 +63,6 @@ public final class OffhandDisplayManager {
     private static boolean resumeDualAfterPutAway;
     private static boolean restartMainAfterPutAway;
     private static boolean keepOffhandDisplay;
-    private static boolean handSwapTransition;
     private static boolean capturingManualActionTrack;
     private static boolean manualActionCapturePending;
     private static boolean manualActionHoldingArmMotionSeen;
@@ -109,17 +108,23 @@ public final class OffhandDisplayManager {
             clear();
             return null;
         }
+        return ensureDisplay(stack, true);
+    }
+
+    private static GunDisplayInstance ensureDisplay(ItemStack stack, boolean playDraw) {
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return null;
+        }
         ResourceLocation gunId = gun.getGunId(stack);
         ResourceLocation requestedDisplayId = gun.getGunDisplayId(stack);
         ResourceLocation resolvedDisplayId = resolveDisplayId(gunId, requestedDisplayId);
-        UUID stackId = DualWieldStackId.get(stack);
-        boolean sameActiveStack = sameLogicalStack(activeStack, stack);
-        if (display != null && gunId.equals(activeGunId) && resolvedDisplayId.equals(activeDisplayId) && sameActiveStack) {
+        if (matchesActiveDisplay(gunId, resolvedDisplayId, stack)) {
             activeStack = stack;
-            activeStackId = stackId;
+            activeStackId = DualWieldStackId.get(stack);
             return display;
         }
-        clear();
+        releaseDisplay();
         GunDisplay rawDisplay = ClientAssetsManager.INSTANCE.getGunDisplay(resolvedDisplayId);
         if (rawDisplay == null) {
             return null;
@@ -137,27 +142,47 @@ public final class OffhandDisplayManager {
             stateMachine.setContext(newContext);
             OffhandMovementAnimation newMovementAnimation = OffhandMovementAnimation.install(stateMachine.getAnimationController());
             stateMachine.initialize();
-            stateMachine.trigger("draw");
-            if (Minecraft.getInstance().player != null) {
-                SoundPlayManager.playDrawSound(Minecraft.getInstance().player, newDisplay);
-            }
-            TimelessAPI.getClientGunIndex(gunId).map(index -> {
-                return index.getGunData();
-            }).ifPresent(gunData -> {
-                CLIENT_STATE.beginDraw(gunData.getDrawTime());
-            });
             display = newDisplay;
             context = newContext;
             movementAnimation = newMovementAnimation;
             activeGunId = gunId;
             activeDisplayId = resolvedDisplayId;
-            activeStackId = stackId;
+            activeStackId = DualWieldStackId.get(stack);
             activeStack = stack;
+            if (playDraw) {
+                startDrawAnimation();
+            }
             return display;
         } catch (RuntimeException exception) {
             TaczFixesMod.LOGGER.error("Failed to create independent offhand display for {}", gunId, exception);
-            clear();
+            releaseDisplay();
             return null;
+        }
+    }
+
+    private static boolean matchesActiveDisplay(ResourceLocation gunId, ResourceLocation resolvedDisplayId, ItemStack stack) {
+        return display != null && gunId.equals(activeGunId) && resolvedDisplayId.equals(activeDisplayId) && sameLogicalStack(activeStack, stack);
+    }
+
+    /** 按 TaCZ 的 draw 机制启动独立副手状态机: trigger("draw") + 掏枪音效 + 客户端掏枪计时。 */
+    private static void startDrawAnimation() {
+        if (display == null || context == null) {
+            return;
+        }
+        LuaAnimationStateMachine<GunAnimationStateContext> stateMachine = display.getAnimationStateMachine();
+        if (stateMachine == null) {
+            return;
+        }
+        stateMachine.trigger("draw");
+        if (Minecraft.getInstance().player != null) {
+            SoundPlayManager.playDrawSound(Minecraft.getInstance().player, display);
+        }
+        if (activeGunId != null) {
+            TimelessAPI.getClientGunIndex(activeGunId).map(index -> {
+                return index.getGunData();
+            }).ifPresent(gunData -> {
+                CLIENT_STATE.beginDraw(gunData.getDrawTime());
+            });
         }
     }
 
@@ -253,18 +278,17 @@ public final class OffhandDisplayManager {
         DualInspectAnimationFilter.triggerFiltered(stateMachine, display == null ? null : display.getGunModel());
     }
 
-    public static boolean beginPutAway(LocalPlayer player, ItemStack previousMainStack, ItemStack previousOffhandStack, ItemStack nextMainStack, ItemStack nextOffhandStack, boolean resumeDual, boolean handSwap) {
+    public static boolean beginPutAway(LocalPlayer player, ItemStack previousMainStack, ItemStack previousOffhandStack, ItemStack nextMainStack, ItemStack nextOffhandStack, boolean resumeDual) {
         LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
         BedrockGunModel bedrockGunModel;
         long j;
-        if (isPuttingAway()) {
+        if (isPutAwayActive()) {
             updatePutAwayTarget(nextMainStack, nextOffhandStack, resumeDual);
             return true;
         }
-        handSwapTransition = handSwap;
         ItemStack safePreviousOffhand = copyOrEmpty(previousOffhandStack);
-        boolean offhandUnchanged = !handSwap && resumeDual && sameLogicalStack(safePreviousOffhand, nextOffhandStack);
-        boolean offhandSwitchedAhead = !handSwap && !sameLogicalStack(activeStack, safePreviousOffhand) && sameLogicalStack(activeStack, nextOffhandStack);
+        boolean offhandUnchanged = resumeDual && sameLogicalStack(safePreviousOffhand, nextOffhandStack);
+        boolean offhandSwitchedAhead = !sameLogicalStack(activeStack, safePreviousOffhand) && sameLogicalStack(activeStack, nextOffhandStack);
         if (!offhandSwitchedAhead && !sameLogicalStack(activeStack, safePreviousOffhand)) {
             getOrCreate(safePreviousOffhand);
         }
@@ -289,17 +313,13 @@ public final class OffhandDisplayManager {
         putAwayNextOffhandStack = copyOrEmpty(nextOffhandStack);
         resumeDualAfterPutAway = resumeDual;
         keepOffhandDisplay = offhandUnchanged || offhandSwitchedAhead;
-        boolean mainUnchanged = !handSwap && resumeDual && sameLogicalStack(putAwayMainStack, putAwayNextMainStack);
-        restartMainAfterPutAway = handSwap
-                ? true
-                : (!mainUnchanged && requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack));
+        boolean mainUnchanged = resumeDual && sameLogicalStack(putAwayMainStack, putAwayNextMainStack);
+        restartMainAfterPutAway = !mainUnchanged && requiresManualMainCycle(putAwayMainStack, putAwayNextMainStack);
         GunItemRendererWrapper mainRenderer = getGunRenderer(putAwayMainStack);
         long mainPutAwayTime = mainUnchanged ? 0L : getMainPutAwayTime(mainRenderer, putAwayMainStack);
         if (restartMainAfterPutAway && player != null && mainRenderer != null) {
             try {
-                if (!handSwap) {
-                    IClientPlayerGunOperator.fromLocalPlayer(player).draw(putAwayMainStack);
-                }
+                IClientPlayerGunOperator.fromLocalPlayer(player).draw(putAwayMainStack);
                 mainRenderer.tryExit(putAwayMainStack, mainPutAwayTime);
             } catch (RuntimeException exception) {
                 TaczFixesMod.LOGGER.error("Failed to start compensated main-hand put-away animation", exception);
@@ -324,7 +344,7 @@ public final class OffhandDisplayManager {
     }
 
     public static void updatePutAwayTarget(ItemStack nextMainStack, ItemStack nextOffhandStack, boolean resumeDual) {
-        if (!isPuttingAway()) {
+        if (!isPutAwayActive()) {
             return;
         }
         putAwayNextMainStack = copyOrEmpty(nextMainStack);
@@ -333,17 +353,138 @@ public final class OffhandDisplayManager {
     }
 
     public static void tickPutAway(LocalPlayer player) {
-        if (putAwayEndTimestamp >= 0 && com.tacz.guns.util.time.GunTime.nowMillis() >= putAwayEndTimestamp) {
+        if (OffhandHandSwap.isActive()) {
+            OffhandHandSwap.tick(player);
+            return;
+        }
+        if (isPutAwayActive() && com.tacz.guns.util.time.GunTime.nowMillis() >= putAwayEndTimestamp) {
             finishPutAway(player);
         }
     }
 
-    public static boolean isPuttingAway() {
+    private static boolean isPutAwayActive() {
         return putAwayEndTimestamp >= 0;
     }
 
+    public static boolean isPuttingAway() {
+        return isPutAwayActive() || OffhandHandSwap.isActive();
+    }
+
     public static ItemStack getPutAwayStack() {
-        return (!isPuttingAway() || activeStack == null) ? ItemStack.EMPTY : activeStack;
+        if (OffhandHandSwap.isActive()) {
+            return OffhandHandSwap.getOffhandRenderStack();
+        }
+        return (!isPutAwayActive() || activeStack == null) ? ItemStack.EMPTY : activeStack;
+    }
+
+    /** F 交换左右手: 显式的交换动画调度器入口 (副手 put_away -> 双方 draw)。 */
+    public static boolean beginHandSwap(LocalPlayer player, ItemStack previousMainStack, ItemStack previousOffhandStack,
+                                        ItemStack nextMainStack, ItemStack nextOffhandStack) {
+        return OffhandHandSwap.begin(player, previousMainStack, previousOffhandStack, nextMainStack, nextOffhandStack);
+    }
+
+    public static boolean isHandSwapActive() {
+        return OffhandHandSwap.isActive();
+    }
+
+    public static ItemStack getHandSwapOffhandRenderStack() {
+        return OffhandHandSwap.getOffhandRenderStack();
+    }
+
+    public static boolean shouldSuppressMainHandRender(ItemStack stack) {
+        return OffhandHandSwap.shouldSuppressMainRender(stack);
+    }
+
+    public static boolean isHoldingMainHandDrawSound() {
+        return OffhandHandSwap.isHoldingMainDrawSound();
+    }
+
+    static long getGunPutAwayTimeMillis(ItemStack stack) {
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return 0L;
+        }
+        ResourceLocation gunId = gun.getGunId(stack);
+        float putAwaySeconds = ((Float) TimelessAPI.getCommonGunIndex(gunId).map(index -> {
+            return index.getGunData();
+        }).map(gunData -> {
+            return Float.valueOf(gunData.getPutAwayTime());
+        }).orElse(Float.valueOf(0.0f))).floatValue();
+        return clampPutAwayTime(putAwaySeconds);
+    }
+
+    /**
+     * 为离开副手的枪启动 put_away: 完全复刻 TaCZ 的 tryExit 机制
+     * (context.setPutAwayTime -> trigger("put_away") -> exit() -> setExitingTime).
+     */
+    static boolean startHandSwapOffhandPutAway(LocalPlayer player, ItemStack leavingStack, long putAwayMillis, long keepMillis) {
+        if (leavingStack == null || leavingStack.isEmpty() || IGun.getIGunOrNull(leavingStack) == null || putAwayMillis <= 0L) {
+            releaseDisplay();
+            return false;
+        }
+        boolean reused = display != null && sameLogicalStack(activeStack, leavingStack)
+                && display.getAnimationStateMachine() != null && display.getAnimationStateMachine().isInitialized();
+        if (!reused) {
+            releaseDisplay();
+            if (ensureDisplay(leavingStack, false) == null) {
+                return false;
+            }
+        }
+        LuaAnimationStateMachine<GunAnimationStateContext> stateMachine = display == null ? null : display.getAnimationStateMachine();
+        if (stateMachine == null || context == null) {
+            releaseDisplay();
+            return false;
+        }
+        try {
+            CLIENT_STATE.resetCharge();
+            ItemStack renderStack = leavingStack.copy();
+            activeStack = renderStack;
+            activeStackId = DualWieldStackId.get(renderStack);
+            context.updateItem(renderStack, 0.0f);
+            context.setPutAwayTime(putAwayMillis / 1000.0f);
+            if (!reused) {
+                // 新创建的显示没有播过 draw, 先进入 draw 状态, 让 put_away 转换与 TaCZ 一致。
+                stateMachine.trigger("draw");
+            }
+            stateMachine.trigger("put_away");
+            stateMachine.exit();
+            stateMachine.setExitingTime(Math.max(keepMillis, putAwayMillis) + 50L);
+            if (player != null) {
+                SoundPlayManager.playPutAwaySound(player, display);
+            }
+            return true;
+        } catch (RuntimeException exception) {
+            TaczFixesMod.LOGGER.error("Failed to start hand-swap offhand put-away", exception);
+            releaseDisplay();
+            return false;
+        }
+    }
+
+    /** 交换结束: 副手按当前真实副手物品重建显示并播放 draw (没有枪则隐藏)。 */
+    static void finishHandSwapOffhand(LocalPlayer player, ItemStack enteringOffhandStack) {
+        clear();
+        if (enteringOffhandStack == null || enteringOffhandStack.isEmpty() || IGun.getIGunOrNull(enteringOffhandStack) == null) {
+            return;
+        }
+        getOrCreate(enteringOffhandStack);
+    }
+
+    /** 交换结束: 主手进入的枪补一次 draw (主手 put_away 由 TaCZ/SBM 自己完成)。 */
+    static void finishHandSwapMain(LocalPlayer player, ItemStack enteringMainStack) {
+        if (player == null || enteringMainStack == null || enteringMainStack.isEmpty() || IGun.getIGunOrNull(enteringMainStack) == null) {
+            return;
+        }
+        GunItemRendererWrapper renderer = getGunRenderer(enteringMainStack);
+        if (renderer == null) {
+            return;
+        }
+        try {
+            renderer.tryInit(enteringMainStack, player, 0.0f);
+        } catch (RuntimeException exception) {
+            TaczFixesMod.LOGGER.error("Failed to start main-hand draw after hand swap", exception);
+        }
+        // draw 音效也被延迟到这一刻播放, 与可见的掏枪动画保持同步。
+        TimelessAPI.getGunDisplay(enteringMainStack).ifPresent(display -> SoundPlayManager.playDrawSound(player, display));
     }
 
     private static long startOffhandPutAway(LuaAnimationStateMachine<GunAnimationStateContext> stateMachine, ItemStack previousOffhandStack) {
@@ -404,7 +545,7 @@ public final class OffhandDisplayManager {
         ItemStack nextOffhandStack = putAwayNextOffhandStack.copy();
         boolean resumeDual = resumeDualAfterPutAway;
         boolean restartMain = restartMainAfterPutAway;
-        boolean reuseOffhandDisplay = !handSwapTransition && resumeDual
+        boolean reuseOffhandDisplay = resumeDual
                 && sameLogicalStack(activeStack, nextOffhandStack) && display != null && context != null;
         if (keepOffhandDisplay && reuseOffhandDisplay) {
             // 副手未变化或渲染已提前切换到新枪: 保持当前显示与动画, 不重播收枪/掏枪动画
@@ -643,37 +784,23 @@ public final class OffhandDisplayManager {
         }
     }
 
-    /** F 交换主副手: 取消收枪过渡, 立刻让两把枪播放掏枪动画。 */
-    public static void swapHandsImmediately(LocalPlayer player, ItemStack nextMainStack, ItemStack nextOffhandStack) {
-        clear();
-        if (player != null && nextMainStack != null && !nextMainStack.isEmpty()) {
-            GunItemRendererWrapper renderer = getGunRenderer(nextMainStack);
-            if (renderer != null) {
-                try {
-                    renderer.tryInit(nextMainStack, player, 0.0f);
-                } catch (RuntimeException exception) {
-                    TaczFixesMod.LOGGER.error("Failed to restart main-hand draw animation on hand swap", exception);
-                }
-            }
-        }
-        if (nextOffhandStack != null && !nextOffhandStack.isEmpty()) {
-            getOrCreate(nextOffhandStack);
-        }
-    }
-
     public static void clear() {
-        LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
+        OffhandHandSwap.reset();
         DualReloadAnimationManager.clear();
         OffhandCameraController.reset();
+        OffhandJumpSway.reset();
         DualMuzzleFlashState.clearMuzzlePositions();
         OffhandArmPoseResolver.clear();
+        releaseDisplay();
+        clearPutAwayMetadata();
+        resetManualActionCapture();
+        CLIENT_STATE.reset();
+    }
+
+    /** 只释放当前独立副手显示 (退出状态机), 不清除其它全局状态与过渡数据。 */
+    private static void releaseDisplay() {
         DualInspectAnimationFilter.clearOffhandInspect(display == null ? null : display.getGunModel());
-        if (display == null) {
-            animationStateMachine = null;
-        } else {
-            animationStateMachine = display.getAnimationStateMachine();
-        }
-        LuaAnimationStateMachine<GunAnimationStateContext> stateMachine = animationStateMachine;
+        LuaAnimationStateMachine<GunAnimationStateContext> stateMachine = display == null ? null : display.getAnimationStateMachine();
         if (stateMachine != null && stateMachine.isInitialized()) {
             try {
                 stateMachine.exit();
@@ -688,9 +815,6 @@ public final class OffhandDisplayManager {
         activeDisplayId = null;
         activeStackId = null;
         activeStack = null;
-        clearPutAwayMetadata();
-        resetManualActionCapture();
-        CLIENT_STATE.reset();
     }
 
     private static void clearPutAwayMetadata() {
@@ -703,7 +827,6 @@ public final class OffhandDisplayManager {
         resumeDualAfterPutAway = false;
         restartMainAfterPutAway = false;
         keepOffhandDisplay = false;
-        handSwapTransition = false;
     }
 
     private static ResourceLocation resolveDisplayId(ResourceLocation gunId, ResourceLocation requestedDisplayId) {
