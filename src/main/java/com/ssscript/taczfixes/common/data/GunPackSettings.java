@@ -89,6 +89,15 @@ public final class GunPackSettings {
         return disabled.contains(GunPackIds.namespaceOf(packId));
     }
 
+    /** 把某个枪包标记为未启用: 它会显示在“可用”列表里, 由玩家自己决定是否启用。 */
+    public static synchronized void addDisabled(String packId) {
+        if (packId == null || packId.isBlank()) return;
+        ensureLoaded();
+        if (disabled.add(packId)) {
+            save();
+        }
+    }
+
     /** 保存当前启用顺序与禁用列表。 */
     public static synchronized void update(List<String> newOrder, List<String> newDisabled) {
         ensureLoaded();

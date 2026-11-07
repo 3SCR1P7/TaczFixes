@@ -8,7 +8,6 @@ import net.minecraft.SharedConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.gui.screens.packs.PackSelectionScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.packs.PackType;
 import net.minecraft.server.packs.repository.Pack;
@@ -24,6 +23,22 @@ import java.util.List;
 /** 枪包管理: 直接复用原版资源包界面(PackSelectionScreen), 只把枪包作为包列表传入。 */
 public final class GunPackScreen {
     private GunPackScreen() {
+    }
+
+    /**
+     * 用于“从 CurseForge 获取”页面返回时复用枪包管理界面:
+     * 先把选择结果 commit 保存并关闭目录监听, 但不触发原来的界面跳转(由调用方决定跳到哪)。
+     */
+    public static final class NavigationGate {
+        private boolean suppressed = false;
+
+        public void suppress() {
+            this.suppressed = true;
+        }
+
+        public boolean isSuppressed() {
+            return this.suppressed;
+        }
     }
 
     public static Screen create() {
@@ -46,7 +61,8 @@ public final class GunPackScreen {
         repository.setSelected(GunPackSettings.arrange(new ArrayList<>(repository.getAvailableIds())));
         Minecraft minecraft = Minecraft.getInstance();
         boolean inWorld = minecraft.level != null;
-        return new PackSelectionScreen(repository, repo -> {
+        NavigationGate gate = new NavigationGate();
+        return new GunPackSelectionScreen(repository, repo -> {
             List<String> selected = new ArrayList<>(repo.getSelectedIds());
             List<String> disabled = new ArrayList<>();
             for (String id : repo.getAvailableIds()) {
@@ -59,12 +75,14 @@ public final class GunPackScreen {
                     || !GunPackSettings.disabledNames().equals(disabled);
             if (changed) {
                 GunPackSettings.update(selected, disabled);
+                // 无论是否由“从 CurseForge 获取”页面接管跳转, 都需要在界面全部关闭后重载资源。
+                PendingResourceReload.request();
+            }
+            if (gate.isSuppressed()) {
+                return;
             }
             if (inWorld) {
                 minecraft.setScreen(null);
-                if (changed) {
-                    PendingResourceReload.request();
-                }
             } else {
                 // 主菜单没有世界: 立即重载客户端资源(数据包会在下次进入世界时由枪包设置生效)
                 minecraft.setScreen(parent != null ? parent : new TitleScreen());
@@ -72,7 +90,7 @@ public final class GunPackScreen {
                     minecraft.reloadResourcePacks();
                 }
             }
-        }, taczDir, Component.translatable("gui.taczfixes.gun_packs.title"));
+        }, taczDir, Component.translatable("gui.taczfixes.gun_packs.title"), parent, gate);
     }
 
     private static Pack createPack(GunPackInfoScanner.PackInfoData info, int format) {

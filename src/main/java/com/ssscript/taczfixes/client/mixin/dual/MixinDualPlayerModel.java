@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = {PlayerModel.class}, priority = 800)
 public abstract class MixinDualPlayerModel<T extends LivingEntity> extends HumanoidModel<T> {
 
-    @Shadow
+    @Shadow(aliases = {"f_103374_"})
     @Final
     public ModelPart leftSleeve;
 

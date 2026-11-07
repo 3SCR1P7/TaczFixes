@@ -14,19 +14,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = {HumanoidModel.class}, priority = 900)
 public abstract class MixinDualHumanoidModel<T extends LivingEntity> {
 
-    @Shadow
+    @Shadow(aliases = {"f_102810_"})
     @Final
     public ModelPart body;
 
-    @Shadow
+    @Shadow(aliases = {"f_102808_"})
     @Final
     public ModelPart head;
 
-    @Shadow
+    @Shadow(aliases = {"f_102812_"})
     @Final
     public ModelPart leftArm;
 
-    @Shadow
+    @Shadow(aliases = {"f_102811_"})
     @Final
     public ModelPart rightArm;
 
