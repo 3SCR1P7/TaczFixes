@@ -713,8 +713,10 @@ public class CurseForgeScreen extends Screen {
                 guiGraphics.blit(icon.location(), iconX, iconY, ICON_SIZE, ICON_SIZE,
                         0.0F, 0.0F, icon.width(), icon.height(), icon.width(), icon.height());
             } else {
-                // 占位: 加载中或没有封面
-                guiGraphics.fill(iconX, iconY, iconX + ICON_SIZE, iconY + ICON_SIZE, 0x40FFFFFF);
+                // 占位: 使用 TaCZ 默认枪包图标
+                guiGraphics.blit(net.minecraft.resources.ResourceLocation.fromNamespaceAndPath(
+                                "taczfixes", "textures/gui/gun_pack_placeholder.png"),
+                        iconX, iconY, ICON_SIZE, ICON_SIZE, 0.0F, 0.0F, 64, 64, 64, 64);
             }
 
             int textLeft = left + ICON_SIZE + 8;
