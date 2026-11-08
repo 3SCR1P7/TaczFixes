@@ -249,7 +249,7 @@ public final class GunRecolorManager {
     /** tacz:paint_module 标签里的配件 id 集合; 未安装涂装包时为空。 */
     private static Set<String> paintModuleIds() {
         try {
-            Set<String> ids = CommonAssetsManager.getInstance()
+            Set<String> ids = CommonAssetsManager.get()
                     .getAttachmentTags(ResourceLocation.fromNamespaceAndPath("tacz", "paint_module"));
             return ids == null ? Set.of() : ids;
         } catch (Throwable ignored) {

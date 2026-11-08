@@ -311,7 +311,7 @@ public class CustomSlotManager {
 
     private static Set<ResourceLocation> taczAllowTagContents(ResourceLocation tagId) {
         try {
-            java.util.Set<String> ids = CommonAssetsManager.getInstance()
+            java.util.Set<String> ids = CommonAssetsManager.get()
                     .getAttachmentTags(tagId);
             if (ids == null || ids.isEmpty()) return null;
             Set<ResourceLocation> result = new HashSet<>();
