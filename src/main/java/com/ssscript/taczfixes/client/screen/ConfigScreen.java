@@ -17,7 +17,7 @@ public class ConfigScreen {
         ConfigBuilder builder = ConfigBuilder.create()
                 .setParentScreen(parent)
                 .setTitle(Component.translatable("config.taczfixes.title"))
-                .setSavingRunnable(Config::saveAll);
+                .setSavingRunnable(com.ssscript.taczfixes.common.config.ConfigSync::saveAllFromConfigScreen);
         ConfigEntryBuilder entry = builder.entryBuilder();
         buildVisualEffect(builder.getOrCreateCategory(cat("visual_effect")), entry);
         buildSuppression(builder.getOrCreateCategory(cat("suppression")), entry);

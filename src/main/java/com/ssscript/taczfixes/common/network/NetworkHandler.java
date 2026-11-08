@@ -217,6 +217,11 @@ public class NetworkHandler {
                 ServerMessageContraptionHit::decode,
                 ServerMessageContraptionHit::handle,
                 false);
+        CHANNEL.registerMessage(40, ServerMessageSyncedConfig.class,
+                ServerMessageSyncedConfig::encode,
+                ServerMessageSyncedConfig::decode,
+                ServerMessageSyncedConfig::handle,
+                false);
 
     }
 }
