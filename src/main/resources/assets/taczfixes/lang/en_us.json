@@ -385,6 +385,9 @@
     "config.taczfixes.entry.dual_wield.right_offset": "Right Gun X Offset",
     "config.taczfixes.entry.dual_wield.forward_offset_pistol": "Pistol Gun Forward Offset",
     "config.taczfixes.entry.dual_wield.forward_offset_other": "Other Gun Forward Offset",
+    "config.taczfixes.entry.dual_wield.movement_animation": "Movement Animation Preset",
+    "config.taczfixes.value.dual_wield.movement_animation.default_1": "Default 1",
+    "config.taczfixes.value.dual_wield.movement_animation.default_2": "Default 2",
 
     "config.taczfixes.entry.visual_effect.max_movement_roll_angle": "Max Movement Roll Angle",
     "config.taczfixes.entry.visual_effect.rotation_inertia_max_angle": "Rotation Inertia Max Angle",

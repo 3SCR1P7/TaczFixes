@@ -140,7 +140,7 @@ public final class OffhandDisplayManager {
             OffhandGunAnimationContext newContext = new OffhandGunAnimationContext(CLIENT_STATE, newDisplay);
             newContext.updateItem(stack, 0.0f);
             stateMachine.setContext(newContext);
-            OffhandMovementAnimation newMovementAnimation = OffhandMovementAnimation.install(stateMachine.getAnimationController());
+            OffhandMovementAnimation newMovementAnimation = OffhandMovementAnimation.install(stateMachine.getAnimationController(), stack);
             stateMachine.initialize();
             display = newDisplay;
             context = newContext;

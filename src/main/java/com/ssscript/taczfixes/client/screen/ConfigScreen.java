@@ -112,6 +112,8 @@ public class ConfigScreen {
         dbl_(cat, entry, "dual_wield.forward_offset_pistol", Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL);
         dbl_(cat, entry, "dual_wield.forward_offset_other", Config.DUAL_WIELD_FORWARD_OFFSET_OTHER);
         dbl_(cat, entry, "dual_wield.melee_switch_percent", Config.DUAL_WIELD_MELEE_SWITCH_PERCENT);
+        enum_(cat, entry, "dual_wield.movement_animation", Config.DUAL_WIELD_MOVEMENT_ANIMATION,
+                v -> net.minecraft.network.chat.Component.translatable(v.translationKey()));
     }
 
     private static void buildStamina(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -160,6 +162,17 @@ public class ConfigScreen {
         cat.addEntry(entry.startEnumSelector(entry(slug), v.get().getDeclaringClass(), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .build());
+    }
+
+    @SuppressWarnings("unchecked")
+    private static <T extends Enum<T>> void enum_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
+                                                  ModConfigSpec.EnumValue<T> v,
+                                                  java.util.function.Function<T, Component> nameProvider) {
+        cat.addEntry(entry.startEnumSelector(entry(slug), v.get().getDeclaringClass(), v.get())
+                .setDefaultValue(v.getDefault())
+                .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .setEnumNameProvider(e -> nameProvider.apply((T) e))
                 .build());
     }
 

@@ -32,19 +32,21 @@ public final class MainhandMovementAnimation {
         LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
         if (DualMovementAnimationLibrary.isMovementClip(animationName) && (listenerSupplier instanceof BedrockAnimatedModel)) {
             BedrockGunModel bedrockGunModel = (BedrockGunModel) listenerSupplier;
+            Minecraft minecraft = Minecraft.getInstance();
+            LocalPlayer player = minecraft.player;
+            // Per-gun preset resolution: always resolve against the player's current main-hand gun.
+            ItemStack mainStack = player == null ? ItemStack.EMPTY : player.getMainHandItem();
             if (BOUNDARY_CONTROLLER.get() == controller) {
-                ObjectAnimation boundaryFallback = DualMovementAnimationLibrary.getMainPrototypes().get(animationName);
+                ObjectAnimation boundaryFallback = DualMovementAnimationLibrary.getMainPrototypes(mainStack).get(animationName);
                 return original == null ? boundaryFallback : original;
             }
-            Minecraft minecraft = Minecraft.getInstance();
             if (!minecraft.options.getCameraType().isFirstPerson()) {
                 return original;
             }
-            LocalPlayer player = minecraft.player;
-            if (!DualWieldClient.isDualMovementActive(player) || OffhandDisplayManager.isActiveModel(bedrockGunModel)) {
+            if (player == null || !DualWieldClient.isDualMovementActive(player) || OffhandDisplayManager.isActiveModel(bedrockGunModel)) {
                 return original;
             }
-            GunDisplayInstance mainDisplay = (GunDisplayInstance) TimelessAPI.getGunDisplay(player.getMainHandItem()).orElse(null);
+            GunDisplayInstance mainDisplay = (GunDisplayInstance) TimelessAPI.getGunDisplay(mainStack).orElse(null);
             if (mainDisplay == null) {
                 animationStateMachine = null;
             } else {
@@ -54,7 +56,7 @@ public final class MainhandMovementAnimation {
             if (mainDisplay == null || mainDisplay.getGunModel() != bedrockGunModel || mainStateMachine == null || mainStateMachine.getAnimationController() != controller) {
                 return original;
             }
-            ObjectAnimation replacement = DualMovementAnimationLibrary.getMainPrototypes().get(animationName);
+            ObjectAnimation replacement = DualMovementAnimationLibrary.getMainPrototypes(mainStack).get(animationName);
             return replacement == null ? original : replacement;
         }
         return original;

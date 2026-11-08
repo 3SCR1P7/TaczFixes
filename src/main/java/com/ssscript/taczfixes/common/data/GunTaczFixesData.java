@@ -269,6 +269,8 @@ public class GunTaczFixesData {
         public Double forward_offset;
         /** 双持换弹是否直接使用枪械自身的换弹动画(不使用收枪-等待-掏枪路径)。默认 false。 */
         public Boolean reload_animation;
+        /** 双持移动动画预设: default_1 / default_2 / custom; 留空跟随全局配置。 */
+        public String movement_animation;
         public HandPosConfig hand_pos;
     }
 

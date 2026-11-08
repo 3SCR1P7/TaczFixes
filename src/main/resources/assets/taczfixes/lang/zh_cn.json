@@ -389,6 +389,9 @@
     "config.taczfixes.entry.dual_wield.right_offset":  "双持右手枪械偏移",
     "config.taczfixes.entry.dual_wield.forward_offset_pistol": "手枪枪械前移距离",
     "config.taczfixes.entry.dual_wield.forward_offset_other": "其它枪械前移距离",
+    "config.taczfixes.entry.dual_wield.movement_animation":  "移动动画预设",
+    "config.taczfixes.value.dual_wield.movement_animation.default_1":  "默认1",
+    "config.taczfixes.value.dual_wield.movement_animation.default_2":  "默认2",
 
     "config.taczfixes.entry.visual_effect.max_movement_roll_angle": "最大桶滚角度",
     "config.taczfixes.entry.visual_effect.rotation_inertia_max_angle": "旋转迟滞角度",
