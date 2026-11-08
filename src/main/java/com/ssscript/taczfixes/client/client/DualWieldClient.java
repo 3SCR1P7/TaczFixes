@@ -1037,19 +1037,37 @@ public final class DualWieldClient {
             return;
         }
         ItemStack stack = player.getItemInHand(hand);
-        if (hand == InteractionHand.OFF_HAND && stack.getItem() instanceof net.minecraft.world.item.BlockItem) {
+        if (hand == InteractionHand.OFF_HAND && stack.getItem() instanceof net.minecraft.world.item.BlockItem blockItem) {
             net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
+            if (!(hit instanceof net.minecraft.world.phys.BlockHitResult)) {
+                // The offhand use may run a frame before Minecraft refreshes its pick result; use a fresh raycast.
+                hit = player.pick(player.getBlockReach(), 1.0F, false);
+            }
             if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
                     && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
-                Minecraft.getInstance().gameMode.useItemOn(player, hand, blockHit);
-                player.swing(hand, true);
-                return;
+                // Mirror vanilla startUseItem: only swallow the use when the block interaction actually consumed it.
+                net.minecraft.world.InteractionResult useOn = Minecraft.getInstance().gameMode.useItemOn(player, hand, blockHit);
+                if (!useOn.consumesAction()
+                        && blockItem.getBlock() instanceof net.minecraft.world.level.block.CropBlock
+                        && player.level().getBlockState(blockHit.getBlockPos()).getBlock()
+                                instanceof net.minecraft.world.level.block.FarmBlock) {
+                    // Carrot/potato: an edible BlockItem. If the click did not hit the top face, retry as a top-face
+                    // use so vanilla planting can run instead of BlockItem.useOn falling back to eating.
+                    net.minecraft.world.phys.BlockHitResult topHit = new net.minecraft.world.phys.BlockHitResult(
+                            net.minecraft.world.phys.Vec3.atCenterOf(blockHit.getBlockPos().above()),
+                            net.minecraft.core.Direction.UP, blockHit.getBlockPos(), blockHit.isInside());
+                    useOn = Minecraft.getInstance().gameMode.useItemOn(player, hand, topHit);
+                }
+                if (useOn.consumesAction()) {
+                    player.swing(hand, true);
+                    return;
+                }
             }
         }
 
-        net.minecraft.world.InteractionResult result = stack.getItem() instanceof net.minecraft.world.item.BlockItem
-                ? net.minecraft.world.InteractionResult.FAIL
-                : Minecraft.getInstance().gameMode.useItem(player, hand);
+        // BlockItem such as carrot/potato is also food; when it cannot be planted (air/no block interaction)
+        // it must still go through gameMode.useItem so the food use starts.
+        net.minecraft.world.InteractionResult result = Minecraft.getInstance().gameMode.useItem(player, hand);
         if (result.consumesAction()) {
             // 与 vanilla startUseItem 一致: 是否开始使用/丢出由物品自己的 use() 决定,
             // 这里只负责动作摆动; 不再手动 startUsingItem, 避免把喷溅药水当成饮用.
