@@ -56,7 +56,8 @@ public final class ConfigSync {
             "leftGunXOffset",
             "rightGunXOffset",
             "forwardOffsetPistol",
-            "forwardOffsetOther");
+            "forwardOffsetOther",
+            "movement_animation");
 
     private static final String REFIT_SPEC = "refit";
     private static final String VIRTUAL_ATTACHMENTS_LEAF = "virtual_attachments";

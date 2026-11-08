@@ -142,6 +142,9 @@
       "left_offset": -0.58,
       "right_offset": 0.18,
       "reload_animation": true,
+      // 可选default_1，default_2，custom
+      // 为custom时，使用枪械自己的动画
+      "movement_animation": "default_2",
       "hand_pos": {
         //在左手时使用的手臂定位组以及是否只镜像手臂(不影响枪械模型); 未填写 on_left 时默认等价于 pos=right, mirror=true
         "on_left": {
