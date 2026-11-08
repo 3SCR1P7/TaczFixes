@@ -140,6 +140,21 @@ public final class ScopeSwitchState {
                 .orElse(null);
     }
 
+    /** 当前自定义槽瞄具的 id(scope 或 sight 均可), 用于复刻原生瞄具的开镜定位路径。 */
+    public static ResourceLocation activeCustomOpticId(ItemStack gun) {
+        String active = getActiveSlot(gun);
+        if (active == null) return null;
+        ItemStack item = CustomSlotStorage.get(gun, active);
+        if (item.isEmpty()) return null;
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return null;
+        ResourceLocation id = attachment.getAttachmentId(item);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) return null;
+        return TimelessAPI.getClientAttachmentIndex(id)
+                .map(index -> index.isScope() || index.isSight() ? id : null)
+                .orElse(null);
+    }
+
     /** 当前自定义槽瞄具的 id, 仅当其类型是 scope(不是 sight)时返回。 */
     public static ResourceLocation activeCustomScopeId(ItemStack gun) {
         String active = getActiveSlot(gun);

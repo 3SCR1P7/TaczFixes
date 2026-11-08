@@ -116,35 +116,20 @@ public final class CustomScopeViewShift {
             com.tacz.guns.client.model.bedrock.BedrockPart actNode =
                     activeEntry == null ? null : CustomSlotMount.nodeFor(model, activeEntry, active);
             if (stdNode != null && actNode != null) {
+                // 原生定位已把 SCOPE 槽 id 重定向到当前自定义槽瞄具(纯 sight 也不例外),
+                // 因此标准挂载点的目标位置也要按该瞄具的视图路径计算, 与原生瞄具保持一致。
                 ItemStack stdItem = readStandardScope(gun);
-                if (stdItem.isEmpty()) {
-                    IGun igunLocal = IGun.getIGunOrNull(gun);
-                    if (igunLocal != null) {
-                        stdItem = igunLocal.getBuiltinAttachment(gun, AttachmentType.SCOPE);
-                    }
-                }
                 ItemStack actItem = CustomSlotStorage.get(gun, active);
-                // 相机视图已经切换到自定义槽瞄具, 标准挂载点的目标也要按该瞄具的视图路径计算。
-                boolean actScope = isScopeAttachment(actItem);
+                ItemStack nativeScopeItem = stdItem.isEmpty() ? actItem : stdItem;
                 Vector3f adapterOffset = getActiveSlotAdapterOffset(gun, actItem, active);
-                Vector3f stdAdapterOffset = getStandardScopeAdapterOffset(gun, stdItem);
-                Vec3 stdPos = slotCenterWorld(stdNode, actScope ? actItem : stdItem, gun, stdAdapterOffset);
+                Vector3f stdAdapterOffset = getStandardScopeAdapterOffset(gun, nativeScopeItem);
+                // 标准挂载点的目标位置按当前瞄具的视图路径计算(瞄具没有 scope_view 节点时
+                // applyViewPath 只补 1.5 与根节点), 与原生瞄准节点的渲染位置保持一致。
+                Vec3 stdPos = slotCenterWorld(stdNode, actItem, gun, stdAdapterOffset);
                 actPos = slotCenterWorld(actNode, actItem, gun, adapterOffset,
                         activeEntry == null ? null : CustomSlotMount.sourceChain(model, gun, activeEntry),
                         activeEntry != null && !activeEntry.source().isEmpty(), -1);
-                if (actScope) {
-                    target = stdPos.subtract(actPos);
-                } else if (stdItem.isEmpty()) {
-                    List<com.tacz.guns.client.model.bedrock.BedrockPart> ironPath = model.getIronSightPath();
-                    if (ironPath != null && !ironPath.isEmpty()) {
-                        Vec3 ironPos = slotCenterWorld(ironPath.get(ironPath.size() - 1), ItemStack.EMPTY, gun, null);
-                        target = ironPos.subtract(actPos);
-                    } else {
-                        target = new Vec3(-actPos.x, -actPos.y, 0.0);
-                    }
-                } else {
-                    target = stdPos.subtract(actPos);
-                }
+                target = stdPos.subtract(actPos);
             }
         }
         Vec3 pivot = actPos != null ? actPos : Vec3.ZERO;
