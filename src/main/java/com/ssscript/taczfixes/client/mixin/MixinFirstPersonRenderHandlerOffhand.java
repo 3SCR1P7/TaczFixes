@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.github.mcmodderanchor.simplebedrockmodel.v1.client.handler.FirstPersonRenderHandler;
+import com.ssscript.taczfixes.client.client.DualWieldClient;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
@@ -35,8 +36,12 @@ public class MixinFirstPersonRenderHandlerOffhand {
         boolean mainGun = IGun.getIGunOrNull(mainhand) != null;
         boolean offGun = IGun.getIGunOrNull(offhand) != null;
         boolean mainShield = mainhand.is(net.minecraft.world.item.Items.SHIELD);
+        // Only let the vanilla offhand item through when this gun/offhand pair is actually dual-wield eligible;
+        // otherwise the normal (non-dual) offhand render suppression must stay in effect.
         if (mainGun && !offGun && !offhand.isEmpty()) {
-            callback.cancel();
+            if (DualWieldClient.isDualMode(player)) {
+                callback.cancel();
+            }
         } else if (!mainGun && offGun && !mainShield) {
             callback.cancel();
         }
