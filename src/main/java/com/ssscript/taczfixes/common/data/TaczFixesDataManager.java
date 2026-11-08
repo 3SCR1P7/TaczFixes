@@ -352,6 +352,31 @@ public class TaczFixesDataManager {
         return cfg != null && Boolean.TRUE.equals(cfg.reload_animation);
     }
 
+    /**
+     * dual_wield.movement_animation: per-gun dual-wield movement animation preset override.
+     * Returns the normalized value "default_1", "default_2" or "custom", or null when the field is
+     * absent, invalid, or the stack is not a gun (callers then fall back to the global config).
+     */
+    @Nullable
+    public static String resolveMovementAnimation(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) {
+            return null;
+        }
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) {
+            return null;
+        }
+        GunTaczFixesData.DualWieldConfig cfg = resolveDualWield(gun.getGunId(gunStack));
+        if (cfg == null || cfg.movement_animation == null) {
+            return null;
+        }
+        String normalized = cfg.movement_animation.trim().toLowerCase(Locale.ROOT);
+        return switch (normalized) {
+            case "default_1", "default_2", "custom" -> normalized;
+            default -> null;
+        };
+    }
+
     public static GunTaczFixesData.FireKnockbackConfig resolveFireKnockback(ResourceLocation dataId) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         return data == null ? null : data.fire_knockback;

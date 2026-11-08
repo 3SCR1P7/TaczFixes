@@ -363,6 +363,7 @@ public class Config {
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_FORWARD_OFFSET_PISTOL;
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_FORWARD_OFFSET_OTHER;
     public static final ModConfigSpec.DoubleValue DUAL_WIELD_MELEE_SWITCH_PERCENT;
+    public static final ModConfigSpec.EnumValue<com.ssscript.taczfixes.common.config.DualMovementAnimation> DUAL_WIELD_MOVEMENT_ANIMATION;
 
     static {
         BUILDER = new ModConfigSpec.Builder();
@@ -1576,6 +1577,10 @@ public class Config {
         DUAL_WIELD_MELEE_SWITCH_PERCENT = BUILDER
                 .comment("一把枪的近战冷却进行到该比例后, 另一只手的枪就可以近战。默认值：0.7")
                 .defineInRange("meleeSwitchPercent", 0.7, 0.0, 1.0);
+        DUAL_WIELD_MOVEMENT_ANIMATION = BUILDER
+                .comment("双持移动动画预设。默认值：DEFAULT_1",
+                "DEFAULT_1 = 当前动画，DEFAULT_2 = left_movement_2 / right_movement_2。")
+                .defineEnum("movement_animation", com.ssscript.taczfixes.common.config.DualMovementAnimation.DEFAULT_1);
         BUILDER.pop();
         SPECS.put("dual_wield", BUILDER.build());
 
