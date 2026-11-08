@@ -192,7 +192,7 @@ public final class ScopeSwitchState {
                 .orElse(1.0f);
         double result = base;
         ResourceLocation attachmentId = attachment.getAttachmentId(scope);
-        AttachmentData data = CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
+        AttachmentData data = CommonAssetsManager.get().getAttachmentData(attachmentId);
         if (data == null) {
             data = TimelessAPI.getCommonAttachmentIndex(attachmentId)
                     .map(CommonAttachmentIndex::getData)

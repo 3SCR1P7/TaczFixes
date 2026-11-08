@@ -123,7 +123,7 @@ public final class VirtualAttachments {
     private static List<ResourceLocation> sortedIds(@Nullable AttachmentType type) {
         List<Map.Entry<ResourceLocation, CommonAttachmentIndex>> entries;
         try {
-            entries = new ArrayList<>(CommonAssetsManager.getInstance().getAllAttachments());
+            entries = new ArrayList<>(CommonAssetsManager.get().getAllAttachments());
         } catch (Exception e) {
             return List.of();
         }

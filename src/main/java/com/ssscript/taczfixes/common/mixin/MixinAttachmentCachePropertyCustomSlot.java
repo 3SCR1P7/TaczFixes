@@ -46,7 +46,7 @@ public abstract class MixinAttachmentCachePropertyCustomSlot {
             ResourceLocation attachmentId = attachment.getAttachmentId(item);
             AttachmentData data = gunData.getExclusiveAttachments().get(attachmentId);
             if (data == null) {
-                data = com.tacz.guns.resource.CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
+                data = com.tacz.guns.resource.CommonAssetsManager.get().getAttachmentData(attachmentId);
             }
             if (data == null) {
                 data = com.tacz.guns.api.TimelessAPI.getCommonAttachmentIndex(attachmentId)

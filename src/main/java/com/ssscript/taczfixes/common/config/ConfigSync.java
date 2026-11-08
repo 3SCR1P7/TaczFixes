@@ -63,8 +63,8 @@ public final class ConfigSync {
 
     private static List<Bound> bounds;
     private static Map<String, Bound> boundsByKey;
-    private static final Map<String, Object> CLIENT_ORIGINALS = new LinkedHashMap<>();
-    private static final Map<String, Object> CLIENT_SYNCED_VALUES = new LinkedHashMap<>();
+    private static final Map<String, Object> CLIENT_ORIGINALS = new java.util.concurrent.ConcurrentHashMap<>();
+    private static final Map<String, Object> CLIENT_SYNCED_VALUES = new java.util.concurrent.ConcurrentHashMap<>();
 
     public record Entry(String spec, List<String> path, String json) {
     }
@@ -152,7 +152,7 @@ public final class ConfigSync {
     /** Client side: restore the local config values that were overridden on login. */
     public static void restoreClientLocalValues() {
         if (!CLIENT_ORIGINALS.isEmpty()) {
-            for (Map.Entry<String, Object> entry : CLIENT_ORIGINALS.entrySet()) {
+            for (Map.Entry<String, Object> entry : new java.util.ArrayList<>(CLIENT_ORIGINALS.entrySet())) {
                 try {
                     Bound bound = boundsByKey().get(entry.getKey());
                     if (bound != null) {
@@ -174,7 +174,7 @@ public final class ConfigSync {
         if (CLIENT_SYNCED_VALUES.isEmpty()) {
             return;
         }
-        for (Map.Entry<String, Object> entry : CLIENT_SYNCED_VALUES.entrySet()) {
+        for (Map.Entry<String, Object> entry : new java.util.ArrayList<>(CLIENT_SYNCED_VALUES.entrySet())) {
             try {
                 Bound bound = boundsByKey().get(entry.getKey());
                 if (bound != null) {
@@ -194,7 +194,7 @@ public final class ConfigSync {
             Config.saveAll();
             return;
         }
-        for (Map.Entry<String, Object> entry : CLIENT_ORIGINALS.entrySet()) {
+        for (Map.Entry<String, Object> entry : new java.util.ArrayList<>(CLIENT_ORIGINALS.entrySet())) {
             try {
                 Bound bound = boundsByKey().get(entry.getKey());
                 if (bound != null) {
@@ -208,7 +208,7 @@ public final class ConfigSync {
         } catch (RuntimeException exception) {
             TaczFixesMod.LOGGER.error("Failed to save local config values", exception);
         } finally {
-            for (Map.Entry<String, Object> entry : CLIENT_SYNCED_VALUES.entrySet()) {
+            for (Map.Entry<String, Object> entry : new java.util.ArrayList<>(CLIENT_SYNCED_VALUES.entrySet())) {
                 try {
                     Bound bound = boundsByKey().get(entry.getKey());
                     if (bound != null) {
