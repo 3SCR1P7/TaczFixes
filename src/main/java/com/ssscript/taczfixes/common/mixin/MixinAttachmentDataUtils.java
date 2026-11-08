@@ -40,7 +40,7 @@ public abstract class MixinAttachmentDataUtils {
             ResourceLocation attachmentId = attachment.getAttachmentId(item);
             AttachmentData data = gunData.getExclusiveAttachments().get(attachmentId);
             if (data == null) {
-                data = CommonAssetsManager.getInstance().getAttachmentData(attachmentId);
+                data = CommonAssetsManager.get().getAttachmentData(attachmentId);
             }
             if (data == null) {
                 data = TimelessAPI.getCommonAttachmentIndex(attachmentId)
