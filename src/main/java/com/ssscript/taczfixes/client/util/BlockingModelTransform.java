@@ -39,7 +39,7 @@ public final class BlockingModelTransform {
         double back = GunBlocking.backOff(cfg) * factor;
         boolean dual = forceDual || DualWieldEligibility.isDualWielding(player);
         // 水平偏移仅在非双持时生效; 负数向左, 正数向右(视线空间 +X)
-        double side = dual ? 0.0d : GunBlocking.offsetYaw(cfg, gunStack) * factor;
+        double side = dual ? 0.0d : -GunBlocking.offsetYaw(cfg, gunStack) * factor;
         // 1.21.1 第一人称姿态空间与 1.20 不同, 直接在模型局部空间绕枢轴旋转:
         // facing 90 = 绕局部 X 轴抬头/低头, facing 180 = 绕局部 Y 轴左右偏转。
         double facingRad = Math.toRadians(dual ? GunBlocking.facingDual(cfg) : GunBlocking.facing(cfg, gunStack));
