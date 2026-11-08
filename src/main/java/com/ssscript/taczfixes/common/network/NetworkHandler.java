@@ -218,6 +218,11 @@ public class NetworkHandler {
                 ServerMessageContraptionHit::decode,
                 ServerMessageContraptionHit::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(40, ServerMessageSyncedConfig.class,
+                ServerMessageSyncedConfig::encode,
+                ServerMessageSyncedConfig::decode,
+                ServerMessageSyncedConfig::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
     }
 }

@@ -17,7 +17,6 @@ import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Redirect;
 
 import java.util.EnumMap;
 import java.util.List;
@@ -43,20 +42,28 @@ public class MixinFirstPersonRenderGunEventAimScope {
         return com.tacz.guns.api.TimelessAPI.getClientAttachmentIndex(activeId);
     }
 
-    /** 原生槽为空时, 开镜定位仍要走 scope 挂载路径, 而不是机瞄路径。 */
-    @Redirect(method = "applyFirstPersonPositioningTransform",
+    /**
+     * 原生槽为空时, 开镜定位仍要走 scope 挂载路径(标准槽瞄具的定位方式), 而不是机瞄路径。
+     * 纯 sight 与组合镜的 sight 视图同样适用: 否则枪身按机瞄姿态定位, 自定义槽瞄具的
+     * 瞄准点与相机位置会与标准槽安装时不一致。
+     * 枪械模型没有 scope_pos 挂载点时保持原行为, 避免把开镜定位退化成默认物品姿态。
+     */
+    @WrapOperation(method = "applyFirstPersonPositioningTransform",
             at = @At(value = "INVOKE", target = "Lcom/tacz/guns/api/item/IGun;getAttachmentId(Lnet/minecraft/world/item/ItemStack;Lcom/tacz/guns/api/item/attachment/AttachmentType;)Lnet/minecraft/resources/ResourceLocation;"),
             remap = false)
-    private static ResourceLocation taczfixes$emptyNativeScopeId(IGun gun, ItemStack stack, AttachmentType type) {
-        ResourceLocation original = gun.getAttachmentId(stack, type);
+    private static ResourceLocation taczfixes$emptyNativeScopeId(IGun gun, ItemStack stack, AttachmentType type,
+                                                                 Operation<ResourceLocation> original,
+                                                                 @Local(argsOnly = true) com.tacz.guns.client.model.BedrockGunModel model) {
+        ResourceLocation value = original.call(gun, stack, type);
         if (type == AttachmentType.SCOPE
-                && com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(original)) {
-            ResourceLocation custom = ScopeSwitchState.activeCustomScopeViewId(stack);
+                && com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(value)
+                && model != null && model.getScopePosPath() != null) {
+            ResourceLocation custom = ScopeSwitchState.activeCustomOpticId(stack);
             if (custom != null) {
                 return custom;
             }
         }
-        return original;
+        return value;
     }
 
     @WrapOperation(method = "applyFirstPersonPositioningTransform",

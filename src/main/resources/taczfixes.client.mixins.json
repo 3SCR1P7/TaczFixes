@@ -152,6 +152,7 @@
         "MixinGunPropertyDiagrams",
         "renderer.MixinGunRendererMovementRoll",
         "renderer.MixinGunRendererRotationInertia",
+        "renderer.MixinScopeThermalRenderer",
         "MixinGunSmithTableScreenAutoCraft",
         "MixinGunTooltipLevel",
         "MixinHeatBarOverlayChargeBar",
