@@ -262,7 +262,8 @@ public final class AttachmentAnimationManager {
         if (model == null) {
             return;
         }
-        AttachmentAnimationKey key = new AttachmentAnimationKey(attachmentId, attachmentItem, gunItem, firstPerson);
+        AttachmentAnimationKey key = new AttachmentAnimationKey(attachmentId, attachmentItem, gunItem,
+                gunIdOf(gunItem), firstPerson, isOffhandGun(gunItem, player));
         AttachmentAnimationInstance instance = INSTANCES.get(key);
         if (instance == null) {
             long now = System.currentTimeMillis();
@@ -315,8 +316,7 @@ public final class AttachmentAnimationManager {
     // 工具
     // ------------------------------------------------------------------
 
-    public static boolean isLocalHeldStack(@Nullable ItemStack stack, LocalPlayer player) {
-        if (stack == null || stack.isEmpty()) {
+    public static boolean isLocalHeldStack(@Nullable ItemStack stack, LocalPlayer player) {        if (stack == null || stack.isEmpty()) {
             return false;
         }
         ItemStack mainHand = player.getMainHandItem();
@@ -325,6 +325,17 @@ public final class AttachmentAnimationManager {
             return true;
         }
         return ItemStack.isSameItemSameTags(stack, mainHand) || ItemStack.isSameItemSameTags(stack, offHand);
+    }
+
+    /** 该枪械当前是否由副手持握（主手优先；用于区分双持两手）。 */
+    public static boolean isOffhandGun(ItemStack gunItem, LocalPlayer player) {
+        if (gunItem == null || gunItem.isEmpty() || player == null) {
+            return false;
+        }
+        if (ItemStack.isSameItemSameTags(gunItem, player.getMainHandItem())) {
+            return false;
+        }
+        return ItemStack.isSameItemSameTags(gunItem, player.getOffhandItem());
     }
 
     private static boolean isAimingNow(LocalPlayer player) {
