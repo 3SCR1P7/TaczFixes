@@ -58,6 +58,7 @@ public final class ClientModEvents {
 
     private static void onRegisterClientReloadListeners(RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new ClientDisplayDataReloadListener());
+        event.registerReloadListener(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationReloadListener());
         event.registerReloadListener(new AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
@@ -92,6 +93,8 @@ public final class ClientModEvents {
             NeoForge.EVENT_BUS.register(new GunDurabilityTooltipHandler());
             NeoForge.EVENT_BUS.register(new GunPackKeyHandler());
             NeoForge.EVENT_BUS.register(new GunPackMenuButtonHandler());
+            NeoForge.EVENT_BUS.register(com.ssscript.taczfixes.client.hud.CustomHudController.instance());
+            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationClientEvents());
             // 启动后后台检查已安装枪包更新; 有更新时在枪包管理界面显示红点
             com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
         });

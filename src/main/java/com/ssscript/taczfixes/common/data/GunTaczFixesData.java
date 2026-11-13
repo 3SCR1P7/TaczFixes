@@ -9,7 +9,7 @@ public class GunTaczFixesData {
     public Boolean allow_animation_zoom;
     /** 是否允许水下开火: true 强制允许, false 强制禁止, 不填则跟随配置文件 prevent_shooting_underwater。 */
     public Boolean allow_shooting_underwater;
-    /** 自定义 HUD id(assets/<ns>/hud/<path>.json); 填写后 tacz 原生 HUD 隐藏。 */
+    /** 自定义 HUD 页面(assets/<ns>/hud/<path>.html, ApricityUI); 填写后 tacz 原生 HUD 隐藏。未安装 ApricityUI 时无效。 */
     public String custom_hud;
     public Map<String, InaccuracyConfig> inaccuracy_multiplier;
     public Map<String, RecoilConfig> recoil_multiplier;

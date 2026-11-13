@@ -1,0 +1,274 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <!-- 使用 Minecraft GUI 坐标系, 方便和原版 HUD 对齐 -->
+    <meta name="aui-viewport" content="mode=gui">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            pointer-events: none;
+            font-family: "Minecraft", monospace;
+            color: #eaf6ff;
+        }
+
+        /* 右下角主面板 */
+        #hud {
+            position: fixed;
+            right: 12px;
+            bottom: 12px;
+            width: 286px;
+            box-sizing: border-box;
+            padding: 10px 12px 9px;
+            background: linear-gradient(180deg, rgba(18, 24, 31, 0.94), rgba(8, 12, 17, 0.94));
+            border: 1px solid rgba(94, 190, 255, 0.38);
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+        }
+
+        .top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+        }
+
+        #gun-hud {
+            width: 78px;
+            height: 26px;
+            image-rendering: pixelated;
+            opacity: 0.95;
+        }
+
+        .top-right {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            color: #8fb4ca;
+        }
+
+        #fire-mode-icon {
+            width: 14px;
+            height: 14px;
+            image-rendering: pixelated;
+        }
+
+        .ammo-line {
+            display: flex;
+            align-items: flex-end;
+            gap: 8px;
+            margin-top: 5px;
+        }
+
+        #ammo-mag {
+            font-size: 30px;
+            line-height: 24px;
+            color: #eaf6ff;
+        }
+
+        #ammo-mag[data-empty="true"] {
+            color: #ff6464;
+        }
+
+        .reserve {
+            display: flex;
+            align-items: center;
+            gap: 3px;
+            margin-bottom: 2px;
+            color: #9db4c4;
+            font-size: 14px;
+        }
+
+        #ammo-inventory[data-hidden="true"] {
+            display: none;
+        }
+
+        .divider {
+            width: 1px;
+            height: 22px;
+            background: rgba(160, 210, 240, 0.28);
+        }
+
+        .ammo-type {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-bottom: 2px;
+            font-size: 11px;
+            color: #a9c6d8;
+        }
+
+        #ammo-type-icon {
+            width: 16px;
+            height: 16px;
+            image-rendering: pixelated;
+        }
+
+        .heat-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 6px;
+            font-size: 10px;
+            color: #8fb4ca;
+        }
+
+        body[data-taczfixes-has-heat="false"] .heat-row {
+            display: none;
+        }
+
+        #heat-bar {
+            flex: 1;
+            height: 5px;
+            background: rgba(150, 190, 220, 0.16);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        #heat-fill {
+            width: 0%;
+            height: 5px;
+            background: linear-gradient(90deg, #37d0ff, #ffc247, #ff5252);
+            border-radius: 3px;
+        }
+
+        #heat-bar[data-locked="true"] #heat-fill {
+            background: #ff4040;
+        }
+
+        .status-row {
+            display: flex;
+            gap: 4px;
+            margin-top: 6px;
+        }
+
+        .chip {
+            padding: 1px 4px;
+            font-size: 9px;
+            color: #9fc4d8;
+            border: 1px solid rgba(120, 190, 230, 0.28);
+            border-radius: 3px;
+            opacity: 0.22;
+        }
+
+        .chip[data-active="true"] {
+            color: #d9f3ff;
+            border-color: rgba(90, 210, 255, 0.7);
+            background: rgba(40, 140, 200, 0.18);
+            opacity: 1;
+        }
+
+        /* 准星: 只在未开镜/未换弹时显示 */
+        #crosshair {
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            width: 22px;
+            height: 22px;
+            transform: translate(-50%, -50%);
+            opacity: 0.9;
+        }
+
+        #crosshair[data-active="false"] {
+            opacity: 0;
+        }
+
+        body[data-taczfixes-aiming="true"] #crosshair {
+            opacity: 0;
+        }
+
+        #crosshair .bar {
+            position: absolute;
+            background: #eaf6ff;
+        }
+
+        #crosshair .bar.top {
+            left: 10px;
+            top: 0;
+            width: 2px;
+            height: 6px;
+        }
+
+        #crosshair .bar.bottom {
+            left: 10px;
+            bottom: 0;
+            width: 2px;
+            height: 6px;
+        }
+
+        #crosshair .bar.left {
+            left: 0;
+            top: 10px;
+            width: 6px;
+            height: 2px;
+        }
+
+        #crosshair .bar.right {
+            right: 0;
+            top: 10px;
+            width: 6px;
+            height: 2px;
+        }
+
+        #crosshair .dot {
+            position: absolute;
+            left: 10px;
+            top: 10px;
+            width: 2px;
+            height: 2px;
+            background: #eaf6ff;
+        }
+    </style>
+</head>
+<body>
+    <div id="hud">
+        <div class="top">
+            <!-- Java 会把当前枪械的 TaCZ HUD 贴图写进 texture 的 src -->
+            <texture id="gun-hud"></texture>
+            <div class="top-right">
+                <texture id="fire-mode-icon"></texture>
+                <span id="fire-mode">AUTO</span>
+            </div>
+        </div>
+
+        <div class="ammo-line">
+            <span id="ammo-mag">030</span>
+            <span class="reserve">
+                <span id="ammo-inventory">0120</span>
+            </span>
+            <span class="divider"></span>
+            <span class="ammo-type">
+                <item id="ammo-type-icon"></item>
+                <span id="ammo-type">7.62x39mm</span>
+            </span>
+        </div>
+
+        <div class="heat-row">
+            <div id="heat-bar" data-active="false" data-locked="false">
+                <div id="heat-fill"></div>
+            </div>
+            <span id="heat-text">--</span>
+        </div>
+
+        <div class="status-row">
+            <span id="status-aiming" class="chip" data-active="false">ADS</span>
+            <span id="status-reloading" class="chip" data-active="false">RLD</span>
+            <span id="status-sprinting" class="chip" data-active="false">SPR</span>
+            <span id="status-hold-breath" class="chip" data-active="false">BREATH</span>
+            <span id="status-dual-wield" class="chip" data-active="false">DUAL</span>
+            <span id="status-crawling" class="chip" data-active="false">CRAWL</span>
+            <span id="status-sneaking" class="chip" data-active="false">SNEAK</span>
+        </div>
+    </div>
+
+    <div id="crosshair" data-active="true">
+        <div class="bar top"></div>
+        <div class="bar bottom"></div>
+        <div class="bar left"></div>
+        <div class="bar right"></div>
+        <div class="dot"></div>
+    </div>
+</body>
+</html>

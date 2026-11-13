@@ -4,6 +4,9 @@ import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.ssscript.taczfixes.client.hud.ApricityHudResources;
+import com.ssscript.taczfixes.client.hud.ApricityHudSupport;
+import com.ssscript.taczfixes.client.hud.CustomHudController;
 import com.ssscript.taczfixes.common.data.AttachmentGroupOffsetManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.data.TaczFixesDataReloadListener;
@@ -29,7 +32,13 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                                           ResourceManager resourceManager, ProfilerFiller prepareProfiler,
                                           ProfilerFiller applyProfiler, Executor backgroundExecutor,
                                           Executor gameExecutor) {
-        return CompletableFuture.supplyAsync(() -> scan(resourceManager), backgroundExecutor)
+        return CompletableFuture.supplyAsync(() -> {
+                    // 枪包 HUD 资源复制是纯文件 IO, 放在后台线程; AUI 模板注册在 apply 阶段完成。
+                    if (ApricityHudSupport.isAuiModLoaded()) {
+                        ApricityHudResources.syncAllFiles();
+                    }
+                    return scan(resourceManager);
+                }, backgroundExecutor)
                 .thenCompose(barrier::wait)
                 .thenAcceptAsync(result -> {
                     AttachmentGroupOffsetManager.putAll(result);
@@ -37,6 +46,7 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                     com.ssscript.taczfixes.common.data.CustomSlotManager.bumpDataStamp();
                     TaczFixesDataManager.syncPosAlterRanges();
                     com.ssscript.taczfixes.client.hud.CustomHudManager.clear();
+                    CustomHudController.onResourceReload();
                     com.ssscript.taczfixes.client.util.GunPackIconLoader.clear();
                     com.ssscript.taczfixes.client.util.GunRecolorManager.clearTextures();
                 }, gameExecutor);

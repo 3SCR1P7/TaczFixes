@@ -1,6 +1,12 @@
 {
   "taczfixes": {
-    "custom_hud": "tacz:custom_hud_1",
+    // 自定义 HUD（仅 ApricityUI HTML）。
+    // 页面路径: assets/<namespace>/hud/<name>.html
+    // 填写 "namespace:name" 或 "namespace:hud/name.html"。
+    // 未安装 ApricityUI 时此字段完全无效，直接使用原版 HUD。
+    // 旧 JSON HUD 已移除；写成 .json 不会生效。
+    // 示例页面见 example/example_custom_hud.html
+    "custom_hud": "tacz:custom_hud_1.html",
     "enchantment_ability": 100,
     "allow_shooting_underwater": true,
     "suppression": {

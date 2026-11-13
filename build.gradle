@@ -47,8 +47,11 @@ repositories {
 
 dependencies {
     // 内嵌的 tacz_charms jar 只用于 Jar-in-Jar, 不参与本模组编译
-    compileOnly fileTree(dir: 'libs', include: ['*.jar'], exclude: ['tacz_charms-1.21.1.jar'])
+    compileOnly fileTree(dir: 'libs', include: ['*.jar'], exclude: ['tacz_charms-1.21.1.jar', 'ApricityUI-neoforge-1.21.1-1.3.1.jar'])
     runtimeOnly files('libs/tacz-neoforge-1.21.1-1025-040705.jar')
+
+    // 可选前置: 仅编译期引用; 运行时通过反射隔离, 未安装时不加载相关类
+    compileOnly files('libs/ApricityUI-neoforge-1.21.1-1.3.1.jar')
 
     implementation 'org.apache.commons:commons-math3:3.6.1'
 
