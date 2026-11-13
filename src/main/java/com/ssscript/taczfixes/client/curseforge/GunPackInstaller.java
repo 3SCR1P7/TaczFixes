@@ -353,6 +353,37 @@ public final class GunPackInstaller {
         return dir.resolve(stem + "-" + System.currentTimeMillis() + ext);
     }
 
+    /**
+     * 更新安装收尾: 尽量让新包占用 CurseForge 给出的文件名, 并删除旧版本 jar。
+     *
+     * @param oldFile       旧版本 jar(安装记录里的文件名), 可为 null
+     * @param installedFile 本次下载安装得到的文件
+     * @param desiredName   CurseForge 文件列表里的文件名
+     * @return 最终落盘的文件
+     */
+    public static Path replaceInstalled(Path taczDir, Path oldFile, Path installedFile, String desiredName) {
+        if (installedFile == null) return oldFile;
+        Path desired = taczDir.resolve(safeFileName(desiredName));
+        Path result = installedFile;
+        try {
+            // 仅当目标名正好是旧版本文件时才原地替换(避免误删其它枪包)
+            if (!installedFile.equals(desired) && oldFile != null && desired.equals(oldFile)) {
+                Files.deleteIfExists(desired);
+                Files.move(installedFile, desired, StandardCopyOption.REPLACE_EXISTING);
+                result = desired;
+            }
+        } catch (IOException ignored) {
+            result = installedFile;
+        }
+        try {
+            if (oldFile != null && !oldFile.equals(result) && Files.isRegularFile(oldFile)) {
+                Files.deleteIfExists(oldFile);
+            }
+        } catch (IOException ignored) {
+        }
+        return result;
+    }
+
     /** 人类可读的文件大小。 */
     public static String formatSize(long bytes) {
         if (bytes < 0L) return "?";

@@ -92,6 +92,8 @@ public final class ClientModEvents {
             NeoForge.EVENT_BUS.register(new GunDurabilityTooltipHandler());
             NeoForge.EVENT_BUS.register(new GunPackKeyHandler());
             NeoForge.EVENT_BUS.register(new GunPackMenuButtonHandler());
+            // 启动后后台检查已安装枪包更新; 有更新时在枪包管理界面显示红点
+            com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
         });
     }
 }

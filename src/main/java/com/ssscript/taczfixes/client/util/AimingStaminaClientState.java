@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.common.config.Config;
+
 /** 客户端缓存的当前上肢耐力(-1 表示尚未同步)。 */
 public final class AimingStaminaClientState {
 
@@ -27,6 +29,8 @@ public final class AimingStaminaClientState {
     }
 
     public static boolean isInsufficient(float cost) {
+        // 与服务端保持一致: 功能禁用时不拦截近战/开火
+        if (!Config.AIMING_STAMINA_ENABLED.get()) return false;
         return isKnown() && cost > 0f && stamina < cost;
     }
 

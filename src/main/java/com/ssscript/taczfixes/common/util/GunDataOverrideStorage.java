@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.stream.Stream;
 
-/** 编辑后 data 的持久化覆盖: 保存到 config/taczfixes, 启动/重载时替换进源枪包(zip/目录)。 */
+/** 编辑后 data 的持久化覆盖: 保存到 taczfixes_cache/gun_data, 启动/重载时替换进源枪包(zip/目录)。 */
 public class GunDataOverrideStorage {
     private static final Logger LOGGER = LogManager.getLogger("taczfixes");
 
@@ -24,7 +24,7 @@ public class GunDataOverrideStorage {
     }
 
     private static Path storageDir() {
-        return FMLPaths.GAMEDIR.get().resolve("config").resolve("taczfixes").resolve("gun_data");
+        return TaczFixesCache.dir("gun_data");
     }
 
     private static Path storageFile(ResourceLocation dataId) {
@@ -33,7 +33,7 @@ public class GunDataOverrideStorage {
                 dataId.getPath().replace('/', '~') + ".json");
     }
 
-    /** 保存编辑后的 data 全文到 config/taczfixes(一次, 启动时回放)。 */
+    /** 保存编辑后的 data 全文到 taczfixes_cache(一次, 启动时回放)。 */
     public static boolean save(ResourceLocation dataId, String fullText) {
         if (dataId == null || fullText == null || fullText.isBlank()) return false;
         try {

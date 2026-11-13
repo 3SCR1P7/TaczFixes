@@ -108,6 +108,32 @@ public final class GunPackSettings {
     }
 
     /**
+     * 枪包更新后文件名变化时, 把旧 ID 的启用状态与排序位置迁移到新 ID。
+     * 旧 ID 不存在时不做任何改动。
+     */
+    public static synchronized void migrate(String oldId, String newId) {
+        if (oldId == null || newId == null || oldId.equals(newId)) return;
+        ensureLoaded();
+        boolean changed = false;
+        int index = order.indexOf(oldId);
+        if (index >= 0) {
+            if (order.contains(newId)) {
+                order.remove(oldId);
+            } else {
+                order.set(index, newId);
+            }
+            changed = true;
+        }
+        if (disabled.remove(oldId)) {
+            disabled.add(newId);
+            changed = true;
+        }
+        if (changed) {
+            save();
+        }
+    }
+
+    /**
      * 按设置排列发现到的枪包 ID: 已配置的高优先级在前, 新枪包按名称追加在后; 过滤掉禁用的。
      * 旧配置里的命名空间条目会匹配该命名空间下的所有枪包。
      */

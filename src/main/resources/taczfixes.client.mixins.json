@@ -6,6 +6,11 @@
     "compatibilityLevel": "JAVA_21",
     "mixins": [],
     "client": [
+        "MixinAbstractSelectionListAccessor",
+        "MixinPackEntryUpdateBadge",
+        "MixinPackSelectionScreenAccessor",
+        "compat.MixinPlayerAnimatorAdjustment",
+        "compat.MixinPlayerAnimatorAnimationManager",
         "compat.MixinARCompatGate",
         "compat.MixinHeldGunCustomScopeAR",
         "compat.MixinLrAttackKeys",

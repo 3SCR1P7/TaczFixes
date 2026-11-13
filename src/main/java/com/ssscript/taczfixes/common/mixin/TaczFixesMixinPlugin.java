@@ -15,6 +15,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean SODIUM_PRESENT;
     private static final boolean CREATE_PRESENT;
     private static final boolean ACCELERATED_PRESENT;
+    private static final boolean PLAYER_ANIMATOR_PRESENT;
 
     static {
         PARCOOL_PRESENT = hasResource("com/alrex/parcool/common/attachment/common/Parkourability.class");
@@ -25,6 +26,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
                 || EMBEDDIUM_PRESENT;
         CREATE_PRESENT = hasResource("com/simibubi/create/content/contraptions/AbstractContraptionEntity.class");
         ACCELERATED_PRESENT = hasResource("com/github/argon4w/acceleratedrendering/core/buffers/accelerated/AcceleratedBufferSource.class");
+        PLAYER_ANIMATOR_PRESENT = hasResource("dev/kosmx/playerAnim/api/layered/modifier/AdjustmentModifier.class");
     }
 
     private static boolean hasResource(String path) {
@@ -42,6 +44,10 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.startsWith("com.ssscript.taczfixes.client.mixin.compat.create.")) {
             return CREATE_PRESENT;
+        }
+        if ("com.ssscript.taczfixes.client.mixin.compat.MixinPlayerAnimatorAnimationManager".equals(mixinClassName)
+                || "com.ssscript.taczfixes.client.mixin.compat.MixinPlayerAnimatorAdjustment".equals(mixinClassName)) {
+            return PLAYER_ANIMATOR_PRESENT;
         }
         if (mixinClassName.contains(".MixinParCool")) {
             return PARCOOL_PRESENT;

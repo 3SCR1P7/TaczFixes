@@ -5,7 +5,6 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.ssscript.taczfixes.TaczFixesMod;
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.fml.loading.FMLPaths;
 
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -191,6 +190,6 @@ public final class RefitPresetStorage {
     }
 
     private static Path getFile() {
-        return FMLPaths.CONFIGDIR.get().resolve("taczfixes").resolve("refit_presets.json");
+        return TaczFixesCache.file("refit_presets.json");
     }
 }
