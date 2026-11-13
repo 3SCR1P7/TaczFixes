@@ -316,13 +316,20 @@ public final class AttachmentAnimationManager {
     // 工具
     // ------------------------------------------------------------------
 
-    public static boolean isLocalHeldStack(@Nullable ItemStack stack, LocalPlayer player) {        if (stack == null || stack.isEmpty()) {
+    public static boolean isLocalHeldStack(@Nullable ItemStack stack, LocalPlayer player) {
+        if (stack == null || stack.isEmpty() || player == null) {
             return false;
         }
         ItemStack mainHand = player.getMainHandItem();
         ItemStack offHand = player.getOffhandItem();
         if (stack == mainHand || stack == offHand) {
             return true;
+        }
+        // 枪械 NBT 会随开火/换弹变化，不能按完整内容比较；否则开火当帧会误判“非本地手持”，
+        // 跳过动画更新，模型在该帧回到基础姿态（表现为闪回 idle）。这里按枪械 id 比较。
+        ResourceLocation gunId = gunIdOf(stack);
+        if (gunId != null) {
+            return gunId.equals(gunIdOf(mainHand)) || gunId.equals(gunIdOf(offHand));
         }
         return ItemStack.isSameItemSameTags(stack, mainHand) || ItemStack.isSameItemSameTags(stack, offHand);
     }
@@ -337,7 +344,6 @@ public final class AttachmentAnimationManager {
         }
         return gunItem.getItem() == player.getOffhandItem().getItem();
     }
-
     private static boolean isAimingNow(LocalPlayer player) {
         try {
             return IClientPlayerGunOperator.fromLocalPlayer(player).isAim();

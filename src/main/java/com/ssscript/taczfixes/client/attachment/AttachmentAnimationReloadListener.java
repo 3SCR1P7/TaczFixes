@@ -52,8 +52,6 @@ public class AttachmentAnimationReloadListener implements PreparableReloadListen
                 // 单个 display 文件解析失败不影响其它配件，静默回退到静态渲染。
             }
         }
-        com.ssscript.taczfixes.TaczFixesMod.LOGGER.info(
-                "taczfixes attachment animation: parsed {} display definition(s)", result.size());
         return result;
     }
 }
