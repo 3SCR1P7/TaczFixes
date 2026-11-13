@@ -262,7 +262,8 @@ public final class AttachmentAnimationManager {
         if (model == null) {
             return;
         }
-        AttachmentAnimationKey key = new AttachmentAnimationKey(attachmentId, attachmentItem, gunItem, firstPerson);
+        AttachmentAnimationKey key = new AttachmentAnimationKey(attachmentId, attachmentItem, gunItem,
+                gunIdOf(gunItem), firstPerson, isOffhandGun(gunItem, player));
         AttachmentAnimationInstance instance = INSTANCES.get(key);
         if (instance == null) {
             long now = System.currentTimeMillis();
@@ -327,6 +328,17 @@ public final class AttachmentAnimationManager {
         }
         return ItemStack.isSameItemSameComponents(stack, mainHand)
                 || ItemStack.isSameItemSameComponents(stack, offHand);
+    }
+
+    /** 该枪械当前是否由副手持握（主手优先；用于区分双持两手）。 */
+    public static boolean isOffhandGun(ItemStack gunItem, LocalPlayer player) {
+        if (gunItem == null || gunItem.isEmpty() || player == null) {
+            return false;
+        }
+        if (ItemStack.isSameItemSameComponents(gunItem, player.getMainHandItem())) {
+            return false;
+        }
+        return ItemStack.isSameItemSameComponents(gunItem, player.getOffhandItem());
     }
 
     private static boolean isAimingNow(LocalPlayer player) {
