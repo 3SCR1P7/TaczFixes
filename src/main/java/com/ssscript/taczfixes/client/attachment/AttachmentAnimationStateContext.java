@@ -222,6 +222,11 @@ public class AttachmentAnimationStateContext extends AnimationStateContext {
         if (player == null) {
             return false;
         }
+        // ParCool 爬行：TaCZ 匍匐标志由兼容 mixin 同步，可能随原版 tickCrawl 反复，
+        // 这里直接读取 ParCool 爬行动作状态，避免趴下状态逐帧抖动。
+        if (com.ssscript.taczfixes.common.util.ParCoolHelper.isCrawling(player)) {
+            return true;
+        }
         if (player.getPose() == net.minecraft.world.entity.Pose.SWIMMING) {
             return true;
         }
