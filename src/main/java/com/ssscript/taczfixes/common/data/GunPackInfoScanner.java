@@ -28,7 +28,11 @@ public final class GunPackInfoScanner {
     private static final ResourceLocation FALLBACK_LOGO = ResourceLocation.fromNamespaceAndPath("tacz", "textures/pack.png");
 
     public record PackInfoData(String id, String name, Path path, Path iconPath, Component displayName,
-                               Component description, ResourceLocation logo) {
+                               Component description, ResourceLocation logo, List<GunPackDependencies.Issue> issues) {
+        /** 依赖是否有问题(缺少前置 / 版本不符), 有问题时管理界面按原版"不兼容资源包"显示。 */
+        public boolean incompatible() {
+            return !this.issues.isEmpty();
+        }
     }
 
     private record LogoSource(Path path, ResourceLocation logo) {
@@ -82,7 +86,7 @@ public final class GunPackInfoScanner {
             String fileName = info.path().getFileName() == null ? info.name() : info.path().getFileName().toString();
             Component displayName = Component.literal(info.displayName().getString() + " " + fileName);
             result.add(new PackInfoData(info.id(), info.name(), info.path(), info.iconPath(),
-                    displayName, info.description(), info.logo()));
+                    displayName, info.description(), info.logo(), info.issues()));
         }
         return result;
     }
@@ -126,7 +130,30 @@ public final class GunPackInfoScanner {
             logo = defaultLogo.logo();
             iconPath = defaultLogo.path();
         }
-        return new PackInfoData(GunPackIds.of(namespace, path), namespace, path, iconPath, displayName, description, logo);
+        return new PackInfoData(GunPackIds.of(namespace, path), namespace, path, iconPath, displayName, description,
+                logo, readDependencyIssues(path));
+    }
+
+    /** 读取 gunpack.meta.json 的 dependencies, 记录缺少前置/版本不符(枪包仍然加载, 管理界面标红)。 */
+    private static List<GunPackDependencies.Issue> readDependencyIssues(Path path) {
+        String raw = readPackFile(path, "gunpack.meta.json");
+        if (raw == null) return List.of();
+        try {
+            JsonElement element = JsonParser.parseString(raw);
+            if (!element.isJsonObject()) return List.of();
+            if (!element.getAsJsonObject().has("dependencies")) return List.of();
+            JsonElement dependencies = element.getAsJsonObject().get("dependencies");
+            if (!dependencies.isJsonObject()) return List.of();
+            Map<String, String> ranges = new HashMap<>();
+            for (Map.Entry<String, JsonElement> entry : dependencies.getAsJsonObject().entrySet()) {
+                if (entry.getValue().isJsonPrimitive()) {
+                    ranges.put(entry.getKey(), entry.getValue().getAsString());
+                }
+            }
+            return GunPackDependencies.check(ranges);
+        } catch (Throwable ignored) {
+            return List.of();
+        }
     }
 
     private static String string(JsonObject root, String key) {

@@ -57,11 +57,16 @@ public final class CurseForgeApi {
             .connectTimeout(CONNECT_TIMEOUT)
             .build();
 
-    private static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(3, runnable -> {
+    static final ExecutorService EXECUTOR = Executors.newFixedThreadPool(3, runnable -> {
         Thread thread = new Thread(runnable, "taczfixes-curseforge");
         thread.setDaemon(true);
         return thread;
     });
+
+    /** 提前在后台加载磁盘缓存, 打开 CurseForge 界面时调用。 */
+    public static void warmUpCache() {
+        CurseForgeCache.warmUp();
+    }
 
     private CurseForgeApi() {
     }
@@ -178,20 +183,28 @@ public final class CurseForgeApi {
                 + "&sortOrder=" + sort.order()
                 + "&index=" + (page * PAGE_SIZE)
                 + "&pageSize=" + PAGE_SIZE;
+        final String cacheKey = searchCacheKey(filter, page, sort);
         return getJson("/mods/search", params).thenApply(root -> {
-            List<ModInfo> mods = new ArrayList<>();
-            JsonArray data = array(root, "data");
-            if (data != null) {
-                for (JsonElement element : data) {
-                    if (!element.isJsonObject()) continue;
-                    ModInfo info = parseMod(element.getAsJsonObject());
-                    if (info != null) mods.add(info);
-                }
-            }
-            int total = intValue(object(root, "pagination"), "totalCount",
-                    mods.size() == PAGE_SIZE ? (page + 2) * PAGE_SIZE : page * PAGE_SIZE + mods.size());
-            return new SearchPage(mods, total, page);
+            SearchPage parsed = parseSearchPage(root, page);
+            // 只缓存成功响应; 落盘在后台线程完成
+            CurseForgeCache.put(cacheKey, root);
+            return parsed;
         });
+    }
+
+    private static SearchPage parseSearchPage(JsonObject root, int page) {
+        List<ModInfo> mods = new ArrayList<>();
+        JsonArray data = array(root, "data");
+        if (data != null) {
+            for (JsonElement element : data) {
+                if (!element.isJsonObject()) continue;
+                ModInfo info = parseMod(element.getAsJsonObject());
+                if (info != null) mods.add(info);
+            }
+        }
+        int total = intValue(object(root, "pagination"), "totalCount",
+                mods.size() == PAGE_SIZE ? (page + 2) * PAGE_SIZE : page * PAGE_SIZE + mods.size());
+        return new SearchPage(mods, total, page);
     }
 
     // 搜索结果内存缓存(不落盘): 翻页/切排序/重开界面时直接复用, 显著降低等待。
@@ -206,26 +219,42 @@ public final class CurseForgeApi {
             };
     /** 正在进行的搜索请求, 用于合并预取与用户翻页的重复请求。 */
     private static final java.util.Map<String, CompletableFuture<SearchPage>> IN_FLIGHT = new java.util.HashMap<>();
+    /** 正在进行的文件列表请求, 用于合并自动更新检查与手动查看。 */
+    private static final java.util.Map<String, CompletableFuture<List<FileInfo>>> FILES_IN_FLIGHT = new java.util.HashMap<>();
 
     private record CachedSearch(SearchPage page, long timestamp) {
     }
 
     private static String searchCacheKey(String filter, int page, SortMode sort) {
-        // 带上 API 地址: 设置里切换镜像/官方 API 后不会命中旧缓存
-        return CurseForgeConfig.apiBase() + '|' + sort.name() + '|' + page + '|' + filter;
+        // 带上 API 地址和游戏版本: 设置里切换镜像/官方 API 后不会命中旧缓存
+        return "search|" + CurseForgeConfig.apiBase() + '|' + GAME_VERSION + '|' + sort.name()
+                + '|' + page + '|' + filter;
     }
 
     private static SearchPage cachedSearch(String filter, int page, SortMode sort) {
         String key = searchCacheKey(filter, page, sort);
         synchronized (SEARCH_CACHE) {
             CachedSearch cached = SEARCH_CACHE.get(key);
-            if (cached == null) return null;
-            if (System.currentTimeMillis() - cached.timestamp() > SEARCH_CACHE_TTL_MS) {
+            if (cached != null) {
+                if (System.currentTimeMillis() - cached.timestamp() <= SEARCH_CACHE_TTL_MS) {
+                    return cached.page();
+                }
                 SEARCH_CACHE.remove(key);
-                return null;
             }
-            return cached.page();
         }
+        // 内存未命中时尝试磁盘缓存, 命中则解析后立即返回(不再发网络请求)
+        JsonObject payload = CurseForgeCache.get(key);
+        if (payload == null) return null;
+        SearchPage parsed;
+        try {
+            parsed = parseSearchPage(payload, page);
+        } catch (Throwable ignored) {
+            return null;
+        }
+        synchronized (SEARCH_CACHE) {
+            SEARCH_CACHE.put(key, new CachedSearch(parsed, System.currentTimeMillis()));
+        }
+        return parsed;
     }
 
     private static void cacheSearch(String filter, int page, SortMode sort, SearchPage result) {
@@ -307,22 +336,69 @@ public final class CurseForgeApi {
 
     // ------------------------------------------------------------------- files
 
-    /** 获取项目的 1.20.1 文件并按日期从新到旧排序。 */
+    /** 获取项目的 1.20.1 文件并按日期从新到旧排序。命中缓存(内存/磁盘)时立即返回。 */
     public static CompletableFuture<List<FileInfo>> listFiles(long modId) {
-        String params = "gameVersion=" + encodeQuery(GAME_VERSION) + "&pageSize=50&index=0";
-        return getJson("/mods/" + modId + "/files", params).thenApply(root -> {
-            List<FileInfo> files = new ArrayList<>();
-            JsonArray data = array(root, "data");
-            if (data != null) {
-                for (JsonElement element : data) {
-                    if (!element.isJsonObject()) continue;
-                    FileInfo info = parseFile(element.getAsJsonObject(), modId);
-                    if (info != null) files.add(info);
+        return listFiles(modId, false);
+    }
+
+    /**
+     * 获取项目的文件列表。
+     *
+     * @param forceRefresh true 时跳过 45 分钟磁盘缓存, 直接请求远端(仅自动更新检查使用);
+     *                     响应仍会写回缓存, 不影响搜索结果缓存。
+     */
+    public static CompletableFuture<List<FileInfo>> listFiles(long modId, boolean forceRefresh) {
+        String key = filesCacheKey(modId);
+        if (!forceRefresh) {
+            JsonObject cached = CurseForgeCache.get(key);
+            if (cached != null) {
+                try {
+                    return CompletableFuture.completedFuture(parseFiles(cached, modId));
+                } catch (Throwable ignored) {
+                    // 缓存内容异常: 落回网络请求
                 }
             }
-            files.sort((a, b) -> Long.compare(b.date(), a.date()));
-            return files;
+        }
+        synchronized (FILES_IN_FLIGHT) {
+            CompletableFuture<List<FileInfo>> running = FILES_IN_FLIGHT.get(key);
+            if (running != null) {
+                return running;
+            }
+            CompletableFuture<List<FileInfo>> future = fetchFiles(modId, key);
+            FILES_IN_FLIGHT.put(key, future);
+            future.whenComplete((result, error) -> {
+                synchronized (FILES_IN_FLIGHT) {
+                    FILES_IN_FLIGHT.remove(key);
+                }
+            });
+            return future;
+        }
+    }
+
+    private static String filesCacheKey(long modId) {
+        return "files|" + CurseForgeConfig.apiBase() + '|' + GAME_VERSION + '|' + modId;
+    }
+
+    private static CompletableFuture<List<FileInfo>> fetchFiles(long modId, String cacheKey) {
+        String params = "gameVersion=" + encodeQuery(GAME_VERSION) + "&pageSize=50&index=0";
+        return getJson("/mods/" + modId + "/files", params).thenApply(root -> {
+            CurseForgeCache.put(cacheKey, root);
+            return parseFiles(root, modId);
         });
+    }
+
+    private static List<FileInfo> parseFiles(JsonObject root, long modId) {
+        List<FileInfo> files = new ArrayList<>();
+        JsonArray data = array(root, "data");
+        if (data != null) {
+            for (JsonElement element : data) {
+                if (!element.isJsonObject()) continue;
+                FileInfo info = parseFile(element.getAsJsonObject(), modId);
+                if (info != null) files.add(info);
+            }
+        }
+        files.sort((a, b) -> Long.compare(b.date(), a.date()));
+        return files;
     }
 
     private static FileInfo parseFile(JsonObject data, long modId) {

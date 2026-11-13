@@ -14,7 +14,7 @@ import java.util.Locale;
 import java.util.stream.Stream;
 import java.util.zip.ZipFile;
 
-/** 编辑后配件 data 的持久化覆盖: 保存到 config/taczfixes/attachment_data, 启动/重载时替换进源包。 */
+/** 编辑后配件 data 的持久化覆盖: 保存到 taczfixes_cache/attachment_data, 启动/重载时替换进源包。 */
 public final class AttachmentDataOverrideStorage {
     private static final Logger LOGGER = LogManager.getLogger("taczfixes");
 
@@ -22,7 +22,7 @@ public final class AttachmentDataOverrideStorage {
     }
 
     private static Path storageDir() {
-        return FMLPaths.GAMEDIR.get().resolve("config").resolve("taczfixes").resolve("attachment_data");
+        return TaczFixesCache.dir("attachment_data");
     }
 
     private static Path storageFile(ResourceLocation dataId) {
