@@ -1,0 +1,23 @@
+{
+  // 本文件是「配件动画」用法的完整示例，复制到枪包后按需改名即可。
+  // 配件 display 路径：assets/<namespace>/display/attachments/<name>.json
+  "slot": "tacz:attachment/slot/grip_cobra",
+  // 配件模型 / 材质：示例直接复用 TaCZ 自带的 foregrip 模型
+  "model": "tacz:attachment/grip_cobra",
+  "texture": "tacz:attachment/uv/grip_cobra",
+  "sounds": {
+    "install": "tacz:attachments/attachment_general_b",
+    "uninstall": "tacz:attachments/attachment_general_uninstall"
+  },
+  // 本模组扩展：TaCZ 会忽略未知字段，因此由 taczfixes 自行解析
+  "taczfixes": {
+    // 配件 Bedrock 动画文件 id → assets/mypack/animations/my_attachment_animations.animation.json
+    "animation": "mypack:my_attachment_animations",
+    // 配件 Lua 状态机 id → assets/mypack/scripts/my_attachment_state_machine.lua
+    "state_machine": "mypack:my_attachment_state_machine",
+    // 可选：传给 Lua 的参数表，脚本里用 context:getStateMachineParams() 读取
+    "state_machine_param": {
+      "enable_aim": true
+    }
+  }
+}

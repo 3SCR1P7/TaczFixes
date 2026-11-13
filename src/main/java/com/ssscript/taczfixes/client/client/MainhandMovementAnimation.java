@@ -9,7 +9,6 @@ import com.tacz.guns.api.client.animation.statemachine.LuaAnimationStateMachine;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.entity.ReloadState;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
-import com.tacz.guns.client.model.BedrockAnimatedModel;
 import com.tacz.guns.client.model.BedrockGunModel;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.ssscript.taczfixes.client.mixin.MixinAnimationControllerAccessor;
@@ -30,7 +29,7 @@ public final class MainhandMovementAnimation {
 
     public static ObjectAnimation resolvePrototype(AnimationController controller, String animationName, ObjectAnimation original, AnimationListenerSupplier listenerSupplier) {
         LuaAnimationStateMachine<GunAnimationStateContext> animationStateMachine;
-        if (DualMovementAnimationLibrary.isMovementClip(animationName) && (listenerSupplier instanceof BedrockAnimatedModel)) {
+        if (DualMovementAnimationLibrary.isMovementClip(animationName) && (listenerSupplier instanceof BedrockGunModel)) {
             BedrockGunModel bedrockGunModel = (BedrockGunModel) listenerSupplier;
             Minecraft minecraft = Minecraft.getInstance();
             LocalPlayer player = minecraft.player;
@@ -87,9 +86,8 @@ public final class MainhandMovementAnimation {
     }
 
     /**
-     * 双持时接管主手移动动画的输入: 主手动作动画(换弹/掏枪/检视等)播放期间不进入 run,
-     * 等动作动画结束后先回 idle 再触发 run, 让状态机重新播放 run_start 起手动画。
-     */
+     * 鍙屾寔鏃舵帴绠′富鎵嬬Щ鍔ㄥ姩鐢荤殑杈撳叆: 涓绘墜鍔ㄤ綔鍔ㄧ敾(鎹㈠脊/鎺忔灙/妫€瑙嗙瓑)鎾斁鏈熼棿涓嶈繘鍏?run,
+     * 绛夊姩浣滃姩鐢荤粨鏉熷悗鍏堝洖 idle 鍐嶈Е鍙?run, 璁╃姸鎬佹満閲嶆柊鎾斁 run_start 璧锋墜鍔ㄧ敾銆?     */
     public static String adjustDualMovementTrigger(String input, LocalPlayer player) {
         Minecraft minecraft = Minecraft.getInstance();
         if (player == null || !minecraft.options.getCameraType().isFirstPerson() || !DualWieldClient.isDualMode(player)) {
@@ -128,7 +126,7 @@ public final class MainhandMovementAnimation {
         return stateMachine != null && hasRunningActionAnimation(stateMachine.getAnimationController());
     }
 
-    /** 控制器中是否仍有正在播放的动作类动画(换弹尾段、掏枪、检视、近战等)。 */
+    /** 鎺у埗鍣ㄤ腑鏄惁浠嶆湁姝ｅ湪鎾斁鐨勫姩浣滅被鍔ㄧ敾(鎹㈠脊灏炬銆佹帍鏋€佹瑙嗐€佽繎鎴樼瓑)銆?*/
     public static boolean hasRunningActionAnimation(AnimationController controller) {
         if (controller == null) {
             return false;

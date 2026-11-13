@@ -47,7 +47,7 @@ public class MixinRenderCrosshairEventCustomHud {
                 || IGun.getIGunOrNull(player.getOffhandItem()) == null) {
             return;
         }
-        if (CustomHudManager.activeHud() != null || OffhandDisplayManager.getClientState().isReloading()) {
+        if (CustomHudManager.isApricityRendering() || OffhandDisplayManager.getClientState().isReloading()) {
             return;
         }
         event.setCanceled(true);
@@ -57,7 +57,7 @@ public class MixinRenderCrosshairEventCustomHud {
 
     @Inject(method = "renderCrosshair", at = @At("HEAD"), cancellable = true, remap = false)
     private static void taczfixes$hideTaczCrosshair(GuiGraphics graphics, Window window, CallbackInfo ci) {
-        if (CustomHudManager.activeHud() != null) {
+        if (CustomHudManager.isApricityRendering()) {
             ci.cancel();
             return;
         }

@@ -1,0 +1,16 @@
+{
+  "slot": "emxarms:attachment/slot/grip_emx_synchronized0",
+  "model": "emxarms:attachment/grip_emx_synchronized0_geo",
+  "texture": "emxarms:attachment/uv/emx_synchronized",
+  "sounds": {
+    "install": "tacz:attachments/scope_general_e",
+    "uninstall": "tacz:attachments/scope_general_e"
+  },
+  "taczfixes": {
+    "animation": "emxarms:grip_emx_synchronized_animations",
+    "state_machine": "emxarms:grip_emx_synchronized_state_machine",
+    "state_machine_param": {
+      "crouch_also_deploy": false
+    }
+  }
+}

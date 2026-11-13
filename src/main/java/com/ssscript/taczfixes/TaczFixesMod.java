@@ -197,6 +197,7 @@ public class TaczFixesMod {
 
     private void onRegisterClientReloadListeners(net.minecraftforge.client.event.RegisterClientReloadListenersEvent event) {
         event.registerReloadListener(new com.ssscript.taczfixes.client.util.ClientDisplayDataReloadListener());
+        event.registerReloadListener(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationReloadListener());
         event.registerReloadListener(new com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
@@ -231,6 +232,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler());
+            MinecraftForge.EVENT_BUS.register(com.ssscript.taczfixes.client.hud.CustomHudController.instance());
             // 启动后后台检查已安装枪包更新; 有更新时在枪包管理界面显示红点
             com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
         });

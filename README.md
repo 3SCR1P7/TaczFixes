@@ -48,11 +48,11 @@
 
 前置模组：
 
---Timeless and Classics Zero 1.2.0 或更高
+--Timeless and Classics Zero 1.2.0
 
 --Cloth Config API 11.1.136 (可选)
 
-注意，测试版TaCZ需要在永恒计划获取。
+--ApricityUI 1.3.1 (可选)
 
 联动模组：
 
@@ -62,14 +62,10 @@
 
 --TaCZ: Arcana
 
---TaCZ Addon
-
---TaCZ Tweaks
-
---GD656Peek
-
 --Iron's Spellbooks
 
---ParCool!
+--ParCool! (v3.4.3.3)
 
+--Create
 
+--ProjectE

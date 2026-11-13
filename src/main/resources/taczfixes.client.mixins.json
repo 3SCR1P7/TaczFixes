@@ -59,6 +59,7 @@
 
         "model.attachment.MixinAttachmentModelAccessor",
         "model.attachment.MixinAttachmentRender",
+        "model.attachment.MixinAttachmentRenderAnimation",
         "model.attachment.MixinAttachmentRenderGroupOffset",
         "model.attachment.MixinAttachmentRenderTransparency",
         "model.attachment.MixinBedrockAttachmentModel",
@@ -117,6 +118,8 @@
         "MixinAimKey",
         "MixinAnimationController",
         "MixinAnimationControllerAccessor",
+        "MixinAnimationStateMachineTrigger",
+        "MixinGunAnimationStateContextAccessor",
         "MixinObjectAnimationRunnerAccessor",
         "MixinAnvilScreenGunCost",
         "MixinAttachmentDisplayStepless",
