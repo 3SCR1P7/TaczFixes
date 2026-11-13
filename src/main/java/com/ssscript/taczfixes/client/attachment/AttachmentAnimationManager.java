@@ -262,8 +262,8 @@ public final class AttachmentAnimationManager {
         if (model == null) {
             return;
         }
-        AttachmentAnimationKey key = new AttachmentAnimationKey(attachmentId, attachmentItem, gunItem,
-                gunIdOf(gunItem), firstPerson, isOffhandGun(gunItem, player));
+        AttachmentAnimationKey key = new AttachmentAnimationKey(attachmentId, gunItem.getItem(), gunItem,
+                firstPerson, isOffhandGun(gunItem, player));
         AttachmentAnimationInstance instance = INSTANCES.get(key);
         if (instance == null) {
             long now = System.currentTimeMillis();
@@ -332,10 +332,10 @@ public final class AttachmentAnimationManager {
         if (gunItem == null || gunItem.isEmpty() || player == null) {
             return false;
         }
-        if (ItemStack.isSameItemSameTags(gunItem, player.getMainHandItem())) {
+        if (gunItem.getItem() == player.getMainHandItem().getItem()) {
             return false;
         }
-        return ItemStack.isSameItemSameTags(gunItem, player.getOffhandItem());
+        return gunItem.getItem() == player.getOffhandItem().getItem();
     }
 
     private static boolean isAimingNow(LocalPlayer player) {
