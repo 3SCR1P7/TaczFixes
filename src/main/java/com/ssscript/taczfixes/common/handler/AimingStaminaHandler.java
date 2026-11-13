@@ -92,9 +92,10 @@ public class AimingStaminaHandler {
                 new ServerMessageAimingStamina(stamina, max));
     }
 
-    /** 消耗上肢耐力(服务端)并立即同步。 */
+    /** 消耗上肢耐力(服务端)并立即同步。功能禁用时不做任何扣减与同步。 */
     public static void consume(ServerPlayer player, float amount) {
         if (player == null || amount <= 0f) return;
+        if (!Config.AIMING_STAMINA_ENABLED.get()) return;
         float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
         if (max <= 0f) max = 1f;
         float value = Math.max(0f, AimingStaminaState.getStamina(player.getUUID(), max) - amount);
@@ -104,9 +105,10 @@ public class AimingStaminaHandler {
         sendToPlayer(player, value, max);
     }
 
-    /** 上肢耐力是否不足以支付该消耗。 */
+    /** 上肢耐力是否不足以支付该消耗。功能禁用时永不不足, 避免拦截动作。 */
     public static boolean isInsufficient(ServerPlayer player, float cost) {
         if (player == null || cost <= 0f) return false;
+        if (!Config.AIMING_STAMINA_ENABLED.get()) return false;
         float max = (float) player.getAttributeValue(TaczFixesMod.AIMING_STAMINA_ATTRIBUTE.get());
         if (max <= 0f) max = 1f;
         return AimingStaminaState.getStamina(player.getUUID(), max) < cost;

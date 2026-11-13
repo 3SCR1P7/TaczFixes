@@ -17,6 +17,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean EMBEDDIUM_PRESENT;
     private static final boolean CREATE_PRESENT;
     private static final boolean ACCELERATED_PRESENT;
+    private static final boolean PLAYER_ANIMATOR_PRESENT;
 
     static {
         GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
@@ -28,6 +29,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         EMBEDDIUM_PRESENT = hasResource("me/jellysquid/mods/sodium/client/gl/shader/ShaderLoader.class");
         CREATE_PRESENT = hasResource("com/simibubi/create/content/contraptions/AbstractContraptionEntity.class");
         ACCELERATED_PRESENT = hasResource("com/github/argon4w/acceleratedrendering/core/buffers/accelerated/AcceleratedBufferSource.class");
+        PLAYER_ANIMATOR_PRESENT = hasResource("dev/kosmx/playerAnim/api/layered/modifier/AdjustmentModifier.class");
     }
 
     private static boolean hasResource(String path) {
@@ -71,6 +73,10 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinEmbeddium")) {
             return EMBEDDIUM_PRESENT;
+        }
+        if ("com.ssscript.taczfixes.client.mixin.compat.MixinPlayerAnimatorAnimationManager".equals(mixinClassName)
+                || "com.ssscript.taczfixes.client.mixin.compat.MixinPlayerAnimatorAdjustment".equals(mixinClassName)) {
+            return PLAYER_ANIMATOR_PRESENT;
         }
         return true;
     }

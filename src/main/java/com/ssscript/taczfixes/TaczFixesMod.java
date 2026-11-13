@@ -231,6 +231,8 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler());
+            // 启动后后台检查已安装枪包更新; 有更新时在枪包管理界面显示红点
+            com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
         });
     }
 }

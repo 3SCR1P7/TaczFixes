@@ -1,12 +1,12 @@
 package com.ssscript.taczfixes.common.mixin;
 
 import com.ssscript.taczfixes.TaczFixesMod;
+import com.ssscript.taczfixes.common.data.GunPackDependencies;
 import com.ssscript.taczfixes.common.data.GunPackHooks;
 import com.ssscript.taczfixes.common.data.GunPackIds;
 import com.ssscript.taczfixes.common.data.GunPackSettings;
 import com.tacz.guns.resource.GunPackLoader;
 import com.tacz.guns.resource.PackMeta;
-import net.minecraftforge.fml.ModList;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 /** 按本模组的枪包设置过滤/排序 TaCZ 扫描到的枪包(顺序即资源覆盖优先级, 越前越优先)。 */
 @Mixin(value = GunPackLoader.class, remap = false)
 public abstract class MixinGunPackLoader {
-    /** 已经警告过的“枪包+版本要求”, 避免每次资源重载都刷日志。 */
+    /** 已经警告过的“枪包+依赖问题”, 避免每次资源重载都刷日志。 */
     @Unique
     private static final Set<String> TACZFIXES$WARNED = ConcurrentHashMap.newKeySet();
 
@@ -53,13 +53,14 @@ public abstract class MixinGunPackLoader {
     }
 
     /**
-     * 枪包在 gunpack.meta.json 里用 dependencies 声明依赖的 TaCZ 版本范围。
-     * 原版 TaCZ 遇到不匹配会直接跳过整个枪包; 这里改为“只警告、继续加载”(仅针对 tacz 依赖),
-     * 其它模组依赖仍按原逻辑检查, 避免装错包。
+     * 枪包在 gunpack.meta.json 里用 dependencies 声明依赖的模组版本范围。
+     * 原版 TaCZ 遇到不匹配会直接跳过整个枪包; 这里改为“只警告、继续加载”,
+     * 覆盖 TaCZ 版本不符、前置模组未安装、其它模组版本不符三种情况。
+     * 依赖有问题的枪包仍会出现在枪包管理页面, 并像原版“不兼容资源包”一样标红。
      */
     @Inject(method = "modVersionAllMatch", at = @At("HEAD"), cancellable = true, remap = false)
-    private static void taczfixes$warnOnlyTaczVersion(PackMeta info,
-                                                      CallbackInfoReturnable<Boolean> cir) {
+    private static void taczfixes$tolerateDependencyMismatch(PackMeta info,
+                                                             CallbackInfoReturnable<Boolean> cir) {
         HashMap<String, String> dependencies;
         try {
             dependencies = info.getDependencies();
@@ -68,22 +69,14 @@ public abstract class MixinGunPackLoader {
         }
         if (dependencies == null || dependencies.isEmpty()) return;
 
-        String taczRange = null;
-        for (Map.Entry<String, String> entry : dependencies.entrySet()) {
-            String modId = entry.getKey();
-            String range = entry.getValue();
-            if (modId == null) continue;
-            boolean matches = taczfixes$modVersionMatches(modId, range);
-            if ("tacz".equalsIgnoreCase(modId)) {
-                if (!matches) {
-                    taczRange = range == null ? "" : range;
-                }
-            } else if (!matches) {
-                // 其它模组的依赖不匹配: 保持 TaCZ 原逻辑(跳过该枪包)
-                return;
-            }
+        List<GunPackDependencies.Issue> issues;
+        try {
+            issues = GunPackDependencies.check(dependencies);
+        } catch (Throwable ignored) {
+            return;
         }
-        if (taczRange == null) return;
+        // 全部匹配则交回 TaCZ 原逻辑
+        if (issues.isEmpty()) return;
 
         String namespace = "?";
         try {
@@ -91,31 +84,17 @@ public abstract class MixinGunPackLoader {
             if (name != null && !name.isBlank()) namespace = name;
         } catch (Throwable ignored) {
         }
-        String currentVersion = "?";
-        try {
-            currentVersion = ModList.get().getModContainerById("tacz")
-                    .map(mod -> mod.getModInfo().getVersion().toString())
-                    .orElse("?");
-        } catch (Throwable ignored) {
-        }
-        String key = namespace + "|" + taczRange;
-        if (TACZFIXES$WARNED.add(key)) {
-            TaczFixesMod.LOGGER.warn("gunspack '{}' needs TaCZ {}, but current version is {}: match failed.",
-                    namespace, taczRange, currentVersion);
+        for (GunPackDependencies.Issue issue : issues) {
+            String key = namespace + "|" + issue.modId() + "|" + issue.range();
+            if (!TACZFIXES$WARNED.add(key)) continue;
+            if (issue.type() == GunPackDependencies.IssueType.MISSING) {
+                TaczFixesMod.LOGGER.warn("gunspack '{}' requires mod '{}', which is not installed: loading anyway.",
+                        namespace, issue.modId());
+            } else {
+                TaczFixesMod.LOGGER.warn("gunspack '{}' needs {} {}, but current version is {}: loading anyway.",
+                        namespace, issue.modId(), issue.range(), GunPackDependencies.versionOf(issue.modId()));
+            }
         }
         cir.setReturnValue(true);
-    }
-
-    @Unique
-    private static boolean taczfixes$modVersionMatches(String modId, String spec) {
-        try {
-            org.apache.maven.artifact.versioning.VersionRange range =
-                    org.apache.maven.artifact.versioning.VersionRange.createFromVersionSpec(spec);
-            return ModList.get().getModContainerById(modId)
-                    .map(mod -> range.containsVersion(mod.getModInfo().getVersion()))
-                    .orElse(false);
-        } catch (Throwable ignored) {
-            return false;
-        }
     }
 }

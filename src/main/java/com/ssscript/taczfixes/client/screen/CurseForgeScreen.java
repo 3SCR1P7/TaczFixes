@@ -3,7 +3,9 @@ package com.ssscript.taczfixes.client.screen;
 import com.ssscript.taczfixes.client.curseforge.CurseForgeApi;
 import com.ssscript.taczfixes.client.curseforge.CurseForgeConfig;
 import com.ssscript.taczfixes.client.curseforge.CurseForgeImages;
+import com.ssscript.taczfixes.client.curseforge.CurseForgeInstalledPacks;
 import com.ssscript.taczfixes.client.curseforge.GunPackInstaller;
+import com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker;
 import com.ssscript.taczfixes.client.util.PendingResourceReload;
 import com.ssscript.taczfixes.common.data.GunPackIds;
 import com.ssscript.taczfixes.common.data.GunPackSettings;
@@ -113,6 +115,8 @@ public class CurseForgeScreen extends Screen {
         int centerX = this.width / 2;
         // 重开界面时允许之前失败的封面重新加载
         CurseForgeImages.clearFailed();
+        // 后台预热搜索/文件列表的磁盘缓存, 避免第一次搜索时在主线程读盘
+        CurseForgeApi.warmUpCache();
         // 搜索框居中, 搜索按钮固定在它右侧(按钮尺寸与其它底部按钮一致: 56x20)
         int boxWidth = Math.min(224, this.width - 56 - 4 - 16);
         boxWidth = Math.max(80, boxWidth);
@@ -486,8 +490,11 @@ public class CurseForgeScreen extends Screen {
                         }
                         this.statusColor = 0xFF55FF55;
                         PendingResourceReload.request();
-                        // 新安装的枪包默认放在“可用”列表, 由玩家自己决定何时启用
+                        // 记录安装来源, 供枪包管理界面自动检查更新
                         String namespace = GunPackInstaller.readGunPackNamespace(result.file());
+                        CurseForgeInstalledPacks.recordInstall(file, result.file(), namespace);
+                        GunPackUpdateChecker.invalidate();
+                        // 新安装的枪包默认放在“可用”列表, 由玩家自己决定何时启用
                         if (namespace != null && !namespace.isBlank()) {
                             String packId = GunPackIds.of(namespace, result.file());
                             this.pendingAvailableIds.add(packId);

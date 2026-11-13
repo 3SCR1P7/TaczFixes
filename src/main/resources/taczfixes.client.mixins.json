@@ -7,6 +7,9 @@
     "refmap": "taczfixes.refmap.json",
     "mixins": [],
     "client": [
+        "MixinAbstractSelectionListAccessor",
+        "MixinPackEntryUpdateBadge",
+        "MixinPackSelectionScreenAccessor",
         "compat.MixinARCompatGate",
         "compat.MixinHeldGunCustomScopeAR",
         "compat.MixinLrAttackKeys",
@@ -190,6 +193,8 @@
         "MixinMuzzleParticleManager",
         "MixinObjectAnimationAccessor",
         "MixinObjectAnimationRunner",
+        "compat.MixinPlayerAnimatorAdjustment",
+        "compat.MixinPlayerAnimatorAnimationManager",
         "compat.MixinPlayerAnimatorCompat",
         "MixinRangefinderLock",
         "MixinRangefinderProjection",
