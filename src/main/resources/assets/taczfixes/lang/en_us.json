@@ -332,6 +332,7 @@
     "config.taczfixes.entry.recoil_knockback.ignore_entity_enable": "Ignore Entity After Hit",
     "config.taczfixes.entry.recoil_knockback.ignore_entity_cooldown_ms": "Entity Ignore Duration (ms)",
 
+    "config.taczfixes.entry.compat.piglin_barter_enabled": "Enable piglin trading of TaCZ items",
     "config.taczfixes.entry.compat.disable_hitboxes": "Disable Entity Hitbox Display",
     "config.taczfixes.entry.compat.disable_third_person": "Disable Third-Person Switching",
     "config.taczfixes.entry.compat.gun_translucent_render": "Allow Translucent Gun Rendering",

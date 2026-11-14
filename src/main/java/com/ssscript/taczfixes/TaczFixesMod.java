@@ -25,6 +25,14 @@ public class TaczFixesMod {
     public static final String MOD_ID = "taczfixes";
     public static final Logger LOGGER = LogManager.getLogger(MOD_ID);
 
+    public static final DeferredRegister<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<?>> LOOT_FUNCTION_TYPES =
+            DeferredRegister.create(net.minecraft.core.registries.Registries.LOOT_FUNCTION_TYPE, MOD_ID);
+    public static final DeferredHolder<net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<?>,
+            net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<com.ssscript.taczfixes.common.loot.BarterPickFunction>> BARTER_PICK_FUNCTION =
+            LOOT_FUNCTION_TYPES.register("barter_pick",
+                    () -> new net.minecraft.world.level.storage.loot.functions.LootItemFunctionType<>(
+                            com.ssscript.taczfixes.common.loot.BarterPickFunction.CODEC));
+
     private static final DeferredRegister<net.minecraft.world.entity.ai.attributes.Attribute> ATTRIBUTES =
             DeferredRegister.create(net.minecraft.core.registries.BuiltInRegistries.ATTRIBUTE, MOD_ID);
     public static final DeferredHolder<net.minecraft.world.entity.ai.attributes.Attribute, net.minecraft.world.entity.ai.attributes.Attribute> AIMING_STAMINA_ATTRIBUTE =
@@ -125,6 +133,7 @@ public class TaczFixesMod {
         });
         modBus.register(new com.ssscript.taczfixes.common.handler.ChargeCapabilityHandler());
         modBus.register(new com.ssscript.taczfixes.common.handler.GunSmithTableEnergyHandler());
+        LOOT_FUNCTION_TYPES.register(modBus);
         ATTRIBUTES.register(modBus);
         modBus.addListener(this::onEntityAttributeModification);
         modBus.addListener(this::onCommonSetup);

@@ -402,6 +402,7 @@ public class ConfigScreen {
         bool_(cat, entry, "compat.disable_tracking_after_penetration", Config.DISABLE_TRACKING_AFTER_PENETRATION);
         bool_(cat, entry, "compat.ads_interrupt_sprint", Config.ADS_INTERRUPT_SPRINT);
         bool_(cat, entry, "compat.prevent_sprint_reengage_when_tilt", Config.PREVENT_SPRINT_REENGAGE_WHEN_TILT);
+        bool_(cat, entry, "compat.piglin_barter_enabled", Config.PIGLIN_BARTER_ENABLED);
         bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);
         bool_(cat, entry, "compat.gun_translucent_render", Config.GUN_TRANSLUCENT_RENDER);
