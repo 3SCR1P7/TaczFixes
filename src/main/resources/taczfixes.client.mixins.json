@@ -78,6 +78,8 @@
         "model.MixinBedrockGunModelScopeHideOthers",
         "model.MixinBedrockGunModelViewRotate",
 
+        "model.MixinDisplayGunGeometry",
+        "model.MixinExternalGunAppearance",
         "model.MixinBedrockPartAddChild",
         "model.MixinBedrockPartParentAccessor",
         

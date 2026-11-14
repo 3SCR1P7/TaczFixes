@@ -368,6 +368,8 @@ public final class GunPackInstaller {
         try {
             // 仅当目标名正好是旧版本文件时才原地替换(避免误删其它枪包)
             if (!installedFile.equals(desired) && oldFile != null && desired.equals(oldFile)) {
+                // Release the zip handle held by the loaded pack first, otherwise delete/move fails on Windows.
+                com.ssscript.taczfixes.client.util.GunPackZipHandleCloser.closeHandles(desired);
                 Files.deleteIfExists(desired);
                 Files.move(installedFile, desired, StandardCopyOption.REPLACE_EXISTING);
                 result = desired;

@@ -42,16 +42,40 @@ public abstract class MixinBedrockAttachmentModel {
         MixinBedrockAttachmentModelScopeSuppress accessor = (MixinBedrockAttachmentModelScopeSuppress) (Object) this;
         if (!accessor.taczfixes$isScope() && !accessor.taczfixes$isSight()) return;
         if (!taczfixes$isPhysicalOpticRender(transformType)) return;
+        boolean standby = com.ssscript.taczfixes.client.util.ScopeCullHelper.isStandbyOpticPass();
+        if (standby) {
+            // standby 瞄具: 隐藏 division 与 sight 镜 ocular, 只保留 scope_ocular。
+            List<List<BedrockPart>> divisions = accessor.taczfixes$divisionNodePaths();
+            if (divisions != null) {
+                for (List<BedrockPart> path : divisions) {
+                    if (path == null) continue;
+                    for (BedrockPart part : path) taczfixes$setPhysicalVisible(part, false);
+                }
+            }
+            List<List<BedrockPart>> ocularPaths = accessor.taczfixes$ocularNodePaths();
+            if (ocularPaths == null) return;
+            // 按 TaCZ 的实际渲染用途区分:
+            // 纯 scope(renderScope): 所有 ocular 都作为目镜可见;
+            // 组合瞄具(renderBoth): 只有 ocular_scope 当目镜, 其余作为 division 线;
+            // 纯 sight(renderSight): 不显示目镜玻璃。
+            boolean pureScope = accessor.taczfixes$isScope() && !accessor.taczfixes$isSight();
+            boolean pureSight = accessor.taczfixes$isSight() && !accessor.taczfixes$isScope();
+            List<Boolean> scopeOcularFlags = accessor.taczfixes$isScopeOcular();
+            for (int i = 0; i < ocularPaths.size(); i++) {
+                List<BedrockPart> path = ocularPaths.get(i);
+                if (path == null) continue;
+                boolean scopeOcular = scopeOcularFlags != null && i < scopeOcularFlags.size()
+                        && Boolean.TRUE.equals(scopeOcularFlags.get(i));
+                boolean visible = pureScope || (!pureSight && scopeOcular);
+                for (BedrockPart part : path) taczfixes$setPhysicalVisible(part, visible);
+            }
+            return;
+        }
         List<List<BedrockPart>> ocularNodePaths = accessor.taczfixes$ocularNodePaths();
         if (ocularNodePaths == null) return;
         for (List<BedrockPart> path : ocularNodePaths) {
             if (path == null) continue;
-            for (BedrockPart part : path) {
-                if (!part.visible) {
-                    taczfixes$ocularVisibilityBeforePhysical.put(part, Boolean.FALSE);
-                    part.visible = true;
-                }
-            }
+            for (BedrockPart part : path) taczfixes$setPhysicalVisible(part, true);
         }
     }
     @Inject(method = TACZFIXES_RENDER_DESC, at = @At("RETURN"), remap = false)
@@ -67,8 +91,16 @@ public abstract class MixinBedrockAttachmentModel {
     }
 
     @Unique
+    private void taczfixes$setPhysicalVisible(BedrockPart part, boolean visible) {
+        if (part.visible == visible) return;
+        taczfixes$ocularVisibilityBeforePhysical.putIfAbsent(part, part.visible);
+        part.visible = visible;
+    }
+
+    @Unique
     private boolean taczfixes$isPhysicalOpticRender(ItemDisplayContext transformType) {
-        return DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND
+        return com.ssscript.taczfixes.client.util.ScopeCullHelper.isPhysicalOpticPass()
+                || DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND
                 || transformType == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
                 || transformType != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
     }

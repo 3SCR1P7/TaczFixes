@@ -104,6 +104,8 @@ dependencies {
     compileOnly files('libs/ProjectE-1.20.1-PE1.0.1.jar')
     compileOnly files('libs/embeddium-0.3.31+mc1.20.1.jar')
 compileOnly files('libs/simplebedrockmodel-2.5.6-forge-mc1.20.1.jar')
+    compileOnly files('libs/sbm-v2-2.6.2-forge-mc1.20.1.jar')
+    compileOnly files('libs/mae-1.1.4.jar')
 
     compileOnly files('libs/gunsmithlib-forge-1.20.1-tacz1.2.0_1021-7.0.0-alpha.10.jar')
 

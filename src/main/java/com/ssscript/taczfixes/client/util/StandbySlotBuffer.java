@@ -5,6 +5,7 @@ import com.ssscript.taczfixes.common.data.GunPosAlterManager;
 import com.ssscript.taczfixes.common.util.PosAlterStorage;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IAttachment;
+import com.tacz.guns.api.item.attachment.AttachmentType;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
@@ -103,6 +104,36 @@ public final class StandbySlotBuffer {
                 }
             }
         } catch (Throwable ignored) {
+        }
+    }
+
+    /** standby 瞄具物理渲染: 直接以计算好的 pose 调模型(非第一人称物理分支), 不经过 AttachmentRender 的槽位变换。 */
+    public static void renderOpticPhysical(BedrockAttachmentModel model, ItemStack item, ItemStack gun,
+                                           PoseStack poseStack, ItemDisplayContext displayContext,
+                                           RenderType renderType, int light, int overlay) {
+        if (model == null) return;
+        com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(true);
+        com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(true);
+        try {
+            model.render(item, gun, poseStack, displayContext, renderType, light, overlay);
+        } finally {
+            com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(false);
+            com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(false);
+        }
+    }
+
+    /** 标准槽瞄具作为 standby 时物理渲染: 用 TaCZ 自己的 AttachmentRender + 物理 pass(保持原生位置/适配器)。 */
+    public static void renderSlotAttachmentPhysical(ItemStack item, ItemStack gun, AttachmentType type,
+                                                    PoseStack poseStack, ItemDisplayContext displayContext,
+                                                    int light, int overlay) {
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(true);
+        com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(true);
+        try {
+            AttachmentRender.renderAttachment(item, gun, type, poseStack, displayContext, light, overlay, bufferSource);
+        } finally {
+            com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(false);
+            com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(false);
         }
     }
 
