@@ -24,6 +24,7 @@ crash-reports/
 
 # 本地第三方依赖 jar (需自行放入 libs/)
 libs/
+repo/
 
 # 源码备份压缩包
 src*.zip
