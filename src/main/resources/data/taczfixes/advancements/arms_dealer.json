@@ -1,0 +1,22 @@
+{
+  "parent": "tacz:root",
+  "display": {
+    "icon": {
+      "item": "minecraft:netherite_ingot"
+    },
+    "title": {
+      "translate": "advancement.taczfixes.arms_dealer.title"
+    },
+    "description": {
+      "translate": "advancement.taczfixes.arms_dealer.description"
+    },
+    "frame": "task",
+    "show_toast": true,
+    "announce_to_chat": true
+  },
+  "criteria": {
+    "barter": {
+      "trigger": "minecraft:impossible"
+    }
+  }
+}

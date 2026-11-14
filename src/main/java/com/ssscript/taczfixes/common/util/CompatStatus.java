@@ -42,7 +42,7 @@ public final class CompatStatus {
     private CompatStatus() {
     }
 
-    /** 形如 taczfixes-1.20.1-2.2.1 的版本标签。 */
+    /** 形如 taczfixes-1.20.1-2.2.2 的版本标签。 */
     public static String versionLabel() {
         if (versionLabel == null) {
             String minecraftVersion = SharedConstants.getCurrentVersion().getName();

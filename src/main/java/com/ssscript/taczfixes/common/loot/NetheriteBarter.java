@@ -8,9 +8,11 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.init.ModItems;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
 import com.tacz.guns.resource.index.CommonGunIndex;
+import net.minecraft.advancements.Advancement;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -61,6 +63,13 @@ public final class NetheriteBarter {
     /** 下界合金锭对应的自定义以物易物战利品表。 */
     public static final ResourceLocation LOOT_TABLE_ID =
             ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "gameplay/netherite_bartering");
+
+    /** 「军火贩」进度: 首次用下界合金锭与猪灵交易时获得。 */
+    public static final ResourceLocation ARMS_DEALER_ADVANCEMENT_ID =
+            ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "arms_dealer");
+    private static final String ARMS_DEALER_CRITERION = "barter";
+    /** 找不到最近可见玩家时, 在该半径内寻找交易对象。 */
+    private static final double ARMS_DEALER_FALLBACK_RANGE = 32.0D;
 
     /** 火箭筒类型: 弹药给 1-3 发。 */
     private static final Set<String> RPG_GUN_TYPES = Set.of("rpg");
@@ -120,6 +129,42 @@ public final class NetheriteBarter {
             items = List.of(new ItemStack(Items.IRON_INGOT));
         }
         throwItems(piglin, items);
+        grantArmsDealerAdvancement(piglin);
+    }
+
+    /**
+     * 授予「军火贩」进度: 优先给猪灵最近可见的玩家(即战利品扔向的交易对象), 否则给附近最近的玩家。
+     */
+    private static void grantArmsDealerAdvancement(Piglin piglin) {
+        Player player = piglin.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER).orElse(null);
+        if (player == null) {
+            MinecraftServer server = piglin.getServer();
+            if (server == null) {
+                return;
+            }
+            double bestDistance = ARMS_DEALER_FALLBACK_RANGE * ARMS_DEALER_FALLBACK_RANGE;
+            for (ServerPlayer candidate : server.getPlayerList().getPlayers()) {
+                if (candidate.level() != piglin.level()) {
+                    continue;
+                }
+                double distance = candidate.distanceToSqr(piglin);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    player = candidate;
+                }
+            }
+        }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        MinecraftServer server = serverPlayer.getServer();
+        if (server == null) {
+            return;
+        }
+        Advancement advancement = server.getAdvancements().getAdvancement(ARMS_DEALER_ADVANCEMENT_ID);
+        if (advancement != null) {
+            serverPlayer.getAdvancements().award(advancement, ARMS_DEALER_CRITERION);
+        }
     }
 
     /** 与 {@code PiglinAi.getBarterResponseItems} 等价, 只是战利品表换成本模组的。 */
