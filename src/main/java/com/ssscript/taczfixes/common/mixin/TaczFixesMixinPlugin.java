@@ -16,6 +16,8 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean CREATE_PRESENT;
     private static final boolean ACCELERATED_PRESENT;
     private static final boolean PLAYER_ANIMATOR_PRESENT;
+    private static final boolean TOUHOU_LITTLE_MAID_PRESENT;
+    private static final boolean YES_STEVE_MODEL_PRESENT;
 
     static {
         PARCOOL_PRESENT = hasResource("com/alrex/parcool/common/attachment/common/Parkourability.class");
@@ -27,6 +29,8 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         CREATE_PRESENT = hasResource("com/simibubi/create/content/contraptions/AbstractContraptionEntity.class");
         ACCELERATED_PRESENT = hasResource("com/github/argon4w/acceleratedrendering/core/buffers/accelerated/AcceleratedBufferSource.class");
         PLAYER_ANIMATOR_PRESENT = hasResource("dev/kosmx/playerAnim/api/layered/modifier/AdjustmentModifier.class");
+        TOUHOU_LITTLE_MAID_PRESENT = hasResource("com/github/tartaricacid/touhoulittlemaid/TouhouLittleMaid.class");
+        YES_STEVE_MODEL_PRESENT = hasResource("com/elfmcys/yesstevemodel/YesSteveModel.class");
     }
 
     private static boolean hasResource(String path) {
@@ -59,6 +63,12 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.contains(".MixinLr")) {
             return LRTACTICAL_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinTml") || mixinClassName.contains(".MixinTouhouMaid")) {
+            return TOUHOU_LITTLE_MAID_PRESENT;
+        }
+        if (mixinClassName.contains(".MixinYsm")) {
+            return YES_STEVE_MODEL_PRESENT;
         }
         if (mixinClassName.contains(".MixinIrons")) {
             return IRONS_SPELLBOOKS_PRESENT;
