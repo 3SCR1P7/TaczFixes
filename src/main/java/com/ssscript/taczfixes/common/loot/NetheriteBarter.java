@@ -18,6 +18,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
+import net.minecraft.advancements.AdvancementHolder;
 import net.minecraft.core.Holder;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.core.registries.Registries;
@@ -25,6 +26,7 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
@@ -65,6 +67,13 @@ public final class NetheriteBarter {
 
     private static final ResourceKey<LootTable> LOOT_TABLE_KEY =
             ResourceKey.create(Registries.LOOT_TABLE, LOOT_TABLE_ID);
+
+    /** "Arms Dealer" advancement: granted on the first netherite-ingot barter with a piglin. */
+    public static final ResourceLocation ARMS_DEALER_ADVANCEMENT_ID =
+            ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "arms_dealer");
+    private static final String ARMS_DEALER_CRITERION = "barter";
+    /** Search radius used to find the trading player when the piglin has no visible-player memory. */
+    private static final double ARMS_DEALER_FALLBACK_RANGE = 32.0D;
 
     /** RPG gun types: 1-3 ammo (highest merge priority). */
     private static final Set<String> RPG_GUN_TYPES = Set.of("rpg");
@@ -123,6 +132,43 @@ public final class NetheriteBarter {
             items = List.of(new ItemStack(Items.IRON_INGOT));
         }
         throwItems(piglin, items);
+        grantArmsDealerAdvancement(piglin);
+    }
+
+    /**
+     * Grants the "Arms Dealer" advancement to the piglin's nearest visible player (the barter
+     * recipient), falling back to the closest player in range.
+     */
+    private static void grantArmsDealerAdvancement(Piglin piglin) {
+        Player player = piglin.getBrain().getMemory(MemoryModuleType.NEAREST_VISIBLE_PLAYER).orElse(null);
+        if (player == null) {
+            MinecraftServer server = piglin.getServer();
+            if (server == null) {
+                return;
+            }
+            double bestDistance = ARMS_DEALER_FALLBACK_RANGE * ARMS_DEALER_FALLBACK_RANGE;
+            for (ServerPlayer candidate : server.getPlayerList().getPlayers()) {
+                if (candidate.level() != piglin.level()) {
+                    continue;
+                }
+                double distance = candidate.distanceToSqr(piglin);
+                if (distance < bestDistance) {
+                    bestDistance = distance;
+                    player = candidate;
+                }
+            }
+        }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        MinecraftServer server = serverPlayer.getServer();
+        if (server == null) {
+            return;
+        }
+        AdvancementHolder advancement = server.getAdvancements().get(ARMS_DEALER_ADVANCEMENT_ID);
+        if (advancement != null) {
+            serverPlayer.getAdvancements().award(advancement, ARMS_DEALER_CRITERION);
+        }
     }
 
     /** Equivalent of {@code PiglinAi.getBarterResponseItems}, using this mod's loot table. */
