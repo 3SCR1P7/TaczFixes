@@ -134,6 +134,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ChargeCapabilityHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunSmithTableEnergyHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.compat.ArcanaSkillBridge());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CompatCommand());
         if (net.minecraftforge.fml.ModList.get().isLoaded("irons_spellbooks")) {
             try {
                 MinecraftForge.EVENT_BUS.register(Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")

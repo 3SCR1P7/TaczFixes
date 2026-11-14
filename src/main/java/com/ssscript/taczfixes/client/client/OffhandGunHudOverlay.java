@@ -135,9 +135,15 @@ public final class OffhandGunHudOverlay implements IGuiOverlay {
             gunIconAmmo = chargePercent <= 0 ? 0 : 1;
         }
         String ammoTypeName = com.ssscript.taczfixes.client.util.GunsmithLibAmmoNameCompat.resolve(stack);
-        Component sideLabel = ammoTypeName != null && !ammoTypeName.isBlank()
-                ? Component.literal(ammoTypeName)
-                : Component.translatable("taczfixes.hud.left");
+        Component sideLabel;
+        if (ammoTypeName != null && !ammoTypeName.isBlank()) {
+            sideLabel = Component.literal(ammoTypeName);
+        } else if (!com.ssscript.taczfixes.common.util.GunsmithLibHelper.isLoaded()) {
+            // 未安装 GunsmithLib 时无法解析弹种名, 改显示 taczfixes 版本标签。
+            sideLabel = com.ssscript.taczfixes.common.util.CompatStatus.versionLiteral();
+        } else {
+            sideLabel = Component.translatable("taczfixes.hud.left");
+        }
         renderNumbers(graphics, minecraft.font, height, currentAmmoCountText, inventoryAmmoCountText, ammoCountColor, inventoryAmmoCountColor, sideLabel);
         renderGunAndFireMode(graphics, minecraft.font, stack, gun, display, height, currentAmmoCountText, gunIconAmmo, overheatLocked);
         renderHeat(gui, graphics, stack, gun, gunData, height);

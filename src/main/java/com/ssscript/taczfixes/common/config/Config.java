@@ -78,6 +78,7 @@ public class Config {
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_MAX_STACKS;
     public static final ForgeConfigSpec.IntValue SPREAD_RAMP_DECAY_DELAY_MS;
     public static final ForgeConfigSpec.DoubleValue SPREAD_RAMP_DECAY;
+    public static final ForgeConfigSpec.ConfigValue<String> SPREAD_BLEND_MODE;
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue JUMP_INACCURACY_DEFAULT_SPEED;
     public static final ForgeConfigSpec.BooleanValue EXPLOSION_BULLET_ONLY;
@@ -135,6 +136,7 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SNEAK_MULTIPLIER;
     public static final ForgeConfigSpec.DoubleValue RECOIL_KNOCKBACK_SEMI_FACTOR;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> RECOIL_FIRE_RATE_DISABLED_GUNS;
+    public static final ForgeConfigSpec.BooleanValue RECOIL_STACKING;
     public static final ForgeConfigSpec.IntValue REFIT_TOAST_DURATION_MS;
     public static final ForgeConfigSpec.IntValue REFIT_TOAST_FADE_MS;
     public static final ForgeConfigSpec.DoubleValue REFIT_BUTTON_OPACITY;
@@ -499,6 +501,12 @@ public class Config {
                 .comment("禁用首发后坐力倍率的枪械列表。",
                         "Example: [\"rfp:m2hb\", \"rfp:dshkm\"]")
                 .defineList("disabled_guns", List.of("rfp:m2hb", "rfp:dshkm"), it -> it instanceof String);
+        RECOIL_STACKING = BUILDER
+                .comment("后坐力叠加。默认值：false",
+                        "false：保持原逻辑，下一次开火打断上一次开火的后坐力上抬。",
+                        "true：每一发开火向上的后坐力作为独立图层叠加；向下的回正部分会被下一发开火打断，",
+                        "停火后只有最后一发的向下段生效(相机回落约最后一发的抬升量，之前叠加的抬升保留)。")
+                .define("recoil_stacking", false);
         BUILDER.pop();
         SPECS.put("recoil_modifier", BUILDER.build());
 
@@ -522,6 +530,13 @@ public class Config {
         SPREAD_RAMP_DECAY = BUILDER
                 .comment("回正散布的速度。默认值：0.1")
                 .defineInRange("decay", 0.10, 0.0, 1.0);
+        SPREAD_BLEND_MODE = BUILDER
+                .comment("枪械散布混合状态。可选：false / addend / multiplier / percent。默认值：false",
+                        "false：保持原逻辑，按优先级只取一个状态。",
+                        "addend：Σ(所有非 STAND 状态散布) − (N−1)×STAND。",
+                        "percent：最小散布状态散布 × Σ(其它状态散布/STAND)。",
+                        "multiplier：最小散布状态散布 × ∏(其它状态散布/STAND)。")
+                .define("spread_blend_mode", com.ssscript.taczfixes.common.util.SpreadBlend.defaultMode());
         JUMP_INACCURACY_DEFAULT_MULTIPLIER = BUILDER
                 .comment("默认滞空散布倍率。默认值：1.2")
                 .defineInRange("jump_default_multiplier", 1.2, 0.0, 10.0);

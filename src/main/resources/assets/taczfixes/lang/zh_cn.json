@@ -35,6 +35,9 @@
     "key.taczfixes.focus_aim":  "单手瞄准",
     "key.taczfixes.offhand_fire_select":  "副手开火模式",
 
+    "command.taczfixes.compat.header":  "TaCZ Fixes 兼容模组 (%s)",
+    "command.taczfixes.compat.not_installed":  "未安装",
+
 
     "config.taczfixes.title":  "TaCZ Fixes 配置",
 
@@ -161,6 +164,7 @@
     "config.taczfixes.entry.recoil_modifier.pause_factor_yaw":  "首次开火的水平后坐力倍率",
     "config.taczfixes.entry.recoil_modifier.min_rpm":  "触发首发倍率所需的最小射速(RPM)",
     "config.taczfixes.entry.recoil_modifier.disabled_guns":  "禁用的枪械列表",
+    "config.taczfixes.entry.recoil_modifier.recoil_stacking":  "后坐力叠加",
 
     "config.taczfixes.entry.inaccuracy.enabled":  "启用连射惩罚",
     "config.taczfixes.entry.inaccuracy.ramp_increment":  "每次开火增加的散布比例",
@@ -170,6 +174,7 @@
     "config.taczfixes.entry.inaccuracy.ramp_decay":  "回正散布速度",
     "config.taczfixes.entry.inaccuracy.jump_default_multiplier":  "滞空精度倍率",
     "config.taczfixes.entry.inaccuracy.jump_default_speed":  "滞空精度增速",
+    "config.taczfixes.entry.inaccuracy.spread_blend_mode":  "枪械散布混合状态（false/addend/multiplier/percent）",
 
     "config.taczfixes.entry.ricochet.enabled":  "启用跳弹",
     "config.taczfixes.entry.ricochet.min_angle":  "跳弹所需最小入射角",
@@ -332,7 +337,7 @@
     "config.taczfixes.entry.compat.disable_hitboxes":  "禁用实体碰撞箱显示",
     "config.taczfixes.entry.compat.disable_third_person":  "禁用切换第三人称视角",
     "config.taczfixes.entry.compat.gun_translucent_render":  "允许枪械半透明渲染",
-  "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",
+    "config.taczfixes.entry.compat.ammo_emc_blacklist":  "弹匣中不计入EMC的弹药类型",
     "config.taczfixes.entry.compat.create_contraption_bullet_collision":  "动态结构子弹碰撞修复",
     "config.taczfixes.entry.compat.bullet_pierce_glass":  "子弹穿透玻璃",
     "config.taczfixes.entry.compat.gun_pack.button_offset_x":  "按钮水平偏移（像素）",
