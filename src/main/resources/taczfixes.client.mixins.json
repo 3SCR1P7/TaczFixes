@@ -169,7 +169,6 @@
         "MixinHSVSliderGroupCustomSlot",
         "MixinHumanoidOffhandRender",
         "MixinInnerThirdPersonManager",
-        "dual.MixinInnerThirdPersonManagerOffhandAnimation",
         "MixinInventoryAttachmentSlotPreview",
         "MixinInventoryAttachmentSlotScale",
         "renderer.MixinItemInHandRendererHeightAccessor",

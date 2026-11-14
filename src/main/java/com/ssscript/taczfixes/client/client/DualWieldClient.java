@@ -295,7 +295,10 @@ public final class DualWieldClient {
                 }
             }
             if (player != null) {
-                updateThirdPersonGunAnimations(minecraft, ItemStack.EMPTY, player.getMainHandItem());
+                // 非双持但副手是枪时, 也要推进副手枪的第三人称动画状态机(否则模型只在初始化时动一下)。
+                ItemStack tickOffhand = player.getOffhandItem();
+                ItemStack tickLeftGun = IGun.getIGunOrNull(tickOffhand) != null ? tickOffhand : ItemStack.EMPTY;
+                updateThirdPersonGunAnimations(minecraft, tickLeftGun, player.getMainHandItem());
                 OffhandDisplayManager.updatePutAwayTarget(player.getMainHandItem(), player.getOffhandItem(), false);
             }
             OffhandDisplayManager.tickPutAway(player);

@@ -67,6 +67,7 @@ public final class DualThirdPersonRenderer {
         }
         DualRenderContext.setPhase(handPhase);
         applyMinigunPitchCorrection(entity, stack, offhand, poseStack);
+        // TaCZ 只支持右手第三人称枪械渲染; 左手位置由外层姿态提供, 这里固定用右手上下文。
         Minecraft.getInstance().getItemRenderer().renderStatic(stack, ItemDisplayContext.THIRD_PERSON_RIGHT_HAND, packedLight, packedOverlay, poseStack, buffer, entity.level(), entity.getId());
         if (previousPhase == DualRenderContext.HandPhase.NONE) {
             DualRenderContext.clear();

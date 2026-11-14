@@ -57,7 +57,8 @@ public abstract class MixinDualItemInHandLayer<T extends LivingEntity, M extends
             getParentModel().translateToHand(physicalArm, poseStack);
             poseStack.mulPose(Axis.XP.rotationDegrees(-90.0f));
             poseStack.mulPose(Axis.YP.rotationDegrees(180.0f));
-            float side = physicalArm == HumanoidArm.LEFT ? -1.0f : 1.0f;
+            // 与原版 ItemInHandLayer 一致: 左手 +1/16, 右手 -1/16。
+            float side = physicalArm == HumanoidArm.LEFT ? 1.0f : -1.0f;
             poseStack.translate(side / 16.0f, 0.125f, -0.625f);
             if (offhand) {
                 DualThirdPersonRenderer.renderOffhand(entity, stack, poseStack, buffer, packedLight, OverlayTexture.NO_OVERLAY);
