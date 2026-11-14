@@ -54,11 +54,13 @@ public class ClientMessageCustomSlotLaserColor {
         IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
         if (attachment == null) return;
         attachment.setLaserColor(item, message.color);
-        CompoundTag tag = ItemNbt.getOrCreate(gunStack);
-        CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
-                ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
-        slots.put(message.slotId, ItemNbt.saveStack(item));
-        tag.put(CustomSlotStorage.TAG_KEY, slots);
+        CompoundTag savedItem = ItemNbt.saveStack(item);
+        ItemNbt.mutate(gunStack, tag -> {
+            CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
+                    ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
+            slots.put(message.slotId, savedItem);
+            tag.put(CustomSlotStorage.TAG_KEY, slots);
+        });
         player.inventoryMenu.broadcastChanges();
     }
 }

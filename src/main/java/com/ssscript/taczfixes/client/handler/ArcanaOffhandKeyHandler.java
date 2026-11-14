@@ -16,6 +16,9 @@ import org.lwjgl.glfw.GLFW;
  */
 public class ArcanaOffhandKeyHandler {
 
+    private static final String KEY_LASER = "key.taczexpands.toggle_laser.desc";
+    private static final String KEY_FLASHLIGHT = "key.taczexpands.toggle_flashlight.desc";
+
     private static final String[] ACTION_KEYS = {
             "key.taczexpands.action_1.desc",
             "key.taczexpands.action_2.desc",
@@ -33,6 +36,12 @@ public class ArcanaOffhandKeyHandler {
         if (player == null || minecraft.screen != null || !minecraft.mouseHandler.isMouseGrabbed() || !minecraft.isWindowActive()) {
             return;
         }
+        // 主手为物品时, Arcana 的激光/手电开关只会作用于主手 (无效); 转发为副手开关。
+        int toggleAction = taczfixes$matchToggleKey(minecraft, event, player);
+        if (toggleAction > 0) {
+            NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandAction(toggleAction));
+            return;
+        }
         if (!DualWieldEligibility.isDualWielding(player)) {
             return;
         }
@@ -43,6 +52,23 @@ public class ArcanaOffhandKeyHandler {
         NetworkHandler.CHANNEL.sendToServer(new ClientMessageOffhandAction(action));
     }
 
+    private static int taczfixes$matchToggleKey(Minecraft minecraft, InputEvent.Key event, LocalPlayer player) {
+        if (com.tacz.guns.api.item.IGun.getIGunOrNull(player.getMainHandItem()) != null) {
+            return 0;
+        }
+        if (com.tacz.guns.api.item.IGun.getIGunOrNull(player.getOffhandItem()) == null) {
+            return 0;
+        }
+        for (KeyMapping mapping : minecraft.options.keyMappings) {
+            if (KEY_LASER.equals(mapping.getName()) && mapping.matches(event.getKey(), event.getScanCode())) {
+                return 101;
+            }
+            if (KEY_FLASHLIGHT.equals(mapping.getName()) && mapping.matches(event.getKey(), event.getScanCode())) {
+                return 102;
+            }
+        }
+        return 0;
+    }
     private static int matchActionKey(Minecraft minecraft, InputEvent.Key event) {
         for (int i = 0; i < ACTION_KEYS.length; i++) {
             for (KeyMapping mapping : minecraft.options.keyMappings) {

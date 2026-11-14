@@ -19,6 +19,26 @@ public final class DualThirdPersonArmPose {
     private DualThirdPersonArmPose() {
     }
 
+    private static void applyGunAnimationToBothArms(LivingEntity entity, ModelPart rightArm, ModelPart leftArm,
+                                                    ModelPart body, ModelPart head) {
+        GunDisplayInstance display = TimelessAPI.getGunDisplay(entity.getOffhandItem()).orElse(null);
+        if (display == null) {
+            return;
+        }
+        com.tacz.guns.api.client.other.IThirdPersonAnimation animation =
+                ThirdPersonManager.getAnimation(display.getThirdPersonAnimation());
+        if (animation == null) {
+            return;
+        }
+        com.tacz.guns.api.entity.IGunOperator operator =
+                com.tacz.guns.api.entity.IGunOperator.fromLivingEntity(entity);
+        float aimingProgress = operator == null ? 0.0f : operator.getSynAimingProgress();
+        if (aimingProgress > 0.0f) {
+            animation.animateGunAim(entity, rightArm, leftArm, body, head, aimingProgress);
+        } else {
+            animation.animateGunHold(entity, rightArm, leftArm, body, head);
+        }
+    }
     public static boolean mirrorRightArm(LivingEntity entity, ModelPart body, ModelPart head,
                                          ModelPart rightArm, ModelPart leftArm) {
         var offhand = entity.getOffhandItem();
@@ -42,6 +62,16 @@ public final class DualThirdPersonArmPose {
         if (entity.getPose() == Pose.SLEEPING || entity.onClimbable() || entity.isSwimming()
                 || entity.getPose() == Pose.FALL_FLYING) {
             return false;
+        }
+        if (offGun && !mainGun) {
+            // 主手物品、副手枪: 有 playeranimator 资源时由 playeranimator 层摆臂(与双手持枪完全一致);
+            // 没有资源时才退回 TaCZ 的 animateGunHold 兜底。
+            GunDisplayInstance offDisplay = TimelessAPI.getGunDisplay(offhand).orElse(null);
+            boolean animatedByPlayerAnimator = offDisplay != null
+                    && com.tacz.guns.compat.playeranimator.animation.AnimationManager.hasPlayerAnimator3rd(offDisplay);
+            if (!animatedByPlayerAnimator) {
+                applyGunAnimationToBothArms(entity, rightArm, leftArm, body, head);
+            }
         }
         leftArm.x = -rightArm.x;
         leftArm.y = rightArm.y;

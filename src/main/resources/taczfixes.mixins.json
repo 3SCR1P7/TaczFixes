@@ -16,7 +16,6 @@
         "MixinAttachmentDataUtilsAmmoAmount",
         "MixinAttachmentDataUtilsExtendedMagLevel",
         "MixinAttachmentPropertyManager",
-        "MixinAttachmentPropertyManager",
         "MixinBlockDataTaczFixes",
         "MixinBulletIgnoreDamagedEntity",
         "MixinBulletPenetrationBlocker",

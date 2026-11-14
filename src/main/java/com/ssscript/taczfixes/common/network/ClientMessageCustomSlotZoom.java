@@ -48,14 +48,19 @@ public class ClientMessageCustomSlotZoom {
         ResourceLocation id = attachment.getAttachmentId(scope);
         if (id == null || com.tacz.guns.api.DefaultAssets.isEmptyAttachmentId(id)) return;
 
-        CompoundTag tag = ItemNbt.getOrCreate(scope);
-        int number = AttachmentItemDataAccessor.getZoomNumberFromTag(tag);
-        AttachmentItemDataAccessor.setZoomNumberToTag(tag, (number + 1) % 2147483646);
+        // 1.21.1: 必须走 ItemStack.update(mutate), 直接改 getUnsafe() 的组件不会同步到客户端。
+        ItemNbt.mutate(scope, tag -> {
+            int number = AttachmentItemDataAccessor.getZoomNumberFromTag(tag);
+            AttachmentItemDataAccessor.setZoomNumberToTag(tag, (number + 1) % 2147483646);
+        });
 
-        CompoundTag gunTag = ItemNbt.getOrCreate(gunStack);
-        CompoundTag slots = gunTag.getCompound(CustomSlotStorage.TAG_KEY);
-        slots.put(message.slotId, ItemNbt.saveStack(scope));
-        gunTag.put(CustomSlotStorage.TAG_KEY, slots);
+        CompoundTag savedScope = ItemNbt.saveStack(scope);
+        ItemNbt.mutate(gunStack, gunTag -> {
+            CompoundTag slots = gunTag.contains(CustomSlotStorage.TAG_KEY, 10)
+                    ? gunTag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();
+            slots.put(message.slotId, savedScope);
+            gunTag.put(CustomSlotStorage.TAG_KEY, slots);
+        });
         player.inventoryMenu.broadcastChanges();
     }
 }

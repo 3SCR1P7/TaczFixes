@@ -449,7 +449,6 @@
     "gui.taczfixes.edit_data.invalid": "Invalid data file",
     "gui.taczfixes.edit_data.saved": "Saved",
     "gui.taczfixes.gun_packs.title": "Gun Packs",
-    "gui.taczfixes.gun_packs.hint": "Upper packs override lower ones. Hover a selected pack for arrows.",
     "gui.taczfixes.gun_packs.available": "Available",
     "gui.taczfixes.gun_packs.selected": "Selected",
     "gui.taczfixes.gun_packs.open_folder": "Open Gun Pack Folder",
