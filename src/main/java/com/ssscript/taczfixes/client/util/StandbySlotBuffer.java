@@ -117,9 +117,13 @@ public final class StandbySlotBuffer {
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         ItemDisplayContext physicalContext = displayContext.firstPerson()
                 ? ItemDisplayContext.FIXED : displayContext;
+        // 标记 standby 物理渲染: 否则 MixinBedrockAttachmentModel 会把所有 ocular(含 sight 目镜)强制设为可见。
+        boolean previousStandbyPass = ScopeCullHelper.isStandbyOpticPass();
+        ScopeCullHelper.setStandbyOpticPass(true);
         try {
             model.render(item, gun, poseStack, physicalContext, renderType, light, overlay, 1.0f, bufferSource);
         } finally {
+            ScopeCullHelper.setStandbyOpticPass(previousStandbyPass);
             restoreOcularVisibility(restore);
         }
     }
@@ -134,9 +138,12 @@ public final class StandbySlotBuffer {
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
         ItemDisplayContext physicalContext = displayContext.firstPerson()
                 ? ItemDisplayContext.FIXED : displayContext;
+        boolean previousStandbyPass = ScopeCullHelper.isStandbyOpticPass();
+        ScopeCullHelper.setStandbyOpticPass(true);
         try {
             AttachmentRender.renderAttachment(item, gun, type, poseStack, physicalContext, light, overlay, bufferSource);
         } finally {
+            ScopeCullHelper.setStandbyOpticPass(previousStandbyPass);
             restoreOcularVisibility(restore);
         }
     }
