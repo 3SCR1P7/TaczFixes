@@ -86,8 +86,9 @@
 
 - Create、Accelerated Rendering、LesRaisins Tactical Equipements、Iron's Spellbooks、ProjectE
 - ParCool、Sodium
+- TouhouLittleMaid 1.5.3、YesSteveModel 2.6.5（双持持枪/开火动画、副手渲染与姿势镜像）
 
-> 1.21.1 分支暂无 TouhouLittleMaid / YesSteveModel 兼容，渲染优化走 Sodium 而非 Embeddium。
+> 1.21.1 分支渲染优化走 Sodium 而非 Embeddium。
 
 ## 按键
 

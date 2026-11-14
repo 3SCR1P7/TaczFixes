@@ -13,6 +13,7 @@ import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -27,6 +28,7 @@ public final class DualFocusAimState {
     private static final float OFFHAND_DROP_Z = 0.16f;
     private static final float OFFHAND_PITCH_DEGREES = 24.0f;
     private static final float OFFHAND_ROLL_DEGREES = -8.0f;
+    private static final ResourceLocation TOUHOU_MAID_ENTITY_ID = ResourceLocation.fromNamespaceAndPath("touhou_little_maid", "maid");
     private static boolean active;
     private static float previousProgress;
     private static float progress;
@@ -147,7 +149,7 @@ public final class DualFocusAimState {
         if (localPlayer != null && (entity == localPlayer || entity.getUUID().equals(localPlayer.getUUID()))) {
             return getFrameProgress();
         }
-        if (!(entity instanceof Player)) {
+        if (!(entity instanceof Player) && !isTouhouMaid(entity)) {
             return 0.0f;
         }
         try {
@@ -155,6 +157,10 @@ public final class DualFocusAimState {
         } catch (RuntimeException e) {
             return 0.0f;
         }
+    }
+
+    private static boolean isTouhouMaid(LivingEntity entity) {
+        return TOUHOU_MAID_ENTITY_ID.equals(BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType()));
     }
 
 
