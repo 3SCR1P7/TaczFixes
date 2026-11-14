@@ -99,45 +99,40 @@ repositories {
 dependencies {
     minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
 
-    // TaCZ: 默认远程坐标; 本地开发快照仍可用 -PtaczJar=libs/xxx.jar 覆盖
+    // 依赖全部使用 Maven 坐标; 无公开坐标的第三方/私有构件由项目内 repo/ 本地 Maven 仓库提供。
+    // TaCZ 开发快照仍可用 -PtaczJar=libs/xxx.jar 临时覆盖。
     def taczJarOverride = providers.gradleProperty('taczJar').getOrNull()
     if (taczJarOverride) {
-        implementation fg.deobf(files(taczJarOverride))
+        implementation files(taczJarOverride)
     } else {
-        implementation fg.deobf("maven.modrinth:SzzJttH8:QGCbNkTy")
+        implementation "taczfixes.local:tacz-forge:1.2.0"
     }
 
-    // 公共 mod 依赖(远程坐标)
-    compileOnly fg.deobf("maven.modrinth:LNytGWDc:8amzvn9x")   // Create
-    compileOnly fg.deobf("maven.modrinth:UfPdUeGy:goctVorN")   // ApricityUI
-    compileOnly "curse.maven:accelerated-rendering-1314021:8448250"
-    compileOnly "curse.maven:projecte-226410:4901949"
-    compileOnly fg.deobf("maven.modrinth:sk9rgfiA:UTbfe5d1")   // Embeddium
-    compileOnly "curse.maven:gunsmith-lib-1264058:9292269"
-
-    // 私有/GitHub-only 构件(项目内本地 Maven 仓库)
+    compileOnly "taczfixes.local:create:6.0.8"
+    compileOnly "taczfixes.local:apricityui:1.3.1"
+    compileOnly "taczfixes.local:acceleratedrendering:1.0.14"
+    compileOnly "taczfixes.local:projecte:PE1.0.1"
+    compileOnly "taczfixes.local:embeddium:0.3.31"
+    compileOnly "taczfixes.local:gunsmithlib:7.0.0-alpha.10"
     compileOnly "taczfixes.local:sbm:2.5.6"
     compileOnly "taczfixes.local:sbm-v2:2.6.2"
     compileOnly "taczfixes.local:mae:1.1.4"
     compileOnly "taczfixes.local:kuroutils:2001.2.5.0"
+    compileOnly "taczfixes.local:mixinextras:0.3.6"
     compileOnly "taczfixes.local:luaj-core:3.0.8-figura"
     compileOnly "taczfixes.local:luaj-jse:3.0.8-figura"
+    compileOnly "taczfixes.local:gd656peek:0.1.1"
+    compileOnly "taczfixes.local:parcool:3.4.3.3"
+    compileOnly "taczfixes.local:lrtactical:0.4.3"
+    compileOnly "taczfixes.local:irons_spellbooks:3.16.3"
+    compileOnly "taczfixes.local:cloth-config:11.1.136"
+    compileOnly "taczfixes.local:commons-math3:3.6.1"
     compileOnly "taczfixes.local:taczexpands:1.4.0"
-
-    // 其余公共 mod 依赖(远程坐标)
-    compileOnly fg.deobf("maven.modrinth:t7aboUWc:ZtM0fbQy")   // GD656 Peek
-    compileOnly fg.deobf("maven.modrinth:Fsvx2bdR:uEY441aP")   // ParCool
-    compileOnly fg.deobf("maven.modrinth:AiwNM9O0:eygQmqIl")   // LesRaisins Tactical Equipements
-    compileOnly fg.deobf("maven.modrinth:s4OWxYQQ:hZaEegS9")   // Iron's Spellbooks
-    compileOnly fg.deobf("maven.modrinth:9s6osm5g:t8TXrZvZ")   // Cloth Config
-    compileOnly fg.deobf("maven.modrinth:R0bDWFAW:tuOQjuRE")   // Touhou Little Maid
-    compileOnly fg.deobf("maven.modrinth:86xjpqqS:Zqooxsd2")   // Yes Steve Model
-
-    // Maven 中央仓库
-    compileOnly "org.apache.commons:commons-math3:3.6.1"
+    compileOnly "taczfixes.local:touhoulittlemaid:1.5.0"
+    compileOnly "taczfixes.local:ysm:2.6.5"
 
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
-    annotationProcessor "io.github.llamalad7:mixinextras-common:0.3.6"
+    annotationProcessor "taczfixes.local:mixinextras:0.3.6"
 }
 
 tasks.named('processResources', ProcessResources).configure {
