@@ -243,6 +243,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "recoil_modifier.pause_factor_yaw", Config.RECOIL_FIRE_RATE_PAUSE_FACTOR_YAW);
         int_(cat, entry, "recoil_modifier.min_rpm", Config.RECOIL_FIRE_RATE_MIN_RPM);
         lst_(cat, entry, "recoil_modifier.disabled_guns", Config.RECOIL_FIRE_RATE_DISABLED_GUNS);
+        bool_(cat, entry, "recoil_modifier.recoil_stacking", Config.RECOIL_STACKING);
     }
 
     private static void buildInaccuracy(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -254,6 +255,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "inaccuracy.ramp_decay", Config.SPREAD_RAMP_DECAY);
         dbl_(cat, entry, "inaccuracy.jump_default_multiplier", Config.JUMP_INACCURACY_DEFAULT_MULTIPLIER);
         dbl_(cat, entry, "inaccuracy.jump_default_speed", Config.JUMP_INACCURACY_DEFAULT_SPEED);
+        spreadBlendSelector(cat, entry, "inaccuracy.spread_blend_mode", Config.SPREAD_BLEND_MODE);
     }
 
     private static void buildRicochet(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -654,6 +656,18 @@ public class ConfigScreen {
         cat.addEntry(entry.startStrField(entry(slug), v.get())
                 .setDefaultValue(v.getDefault())
                 .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .build());
+    }
+
+    /** 散布混合模式: 在 false/addend/multiplier/percent 之间循环切换。 */
+    private static void spreadBlendSelector(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
+                                            ModConfigSpec.ConfigValue<String> v) {
+        cat.addEntry(entry.startSelector(entry(slug),
+                        new String[]{"false", "addend", "multiplier", "percent"},
+                        com.ssscript.taczfixes.common.util.SpreadBlend.normalized(v.get()))
+                .setDefaultValue(com.ssscript.taczfixes.common.util.SpreadBlend.defaultMode())
+                .setSaveConsumer(n -> safeSet(() -> v.set(
+                        com.ssscript.taczfixes.common.util.SpreadBlend.normalized(n))))
                 .build());
     }
 

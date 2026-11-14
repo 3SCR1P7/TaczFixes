@@ -34,6 +34,9 @@
     "key.taczfixes.focus_aim": "Focus Aim",
     "key.taczfixes.offhand_fire_select": "Offhand Fire Mode",
 
+    "command.taczfixes.compat.header": "taczfixes compatibility (%s)",
+    "command.taczfixes.compat.not_installed": "not installed",
+
     "config.taczfixes.title": "TaCZ Fixes Configuration",
 
     "config.taczfixes.category.auto_craft": "Auto Craft",
@@ -159,6 +162,7 @@
     "config.taczfixes.entry.recoil_modifier.pause_factor_yaw": "First-Shot Horizontal Recoil Multiplier",
     "config.taczfixes.entry.recoil_modifier.min_rpm": "Minimum Fire Rate (RPM) to Trigger First-Shot Multiplier",
     "config.taczfixes.entry.recoil_modifier.disabled_guns": "Disabled Guns",
+    "config.taczfixes.entry.recoil_modifier.recoil_stacking": "Recoil Stacking",
 
     "config.taczfixes.entry.inaccuracy.enabled": "Enable Inaccuracy Modifier",
     "config.taczfixes.entry.inaccuracy.ramp_increment": "Spread Increase per Shot (Multiplier)",
@@ -168,6 +172,7 @@
     "config.taczfixes.entry.inaccuracy.ramp_decay": "Spread Recovery Speed",
     "config.taczfixes.entry.inaccuracy.jump_default_multiplier": "Default Jump Accuracy Multiplier",
     "config.taczfixes.entry.inaccuracy.jump_default_speed": "Default Jump Accuracy Ramp Speed",
+    "config.taczfixes.entry.inaccuracy.spread_blend_mode": "Spread Blend Mode (false/addend/multiplier/percent)",
 
     "config.taczfixes.entry.ricochet.enabled": "Enable Ricochet",
     "config.taczfixes.entry.ricochet.min_angle": "Minimum Angle for Ricochet",
