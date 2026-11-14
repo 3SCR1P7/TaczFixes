@@ -85,9 +85,6 @@ public final class MainhandMovementAnimation {
         }
     }
 
-    /**
-     * 鍙屾寔鏃舵帴绠′富鎵嬬Щ鍔ㄥ姩鐢荤殑杈撳叆: 涓绘墜鍔ㄤ綔鍔ㄧ敾(鎹㈠脊/鎺忔灙/妫€瑙嗙瓑)鎾斁鏈熼棿涓嶈繘鍏?run,
-     * 绛夊姩浣滃姩鐢荤粨鏉熷悗鍏堝洖 idle 鍐嶈Е鍙?run, 璁╃姸鎬佹満閲嶆柊鎾斁 run_start 璧锋墜鍔ㄧ敾銆?     */
     public static String adjustDualMovementTrigger(String input, LocalPlayer player) {
         Minecraft minecraft = Minecraft.getInstance();
         if (player == null || !minecraft.options.getCameraType().isFirstPerson() || !DualWieldClient.isDualMode(player)) {
@@ -126,7 +123,6 @@ public final class MainhandMovementAnimation {
         return stateMachine != null && hasRunningActionAnimation(stateMachine.getAnimationController());
     }
 
-    /** 鎺у埗鍣ㄤ腑鏄惁浠嶆湁姝ｅ湪鎾斁鐨勫姩浣滅被鍔ㄧ敾(鎹㈠脊灏炬銆佹帍鏋€佹瑙嗐€佽繎鎴樼瓑)銆?*/
     public static boolean hasRunningActionAnimation(AnimationController controller) {
         if (controller == null) {
             return false;

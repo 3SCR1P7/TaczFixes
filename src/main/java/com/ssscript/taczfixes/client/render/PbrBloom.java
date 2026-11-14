@@ -249,8 +249,6 @@ public final class PbrBloom {
         ResourceLocation id = activeScopeId(iGun, gun);
         return id != null && TimelessAPI.getClientAttachmentIndex(id).isPresent();
     }
-
-    /** 褰撳墠娓叉煋鐨勯厤浠舵槸鍚︿负姝ｅ湪浣跨敤鐨?scope 瑙嗗浘鐬勫叿銆?*/
     public static boolean isActiveScopeItem(ItemStack attachment, ItemStack gun) {
         if (attachment == null || attachment.isEmpty() || gun == null || gun.isEmpty()) return false;
         LocalPlayer player = Minecraft.getInstance().player;
@@ -275,7 +273,6 @@ public final class PbrBloom {
         return Minecraft.getInstance().getMainRenderTarget().isStencilEnabled();
     }
 
-    /** 鎶婂綋鍓?scope 闀滃唴鍖哄煙(division 闄ゅ)璁板綍涓洪伄缃? 娉涘厜鍚堟垚鏃跺墧闄ら暅鍐呮硾鍏夈€?*/
     public static void captureScopeMask() {
         if (!pureScopeAiming()) {
             scopeMaskValid = false;

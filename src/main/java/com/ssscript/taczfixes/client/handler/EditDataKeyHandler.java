@@ -45,10 +45,7 @@ public class EditDataKeyHandler {
         wasDown = down;
     }
 
-    /**
-     * 旧版本默认键为 U(无修饰键), 升级后首次启动时一次性迁移到新的默认 Alt+D 并保存;
-     * 迁移记录写入 config/taczfixes 下, 之后玩家手动改回 U 不会被再次覆盖。
-     */
+
     private static void migrateLegacyDefaultBinding() {
         if (legacyBindingChecked) return;
         legacyBindingChecked = true;

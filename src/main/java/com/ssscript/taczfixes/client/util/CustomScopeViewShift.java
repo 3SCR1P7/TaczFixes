@@ -24,11 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-/**
 
-
-
- */
 public final class CustomScopeViewShift {
 
     private static final float SMOOTH_FACTOR = 0.2f;

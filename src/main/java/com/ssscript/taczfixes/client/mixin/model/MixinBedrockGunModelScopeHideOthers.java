@@ -457,7 +457,6 @@ public abstract class MixinBedrockGunModelScopeHideOthers implements CustomSlotR
                 com.tacz.guns.util.RenderHelper.enableItemEntityStencilTest();
                 com.mojang.blaze3d.systems.RenderSystem.stencilFunc(org.lwjgl.opengl.GL11.GL_GREATER, 127, 255);
             } else if (index.isScope()) {
-                // 绾瓛鐘堕暅: 闀滅墖澶?EQUAL 0)鍓旈櫎
 
                 com.tacz.guns.util.RenderHelper.enableItemEntityStencilTest();
                 com.mojang.blaze3d.systems.RenderSystem.stencilFunc(org.lwjgl.opengl.GL11.GL_EQUAL, 0, 255);
