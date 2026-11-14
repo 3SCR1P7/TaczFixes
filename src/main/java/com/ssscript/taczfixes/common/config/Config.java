@@ -58,6 +58,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue AUTO_AIM_WHEN_PEEKING;
     public static final ForgeConfigSpec.BooleanValue ADS_INTERRUPT_SPRINT;
     public static final ForgeConfigSpec.BooleanValue PREVENT_SPRINT_REENGAGE_WHEN_TILT;
+    public static final ForgeConfigSpec.BooleanValue PIGLIN_BARTER_ENABLED;
     public static final ForgeConfigSpec.BooleanValue AUTO_CRAFT_ENABLED;
     public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_BASE_SECONDS;
     public static final ForgeConfigSpec.DoubleValue AUTO_CRAFT_SECONDS_PER_TYPE;
@@ -912,6 +913,10 @@ public class Config {
                 .comment("持枪时是否阻止冲刺恢复（防止冲刺触发系列滑块颤抖）。默认值：true",
                         "需要TaCZ Tweaks模组。")
                 .define("prevent_sprint_reengage_when_tilt", true);
+        PIGLIN_BARTER_ENABLED = BUILDER
+                .comment("是否启用猪灵交易TaCZ物品。默认值：true",
+                        "false：猪灵不再把下界合金锭当作可交易物，原版行为。")
+                .define("piglin_barter_enabled", true);
         AUTO_AIM_WHEN_PEEKING = BUILDER
                 .comment("是否启用探头自动开镜。默认值：true",
                         "需要GD656Peek模组。")

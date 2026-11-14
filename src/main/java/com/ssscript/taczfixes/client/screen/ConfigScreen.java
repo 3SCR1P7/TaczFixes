@@ -403,6 +403,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "compat.peek_headshot_height", Config.PEEK_HEADSHOT_HEIGHT);
         bool_(cat, entry, "compat.ads_interrupt_sprint", Config.ADS_INTERRUPT_SPRINT);
         bool_(cat, entry, "compat.prevent_sprint_reengage_when_tilt", Config.PREVENT_SPRINT_REENGAGE_WHEN_TILT);
+        bool_(cat, entry, "compat.piglin_barter_enabled", Config.PIGLIN_BARTER_ENABLED);
         bool_(cat, entry, "compat.auto_aim_when_peeking", Config.AUTO_AIM_WHEN_PEEKING);
         bool_(cat, entry, "compat.disable_hitboxes", Config.DISABLE_HITBOXES);
         bool_(cat, entry, "compat.disable_third_person", Config.DISABLE_THIRD_PERSON);

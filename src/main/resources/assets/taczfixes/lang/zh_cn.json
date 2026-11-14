@@ -343,6 +343,7 @@
     "config.taczfixes.entry.compat.gun_pack.button_offset_x":  "按钮水平偏移（像素）",
     "config.taczfixes.entry.compat.gun_pack.button_offset_y":  "按钮垂直偏移（像素）",
     "config.taczfixes.entry.compat.gun_pack.button_size":  "按钮尺寸（像素）",
+    "config.taczfixes.entry.compat.piglin_barter_enabled":  "是否启用猪灵交易TaCZ物品",
 
     "config.taczfixes.entry.aiming_stamina.enabled":  "启用上肢耐力系统",
     "config.taczfixes.entry.aiming_stamina.max_stamina":  "耐力上限默认值",

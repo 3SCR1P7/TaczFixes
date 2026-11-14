@@ -92,6 +92,7 @@
         "MixinModernKineticGunItemSpread",
         "MixinModernKineticGunMeleeEnchant",
         "MixinModernKineticGunScriptAPI",
+        "MixinPiglinAiNetheriteBarter",
         "MixinRepairItemRecipeGunMerge",
         "MixinShieldBehavior",
         "MixinShooterDataHolder",

@@ -44,6 +44,18 @@ public abstract class BaseGunEnchantment extends Enchantment {
         return true;
     }
 
+    /** 宝藏附魔: 不参与附魔台随机抽取。 */
+    @Override
+    public boolean isDiscoverable() {
+        return false;
+    }
+
+    /** 宝藏附魔: 村民不交易。 */
+    @Override
+    public boolean isTradeable() {
+        return false;
+    }
+
     @Override
     public boolean canApplyAtEnchantingTable(ItemStack stack) {
         if (!GunEnchantmentHelper.isEnabled()) {

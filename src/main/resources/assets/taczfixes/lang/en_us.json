@@ -341,6 +341,7 @@
     "config.taczfixes.entry.compat.gun_pack.button_offset_x": "Button X Offset (px)",
     "config.taczfixes.entry.compat.gun_pack.button_offset_y": "Button Y Offset (px)",
     "config.taczfixes.entry.compat.gun_pack.button_size": "Button Size (px)",
+    "config.taczfixes.entry.compat.piglin_barter_enabled": "Enable piglin trading of TaCZ items",
 
     "config.taczfixes.entry.aiming_stamina.enabled": "Enable Aiming Stamina",
     "config.taczfixes.entry.aiming_stamina.max_stamina": "Default Max Stamina",

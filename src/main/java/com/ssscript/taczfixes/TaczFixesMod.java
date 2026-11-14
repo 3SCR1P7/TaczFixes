@@ -3,6 +3,7 @@ package com.ssscript.taczfixes;
 import com.ssscript.taczfixes.common.config.Config;
 
 import com.ssscript.taczfixes.common.data.TaczFixesDataHandler;
+import com.ssscript.taczfixes.common.loot.BarterPickFunction;
 import com.ssscript.taczfixes.common.util.GunEnchantments;
 import com.ssscript.taczfixes.common.handler.GunAnvilHandler;
 import com.ssscript.taczfixes.client.handler.GunEnchantmentHandler;
@@ -13,6 +14,7 @@ import com.ssscript.taczfixes.common.handler.SpreadRampHandler;
 import com.ssscript.taczfixes.client.handler.SteplessZoomHandler;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import net.minecraft.world.item.enchantment.Enchantment;
+import net.minecraft.world.level.storage.loot.functions.LootItemFunctionType;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.eventbus.api.IEventBus;
 import net.minecraftforge.fml.common.Mod;
@@ -33,6 +35,12 @@ public class TaczFixesMod {
 
     public static final DeferredRegister<Enchantment> ENCHANTMENTS =
             DeferredRegister.create(ForgeRegistries.ENCHANTMENTS, MOD_ID);
+    /** 自定义战利品函数类型(下界合金锭以物易物)。 */
+    public static final DeferredRegister<LootItemFunctionType> LOOT_FUNCTION_TYPES =
+            DeferredRegister.create(net.minecraft.core.registries.Registries.LOOT_FUNCTION_TYPE, MOD_ID);
+    public static final RegistryObject<LootItemFunctionType> BARTER_PICK_FUNCTION =
+            LOOT_FUNCTION_TYPES.register("barter_pick",
+                    () -> new LootItemFunctionType(new BarterPickFunction.Serializer()));
     public static final DeferredRegister<net.minecraft.world.entity.ai.attributes.Attribute> ATTRIBUTES =
             DeferredRegister.create(ForgeRegistries.ATTRIBUTES, MOD_ID);
     public static final RegistryObject<net.minecraft.world.entity.ai.attributes.Attribute> AIMING_STAMINA_ATTRIBUTE =
@@ -160,6 +168,7 @@ public class TaczFixesMod {
         });
         IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         ENCHANTMENTS.register(modBus);
+        LOOT_FUNCTION_TYPES.register(modBus);
         ATTRIBUTES.register(modBus);
         modBus.addListener(this::onEntityAttributeModification);
         modBus.addListener(this::onCommonSetup);
