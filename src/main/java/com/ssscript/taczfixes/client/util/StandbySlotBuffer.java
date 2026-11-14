@@ -107,34 +107,81 @@ public final class StandbySlotBuffer {
         }
     }
 
-    /** standby 瞄具物理渲染: 直接以计算好的 pose 调模型(非第一人称物理分支), 不经过 AttachmentRender 的槽位变换。 */
+    /** standby 瞄具物理渲染: 传非第一人称 context, 让 TaCZ/Arcana 都走物理分支(不写 stencil、不 capture 镜片)。 */
     public static void renderOpticPhysical(BedrockAttachmentModel model, ItemStack item, ItemStack gun,
                                            PoseStack poseStack, ItemDisplayContext displayContext,
                                            RenderType renderType, int light, int overlay) {
         if (model == null) return;
-        com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(true);
-        com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(true);
+        java.util.Map<BedrockPart, Boolean> restore = new java.util.LinkedHashMap<>();
+        applyStandbyOpticVisibility(model, restore);
+        MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
+        ItemDisplayContext physicalContext = displayContext.firstPerson()
+                ? ItemDisplayContext.FIXED : displayContext;
         try {
-            model.render(item, gun, poseStack, displayContext, renderType, light, overlay);
+            model.render(item, gun, poseStack, physicalContext, renderType, light, overlay, 1.0f, bufferSource);
         } finally {
-            com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(false);
-            com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(false);
+            restoreOcularVisibility(restore);
         }
     }
 
-    /** 标准槽瞄具作为 standby 时物理渲染: 用 TaCZ 自己的 AttachmentRender + 物理 pass(保持原生位置/适配器)。 */
+    /** 标准槽瞄具作为 standby 时物理渲染: 保留 AttachmentRender 的原生槽位/适配器变换, 但用非第一人称 context。 */
     public static void renderSlotAttachmentPhysical(ItemStack item, ItemStack gun, AttachmentType type,
                                                     PoseStack poseStack, ItemDisplayContext displayContext,
                                                     int light, int overlay) {
+        java.util.Map<BedrockPart, Boolean> restore = new java.util.LinkedHashMap<>();
+        BedrockAttachmentModel model = resolveAttachmentModel(item);
+        if (model != null) applyStandbyOpticVisibility(model, restore);
         MultiBufferSource.BufferSource bufferSource = Minecraft.getInstance().renderBuffers().bufferSource();
-        com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(true);
-        com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(true);
+        ItemDisplayContext physicalContext = displayContext.firstPerson()
+                ? ItemDisplayContext.FIXED : displayContext;
         try {
-            AttachmentRender.renderAttachment(item, gun, type, poseStack, displayContext, light, overlay, bufferSource);
+            AttachmentRender.renderAttachment(item, gun, type, poseStack, physicalContext, light, overlay, bufferSource);
         } finally {
-            com.ssscript.taczfixes.client.util.ScopeCullHelper.setPhysicalOpticPass(false);
-            com.ssscript.taczfixes.client.util.ScopeCullHelper.setStandbyOpticPass(false);
+            restoreOcularVisibility(restore);
         }
+    }
+
+    /** standby 瞄具可见性: 隐藏 division; 纯 scope 显示全部 ocular, 组合只显示 scope ocular, 纯 sight 隐藏全部。 */
+    public static void applyStandbyOpticVisibility(BedrockAttachmentModel model,
+                                                   java.util.Map<BedrockPart, Boolean> restore) {
+        if (model == null) return;
+        com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress acc =
+                (com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress) model;
+        boolean pureScope = acc.taczfixes$isScope() && !acc.taczfixes$isSight();
+        boolean pureSight = acc.taczfixes$isSight() && !acc.taczfixes$isScope();
+        List<List<BedrockPart>> divisions = acc.taczfixes$divisionNodePaths();
+        if (divisions != null) {
+            for (List<BedrockPart> path : divisions) setPathVisible(restore, path, false);
+        }
+        List<List<BedrockPart>> oculars = acc.taczfixes$ocularNodePaths();
+        List<Boolean> flags = acc.taczfixes$isScopeOcular();
+        if (oculars != null) {
+            for (int i = 0; i < oculars.size(); i++) {
+                boolean scopeOcular = flags != null && i < flags.size() && Boolean.TRUE.equals(flags.get(i));
+                boolean visible = pureScope || (!pureSight && scopeOcular);
+                setPathVisible(restore, oculars.get(i), visible);
+            }
+        }
+    }
+
+    private static void setPathVisible(java.util.Map<BedrockPart, Boolean> restore,
+                                       List<BedrockPart> path, boolean visible) {
+        if (path == null) return;
+        for (BedrockPart part : path) {
+            if (part.visible != visible) {
+                restore.putIfAbsent(part, part.visible);
+                part.visible = visible;
+            }
+        }
+    }
+
+    private static BedrockAttachmentModel resolveAttachmentModel(ItemStack item) {
+        IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+        if (attachment == null) return null;
+        ResourceLocation id = attachment.getAttachmentId(item);
+        if (id == null) return null;
+        return TimelessAPI.getClientAttachmentIndex(id)
+                .map(index -> index.getAttachmentModel()).orElse(null);
     }
 
     /** 按记录的原值恢复可见性(同一部件多次改动也只恢复一次)。 */

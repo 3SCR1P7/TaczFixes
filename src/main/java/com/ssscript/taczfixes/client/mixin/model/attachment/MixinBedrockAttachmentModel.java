@@ -39,6 +39,9 @@ public abstract class MixinBedrockAttachmentModel {
                                               ItemDisplayContext transformType, RenderType renderType,
                                               int light, int overlay, float alpha, MultiBufferSource bufferSource,
                                               CallbackInfo ci) {
+        // Arcana 会 HEAD-cancel BedrockAttachmentModel.render, 导致本 mixin 的 RETURN 不执行、
+        // 可见性状态泄漏; 装了 Arcana 时跳过这里的可见性切换(standby 可见性由调用方 try/finally 处理)。
+        if (com.ssscript.taczfixes.client.util.ArcanaLensCompat.installed()) return;
         MixinBedrockAttachmentModelScopeSuppress accessor = (MixinBedrockAttachmentModelScopeSuppress) (Object) this;
         if (!accessor.taczfixes$isScope() && !accessor.taczfixes$isSight()) return;
         if (!taczfixes$isPhysicalOpticRender(transformType)) return;
