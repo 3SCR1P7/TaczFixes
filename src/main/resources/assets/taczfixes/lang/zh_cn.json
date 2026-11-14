@@ -174,7 +174,7 @@
     "config.taczfixes.entry.inaccuracy.ramp_decay":  "回正散布速度",
     "config.taczfixes.entry.inaccuracy.jump_default_multiplier":  "滞空精度倍率",
     "config.taczfixes.entry.inaccuracy.jump_default_speed":  "滞空精度增速",
-    "config.taczfixes.entry.inaccuracy.spread_blend_mode":  "枪械散布混合状态（false/addend/multiplier/percent）",
+    "config.taczfixes.entry.inaccuracy.spread_blend_mode":  "枪械散布混合状态",
 
     "config.taczfixes.entry.ricochet.enabled":  "启用跳弹",
     "config.taczfixes.entry.ricochet.min_angle":  "跳弹所需最小入射角",

@@ -172,7 +172,7 @@
     "config.taczfixes.entry.inaccuracy.ramp_decay": "Spread Recovery Speed",
     "config.taczfixes.entry.inaccuracy.jump_default_multiplier": "Default Jump Accuracy Multiplier",
     "config.taczfixes.entry.inaccuracy.jump_default_speed": "Default Jump Accuracy Ramp Speed",
-    "config.taczfixes.entry.inaccuracy.spread_blend_mode": "Spread Blend Mode (false/addend/multiplier/percent)",
+    "config.taczfixes.entry.inaccuracy.spread_blend_mode": "Spread Blend Mode",
 
     "config.taczfixes.entry.ricochet.enabled": "Enable Ricochet",
     "config.taczfixes.entry.ricochet.min_angle": "Minimum Angle for Ricochet",
