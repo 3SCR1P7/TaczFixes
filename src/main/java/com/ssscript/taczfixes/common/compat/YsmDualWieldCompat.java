@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.common.compat;
 
 import com.ssscript.taczfixes.TaczFixesMod;
+import com.tacz.guns.api.item.IGun;
 import com.ssscript.taczfixes.client.client.DualFocusAimState;
 import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
@@ -173,6 +174,21 @@ public final class YsmDualWieldCompat {
             logReflectionWarning("offhand fire Molang context", exception);
             return 0L;
         }
+    }
+
+    /**
+     * YSM 的持枪/开火动画事件只读取主手物品。副手为枪、主手不是枪时用副手枪械顶替主手物品,
+     * 让 YSM 继续选取 TaCZ 的 tac:* 持枪动画与开火动画。
+     */
+    public static ItemStack offhandAnimationSource(LivingEntity entity, ItemStack mainHandStack) {
+        if (entity == null || mainHandStack == null || IGun.getIGunOrNull(mainHandStack) != null) {
+            return mainHandStack;
+        }
+        if (!isThirdPersonDualWielding(entity)) {
+            return mainHandStack;
+        }
+        ItemStack offhandStack = entity.getOffhandItem();
+        return IGun.getIGunOrNull(offhandStack) != null ? offhandStack : mainHandStack;
     }
 
     private static long getLocalOffhandShootCoolDown(LivingEntity entity) {

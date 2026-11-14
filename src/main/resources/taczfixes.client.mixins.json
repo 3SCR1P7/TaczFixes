@@ -39,6 +39,8 @@
         "compat.ysm.MixinYsmBackGun",
         "compat.ysm.MixinYsmItemInHandLayer",
         "compat.ysm.MixinYsmLivingRendererPose",
+        "compat.ysm.MixinYsmOffhandFireAnimation",
+        "compat.ysm.MixinYsmOffhandHoldAnimation",
         "compat.ysm.MixinYsmRendererPose",
         "compat.ysm.MixinYsmTacAnimation",
         "compat.ysm.MixinYsmTacBinding",
