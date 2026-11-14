@@ -565,5 +565,7 @@
     "attribute.name.taczfixes.aiming_stamina_recovery": "Aiming Stamina Recovery",
     "attribute.name.taczfixes.stamina": "Stamina",
     "attribute.name.taczfixes.stamina_recovery": "Stamina Recovery",
-    "attribute.name.taczfixes.stamina_consumption": "Stamina Consumption Multiplier"
+    "attribute.name.taczfixes.stamina_consumption": "Stamina Consumption Multiplier",
+    "advancement.taczfixes.arms_dealer.title": "Arms Dealer",
+    "advancement.taczfixes.arms_dealer.description": "Barter with a piglin using a netherite ingot"
 }
