@@ -19,6 +19,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
+import net.neoforged.neoforge.client.event.ViewportEvent;
 import org.apache.commons.math3.analysis.polynomials.PolynomialSplineFunction;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -35,6 +36,18 @@ public class MixinCameraSetupEvent {
     @Shadow(remap = false)
     private static long shootTimeStamp;
 
+    @Shadow(remap = false)
+    private static PolynomialSplineFunction pitchSplineFunction;
+
+    @Shadow(remap = false)
+    private static PolynomialSplineFunction yawSplineFunction;
+
+    @Unique
+    private static PolynomialSplineFunction taczfixes$lastPitchSpline;
+
+    @Unique
+    private static PolynomialSplineFunction taczfixes$lastYawSpline;
+
     @Unique
     private static float taczfixes$recoilMultiplierPitch = 1.0f;
     @Unique
@@ -42,6 +55,11 @@ public class MixinCameraSetupEvent {
 
     @Inject(method = "initialCameraRecoil", at = @At("HEAD"), remap = false)
     private static void taczfixes$preRecoil(GunFireEvent event, CallbackInfo ci) {
+        taczfixes$lastPitchSpline = pitchSplineFunction;
+        taczfixes$lastYawSpline = yawSplineFunction;
+        if (!Config.RECOIL_STACKING.get()) {
+            com.ssscript.taczfixes.client.util.RecoilStacking.reset();
+        }
         taczfixes$recoilMultiplierPitch = 1.0f;
         taczfixes$recoilMultiplierYaw = 1.0f;
         LivingEntity shooter = event.getShooter();
@@ -140,5 +158,31 @@ public class MixinCameraSetupEvent {
     private static PolynomialSplineFunction taczfixes$wrapYawScaleV2(GunRecoil recoil, float scale,
                                                                      Operation<PolynomialSplineFunction> original) {
         return original.call(recoil, DualRecoilMultiplier.apply(Minecraft.getInstance().player, scale * taczfixes$recoilMultiplierYaw));
+    }
+
+    /** 后坐力叠加: 本次开火生成了新的后坐力曲线时, 把它作为一个独立图层压入叠加栈。 */
+    @Inject(method = "initialCameraRecoil", at = @At("TAIL"), remap = false)
+    private static void taczfixes$pushRecoilLayer(GunFireEvent event, CallbackInfo ci) {
+        if (!Config.RECOIL_STACKING.get()) {
+            return;
+        }
+        if (pitchSplineFunction == taczfixes$lastPitchSpline && yawSplineFunction == taczfixes$lastYawSpline) {
+            return;
+        }
+        com.ssscript.taczfixes.client.util.RecoilStacking.push(pitchSplineFunction, yawSplineFunction, shootTimeStamp);
+    }
+
+    /** 后坐力叠加: 接管原生相机后坐力, 改为累加所有图层的正向增量。 */
+    @Inject(method = "applyCameraRecoil", at = @At("HEAD"), cancellable = true, remap = false)
+    private static void taczfixes$applyStackedRecoil(ViewportEvent.ComputeCameraAngles event, CallbackInfo ci) {
+        if (!Config.RECOIL_STACKING.get()) {
+            return;
+        }
+        if (com.tacz.guns.compat.shouldersurfing.ShoulderSurfingCompat.isInstalled()) {
+            // ShoulderSurfing 会接管相机, 保持原生行为避免冲突
+            return;
+        }
+        com.ssscript.taczfixes.client.util.RecoilStacking.apply(Minecraft.getInstance().player);
+        ci.cancel();
     }
 }

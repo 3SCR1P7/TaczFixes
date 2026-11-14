@@ -99,6 +99,7 @@ public class TaczFixesMod {
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.AimingStaminaHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.compat.ArcanaSkillBridge());
+        NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CompatCommand());
         if (net.neoforged.fml.ModList.get().isLoaded("irons_spellbooks")) {
             try {
                 NeoForge.EVENT_BUS.register(Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")

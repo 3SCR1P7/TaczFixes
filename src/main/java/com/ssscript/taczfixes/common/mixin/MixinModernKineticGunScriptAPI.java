@@ -113,6 +113,12 @@ public abstract class MixinModernKineticGunScriptAPI {
         CustomFireModeManager.activateFor(itemStack);
     }
 
+    /** 散布混合: 按配置把同时满足的多个状态(瞄准/移动/潜行/趴下)的散布混合后开火。 */
+    @Redirect(method = {"shootOnce"}, at = @At(value = "INVOKE", target = "Ljava/util/Map;get(Ljava/lang/Object;)Ljava/lang/Object;"), require = 0, remap = false)
+    private Object taczfixes$blendSpread(java.util.Map<com.tacz.guns.resource.pojo.data.gun.InaccuracyType, Float> values, Object state) {
+        return com.ssscript.taczfixes.common.util.SpreadBlend.select(this.shooter, values);
+    }
+
     /** lua: api:getScoreboardValue("aaaa") 获取开火者玩家在名称 "aaaa"(或任意名字)的计分板上的值。
      *  计分板不存在或开火者无该值返回 0; 仅服务端生效。 */
     @Unique
