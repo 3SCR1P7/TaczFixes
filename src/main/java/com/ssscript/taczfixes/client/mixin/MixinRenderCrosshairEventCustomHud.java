@@ -18,8 +18,6 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * 浣跨敤鑷畾涔?HUD 鏃堕殣钘?tacz 鑷繁鐨勫噯鏄熺粯鍒?鐢辫嚜瀹氫箟 HUD 鐨?crosshair 鎺ョ)銆? * 涓嶆嫤鎴?onRenderOverlay: tacz 浠嶄細鍙栨秷鍘熺増鍑嗘槦, 淇濊瘉鑷畾涔?HUD 涓嬩笉浼氭樉绀哄師鐗堝噯鏄熴€? */
 @Mixin(RenderCrosshairEvent.class)
 public class MixinRenderCrosshairEventCustomHud {
 
@@ -68,7 +66,6 @@ public class MixinRenderCrosshairEventCustomHud {
         }
     }
 
-    /** 鍙屾寔: 涓绘墜鎹㈠脊鏃跺彧鏈夊壇鎵嬩篃鍦ㄦ崲寮规墠闅愯棌鍑嗘槦銆?*/
     @ModifyExpressionValue(method = "onRenderCrosshair", at = @At(value = "INVOKE",
             target = "Lcom/tacz/guns/api/entity/ReloadState$StateType;isReloading()Z"), remap = false)
     private static boolean taczfixes$dualReloadCrosshair(boolean reloading) {
@@ -82,7 +79,6 @@ public class MixinRenderCrosshairEventCustomHud {
         return OffhandDisplayManager.getClientState().isReloading();
     }
 
-    /** 鍙屾寔: 涓绘墜鍔ㄧ敾瑕佹眰闅愯棌鍑嗘槦鏃? 鍚屾牱浠呭壇鎵嬩篃鍦ㄦ崲寮规墠闅愯棌銆?*/
     @ModifyExpressionValue(method = "lambda$onRenderCrosshair$0", at = @At(value = "INVOKE",
             target = "Lcom/tacz/guns/api/client/animation/statemachine/AnimationStateContext;shouldHideCrossHair()Z"), remap = false)
     private static boolean taczfixes$dualAnimationCrosshair(boolean hide) {
