@@ -23,7 +23,6 @@ import com.ssscript.taczfixes.client.render.LightManager;
 import com.ssscript.taczfixes.client.screen.ConfigScreen;
 import com.ssscript.taczfixes.client.util.ClientDisplayDataReloadListener;
 import com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener;
-import com.ssscript.taczfixes.common.network.NetworkHandler;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.bus.api.IEventBus;
 import net.neoforged.fml.ModContainer;
@@ -46,7 +45,6 @@ public final class ClientModEvents {
         modBus.addListener(ClientModEvents::onRegisterKeyMappings);
         modBus.addListener(ClientModEvents::onRegisterClientReloadListeners);
         modBus.addListener(ClientModEvents::onRegisterGuiLayers);
-        modBus.addListener(NetworkHandler::register);
     }
 
     private static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {

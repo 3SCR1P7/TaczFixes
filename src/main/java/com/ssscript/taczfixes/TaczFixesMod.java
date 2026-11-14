@@ -116,6 +116,9 @@ public class TaczFixesMod {
             }
         }
         NetworkHandler.init();
+        // 通信通道必须在客户端与服务端两侧都注册，否则专用服务端缺少 taczfixes:main，
+        // 客户端在配置阶段的通道协商会失败并被服务端踢出。
+        modBus.addListener(NetworkHandler::register);
         com.ssscript.taczfixes.common.util.DualWieldOverrides.setProvider(gunId -> {
             com.ssscript.taczfixes.common.data.GunTaczFixesData.DualWieldConfig cfg =
                     com.ssscript.taczfixes.common.data.TaczFixesDataManager.resolveDualWield(gunId);
