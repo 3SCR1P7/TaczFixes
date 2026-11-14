@@ -15,7 +15,21 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 /* 标记当前第三人称动画请求是否来自双持实体, 供 GunDisplayInstance 替换动画资源。 */
 public abstract class MixinPlayerAnimatorCompat {
 
-    @Inject(method = {"hasPlayerAnimator3rd"}, at = {@At("HEAD")}, remap = false)
+    /** 主手不是枪、副手是枪时, 也允许 TaCZ 的第三人称 playeranimator 动画(否则副手开火/换弹动画会被 stopAllAnimation 清掉)。 */
+    @Inject(method = {"canPlayAnimation"}, at = {@At("RETURN")}, cancellable = true, remap = false)
+    private static void taczfixes$allowOffhandGunAnimation(LivingEntity entity, CallbackInfoReturnable<Boolean> callback) {
+        if (callback.getReturnValueZ()) {
+            return;
+        }
+        if (com.tacz.guns.api.item.IGun.getIGunOrNull(entity.getOffhandItem()) == null) {
+            return;
+        }
+        if (entity.getPose() == net.minecraft.world.entity.Pose.SLEEPING || entity.onClimbable()
+                || entity.isSwimming() || entity.getPose() == net.minecraft.world.entity.Pose.FALL_FLYING) {
+            return;
+        }
+        callback.setReturnValue(true);
+    }    @Inject(method = {"hasPlayerAnimator3rd"}, at = {@At("HEAD")}, remap = false)
     private static void taczfixes$beginDualWieldAnimatorContext(LivingEntity entity, GunDisplayInstance display, CallbackInfoReturnable<Boolean> callback) {
         DualWieldAnimatorContext.begin(DualWieldEligibility.isDualWielding(entity));
     }

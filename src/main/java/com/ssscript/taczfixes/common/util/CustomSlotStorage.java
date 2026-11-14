@@ -74,14 +74,15 @@ public class CustomSlotStorage {
 
     public static void setAdapter(ItemStack gun, String slotId, ResourceLocation adapterId) {
         if (gun == null || gun.isEmpty()) return;
-        CompoundTag tag = ItemNbt.getOrCreate(gun);
-        CompoundTag adapters = tag.contains(ADAPTER_TAG_KEY, 10) ? tag.getCompound(ADAPTER_TAG_KEY) : new CompoundTag();
-        if (adapterId == null) {
-            adapters.remove(slotId);
-        } else {
-            adapters.putString(slotId, adapterId.toString());
-        }
-        tag.put(ADAPTER_TAG_KEY, adapters);
+        ItemNbt.mutate(gun, tag -> {
+            CompoundTag adapters = tag.contains(ADAPTER_TAG_KEY, 10) ? tag.getCompound(ADAPTER_TAG_KEY) : new CompoundTag();
+            if (adapterId == null) {
+                adapters.remove(slotId);
+            } else {
+                adapters.putString(slotId, adapterId.toString());
+            }
+            tag.put(ADAPTER_TAG_KEY, adapters);
+        });
     }
 
     public static ResourceLocation getAttachmentId(ItemStack gun, String slotId) {
@@ -94,11 +95,17 @@ public class CustomSlotStorage {
     /** 安装物理配件; 同时清空该槽的原厂件选择, 避免卸下后默认原厂件"复活"。 */
     public static void install(ItemStack gun, String slotId, ItemStack item) {
         if (item == null || item.isEmpty()) return;
-        CompoundTag tag = ItemNbt.getOrCreate(gun);
-        CompoundTag slots = tag.contains(TAG_KEY, 10) ? tag.getCompound(TAG_KEY) : new CompoundTag();
-        slots.put(slotId, ItemNbt.saveStack(item));
-        tag.put(TAG_KEY, slots);
-        setBuiltinEntry(gun, slotId, "");
+        // 必须走 ItemStack.update(mutate): 1.21.1 的组件是可变共享对象, 直接改 getUnsafe()
+        // 会让 broadcastChanges() 的快照比对(ItemStack.matches)恒为 true, 客户端收不到更新。
+        CompoundTag saved = ItemNbt.saveStack(item);
+        ItemNbt.mutate(gun, tag -> {
+            CompoundTag slots = tag.contains(TAG_KEY, 10) ? tag.getCompound(TAG_KEY) : new CompoundTag();
+            slots.put(slotId, saved);
+            tag.put(TAG_KEY, slots);
+            CompoundTag builtin = tag.contains(BUILTIN_TAG_KEY, 10) ? tag.getCompound(BUILTIN_TAG_KEY) : new CompoundTag();
+            builtin.putString(slotId, "");
+            tag.put(BUILTIN_TAG_KEY, builtin);
+        });
     }
 
     /** 选择原厂件(虚拟 OEM): 清空物理配件, 卸下不会返还到背包。 */
@@ -185,16 +192,19 @@ public class CustomSlotStorage {
 
     private static void setBuiltinEntry(ItemStack gun, String slotId, String value) {
         if (gun == null || gun.isEmpty()) return;
-        CompoundTag tag = ItemNbt.getOrCreate(gun);
-        CompoundTag builtin = tag.contains(BUILTIN_TAG_KEY, 10) ? tag.getCompound(BUILTIN_TAG_KEY) : new CompoundTag();
-        builtin.putString(slotId, value == null ? "" : value);
-        tag.put(BUILTIN_TAG_KEY, builtin);
+        ItemNbt.mutate(gun, tag -> {
+            CompoundTag builtin = tag.contains(BUILTIN_TAG_KEY, 10) ? tag.getCompound(BUILTIN_TAG_KEY) : new CompoundTag();
+            builtin.putString(slotId, value == null ? "" : value);
+            tag.put(BUILTIN_TAG_KEY, builtin);
+        });
     }
 
     private static void removePhysical(ItemStack gun, String slotId) {
-        CompoundTag tag = ItemNbt.get(gun);
-        if (tag != null && tag.contains(TAG_KEY, 10)) {
-            tag.getCompound(TAG_KEY).remove(slotId);
-        }
+        if (gun == null || gun.isEmpty()) return;
+        ItemNbt.mutate(gun, tag -> {
+            if (tag.contains(TAG_KEY, 10)) {
+                tag.getCompound(TAG_KEY).remove(slotId);
+            }
+        });
     }
 }

@@ -453,7 +453,6 @@
     "gui.taczfixes.edit_data.invalid":  "无效的数据文件",
     "gui.taczfixes.edit_data.saved":  "已保存",
     "gui.taczfixes.gun_packs.title":  "枪包管理",
-    "gui.taczfixes.gun_packs.hint":  "列表越靠上优先级越高, 悬停已选枪包显示排序箭头。",
     "gui.taczfixes.gun_packs.available":  "可用",
     "gui.taczfixes.gun_packs.selected":  "已选",
     "gui.taczfixes.gun_packs.open_folder":  "打开枪包文件夹",

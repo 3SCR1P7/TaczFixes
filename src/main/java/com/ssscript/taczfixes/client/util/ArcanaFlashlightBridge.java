@@ -84,11 +84,18 @@ public final class ArcanaFlashlightBridge {
             return null;
         }
         LocalPlayer player = Minecraft.getInstance().player;
-        if (player == null || !DualWieldEligibility.isDualWielding(player)) {
+        if (player == null) {
             return null;
         }
         ItemStack main = player.getMainHandItem();
         ItemStack offhand = player.getOffhandItem();
+        // 主手为物品、副手为枪械: Arcana 的查询仍然按主手栈发起, 直接回退到副手枪。
+        if (IGun.getIGunOrNull(main) == null && IGun.getIGunOrNull(offhand) != null) {
+            return offhand;
+        }
+        if (!DualWieldEligibility.isDualWielding(player)) {
+            return null;
+        }
         ItemStack other;
         if (gunStack == main || DualWieldStackId.matches(gunStack, main)) {
             other = offhand;

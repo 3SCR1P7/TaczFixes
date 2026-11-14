@@ -32,6 +32,10 @@ public class MixinArcanaLaserToggle {
         if (stack == main || main.isEmpty()) {
             return;
         }
+        // 主手不是枪械时不镜像 (副手使用自己的状态, 否则副手开关不生效)。
+        if (com.tacz.guns.api.item.IGun.getIGunOrNull(main) == null) {
+            return;
+        }
         if (!DualWieldEligibility.isDualWielding(player)) {
             return;
         }

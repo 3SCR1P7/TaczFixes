@@ -142,6 +142,7 @@ public final class AttachmentDataOverrideStorage {
         if (!found) return false;
 
         try {
+            ZipPackHandleCloser.closeHandles(zipFile);
             if (ZipAppendUpdater.replaceEntry(zipFile, entryName, fullText.getBytes(StandardCharsets.UTF_8))) {
                 return true;
             }
