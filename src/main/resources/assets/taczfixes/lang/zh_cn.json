@@ -334,6 +334,7 @@
     "config.taczfixes.entry.recoil_knockback.ignore_entity_cooldown_ms":  "忽略实体的时长（毫秒）",
  
     "config.taczfixes.entry.compat.auto_aim_when_peeking":  "探头自动开镜",
+    "config.taczfixes.entry.compat.piglin_barter_enabled":  "是否启用猪灵交易TaCZ物品",
     "config.taczfixes.entry.compat.disable_hitboxes":  "禁用实体碰撞箱显示",
     "config.taczfixes.entry.compat.disable_third_person":  "禁用切换第三人称视角",
     "config.taczfixes.entry.compat.gun_translucent_render":  "允许枪械半透明渲染",
