@@ -44,6 +44,7 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_ENABLED;
     public static final ForgeConfigSpec.BooleanValue LIMB_DAMAGE_SHOW_IN_CHARTS;
     public static final ForgeConfigSpec.BooleanValue CRAWL_HITBOX_ENABLED;
+    public static final ForgeConfigSpec.BooleanValue STANDING_HITBOX_ENABLED;
     public static final ForgeConfigSpec.DoubleValue LIMB_FACTOR_DEFAULT;
     public static final ForgeConfigSpec.ConfigValue<List<? extends String>> BURST_BLOCK_ATTACHMENTS;
     public static final ForgeConfigSpec.BooleanValue LIVING_ENTITY_LIMB_ENABLED;
@@ -424,8 +425,11 @@ public class Config {
                 .comment("是否在枪械 tooltip 和改装界面属性图表中显示四肢伤害。默认值：true")
                 .define("show_in_charts", true);
         CRAWL_HITBOX_ENABLED = BUILDER
-                .comment("是否启用更好的爬行受击碰撞箱。默认值：true")
+                .comment("是否启用更好的爬行受击碰撞箱（爬行与游泳共用）。默认值：true")
                 .define("crawl_hitbox_enabled", true);
+        STANDING_HITBOX_ENABLED = BUILDER
+                .comment("是否启用更好的站立碰撞箱：开启后受击判定箱会随玩家面朝方向旋转（判定箱大小与原版一致，玩家非游泳且非爬行时生效）。默认值：false")
+                .define("standing_hitbox_enabled", false);
 
         BUILDER.push("player");
         LIMB_THRESHOLD_STANDING = BUILDER

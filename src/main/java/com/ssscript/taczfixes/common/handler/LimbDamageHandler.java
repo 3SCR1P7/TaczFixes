@@ -24,7 +24,7 @@ public class LimbDamageHandler {
         if (event.isHeadShot()) return;
 
         // 爬行玩家使用独立受击箱: 仅尾端(腿部)区域造成四肢伤害, 其余为普通命中
-        if (CrawlHitboxHelper.isCrawling(entity)) {
+        if (CrawlHitboxHelper.isHorizontalHitboxActive(entity)) {
             CrawlHitboxHelper.Zone zone = LimbDamageHelper.getCrawlZone(event.getBullet().getId(), entity.getId());
             if (zone == CrawlHitboxHelper.Zone.LIMB) {
                 float limbFactor = getLimbFactorForGun(event);
