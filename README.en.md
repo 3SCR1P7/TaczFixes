@@ -8,8 +8,8 @@ An add-on mod for [Timeless and Classics Zero](https://www.curseforge.com/minecr
 
 | Branch | Minecraft | Loader | Mod version | TaCZ version |
 | --- | --- | --- | --- | --- |
-| `taczfixes` | 1.20.1 | Forge 47.4+ | 2.2.3 | tacz-forge 1.20.1 1.2.0 |
-| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.0.3 | tacz-neoforge 1.21.1 1.2.0 |
+| `taczfixes` | 1.20.1 | Forge 47.4+ | 2.3.0 | tacz-forge 1.20.1 1.2.0 |
+| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.1.0 | tacz-neoforge 1.21.1 1.2.0 |
 
 Client and server must run the same TaCZ Fixes version; mismatched versions cannot connect because the network payload registration differs.
 
@@ -48,7 +48,7 @@ Optional (the related features degrade gracefully when missing):
 
 ### Visuals and camera
 
-- PBR reflections, bloom, emissive effects, enchantment glint
+- PBR reflections, bloom, emissive effects, enchantment glint, dynamic camouflage (gun-pack driven)
 - Dynamic muzzle / bullet / explosion lighting
 - Stepless scope zoom, aim depth of field, sprint interruption while aiming, hold breath
 - Suppression effects: impact blur, vignette, chromatic aberration
@@ -128,6 +128,10 @@ The files contain comments. Changes take effect after reloading resources or res
 - HTML HUDs go in `assets/<namespace>/hud/**.html`; the mod synchronizes them to ApricityUI automatically
 - Attachment slots, virtual attachments, refit point costs, enchantment compatibility, etc. are all defined through data JSON
 - See `example/` for attachment animation examples: `grip_emx_bipod` is a working bipod state machine with animation configuration
+
+### Dynamic camoflage
+
+Supports dynamic camoflage based on gunspack. Visit `example/camo_example_pack` to learn more.
 
 ## Building
 

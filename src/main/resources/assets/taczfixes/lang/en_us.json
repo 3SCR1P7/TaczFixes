@@ -529,6 +529,8 @@
     "gui.taczfixes.recolor.reset_group": "Reset",
     "gui.taczfixes.recolor.reset_all": "Reset All",
     "gui.taczfixes.recolor.done": "Done",
+    "gui.taczfixes.recolor.camo": "Camo: %s",
+    "gui.taczfixes.recolor.camo_none": "No camo",
     "gui.taczfixes.refit_preset.save": "Save Current Modifications",
     "gui.taczfixes.refit_preset.load": "Load Modifications Preset",
     "gui.taczfixes.refit_preset.saved": "Saved",

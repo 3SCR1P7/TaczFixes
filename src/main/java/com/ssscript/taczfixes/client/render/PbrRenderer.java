@@ -53,6 +53,7 @@ public final class PbrRenderer {
     private static AbstractUniform uAnisotropy, uWetDetail, uSSRStrength, uTime;
     private static AbstractUniform uViewRotX, uViewRotY, uViewRotZ;
     private static AbstractUniform uCameraPos;
+    private static AbstractUniform uCamoIndex, uCamoStrength, uCamoEmissive;
     private static AbstractUniform uBlurDirection, uCompositeStrength, uHasScopeMask;
     private static VertexBuffer mesh;
     private static int emissionBlendOverride;
@@ -127,6 +128,24 @@ public final class PbrRenderer {
                 }
             };
 
+    /** 不同迷彩(以及不同强度)的枪共用同一张贴图, 但必须分开成不同 RenderType, 才能各带各的 uniform。 */
+    private static final int CAMO_TYPES_MAX = 256;
+    private static final Map<CamoKey, RenderType> CAMO_TYPES =
+            new java.util.LinkedHashMap<>(CAMO_TYPES_MAX, 0.75f, true) {
+                @Override
+                protected boolean removeEldestEntry(Map.Entry<CamoKey, RenderType> eldest) {
+                    return size() > CAMO_TYPES_MAX;
+                }
+            };
+    private static volatile ShaderInstance camoShader;
+
+    private record CamoKey(RenderType original, int index, float strength, float emissive) {
+    }
+
+    private record CamoUniforms(int index, float strength, float emissive) {
+        static final CamoUniforms NONE = new CamoUniforms(0, 1.0f, 0.0f);
+    }
+
     private record Material(ResourceLocation specular, ResourceLocation normal) {}
 
     private static int tracerBloomSuppression;
@@ -157,6 +176,17 @@ public final class PbrRenderer {
     }
 
     private static final java.util.ArrayDeque<Boolean> DIVISION_RENDER_STACK = new java.util.ArrayDeque<>();
+
+    /** 镜片/分划/目镜之类"镜内可见"的部件: 渲染期间禁用动态迷彩(否则开镜后镜内会看到迷彩与光晕)。 */
+    private static int camoSuppression;
+
+    public static void pushCamoSuppression() {
+        camoSuppression++;
+    }
+
+    public static void popCamoSuppression() {
+        if (camoSuppression > 0) camoSuppression--;
+    }
 
     public static void pushScopeDivision(boolean division) {
         DIVISION_RENDER_STACK.push(division);
@@ -563,6 +593,15 @@ public final class PbrRenderer {
     public static void registerShaders(RegisterShadersEvent event) throws IOException {
         MATERIALS.clear();
         TYPES.clear();
+        CAMO_TYPES.clear();
+        com.ssscript.taczfixes.client.camo.DynamicCamo.clear();
+        if (camoShader != null) {
+            try {
+                camoShader.close();
+            } catch (Throwable ignored) {
+            }
+            camoShader = null;
+        }
         PbrBloom.release();
         if (mesh != null) { mesh.close(); mesh = null; }
         releaseSceneColor();
@@ -571,8 +610,25 @@ public final class PbrRenderer {
         reloadCloudTexture();
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> {
-                    shader = s;
-                    cacheGunUniforms(s);
+                    // 动态迷彩: 把枪包提供的片段拼进 gun_pbr, 生成带 CamoIndex 分发的程序;
+                    // 没有迷彩(或编译失败)时退回原程序, 迷彩行在面板里自然消失。
+                    try {
+                        com.ssscript.taczfixes.client.camo.CamoShaderBuilder.Result camo =
+                                com.ssscript.taczfixes.client.camo.CamoShaderBuilder.build(event.getResourceProvider());
+                        com.ssscript.taczfixes.client.camo.DynamicCamo.publish(camo);
+                        if (camo != null) {
+                            camoShader = camo.shader();
+                            shader = camoShader;
+                        } else {
+                            shader = s;
+                        }
+                    } catch (Throwable t) {
+                        TaczFixesMod.LOGGER.error("taczfixes: dynamic camo build failed, falling back to base gun_pbr", t);
+                        com.ssscript.taczfixes.client.camo.DynamicCamo.publish(null);
+                        camoShader = null;
+                        shader = s;
+                    }
+                    cacheGunUniforms(shader);
                 });
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_mask"), DefaultVertexFormat.POSITION_TEX), s -> maskShader = s);
@@ -600,6 +656,7 @@ public final class PbrRenderer {
         uAnisotropy = uWetDetail = uSSRStrength = uTime = null;
         uViewRotX = uViewRotY = uViewRotZ = null;
         uCameraPos = null;
+        uCamoIndex = uCamoStrength = uCamoEmissive = null;
         uBlurDirection = uCompositeStrength = uHasScopeMask = null;
         for (int i = 0; i < LOCAL_LIGHT_SLOTS; i++) {
             uLocalLightDir[i] = null;
@@ -647,6 +704,9 @@ public final class PbrRenderer {
         uViewRotZ = s.safeGetUniform("ViewRotZ");
         uCameraPos = s.safeGetUniform("CameraPos");
         uTime = s.safeGetUniform("Time");
+        uCamoIndex = s.safeGetUniform("CamoIndex");
+        uCamoStrength = s.safeGetUniform("CamoStrength");
+        uCamoEmissive = s.safeGetUniform("CamoEmissive");
     }
 
     static void setUniform(AbstractUniform uniform, int value) {
@@ -818,13 +878,40 @@ public final class PbrRenderer {
     public static RenderType resolve(RenderType original) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
+        CamoUniforms camo = camoSuppression > 0 ? CamoUniforms.NONE : camoForCurrentItem();
         if (materialFallbackSuppression > 0) {
-            return resolveType(original, composite, false);
+            return resolveType(original, composite, false, camo);
         }
-        return TYPES.computeIfAbsent(original, key -> resolveType(key, composite, true));
+        if (camo.index() > 0) {
+            CamoKey key = new CamoKey(original, camo.index(), camo.strength(), camo.emissive());
+            return CAMO_TYPES.computeIfAbsent(key,
+                    k -> resolveType(k.original(), composite, true, camo));
+        }
+        return TYPES.computeIfAbsent(original, key -> resolveType(key, composite, true, camo));
     }
 
-    private static RenderType resolveType(RenderType original, PbrCompositeAccessor composite, boolean allowFallback) {
+    /** 当前正在渲染的枪/配件是否挂了动态迷彩(读渲染上下文的 NBT)。 */
+    private static CamoUniforms camoForCurrentItem() {
+        if (camoShader == null) {
+            return CamoUniforms.NONE;
+        }
+        com.ssscript.taczfixes.client.camo.DynamicCamo.Entry entry =
+                com.ssscript.taczfixes.client.camo.DynamicCamo.appliedOn(
+                        com.ssscript.taczfixes.client.util.GunRecolorManager.currentRenderItem());
+        if (entry == null) {
+            return CamoUniforms.NONE;
+        }
+        return new CamoUniforms(entry.index(), entry.strength(), entry.emissive());
+    }
+
+    private static void applyCamoUniforms(CamoUniforms camo) {
+        setUniform(uCamoIndex, camo.index());
+        setUniform(uCamoStrength, camo.strength());
+        setUniform(uCamoEmissive, camo.emissive());
+    }
+
+    private static RenderType resolveType(RenderType original, PbrCompositeAccessor composite,
+                                          boolean allowFallback, CamoUniforms camo) {
         var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
         var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
         if (texture.isEmpty()) return original;
@@ -839,7 +926,7 @@ public final class PbrRenderer {
                 }
             }
         }
-        return material == null ? original : new PbrType(original, material);
+        return material == null ? original : new PbrType(original, material, camo);
     }
 
     private static Material material(ResourceLocation base) {
@@ -861,12 +948,14 @@ public final class PbrRenderer {
     private static final class PbrType extends RenderType {
         private final RenderType original;
         private final Material material;
+        private final CamoUniforms camo;
 
-        PbrType(RenderType original, Material material) {
+        PbrType(RenderType original, Material material, CamoUniforms camo) {
             super("taczfixes_pbr", original.format(), original.mode(), original.bufferSize(),
                     original.affectsCrumbling(), true, original::setupRenderState, original::clearRenderState);
             this.original = original;
             this.material = material;
+            this.camo = camo;
         }
 
         @Override public Optional<RenderType> outline() { return original.outline(); }
@@ -878,6 +967,7 @@ public final class PbrRenderer {
             boolean accelerated = isAcceleratedPbrPass();
             if (accelerated) {
                 applyMaterialState(material);
+                applyCamoUniforms(camo);
             }
         }
 
@@ -909,6 +999,7 @@ public final class PbrRenderer {
                 setUniform(uGlareStrength, materialGlareStrength(material));
                 setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
                 setUniform(uEmissionPass, 0);
+                applyCamoUniforms(camo);
                 RenderSystem.setShader(() -> shader);
                 bindGlareDepth();
                 if (!emissionReplay) {

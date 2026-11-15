@@ -1,0 +1,9 @@
+{
+  "name": "taczfixes_camo_demo.camo.frost",
+  "shader": "taczfixes_camo_demo:camo/styles",
+  "strength": 0.90,
+  "emissive": 0.27,
+  "params": [
+    [0.85, 3.0, 0.0, 0.0]
+  ]
+}

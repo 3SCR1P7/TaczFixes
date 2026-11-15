@@ -37,6 +37,15 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                     if (ApricityHudSupport.isAuiModLoaded()) {
                         ApricityHudResources.syncAllFiles();
                     }
+                    // 动态迷彩: 扫描 tacz 枪包(data 声明 + assets 着色器片段)。必须在 barrier 之前
+                    // 完成 stage, 因为原版 shader 重载(RegisterShadersEvent)发生在各监听器 apply 阶段。
+                    try {
+                        com.ssscript.taczfixes.client.camo.DynamicCamo.stage(
+                                com.ssscript.taczfixes.client.camo.CamoPackScanner.scan());
+                    } catch (Throwable t) {
+                        LOGGER.warn("taczfixes: dynamic camo scan failed", t);
+                        com.ssscript.taczfixes.client.camo.DynamicCamo.stage(java.util.List.of());
+                    }
                     return scan(resourceManager);
                 }, backgroundExecutor)
                 .thenCompose(barrier::wait)

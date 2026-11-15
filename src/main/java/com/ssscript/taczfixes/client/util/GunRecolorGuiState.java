@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.util;
 
+import com.ssscript.taczfixes.client.camo.DynamicCamo;
+import com.ssscript.taczfixes.common.util.GunColorStorage;
 import com.ssscript.taczfixes.common.util.TaczItemCompat;
 import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.ssscript.taczfixes.common.network.ClientMessageGunColor;
@@ -45,6 +47,11 @@ public final class GunRecolorGuiState {
     private static RecolorSlider hueSlider;
     private static RecolorSlider saturationSlider;
     private static RecolorSlider lightnessSlider;
+    private static RecolorActionButton camoPrev;
+    private static RecolorActionButton camoNext;
+    private static RecolorCamoButton camoLabel;
+    private static List<DynamicCamo.Entry> camoEntries = List.of();
+    private static int camoIndex;
 
     private GunRecolorGuiState() {
     }
@@ -123,6 +130,8 @@ public final class GunRecolorGuiState {
             }
         }
         GunRecolorManager.applyClusterCountFor(target());
+        reloadCamoList();
+        camoIndex = camoIndexOfCurrent();
     }
 
     /** 退出改装界面时调用: 关闭状态并同步到服务端。 */
@@ -148,6 +157,11 @@ public final class GunRecolorGuiState {
         hueSlider = null;
         saturationSlider = null;
         lightnessSlider = null;
+        camoPrev = null;
+        camoNext = null;
+        camoLabel = null;
+        camoEntries = List.of();
+        camoIndex = 0;
     }
 
     private static void done(Runnable rebuild) {
@@ -162,7 +176,8 @@ public final class GunRecolorGuiState {
         }
         // 空数组也要发送: 否则"全部重置"不会被服务端记录, 之后服务端同步物品时会把旧调色板覆盖回来。
         NetworkHandler.CHANNEL.sendToServer(new ClientMessageGunColor(
-                targetSlot == null ? "" : targetSlot, GunRecolorManager.rawTargets(target)));
+                targetSlot == null ? "" : targetSlot, GunRecolorManager.rawTargets(target),
+                GunColorStorage.getCamo(target)));
     }
 
     /** 把配件调色板写回枪械的自定义槽 NBT(客户端预览用), 服务端由消息写回。 */
@@ -200,7 +215,12 @@ public final class GunRecolorGuiState {
         hueSlider = null;
         saturationSlider = null;
         lightnessSlider = null;
+        camoPrev = null;
+        camoNext = null;
+        camoLabel = null;
         selected = -1;
+        reloadCamoList();
+        camoIndex = camoIndexOfCurrent();
         background = new RecolorPanelBackground(X, Y, W, 100);
         add(adder, background);
 
@@ -235,6 +255,17 @@ public final class GunRecolorGuiState {
         add(adder, saturationSlider);
         add(adder, lightnessSlider);
 
+        // 动态迷彩: ◀ 名称 ▶, 名称按钮点一下切到下一种。枪包里没有迷彩时整行隐藏。
+        camoPrev = new RecolorActionButton(X + 2, Y, 18, 18, Component.literal("<"),
+                button -> cycleCamo(-1));
+        camoLabel = new RecolorCamoButton(X + 2, Y, W - 4, 18, button -> cycleCamo(1));
+        camoNext = new RecolorActionButton(X + 2, Y, 18, 18, Component.literal(">"),
+                button -> cycleCamo(1));
+        camoLabel.setMessage(camoLabelText());
+        add(adder, camoPrev);
+        add(adder, camoLabel);
+        add(adder, camoNext);
+
         int buttonWidth = (W - 4 - 8) / 3;
         add(adder, new RecolorActionButton(X + 2, Y, buttonWidth, 18,
                 Component.translatable("gui.taczfixes.recolor.reset_group"), button -> resetSelected()));
@@ -243,7 +274,8 @@ public final class GunRecolorGuiState {
         add(adder, new RecolorActionButton(X + 2 + 2 * (buttonWidth + 4), Y, buttonWidth, 18,
                 Component.translatable("gui.taczfixes.recolor.done"), button -> done(rebuild)));
         for (AbstractWidget widget : PANEL) {
-            if (widget instanceof RecolorActionButton) {
+            // 迷彩行的左右箭头单独定位, 不参与底部按钮行的纵向排布。
+            if (widget instanceof RecolorActionButton && widget != camoPrev && widget != camoNext) {
                 ACTION_BUTTONS.add(widget);
             }
         }
@@ -278,13 +310,67 @@ public final class GunRecolorGuiState {
         hueSlider.setY(sliderY);
         saturationSlider.setY(sliderY + SLIDER_H + 3);
         lightnessSlider.setY(sliderY + 2 * (SLIDER_H + 3));
-        int buttonY = sliderY + 3 * (SLIDER_H + 3) + 6;
+        int camoY = sliderY + 3 * (SLIDER_H + 3) + 6;
+        boolean camoVisible = !camoEntries.isEmpty();
+        if (camoPrev != null && camoLabel != null && camoNext != null) {
+            int labelWidth = W - 4 - 42;
+            camoPrev.setX(X + 2);
+            camoLabel.setX(X + 2 + 21);
+            camoLabel.setWidth(labelWidth);
+            camoNext.setX(X + 2 + 21 + labelWidth + 3);
+            camoPrev.setY(camoY);
+            camoLabel.setY(camoY);
+            camoNext.setY(camoY);
+            camoPrev.visible = camoVisible;
+            camoLabel.visible = camoVisible;
+            camoNext.visible = camoVisible;
+            camoPrev.active = camoVisible;
+            camoLabel.active = camoVisible;
+            camoNext.active = camoVisible;
+        }
+        int buttonY = camoY + (camoVisible ? 22 : 0) + 6;
         for (AbstractWidget button : ACTION_BUTTONS) {
             button.setY(buttonY);
         }
         if (background != null) {
-            background.setHeight(4 + (SLIDER_H + 6) + 14 + rows * ROW_H + 6 + 3 * (SLIDER_H + 3) + 6 + 24);
+            background.setHeight(buttonY + 18 + 6 - Y);
         }
+    }
+
+    private static void reloadCamoList() {
+        camoEntries = DynamicCamo.entries();
+    }
+
+    private static int camoIndexOfCurrent() {
+        DynamicCamo.Entry entry = DynamicCamo.byId(GunColorStorage.getCamo(target()));
+        return entry == null ? 0 : entry.index();
+    }
+
+    private static Component camoLabelText() {
+        String name;
+        if (camoIndex <= 0) {
+            name = Component.translatable("gui.taczfixes.recolor.camo_none").getString();
+        } else {
+            DynamicCamo.Entry entry = DynamicCamo.byIndex(camoIndex);
+            name = entry == null ? String.valueOf(camoIndex)
+                    : Component.translatable(entry.nameKey()).getString();
+        }
+        return Component.translatable("gui.taczfixes.recolor.camo", name);
+    }
+
+    private static void cycleCamo(int delta) {
+        int count = camoEntries.size() + 1;
+        if (count <= 1) {
+            return;
+        }
+        camoIndex = ((camoIndex + delta) % count + count) % count;
+        DynamicCamo.Entry entry = camoIndex <= 0 ? null : DynamicCamo.byIndex(camoIndex);
+        GunColorStorage.setCamo(target(), entry == null ? "" : entry.id().toString());
+        writeBack();
+        if (camoLabel != null) {
+            camoLabel.setMessage(camoLabelText());
+        }
+        send();
     }
 
     private static int clusterCountOf(double value) {

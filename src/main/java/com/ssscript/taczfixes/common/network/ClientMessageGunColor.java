@@ -15,23 +15,35 @@ import java.util.Arrays;
 import java.util.Locale;
 import java.util.function.Supplier;
 
-/** 客户端改装界面把调色板同步到服务端。 slotId 为空表示枪械本体, 否则为自定义槽中的配件。 */
+/** 客户端改装界面把调色板与动态迷彩同步到服务端。 slotId 为空表示枪械本体, 否则为配件。 */
 public class ClientMessageGunColor {
     private final String slotId;
     private final int[] targets;
+    private final String camo;
 
     public ClientMessageGunColor(String slotId, int[] targets) {
+        this(slotId, targets, "");
+    }
+
+    public ClientMessageGunColor(String slotId, int[] targets, String camo) {
         this.slotId = slotId == null ? "" : slotId;
         this.targets = targets == null ? new int[0] : targets;
+        String safe = camo == null ? "" : camo;
+        this.camo = safe.length() > GunColorStorage.MAX_CAMO_LENGTH
+                ? safe.substring(0, GunColorStorage.MAX_CAMO_LENGTH) : safe;
     }
 
     public static void encode(ClientMessageGunColor message, FriendlyByteBuf buf) {
         buf.writeUtf(message.slotId);
         buf.writeVarIntArray(message.targets);
+        buf.writeUtf(message.camo, GunColorStorage.MAX_CAMO_LENGTH);
     }
 
     public static ClientMessageGunColor decode(FriendlyByteBuf buf) {
-        return new ClientMessageGunColor(buf.readUtf(), buf.readVarIntArray());
+        String slotId = buf.readUtf();
+        int[] targets = buf.readVarIntArray();
+        String camo = buf.readUtf(GunColorStorage.MAX_CAMO_LENGTH);
+        return new ClientMessageGunColor(slotId, targets, camo);
     }
 
     public static void handle(ClientMessageGunColor message, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -52,6 +64,7 @@ public class ClientMessageGunColor {
         IGun gun = IGun.getIGunOrNull(gunStack);
         if (message.slotId.isEmpty()) {
             GunColorStorage.set(gunStack, targets);
+            GunColorStorage.setCamo(gunStack, message.camo);
         } else if (message.slotId.startsWith("t:")) {
             AttachmentType type;
             try {
@@ -62,6 +75,7 @@ public class ClientMessageGunColor {
             ItemStack item = gun == null ? ItemStack.EMPTY : TaczItemCompat.getAttachment(gun, gunStack, type);
             if (item.isEmpty()) return;
             GunColorStorage.set(item, targets);
+            GunColorStorage.setCamo(item, message.camo);
             CompoundTag tag = ItemNbt.getOrCreate(gunStack);
             CompoundTag attachmentTag = new CompoundTag();
             item.save(com.ssscript.taczfixes.common.util.RegistryAccessHelper.provider(), attachmentTag);
@@ -70,6 +84,7 @@ public class ClientMessageGunColor {
             ItemStack item = CustomSlotStorage.getPhysical(gunStack, message.slotId);
             if (item.isEmpty()) return;
             GunColorStorage.set(item, targets);
+            GunColorStorage.setCamo(item, message.camo);
             CompoundTag tag = ItemNbt.getOrCreate(gunStack);
             CompoundTag slots = tag.contains(CustomSlotStorage.TAG_KEY, 10)
                     ? tag.getCompound(CustomSlotStorage.TAG_KEY) : new CompoundTag();

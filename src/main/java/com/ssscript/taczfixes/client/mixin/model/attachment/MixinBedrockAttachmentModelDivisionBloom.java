@@ -13,6 +13,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+/**
+ * 分划渲染阶段标记（供泛光管线区分镜内区域），不再在这里做迷彩压制：
+ * 迷彩的镜内屏蔽改由 {@link MixinBedrockAttachmentModelCamoPhases} 按渲染阶段处理。
+ */
 @Mixin(value = BedrockAttachmentModel.class, remap = false)
 public abstract class MixinBedrockAttachmentModelDivisionBloom {
     private static final String RENDER_TEMP_PART =
