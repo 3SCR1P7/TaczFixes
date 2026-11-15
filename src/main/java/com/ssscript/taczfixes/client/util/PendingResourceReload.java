@@ -20,14 +20,27 @@ public final class PendingResourceReload {
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) return;
         pending = false;
-        mc.reloadResourcePacks();
+        // 资源包/模组 jar 损坏时加载器会直接抛出异常, 进而让客户端崩溃。
+        // 这里兜住: 重载失败只记录日志, 不把整个游戏带崩。
+        try {
+            mc.reloadResourcePacks();
+        } catch (Throwable failed) {
+            com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn(
+                    "Resource reload failed after gun pack change: {}", failed.toString());
+            return;
+        }
         // 枪包同时提供 data 内容: 服务端数据包需要重建仓库(重跑 RepositorySource)再重载,
         // 否则禁用/新增的枪包的 data 与创造标签页不会更新。
-        MinecraftServer server = mc.getSingleplayerServer();
-        if (server != null) {
-            net.minecraft.server.packs.repository.PackRepository repository = server.getPackRepository();
-            repository.reload();
-            server.reloadResources(repository.getSelectedIds());
+        try {
+            MinecraftServer server = mc.getSingleplayerServer();
+            if (server != null) {
+                net.minecraft.server.packs.repository.PackRepository repository = server.getPackRepository();
+                repository.reload();
+                server.reloadResources(repository.getSelectedIds());
+            }
+        } catch (Throwable failed) {
+            com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn(
+                    "Data pack reload failed after gun pack change: {}", failed.toString());
         }
     }
 }

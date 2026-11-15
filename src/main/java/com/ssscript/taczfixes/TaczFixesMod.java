@@ -224,6 +224,9 @@ public class TaczFixesMod {
 
     private void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            // 世界渲染结束(AFTER_LEVEL, 手部渲染之前)复制场景颜色/深度, 供 PBR 屏幕空间反射采样。
+            MinecraftForge.EVENT_BUS.addListener(
+                    com.ssscript.taczfixes.client.render.PbrRenderer::onRenderLevelStage);
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());

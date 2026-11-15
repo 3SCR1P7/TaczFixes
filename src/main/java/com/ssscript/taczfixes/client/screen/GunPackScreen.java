@@ -99,7 +99,12 @@ public final class GunPackScreen {
                 // 主菜单没有世界: 立即重载客户端资源(数据包会在下次进入世界时由枪包设置生效)
                 minecraft.setScreen(parent != null ? parent : new TitleScreen());
                 if (changed) {
-                    minecraft.reloadResourcePacks();
+                    try {
+                        minecraft.reloadResourcePacks();
+                    } catch (Throwable failed) {
+                        com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn(
+                                "Resource reload failed after gun pack change: {}", failed.toString());
+                    }
                 }
             }
         }, taczDir, Component.translatable("gui.taczfixes.gun_packs.title"), parent, gate, installedByPackId);

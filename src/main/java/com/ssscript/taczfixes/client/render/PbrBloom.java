@@ -27,7 +27,7 @@ import org.lwjgl.opengl.GL30;
 
 /** Separate world/hand phases prevent the hand depth clear from invalidating world bloom. */
 public final class PbrBloom {
-    private static RenderTarget emission, horizontal, vertical, scopeMask;
+    private static RenderTarget emission, horizontal, vertical, wideA, wideB, scopeMask;
     private static VertexBuffer quad, maskQuad;
     private static boolean active, dirty, stencilCopied, scopeMaskValid;
     private static final Matrix4f IDENTITY = new Matrix4f();
@@ -69,6 +69,11 @@ public final class PbrBloom {
             vertical = new TextureTarget(horizontal.width, horizontal.height, false, Minecraft.ON_OSX);
             horizontal.setFilterMode(GL11.GL_LINEAR);
             vertical.setFilterMode(GL11.GL_LINEAR);
+            // 两层泛光: 窄光晕 + 更宽的光晕, 合成时叠加, 过渡比单层更自然。
+            wideA = new TextureTarget(width, height, false, Minecraft.ON_OSX);
+            wideB = new TextureTarget(width, height, false, Minecraft.ON_OSX);
+            wideA.setFilterMode(GL11.GL_LINEAR);
+            wideB.setFilterMode(GL11.GL_LINEAR);
             dirty = false;
         }
         if (!dirty) {
@@ -130,6 +135,7 @@ public final class PbrBloom {
             GL11.glDisable(GL11.GL_STENCIL_TEST);
             ensureQuad();
             float radius = Config.PBR_BLOOM_RADIUS.get().floatValue();
+            float strength = Config.PBR_BLOOM_STRENGTH.get().floatValue();
             // Match 2.0.0: check scene depth only on the first blur pass.
             RenderSystem.setShaderTexture(0, emission.getColorTextureId());
             RenderSystem.setShaderTexture(1, emission.getDepthTextureId());
@@ -140,15 +146,28 @@ public final class PbrBloom {
             PbrRenderer.setBlurDirection(radius / main.width, 0f);
             draw(horizontal, vertical, PbrRenderer.blurShader);
             PbrRenderer.setBlurDirection(0f, radius / main.height);
-            draw(vertical, horizontal, PbrRenderer.blurShader);
-            PbrRenderer.setBloomStrength(Config.PBR_BLOOM_STRENGTH.get().floatValue());
+            draw(vertical, wideA, PbrRenderer.blurShader);
+            boolean wide = wideB != null && Config.PBR_BLOOM_WIDE.get()
+                    && Config.PBR_BLOOM_WIDE_STRENGTH.get() > 0.0D;
+            if (wide) {
+                float wideRadius = radius * 2.4f;
+                PbrRenderer.setBlurDirection(wideRadius / main.width, 0f);
+                draw(wideA, vertical, PbrRenderer.blurShader);
+                PbrRenderer.setBlurDirection(0f, wideRadius / main.height);
+                draw(vertical, wideB, PbrRenderer.blurShader);
+            }
+            PbrRenderer.setBloomStrength(strength);
             // ShaderInstance caches BlendMode. If its additive mode is already cached,
             // apply() will not undo the disableBlend() above, and the quad replaces the world.
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO, GL11.GL_ONE);
             main.bindWrite(true);
             int maskTexture = scopeMaskValid && scopeMask != null ? scopeMask.getColorTextureId() : 0;
-            compositeToMain(horizontal, PbrRenderer.compositeShader, maskTexture);
+            compositeToMain(wideA, PbrRenderer.compositeShader, maskTexture);
+            if (wide) {
+                PbrRenderer.setBloomStrength(strength * Config.PBR_BLOOM_WIDE_STRENGTH.get().floatValue());
+                compositeToMain(wideB, PbrRenderer.compositeShader, maskTexture);
+            }
         } finally {
             dirty = false;
             stencilCopied = false;
@@ -222,7 +241,9 @@ public final class PbrBloom {
         if (emission != null) emission.destroyBuffers();
         if (horizontal != null) horizontal.destroyBuffers();
         if (vertical != null) vertical.destroyBuffers();
-        emission = horizontal = vertical = null;
+        if (wideA != null) wideA.destroyBuffers();
+        if (wideB != null) wideB.destroyBuffers();
+        emission = horizontal = vertical = wideA = wideB = null;
         releaseScopeMask();
         dirty = false;
         stencilCopied = false;

@@ -33,6 +33,8 @@ void main() {
     viewPosition = position.xyz;
     viewNormal = normalize(transpose(inverse(mat3(ModelViewMat))) * Normal);
     skyExposure = clamp(float(UV2.y) / 240.0, 0.0, 1.0);
+    // 1.20.1 的 <fog.glsl> 只有 fog_distance(mat4, vec3, int) 这一种签名
+    // (1.21.1 起才加入 fog_distance(vec3, int)), 这里保留矩阵参数形式。
     vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
     rawVertexColor = Color;

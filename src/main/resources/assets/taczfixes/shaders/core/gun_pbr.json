@@ -15,56 +15,51 @@
     "Normal"
   ],
   "samplers": [
-    {
-      "name": "Sampler0"
-    },
-    {
-      "name": "Sampler1"
-    },
-    {
-      "name": "Sampler2"
-    },
-    {
-      "name": "Sampler3"
-    },
-    {
-      "name": "Sampler4"
-    },
-    {
-      "name": "Sampler5"
-    }
+    { "name": "Sampler0" },
+    { "name": "Sampler1" },
+    { "name": "Sampler2" },
+    { "name": "Sampler3" },
+    { "name": "Sampler4" },
+    { "name": "Sampler5" },
+    { "name": "Sampler6" },
+    { "name": "Sampler7" }
   ],
   "uniforms": [
     { "name": "CelestialVisibility", "type": "float", "count": 1, "values": [0.0] },
     { "name": "LocalSkyExposure", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "SunOcclusion", "type": "float", "count": 1, "values": [0.0] },
     { "name": "CelestialDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
     { "name": "CelestialColor", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
     { "name": "SkyAmbient", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "SkyZenith", "type": "float", "count": 3, "values": [0.3, 0.45, 0.7] },
+    { "name": "SkyHorizon", "type": "float", "count": 3, "values": [0.6, 0.65, 0.75] },
+    { "name": "SunHorizon", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "SunAzimuth", "type": "float", "count": 2, "values": [1.0, 0.0] },
     { "name": "Wetness", "type": "float", "count": 1, "values": [0.0] },
-    { "name": "LocalLightDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
-    { "name": "LocalLightColor", "type": "float", "count": 3, "values": [1.0, 1.0, 1.0] },
-    { "name": "LocalLightStrength", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "WetDetail", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Time", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "CameraPos", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "LocalLightPos1", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "LocalLightColor1", "type": "float", "count": 3, "values": [1.0, 1.0, 1.0] },
+    { "name": "LocalLightStrength1", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "LocalLightPos2", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "LocalLightColor2", "type": "float", "count": 3, "values": [1.0, 1.0, 1.0] },
+    { "name": "LocalLightStrength2", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "LocalLightPos3", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "LocalLightColor3", "type": "float", "count": 3, "values": [1.0, 1.0, 1.0] },
+    { "name": "LocalLightStrength3", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "LocalLightPos4", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "LocalLightColor4", "type": "float", "count": 3, "values": [1.0, 1.0, 1.0] },
+    { "name": "LocalLightStrength4", "type": "float", "count": 1, "values": [0.0] },
     {
       "name": "ModelViewMat",
       "type": "matrix4x4",
       "count": 16,
       "values": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
       ]
     },
     {
@@ -72,22 +67,10 @@
       "type": "matrix4x4",
       "count": 16,
       "values": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        1.0, 0.0, 0.0, 0.0,
+        0.0, 1.0, 0.0, 0.0,
+        0.0, 0.0, 1.0, 0.0,
+        0.0, 0.0, 0.0, 1.0
       ]
     },
     {
@@ -95,146 +78,35 @@
       "type": "matrix3x3",
       "count": 9,
       "values": [
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0,
-        0.0,
-        0.0,
-        0.0,
-        1.0
+        1.0, 0.0, 0.0,
+        0.0, 1.0, 0.0,
+        0.0, 0.0, 1.0
       ]
     },
-    {
-      "name": "ColorModulator",
-      "type": "float",
-      "count": 4,
-      "values": [
-        1.0,
-        1.0,
-        1.0,
-        1.0
-      ]
-    },
-    {
-      "name": "Light0_Direction",
-      "type": "float",
-      "count": 3,
-      "values": [
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "name": "Light1_Direction",
-      "type": "float",
-      "count": 3,
-      "values": [
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "name": "FogStart",
-      "type": "float",
-      "count": 1,
-      "values": [
-        0.0
-      ]
-    },
-    {
-      "name": "FogEnd",
-      "type": "float",
-      "count": 1,
-      "values": [
-        1.0
-      ]
-    },
-    {
-      "name": "FogColor",
-      "type": "float",
-      "count": 4,
-      "values": [
-        0.0,
-        0.0,
-        0.0,
-        0.0
-      ]
-    },
-    {
-      "name": "FogShape",
-      "type": "int",
-      "count": 1,
-      "values": [
-        0
-      ]
-    },
-    {
-      "type": "int",
-      "count": 1,
-      "name": "HasSpecular",
-      "values": [
-        0
-      ]
-    },
-    {
-      "type": "int",
-      "count": 1,
-      "name": "HasNormal",
-      "values": [
-        0
-      ]
-    },
-    {
-      "type": "int",
-      "count": 1,
-      "name": "EmissionPass",
-      "values": [
-        0
-      ]
-    },
-    {
-      "type": "int",
-      "count": 1,
-      "name": "ScopeDivisionPass",
-      "values": [
-        0
-      ]
-    },
-    {
-      "type": "float",
-      "count": 1,
-      "name": "ReflectionStrength",
-      "values": [
-        1.0
-      ]
-    },
-    {
-      "type": "float",
-      "count": 1,
-      "name": "ReflectionArea",
-      "values": [
-        2.0
-      ]
-    },
-    {
-      "type": "float",
-      "count": 1,
-      "name": "GlareStrength",
-      "values": [
-        1.0
-      ]
-    },
-    {
-      "type": "float",
-      "count": 1,
-      "name": "EmissionStrength",
-      "values": [
-        1.0
-      ]
-    }
+    { "name": "ColorModulator", "type": "float", "count": 4, "values": [1.0, 1.0, 1.0, 1.0] },
+    { "name": "Light0_Direction", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "Light1_Direction", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
+    { "name": "FogStart", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "FogEnd", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "FogColor", "type": "float", "count": 4, "values": [0.0, 0.0, 0.0, 0.0] },
+    { "name": "FogShape", "type": "int", "count": 1, "values": [0] },
+    { "name": "HasSpecular", "type": "int", "count": 1, "values": [0] },
+    { "name": "HasNormal", "type": "int", "count": 1, "values": [0] },
+    { "name": "FallbackMaterial", "type": "int", "count": 1, "values": [1] },
+    { "name": "EmissionPass", "type": "int", "count": 1, "values": [0] },
+    { "name": "ScopeDivisionPass", "type": "int", "count": 1, "values": [0] },
+    { "name": "GlareDepthTest", "type": "int", "count": 1, "values": [0] },
+    { "name": "ReflectionStrength", "type": "float", "count": 1, "values": [0.35] },
+    { "name": "GlareStrength", "type": "float", "count": 1, "values": [0.5] },
+    { "name": "EmissionStrength", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "DefaultRoughness", "type": "float", "count": 1, "values": [0.45] },
+    { "name": "DefaultMetal", "type": "float", "count": 1, "values": [0.55] },
+    { "name": "DefaultReflection", "type": "float", "count": 1, "values": [0.35] },
+    { "name": "EnvStrength", "type": "float", "count": 1, "values": [1.0] },
+    { "name": "Anisotropy", "type": "float", "count": 1, "values": [0.5] },
+    { "name": "SSRStrength", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "ViewRotX", "type": "float", "count": 3, "values": [1.0, 0.0, 0.0] },
+    { "name": "ViewRotY", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
+    { "name": "ViewRotZ", "type": "float", "count": 3, "values": [0.0, 0.0, 1.0] }
   ]
 }

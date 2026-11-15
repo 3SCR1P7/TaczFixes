@@ -12,7 +12,6 @@ public class Config {
     public static final ForgeConfigSpec.BooleanValue PBR_ENABLED;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM;
     public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION;
-    public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION_AREA;
     public static final ForgeConfigSpec.DoubleValue PBR_GLARE_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_EMISSION;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
@@ -20,6 +19,17 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
+    public static final ForgeConfigSpec.BooleanValue PBR_FALLBACK_MATERIAL;
+    public static final ForgeConfigSpec.DoubleValue PBR_DEFAULT_ROUGHNESS;
+    public static final ForgeConfigSpec.DoubleValue PBR_DEFAULT_METAL;
+    public static final ForgeConfigSpec.DoubleValue PBR_DEFAULT_REFLECTION;
+    public static final ForgeConfigSpec.DoubleValue PBR_ENV_STRENGTH;
+    public static final ForgeConfigSpec.DoubleValue PBR_ANISOTROPY;
+    public static final ForgeConfigSpec.BooleanValue PBR_SSR;
+    public static final ForgeConfigSpec.DoubleValue PBR_SSR_STRENGTH;
+    public static final ForgeConfigSpec.BooleanValue PBR_WET_DETAIL;
+    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_WIDE;
+    public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_WIDE_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue GUN_ENCHANT_GLINT_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
     public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_FULL_SPEED;
@@ -1635,13 +1645,10 @@ public class Config {
                 .define("enabled", true);
         PBR_REFLECTION = BUILDER
                 .comment("枪械材质反光强度。默认值：0.5")
-                .defineInRange("reflection_strength", 0.5, 0.0, 4.0);
+                .defineInRange("reflection_strength", 1.0, 0.0, 4.0);
         PBR_GLARE_STRENGTH = BUILDER
                 .comment("枪身高光的眩光强度。默认值：0.5")
-                .defineInRange("glare_strength", 0.5, 0.0, 10.0);
-        PBR_REFLECTION_AREA = BUILDER
-                .comment("光源直射时枪身反光的面积倍率。默认值：2.0")
-                .defineInRange("reflection_area", 2.0, 0.5, 10.0);
+                .defineInRange("glare_strength", 1.0, 0.0, 10.0);
         PBR_EMISSION = BUILDER
                 .comment("枪械自发光强度。默认值：1.0")
                 .defineInRange("emission_strength", 1.0, 0.0, 4.0);
@@ -1663,6 +1670,39 @@ public class Config {
         PBR_BLOOM_TRACER = BUILDER
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
+        PBR_FALLBACK_MATERIAL = BUILDER
+                .comment("没有 _s 贴图的枪械是否按底色推导材质，使这类枪包也有反光。默认值：true")
+                .define("fallback_material", true);
+        PBR_DEFAULT_ROUGHNESS = BUILDER
+                .comment("无 _s 贴图时的默认粗糙度，越大越哑光。默认值：0.45")
+                .defineInRange("default_roughness", 0.45, 0.03, 1.0);
+        PBR_DEFAULT_METAL = BUILDER
+                .comment("无 _s 贴图时按底色亮度推导的金属度上限，越大越像金属。默认值：0.55")
+                .defineInRange("default_metal", 0.55, 0.0, 1.0);
+        PBR_DEFAULT_REFLECTION = BUILDER
+                .comment("无 _s 贴图时的默认反光强度。默认值：0.35")
+                .defineInRange("default_reflection", 0.35, 0.0, 4.0);
+        PBR_ENV_STRENGTH = BUILDER
+                .comment("天空环境反射强度，影响金属/光滑面反射天空与日落的明显程度。默认值：1.0")
+                .defineInRange("env_strength", 1.0, 0.0, 4.0);
+        PBR_ANISOTROPY = BUILDER
+                .comment("各向异性反光强度，表现拉丝金属与枪管沿轴向的细长高光。默认值：0.5")
+                .defineInRange("anisotropy", 0.5, 0.0, 1.0);
+        PBR_SSR = BUILDER
+                .comment("是否启用屏幕空间反射，让枪械金属反射出场景中的方块与实体。默认值：true")
+                .define("ssr", true);
+        PBR_SSR_STRENGTH = BUILDER
+                .comment("屏幕空间反射强度，0 等同关闭。默认值：0.8")
+                .defineInRange("ssr_strength", 0.8, 0.0, 2.0);
+        PBR_WET_DETAIL = BUILDER
+                .comment("是否启用雨水膜细节（波纹扰动、雨痕），需要枪械浸雨。默认值：true")
+                .define("wet_detail", true);
+        PBR_BLOOM_WIDE = BUILDER
+                .comment("是否叠加一层更大半径的宽泛光，让光晕过渡更自然。默认值：true")
+                .define("bloom_wide", true);
+        PBR_BLOOM_WIDE_STRENGTH = BUILDER
+                .comment("宽泛光层强度。默认值：0.5")
+                .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);
         GUN_ENCHANT_GLINT_STRENGTH = BUILDER
                 .comment("附魔光效强度。默认值：1.0")
                 .defineInRange("enchantment_glint_strength", 1.0, 0.0, 2.0);
