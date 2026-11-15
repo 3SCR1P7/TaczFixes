@@ -152,6 +152,11 @@ public final class GunRecolorManager {
         return stack.isEmpty() ? null : stack.peek();
     }
 
+    /** 当前渲染上下文里的物品(动态迷彩据此读取 NBT)。 */
+    public static ItemStack currentRenderItem() {
+        return currentStack();
+    }
+
     /** 当前渲染上下文是否因"涂装模块"(arcana 调色喷罐附件)而禁用本模组调色。 */
     public static boolean isSuppressed() {
         Deque<Boolean> suppress = SUPPRESS_STACK.get();

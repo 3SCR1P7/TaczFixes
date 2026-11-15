@@ -7,7 +7,7 @@
 
 | 分支 | Minecraft | 加载器 | 模组版本 | 对应 TaCZ |
 | --- | --- | --- | --- | --- |
-| `taczfixes` | 1.20.1 | Forge 47.4+ | 2.2.3 | tacz-forge 1.20.1 1.2.0 |
+| `taczfixes` | 1.20.1 | Forge 47.4+ | 2.3.0 | tacz-forge 1.20.1 1.2.0 |
 | `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.0.1 | tacz-neoforge 1.21.1 1.2.0 |
 
 客户端与服务端需要安装相同版本的 TaCZ Fixes（网络协议版本 `2`），单机/客户端安装即可使用全部功能。
@@ -124,6 +124,10 @@
 - HTML HUD 放在 `assets/<namespace>/hud/**.html`，模组会自动同步给 ApricityUI
 - 配件槽位、虚拟配件、改装点数、附魔兼容等均通过 data json 定义
 - 配件动画示例见 `example/`：`grip_emx_bipod` 为可用的两脚架状态机与动画配置
+
+### 动态迷彩
+
+添加了枪包驱动的动态迷彩支持，详见`example/camo_example_pack`。
 
 ## 构建
 

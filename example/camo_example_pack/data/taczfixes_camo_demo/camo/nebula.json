@@ -1,0 +1,9 @@
+{
+  "name": "taczfixes_camo_demo.camo.nebula",
+  "shader": "taczfixes_camo_demo:camo/nebula",
+  "strength": 0.95,
+  "emissive": 0.55,
+  "params": [
+    [1.0, 0.0, 0.0, 0.0]
+  ]
+}

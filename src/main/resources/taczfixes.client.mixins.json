@@ -66,6 +66,7 @@
         "model.attachment.MixinAttachmentRenderTransparency",
         "model.attachment.MixinBedrockAttachmentModel",
         "model.attachment.MixinBedrockAttachmentModelDivisionBloom",
+        "model.attachment.MixinBedrockAttachmentModelCamoPhases",
         "model.attachment.MixinBedrockAttachmentModelScopeMask",
         "model.attachment.MixinBedrockAttachmentModelScopeSuppress",
         "model.attachment.MixinClientAttachmentIndexRecolor",

@@ -176,8 +176,9 @@ public class MixinGunPropertyDiagrams {
         if (!Config.LIMB_DAMAGE_SHOW_IN_CHARTS.get()) {
             return;
         }
-        // 多留一行给四肢伤害，并补偿 TaCZ 实际绘制行数与声明行数不一致的情况。
-        cir.setReturnValue(cir.getReturnValue() + 20);
+        // 只多留一行给四肢伤害(10px)。旧版 TaCZ 的图表少画一行, 这里曾用 +20 补那个坑;
+        // TaCZ 本体修掉之后 +20 会变成一格空白行, 所以改回 +10。
+        cir.setReturnValue(cir.getReturnValue() + 10);
     }
 
     @Unique

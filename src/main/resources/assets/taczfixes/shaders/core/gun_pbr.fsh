@@ -29,6 +29,13 @@ uniform float Anisotropy;
 uniform float WetDetail;
 uniform float SSRStrength;
 uniform float Time;
+// 动态迷彩: 由 PbrRenderer 按当前渲染物品的 NBT 逐次绘制写入。
+//   CamoIndex    = 当前迷彩序号(0=无), 对应生成程序里的 dispatch 分支
+//   CamoStrength = 该迷彩定义的混合强度(0..1)
+//   CamoEmissive = 该迷彩定义的自发光倾向(0..1), 亮带同时进泛光
+uniform int CamoIndex;
+uniform float CamoStrength;
+uniform float CamoEmissive;
 uniform vec3 CameraPos;
 uniform vec3 ViewRotX;
 uniform vec3 ViewRotY;
@@ -252,14 +259,41 @@ vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
     return result / (1.0 + result * 0.35);
 }
 
+// ===== 动态迷彩拼接区(枪包数据驱动)=====
+// CamoShaderBuilder 会把下面两个标记之间的内容整段替换成:
+//   公共工具函数 + 每条枪包迷彩的片段(#define 重命名) + taczfixesCamoDispatch()
+// 没有任何迷彩时保留这个空实现: 原版 gun_pbr 程序照样能编译, dispatch 永远返回 0。
+//<<<TACZFIXES_CAMO_BEGIN>>>
+vec4 taczfixesCamoDispatch(vec2 uv, float t) { return vec4(0.0); }
+//<<<TACZFIXES_CAMO_END>>>
+
 void main() {
     vec4 base = texture(Sampler0, texCoord0);
     float alpha = base.a * vertexColor.a * ColorModulator.a;
     if (alpha < 0.1) discard;
+    // 动态迷彩: 程序化颜色替换枪身色相, 明暗结构仍取原贴图亮度(蚀刻/凹槽/棱线保留);
+    // 返回的 alpha 是混合权重, 定义里的 strength 作为上限。CamoEmissive>0 时亮带进 glow。
+    vec3 camoGlow = vec3(0.0);
+    if (CamoIndex > 0) {
+        float camoLum = clamp(dot(base.rgb, vec3(0.2126, 0.7152, 0.0722)), 0.0, 1.0);
+        // 贴图明暗同时推动迷彩相位: 凹槽/棱线处的图案被挤到一边, 像刻在金属上而不是盖在表面
+        vec2 camoUV = texCoord0 + (camoLum - 0.5) * 0.030 * vec2(1.0, 0.55);
+        vec4 camoCol = taczfixesCamoDispatch(camoUV, Time);
+        float camoW = clamp(camoCol.a * CamoStrength, 0.0, 1.0);
+        if (camoW > 0.002) {
+            // 与参考实现同款明暗模板: 暗部保底 0.45、亮部可到 1.35
+            float camoShape = 0.45 + 0.90 * pow(camoLum, 0.86);
+            base.rgb = mix(base.rgb, camoCol.rgb * camoShape, camoW);
+            // 只有"亮带"才发光(亮带扫到哪亮到哪)
+            float camoEmi = smoothstep(0.42, 1.05, max(camoCol.r, max(camoCol.g, camoCol.b)));
+            camoGlow = camoCol.rgb * camoW * CamoEmissive * camoEmi;
+        }
+    }
     vec4 specular = HasSpecular != 0 ? texture(Sampler3, texCoord0) : vec4(0.0, 0.0, 0.0, 1.0);
     float emission = max(float(illuminatedGroup),
             specular.a < 254.5 / 255.0 ? specular.a * (255.0 / 254.0) : 0.0);
     vec3 glow = base.rgb * rawVertexColor.rgb * ColorModulator.rgb * emission * EmissionStrength;
+    glow += camoGlow * rawVertexColor.rgb * ColorModulator.rgb;
     float fog = 1.0 - smoothstep(FogStart, max(FogEnd, FogStart + 0.001), vertexDistance);
 
     vec3 n = safeNormalize(viewNormal);
