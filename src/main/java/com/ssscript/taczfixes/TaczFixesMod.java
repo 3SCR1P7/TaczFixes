@@ -228,6 +228,8 @@ public class TaczFixesMod {
             // 世界渲染结束(AFTER_LEVEL, 手部渲染之前)复制场景颜色/深度, 供 PBR 屏幕空间反射采样。
             MinecraftForge.EVENT_BUS.addListener(
                     com.ssscript.taczfixes.client.render.PbrRenderer::onRenderLevelStage);
+            // 迷彩切换后让渲染侧按物品实例的缓存失效, 改装界面里立即看到效果
+            com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.camo.DynamicCamo::invalidate);
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());

@@ -14,7 +14,21 @@ public final class GunColorStorage {
     /** 迷彩 id 最长长度(资源位置完整写法), 与网络包上限一致。 */
     public static final int MAX_CAMO_LENGTH = 128;
 
+    /** 客户端注册: 迷彩 id 变化时让渲染侧的按实例缓存失效, 保证切换后立即生效。 */
+    private static volatile Runnable camoChangeListener;
+
     private GunColorStorage() {
+    }
+
+    public static void setCamoChangeListener(Runnable listener) {
+        camoChangeListener = listener;
+    }
+
+    private static void notifyCamoChanged() {
+        Runnable listener = camoChangeListener;
+        if (listener != null) {
+            listener.run();
+        }
     }
 
     public static int[] get(ItemStack gun) {
@@ -64,6 +78,7 @@ public final class GunColorStorage {
         } else {
             tag.put(TAG_KEY, color);
         }
+        notifyCamoChanged();
     }
 
     private static CompoundTag colorTag(ItemStack stack) {
