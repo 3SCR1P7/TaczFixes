@@ -311,7 +311,7 @@ public final class GunRecolorGuiState {
         saturationSlider.setY(sliderY + SLIDER_H + 3);
         lightnessSlider.setY(sliderY + 2 * (SLIDER_H + 3));
         int camoY = sliderY + 3 * (SLIDER_H + 3) + 6;
-        boolean camoVisible = !camoEntries.isEmpty();
+        boolean camoVisible = !camoEntries.isEmpty() && targetSlot == null; // 迷彩属于枪, 选配件时不提供
         if (camoPrev != null && camoLabel != null && camoNext != null) {
             int labelWidth = W - 4 - 42;
             camoPrev.setX(X + 2);

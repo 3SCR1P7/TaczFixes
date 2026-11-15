@@ -27,6 +27,12 @@ public abstract class MixinAttachmentRenderGroupOffset {
             "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;" +
                     "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lcom/mojang/blaze3d/vertex/PoseStack;" +
                     "Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource;)V";
+    /** 瞄具走带 defer 回调的 9 参重载, 同样要记录所属枪, 迷彩才会跟随枪而不是瞄具自己。 */
+    private static final String TACZFIXES_RENDER_DEFERRED_DESC =
+            "(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;" +
+                    "Lcom/tacz/guns/api/item/attachment/AttachmentType;Lcom/mojang/blaze3d/vertex/PoseStack;" +
+                    "Lnet/minecraft/world/item/ItemDisplayContext;IILnet/minecraft/client/renderer/MultiBufferSource;" +
+                    "Ljava/util/function/Consumer;)V";
 
     /** 调色: 渲染配件模型期间记录当前配件, 供 ClientAttachmentIndex.getModelTexture 替换贴图。 */
     @Inject(method = "renderAttachment" + TACZFIXES_RENDER_DESC, at = @At("HEAD"), remap = false)
@@ -36,6 +42,7 @@ public abstract class MixinAttachmentRenderGroupOffset {
                                                    MultiBufferSource bufferSource,
                                                    org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         GunRecolorManager.pushRenderStack(attachmentStack);
+        GunRecolorManager.pushCamoSource(gunStack);
     }
 
     @Inject(method = "renderAttachment" + TACZFIXES_RENDER_DESC, at = @At("RETURN"), remap = false)
@@ -45,6 +52,27 @@ public abstract class MixinAttachmentRenderGroupOffset {
                                                   MultiBufferSource bufferSource,
                                                   org.spongepowered.asm.mixin.injection.callback.CallbackInfo ci) {
         GunRecolorManager.popRenderStack();
+        GunRecolorManager.popCamoSource();
+    }
+
+    @Inject(method = "renderAttachment" + TACZFIXES_RENDER_DEFERRED_DESC, at = @At("HEAD"), remap = false)
+    private static void taczfixes$pushDeferredCamoSource(ItemStack attachmentStack, ItemStack gunStack,
+                                                         AttachmentType type, PoseStack poseStack,
+                                                         ItemDisplayContext displayContext, int light, int overlay,
+                                                         MultiBufferSource bufferSource,
+                                                         java.util.function.Consumer<?> deferredSlotAdapters,
+                                                         CallbackInfo ci) {
+        GunRecolorManager.pushCamoSource(gunStack);
+    }
+
+    @Inject(method = "renderAttachment" + TACZFIXES_RENDER_DEFERRED_DESC, at = @At("RETURN"), remap = false)
+    private static void taczfixes$popDeferredCamoSource(ItemStack attachmentStack, ItemStack gunStack,
+                                                        AttachmentType type, PoseStack poseStack,
+                                                        ItemDisplayContext displayContext, int light, int overlay,
+                                                        MultiBufferSource bufferSource,
+                                                        java.util.function.Consumer<?> deferredSlotAdapters,
+                                                        CallbackInfo ci) {
+        GunRecolorManager.popCamoSource();
     }
 
     @Inject(method = "lambda$renderAttachment$1", at = @At("HEAD"), remap = false)

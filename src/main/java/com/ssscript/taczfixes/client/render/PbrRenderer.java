@@ -895,9 +895,14 @@ public final class PbrRenderer {
         if (camoShader == null) {
             return CamoUniforms.NONE;
         }
+        // 配件渲染时一律跟随它所属的枪的迷彩: 迷彩归属枪, 而不是单个配件(不再读配件自己的 NBT)。
+        net.minecraft.world.item.ItemStack camoOwner =
+                com.ssscript.taczfixes.client.util.GunRecolorManager.currentCamoSource();
+        if (camoOwner == null) {
+            camoOwner = com.ssscript.taczfixes.client.util.GunRecolorManager.currentRenderItem();
+        }
         com.ssscript.taczfixes.client.camo.DynamicCamo.Entry entry =
-                com.ssscript.taczfixes.client.camo.DynamicCamo.appliedOn(
-                        com.ssscript.taczfixes.client.util.GunRecolorManager.currentRenderItem());
+                com.ssscript.taczfixes.client.camo.DynamicCamo.appliedOn(camoOwner);
         if (entry == null) {
             return CamoUniforms.NONE;
         }

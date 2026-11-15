@@ -65,6 +65,9 @@ public final class GunRecolorManager {
     /** 与 RENDER_STACK 同步的"是否禁用本模组调色"标记(安装了涂装模块的枪械)。 */
     private static final ThreadLocal<Deque<Boolean>> SUPPRESS_STACK =
             ThreadLocal.withInitial(ArrayDeque::new);
+    /** 配件渲染时它所属的枪: 配件自身没有迷彩 NBT 时, 动态迷彩跟随枪。 */
+    private static final ThreadLocal<Deque<ItemStack>> CAMO_SOURCE_STACK =
+            ThreadLocal.withInitial(ArrayDeque::new);
     private static final Map<String, TextureData> TEXTURES = new HashMap<>();
     private static final LinkedHashMap<String, Recached> RECACHED = new LinkedHashMap<>();
     /** 重着色贴图 -> 原始贴图, 供 PBR 查找原 _s/_n 贴图。 */
@@ -156,6 +159,26 @@ public final class GunRecolorManager {
     /** 当前渲染上下文里的物品(动态迷彩据此读取 NBT)。 */
     public static ItemStack currentRenderItem() {
         return currentStack();
+    }
+
+    /** 渲染配件模型期间记录它所属的枪, 供动态迷彩兜底。 */
+    public static void pushCamoSource(ItemStack gunStack) {
+        CAMO_SOURCE_STACK.get().push(gunStack);
+    }
+
+    public static void popCamoSource() {
+        Deque<ItemStack> stack = CAMO_SOURCE_STACK.get();
+        if (!stack.isEmpty()) stack.pop();
+    }
+
+    /** 配件渲染时它所属的枪; 没有枪在渲染(或枪是空栈)时返回 null。 */
+    public static ItemStack currentCamoSource() {
+        Deque<ItemStack> stack = CAMO_SOURCE_STACK.get();
+        if (stack.isEmpty()) {
+            return null;
+        }
+        ItemStack source = stack.peek();
+        return source == null || source.isEmpty() ? null : source;
     }
 
     /** 当前渲染上下文是否因"涂装模块"(arcana 调色喷罐附件)而禁用本模组调色。 */
