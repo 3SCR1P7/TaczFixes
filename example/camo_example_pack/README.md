@@ -1,6 +1,6 @@
 ### 动态迷彩
 
-动态迷彩完全由枪包提供：**data 声明着色器，assets 编写 GLSL 片段**。
+动态迷彩完全由枪包提供：**data 声明，assets 编写 GLSL 片段**。
 
 目录结构：
 
@@ -10,18 +10,16 @@ tacz/<枪包>/
 └── assets/<namespace>/camo/<name>.glsl   # 着色器片段（默认位置）
 ```
 
-声明示例 `data/mypack/camo/nebula.json`：
+声明示例 `data/mypack/camo/violet.json`：
 
 ```json
 {
-  "name": "mypack.camo.nebula",
-  "shader": "mypack:camo/nebula",
+  "name": "mypack.camo.violet",
+  "shader": "mypack:camo/styles",
   "strength": 0.92,
-  "emissive": 0.35,
+  "emissive": 0.30,
   "params": [
-    [2.6, 0.85, 1.6, 0.0],
-    [0.10, 0.22, 0.85, 1.0],
-    [0.55, 0.18, 0.95, 1.0]
+    [0.95, 1.0, 0.0, 0.0]
   ]
 }
 ```
@@ -31,10 +29,10 @@ tacz/<枪包>/
 | `name` | 是 | 显示名：语言键（放在枪包 `assets/<namespace>/lang/` 下）或纯文本；缺省为 `<namespace>:<name>` |
 | `shader` | 是 | 片段位置，推荐写 `"<namespace>:camo/<name>"`（相对 assets 的路径，`.glsl` 可省略）；纯相对路径则相对 `assets/<namespace>/camo/`；缺省 = 与 data 同名的 `.glsl` |
 | `strength` | 是 | 混色强度 0~1，默认 1 |
-| `emissive` | 是 | 亮带自发光 0~1，默认 0 |
+| `emissive` | 是 | 自发光强度 0~1，默认 0；只有迷彩的亮带会发光 |
 | `params` | 是 | 最多 3 个 `vec4`，作为 `p0`/`p1`/`p2` 传给片段，不足补 0 |
 
-着色器片段（`assets/mypack/camo/nebula.glsl`）必须定义这个函数：
+着色器片段必须定义这个函数：
 
 ```glsl
 vec4 taczfixesCamo(vec2 uv, float time, vec4 p0, vec4 p1, vec4 p2) {
@@ -48,5 +46,25 @@ vec4 taczfixesCamo(vec2 uv, float time, vec4 p0, vec4 p1, vec4 p2) {
 ```
 
 - 片段里**不要**写 `#version`、`main`、`uniform`/`sampler`；需要外部数据用 `params`。
-- 内置工具函数（可直接调用，请勿重名）：`tfSat`、`tfHash11/12/21/22`、`tfRot`、`tfNoise`、`tfFbm`、`tfFbm3`、`tfWarp`、`tfSwell`、`tfStars`、`tfStarfield`、`tfStarChart`、`tfPhaseW`、`tfBlendHue`、`tfHsv`
-- 迷彩选择存在物品 NBT 里，随枪械同步。依赖本模组的 PBR 枪械渲染管线。
+- **顶层函数名必须全局唯一**：所有枪包的迷彩片段会被拼进同一个 `gun_pbr` 程序，
+  请给自己定义的辅助函数加上独特前缀（本示例用 `dgs`）；重名会让整个动态迷彩程序编译失败并回退到原版渲染。
+- **同一个着色器文件可以被多条声明复用**：模组按片段内容去重、只编译一份，每条声明用自己的 `params` 区分。
+  本示例就是用一个 `styles.glsl` 提供六档风格，参数约定为：
+  `p0 = (速度倍率, 风格编号, 相位偏移秒, 未用)`。
+
+六档风格速查（风格编号 = `p0.y`）：
+
+| 编号 | 名称 | 速度倍率 | 强度 | 自发光 |
+| --- | --- | --- | --- | --- |
+| 1 | 流动暗紫 | 0.95 | 0.92 | 0.30 |
+| 2 | 流动彩虹 | 0.90 | 0.95 | 0.18 |
+| 3 | 流动冰霜 | 0.85 | 0.90 | 0.27 |
+| 4 | 暗物质 | 0.90 | 0.97 | 0.33 |
+| 5 | 星云 | 1.00 | 0.96 | 0.33 |
+| 6 | 星座尽头 | 1.25 | 0.97 | 0.32 |
+
+其他行为：
+
+- 迷彩图案按「单个方块面」定标（一个面里装得下 1~2 团结构），因为枪身贴图是被几十上百个方块面切碎的图集。
+- 迷彩选择存在物品 NBT 里，随枪械同步；依赖本模组的 PBR 枪械渲染管线。
+- 开启加速渲染（AR）时，带迷彩的枪自动走原版渲染路径，不参与加速合批；瞄具的镜筒/分划渲染阶段不参与迷彩上色（开镜时镜内保持干净）。

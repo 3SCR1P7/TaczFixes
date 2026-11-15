@@ -1,0 +1,9 @@
+{
+  "name": "taczfixes_camo_demo.camo.darkmatter",
+  "shader": "taczfixes_camo_demo:camo/styles",
+  "strength": 0.97,
+  "emissive": 0.33,
+  "params": [
+    [0.90, 4.0, 0.0, 0.0]
+  ]
+}

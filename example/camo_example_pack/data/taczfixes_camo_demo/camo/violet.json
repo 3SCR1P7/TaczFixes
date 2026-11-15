@@ -1,0 +1,9 @@
+{
+  "name": "taczfixes_camo_demo.camo.violet",
+  "shader": "taczfixes_camo_demo:camo/styles",
+  "strength": 0.92,
+  "emissive": 0.30,
+  "params": [
+    [0.95, 1.0, 0.0, 0.0]
+  ]
+}

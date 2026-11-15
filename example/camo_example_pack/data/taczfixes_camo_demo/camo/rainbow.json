@@ -1,0 +1,9 @@
+{
+  "name": "taczfixes_camo_demo.camo.rainbow",
+  "shader": "taczfixes_camo_demo:camo/styles",
+  "strength": 0.95,
+  "emissive": 0.18,
+  "params": [
+    [0.90, 2.0, 0.0, 0.0]
+  ]
+}

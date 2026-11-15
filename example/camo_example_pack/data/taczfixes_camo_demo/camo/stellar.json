@@ -1,9 +1,9 @@
 {
   "name": "taczfixes_camo_demo.camo.stellar",
-  "shader": "taczfixes_camo_demo:camo/stellar",
-  "strength": 0.95,
-  "emissive": 0.60,
+  "shader": "taczfixes_camo_demo:camo/styles",
+  "strength": 0.97,
+  "emissive": 0.32,
   "params": [
-    [1.25, 0.0, 0.0, 0.0]
+    [1.25, 6.0, 0.0, 0.0]
   ]
 }

@@ -261,7 +261,8 @@ vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
 
 // ===== 动态迷彩拼接区(枪包数据驱动)=====
 // CamoShaderBuilder 会把下面两个标记之间的内容整段替换成:
-//   公共工具函数 + 每条枪包迷彩的片段(#define 重命名) + taczfixesCamoDispatch()
+//   每条枪包迷彩的片段(#define 重命名) + taczfixesCamoDispatch()
+//   片段里用到的工具函数由枪包自己提供, 本模组不再内置。
 // 没有任何迷彩时保留这个空实现: 原版 gun_pbr 程序照样能编译, dispatch 永远返回 0。
 //<<<TACZFIXES_CAMO_BEGIN>>>
 vec4 taczfixesCamoDispatch(vec2 uv, float t) { return vec4(0.0); }
