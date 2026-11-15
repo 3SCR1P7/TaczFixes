@@ -397,7 +397,6 @@ public final class PbrRenderer {
     private static final float[] lightTargetStrength = new float[LOCAL_LIGHT_SLOTS];
     private static final Vec3[] lightSlotPos = new Vec3[LOCAL_LIGHT_SLOTS];
     private static final java.util.List<LightCandidate> LIGHT_CANDIDATES = new java.util.ArrayList<>();
-    private static final java.util.List<ClientGunLightManager.LightSample> LIGHT_SAMPLES = new java.util.ArrayList<>();
     private static long localLightNextScan = 0L;
     private static long lastPbrDrawAt = 0L;
 
@@ -436,15 +435,8 @@ public final class PbrRenderer {
                 LIGHT_CANDIDATES.add(new LightCandidate(score, Vec3.atCenterOf(immutable), red, green, blue,
                         (float) Math.min(1.0D, score / 7.0D)));
             }
-            // 枪口闪光/镭射/爆炸等动态彩色光, 与静态方块光一起参与反光。
-            ClientGunLightManager.collectLights(origin, 10.0D, LIGHT_SAMPLES);
-            for (ClientGunLightManager.LightSample sample : LIGHT_SAMPLES) {
-                double distSqr = sample.position().distanceToSqr(origin);
-                double score = sample.level() / (1.0D + distSqr * 0.25D);
-                if (score <= 0.0D) continue;
-                LIGHT_CANDIDATES.add(new LightCandidate(score, sample.position(), sample.red(), sample.green(),
-                        sample.blue(), (float) Math.min(1.0D, score / 7.0D)));
-            }
+            // 开火/镭射/爆炸等动态光只照亮世界, 不参与枪身反光:
+            // 枪口闪光离枪太近, 参与反光会变成逐帧闪烁的假高光。
             LIGHT_CANDIDATES.sort((a, b) -> Double.compare(b.score(), a.score()));
             int count = Math.min(LOCAL_LIGHT_SLOTS, LIGHT_CANDIDATES.size());
             boolean[] used = new boolean[count];
