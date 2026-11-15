@@ -97,6 +97,7 @@ public class TaczFixesMod {
         NeoForge.EVENT_BUS.register(new JumpInaccuracyHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CustomSlotOrphanHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ShieldHandler());
+        NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDamageReductionHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.InputStateCleanHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDataOverrideReloadHandler());
         NeoForge.EVENT_BUS.register(new TaczFixesDataHandler());
