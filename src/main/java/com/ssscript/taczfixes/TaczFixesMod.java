@@ -130,6 +130,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new JumpInaccuracyHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CustomSlotOrphanHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.ShieldHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDamageReductionHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.InputStateCleanHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunDataOverrideReloadHandler());
         MinecraftForge.EVENT_BUS.register(new TaczFixesDataHandler());

@@ -26,6 +26,8 @@ public class MixinEntityDamageReducer {
     @Inject(method = "getDamage", at = @At("RETURN"), cancellable = true, remap = false)
     private void taczfixes$applyDamageReduction(Vec3 hitPos, CallbackInfoReturnable<Float> cir) {
         if (this.taczfixes_damageTargetEntity == null) return;
+        // 普通实体由 EntityHurtByGunEvent.Pre 统一缩放; 这里只兜底不走事件的自定义目标(ITargetEntity), 避免重复减伤
+        if (!(this.taczfixes_damageTargetEntity instanceof com.tacz.guns.api.entity.ITargetEntity)) return;
         String entityId = ForgeRegistries.ENTITY_TYPES.getKey(this.taczfixes_damageTargetEntity.getType()).toString();
         List<? extends String> entries = Config.DAMAGE_REDUCTION_ENTITIES.get();
         for (String entry : entries) {
