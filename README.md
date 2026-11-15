@@ -1,7 +1,7 @@
 # TaCZ Fixes
 
 [Timeless and Classics Zero](https://www.curseforge.com/minecraft/mc-mods/timeless-and-classics-zero) 的附属模组。
-在 TaCZ 1.2.0 的基础上添加机制，并加入大量面向枪包作者的数据驱动功能；也有不少功能开箱即用。
+- 在 TaCZ 1.2.0 的基础上添加机制，并加入大量面向枪包作者的数据驱动功能；也有不少功能开箱即用。
 
 ## 版本
 
@@ -130,7 +130,7 @@
 
 ## 构建
 
-需要 JDK 21；依赖已放在 `libs/` 下，可离线构建：
+需要 JDK 21；依赖需要放在 `repo/` 下，此处不提供。可在build.gradle下看到模组名。
 
 ```bash
 ./gradlew build --offline
