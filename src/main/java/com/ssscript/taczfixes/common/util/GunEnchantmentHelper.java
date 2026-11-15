@@ -131,48 +131,6 @@ public class GunEnchantmentHelper {
         return isEnabled() && GUN_ENCHANTING.get();
     }
 
-    public static int getAnvilCostMultiplier(ResourceKey<Enchantment> enchantment) {
-        if (enchantment == null) {
-            return -1;
-        }
-        ResourceLocation key = enchantment.location();
-        if (key == null || !key.getNamespace().equals(TaczFixesMod.MOD_ID)) {
-            return -1;
-        }
-        return switch (key.getPath()) {
-            case "standard_ammo" -> Config.ENCH_STANDARD_AMMO_ANVIL_MULT.get();
-            case "neurotoxin" -> Config.ENCH_NEUROTOXIN_ANVIL_MULT.get();
-            case "chain_explosion" -> Config.ENCH_CHAIN_EXPLOSION_ANVIL_MULT.get();
-            case "preemptive_strike" -> Config.ENCH_PREEMPTIVE_STRIKE_ANVIL_MULT.get();
-            case "annihilation" -> Config.ENCH_ANNIHILATION_ANVIL_MULT.get();
-            case "electromagnetic_coil" -> Config.ENCH_COIL_ANVIL_MULT.get();
-            case "anti_gravity" -> Config.ENCH_ANTIGRAVITY_ANVIL_MULT.get();
-            case "stability" -> Config.ENCH_STABILITY_ANVIL_MULT.get();
-            case "overload" -> Config.ENCH_OVERLOAD_ANVIL_MULT.get();
-            case "collector" -> Config.ENCH_COLLECTOR_ANVIL_MULT.get();
-            case "explosion_expert" -> Config.ENCH_EXPLOSION_EXPERT_ANVIL_MULT.get();
-            case "life_leech" -> Config.ENCH_LIFE_LEECH_ANVIL_MULT.get();
-            case "sniper_elite" -> Config.ENCH_SNIPER_ELITE_ANVIL_MULT.get();
-            case "pandora_paradox" -> Config.ENCH_PANDORA_PARADOX_ANVIL_MULT.get();
-            case "smart_scope" -> Config.ENCH_SMART_SCOPE_ANVIL_MULT.get();
-            case "deep_learning" -> Config.ENCH_DEEP_LEARNING_ANVIL_MULT.get();
-            case "equalizer" -> Config.ENCH_EQUALIZER_ANVIL_MULT.get();
-            case "random" -> Config.ENCH_RANDOM_ANVIL_MULT.get();
-            case "decapitation" -> Config.ENCH_DECAPITATION_ANVIL_MULT.get();
-            case "charge" -> Config.ENCH_CHARGE_ANVIL_MULT.get();
-            case "abyssgazer" -> Config.ENCH_ABYSSGAZER_ANVIL_MULT.get();
-            case "double_shot" -> Config.ENCH_DOUBLE_SHOT_ANVIL_MULT.get();
-            case "focused_ammo" -> Config.ENCH_FOCUSED_AMMO_ANVIL_MULT.get();
-            case "arcana_eden" -> Config.ENCH_ARCANA_EDEN_ANVIL_MULT.get();
-            case "patience" -> Config.ENCH_PATIENCE_ANVIL_MULT.get();
-            default -> -1;
-        };
-    }
-
-    public static boolean isConfiguredAnvilEnchantment(ResourceKey<Enchantment> enchantment) {
-        return getAnvilCostMultiplier(enchantment) > 0;
-    }
-
     public static boolean isUndead(EntityType<?> type) {
         return type.is(EntityTypeTags.UNDEAD);
     }

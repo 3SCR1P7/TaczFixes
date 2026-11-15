@@ -214,86 +214,36 @@ public class Config {
     public static final ModConfigSpec.DoubleValue ENCH_EFFICIENCY_FIRE_RATE_PERCENT_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_EFFICIENCY_BOLT_TIME_REDUCTION_PERCENT_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_OVERLOAD_DAMAGE_PERCENT;
-    public static final ModConfigSpec.IntValue ENCH_OVERLOAD_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_ANNIHILATION_DAMAGE_PERCENT;
-    public static final ModConfigSpec.IntValue ENCH_ANNIHILATION_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_STABILITY_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_ANTIGRAVITY_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_COIL_SPEED_PERCENT;
     public static final ModConfigSpec.DoubleValue ENCH_COIL_SPREAD_REDUCTION_PERCENT;
     public static final ModConfigSpec.DoubleValue ENCH_COIL_LIGHTNING_CHANCE_PERCENT;
     public static final ModConfigSpec.DoubleValue ENCH_COIL_LIGHTNING_DAMAGE_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_COIL_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_STANDARD_AMMO_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_FORTUNE_HEADSHOT_CHANCE_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_NEUROTOXIN_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_NEUROTOXIN_TRIGGER_CHANCE_PERCENT_PER_LEVEL;
     public static final ModConfigSpec.IntValue ENCH_NEUROTOXIN_DURATION_TICKS;
-    public static final ModConfigSpec.IntValue ENCH_CHAIN_EXPLOSION_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_BASE_CHANCE_PERCENT;
     public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_CHANCE_PERCENT_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_RADIUS_MIN;
     public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_RADIUS_SCALE_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_DAMAGE_BASE;
     public static final ModConfigSpec.DoubleValue ENCH_CHAIN_EXPLOSION_DAMAGE_SCALE_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_PREEMPTIVE_STRIKE_DAMAGE_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_COLLECTOR_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_COLLECTOR_DAMAGE_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_STANDARD_AMMO_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_EXPLOSION_EXPERT_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_LIFE_LEECH_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_LIFE_LEECH_HEAL_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_SNIPER_ELITE_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_SNIPER_ELITE_HEADSHOT_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_PANDORA_PARADOX_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_NEUROTOXIN_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_CHAIN_EXPLOSION_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_PREEMPTIVE_STRIKE_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_ANNIHILATION_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_COIL_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_ANTIGRAVITY_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_STABILITY_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_OVERLOAD_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_COLLECTOR_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_EXPLOSION_EXPERT_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_LIFE_LEECH_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_SNIPER_ELITE_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_PANDORA_PARADOX_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_SMART_SCOPE_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_SMART_SCOPE_MAX_DISTANCE;
-    public static final ModConfigSpec.IntValue ENCH_DEEP_LEARNING_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_DEEP_LEARNING_DAMAGE_PERCENT_PER_GUN_LEVEL_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_EQUALIZER_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_EQUALIZER_TRIGGER_CHANCE_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_RANDOM_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL;
     public static final ModConfigSpec.IntValue ENCH_RANDOM_EFFECT_DURATION_TICKS;
-    public static final ModConfigSpec.IntValue ENCH_DECAPITATION_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_DECAPITATION_HEADSHOT_BONUS_PERCENT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_SMART_SCOPE_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_DEEP_LEARNING_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_EQUALIZER_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_RANDOM_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_DECAPITATION_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_CHARGE_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_CHARGE_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_ABYSSGAZER_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_ABYSSGAZER_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_DOUBLE_SHOT_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_DOUBLE_SHOT_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_FOCUSED_AMMO_MAX_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_FOCUSED_AMMO_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_ARCANA_EDEN_MAX_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_ARCANA_EDEN_ANVIL_MULT;
-    public static final ModConfigSpec.IntValue ENCH_PATIENCE_MAX_LEVEL;
     public static final ModConfigSpec.IntValue ENCH_PATIENCE_DELAY_MS;
     public static final ModConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
-    public static final ModConfigSpec.IntValue ENCH_PATIENCE_ANVIL_MULT;
 
     public static final ModConfigSpec.BooleanValue AIMING_STAMINA_ENABLED;
     public static final ModConfigSpec.DoubleValue AIMING_STAMINA_MAX;
@@ -1130,46 +1080,18 @@ public class Config {
         ENCH_OVERLOAD_DAMAGE_PERCENT = BUILDER
                 .comment("过载：每级增加的伤害。默认值：50%")
                 .defineInRange("overload_damage_percent", 50.0, 0.0, 1000.0);
-        ENCH_OVERLOAD_MAX_LEVEL = BUILDER
-                .comment("过载：附魔的最大等级。默认值：4")
-                .defineInRange("overload_max_level", 4, 1, 10);
-        ENCH_OVERLOAD_ANVIL_MULT = BUILDER
-                .comment("过载：经验等级乘数。",
-                        "默认值：4")
-                .defineInRange("overload_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("annihilation");
         ENCH_ANNIHILATION_DAMAGE_PERCENT = BUILDER
                 .comment("湮灭：每级额外造成的虚空伤害。默认值：10%")
                 .defineInRange("annihilation_damage_percent_per_level", 10.0, 0.0, 1000.0);
-        ENCH_ANNIHILATION_MAX_LEVEL = BUILDER
-                .comment("湮灭：附魔的最大等级。默认值：3")
-                .defineInRange("annihilation_max_level", 3, 1, 10);
-        ENCH_ANNIHILATION_ANVIL_MULT = BUILDER
-                .comment("湮灭：经验等级乘数。默认值：4")
-                .defineInRange("annihilation_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("stability");
         ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL = BUILDER
                 .comment("稳定：每级降低的后坐力。默认值：15%")
                 .defineInRange("stability_recoil_reduction_per_level", 15.0, 0.0, 100.0);
-        ENCH_STABILITY_MAX_LEVEL = BUILDER
-                .comment("稳定：附魔的最大等级。默认值：5")
-                .defineInRange("stability_max_level", 5, 1, 10);
-        ENCH_STABILITY_ANVIL_MULT = BUILDER
-                .comment("稳定：经验等级乘数。默认值：1")
-                .defineInRange("stability_cost_multiplier", 1, 1, 100);
-        BUILDER.pop();
-
-        BUILDER.push("anti_gravity");
-        ENCH_ANTIGRAVITY_MAX_LEVEL = BUILDER
-                .comment("反重力：附魔的最大等级。默认值：1")
-                .defineInRange("anti_gravity_max_level", 1, 1, 10);
-        ENCH_ANTIGRAVITY_ANVIL_MULT = BUILDER
-                .comment("反重力：经验等级乘数。默认值：4")
-                .defineInRange("anti_gravity_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("electromagnetic_coil");
@@ -1185,42 +1107,18 @@ public class Config {
         ENCH_COIL_LIGHTNING_DAMAGE_PER_LEVEL = BUILDER
                 .comment("电磁线圈：触发时每级造成的雷电伤害值。默认值：4")
                 .defineInRange("electromagnetic_coil_lightning_damage_per_level", 4.0, 0.0, 1000.0);
-        ENCH_COIL_MAX_LEVEL = BUILDER
-                .comment("电磁线圈：附魔的最大等级。默认值：2")
-                .defineInRange("electromagnetic_coil_max_level", 2, 1, 10);
-        ENCH_COIL_ANVIL_MULT = BUILDER
-                .comment("电磁线圈：经验等级乘数。默认值：2")
-                .defineInRange("electromagnetic_coil_cost_multiplier", 2, 1, 100);
-        BUILDER.pop();
-
-        BUILDER.push("standard_ammo");
-        ENCH_STANDARD_AMMO_MAX_LEVEL = BUILDER
-                .comment("标准弹药：附魔的最大等级。默认值：1")
-                .defineInRange("standard_ammo_max_level", 1, 1, 10);
-        ENCH_STANDARD_AMMO_ANVIL_MULT = BUILDER
-                .comment("标准弹药：经验等级乘数。默认值：4")
-                .defineInRange("standard_ammo_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("neurotoxin");
-        ENCH_NEUROTOXIN_MAX_LEVEL = BUILDER
-                .comment("神经毒素：附魔的最大等级。默认值：2")
-                .defineInRange("neurotoxin_max_level", 2, 1, 10);
         ENCH_NEUROTOXIN_TRIGGER_CHANCE_PERCENT_PER_LEVEL = BUILDER
                 .comment("神经毒素：每级命中时施加缓慢/失明/中毒的概率。默认值：10%")
                 .defineInRange("neurotoxin_trigger_chance_percent_per_level", 10.0, 0.0, 100.0);
         ENCH_NEUROTOXIN_DURATION_TICKS = BUILDER
                 .comment("神经毒素：施加状态效果的时长。默认值：100tick")
                 .defineInRange("neurotoxin_duration_ticks", 100, 1, 12000);
-        ENCH_NEUROTOXIN_ANVIL_MULT = BUILDER
-                .comment("神经毒素：经验等级乘数。默认值：4")
-                .defineInRange("neurotoxin_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("chain_explosion");
-        ENCH_CHAIN_EXPLOSION_MAX_LEVEL = BUILDER
-                .comment("连锁爆破：附魔的最大等级。默认值：5")
-                .defineInRange("chain_explosion_max_level", 5, 1, 10);
         ENCH_CHAIN_EXPLOSION_BASE_CHANCE_PERCENT = BUILDER
                 .comment("连锁爆破：基础触发概率。默认值：10%")
                 .defineInRange("chain_explosion_base_chance_percent", 10.0, 0.0, 100.0);
@@ -1239,207 +1137,90 @@ public class Config {
         ENCH_CHAIN_EXPLOSION_DAMAGE_SCALE_PER_LEVEL = BUILDER
                 .comment("连锁爆破：爆炸伤害每级的最大值。默认值：10")
                 .defineInRange("chain_explosion_damage_scale_per_level", 10.0, 0.0, 1000.0);
-        ENCH_CHAIN_EXPLOSION_ANVIL_MULT = BUILDER
-                .comment("连锁爆破：经验等级乘数。默认值：2")
-                .defineInRange("chain_explosion_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("preemptive_strike");
-        ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL = BUILDER
-                .comment("先发制人：附魔的最大等级。默认值：4")
-                .defineInRange("preemptive_strike_max_level", 4, 1, 10);
         ENCH_PREEMPTIVE_STRIKE_DAMAGE_PERCENT_PER_LEVEL = BUILDER
                 .comment("先发制人：每级提升的伤害。默认值：25%")
                 .defineInRange("preemptive_strike_damage_percent_per_level", 25.0, 0.0, 1000.0);
-        ENCH_PREEMPTIVE_STRIKE_ANVIL_MULT = BUILDER
-                .comment("先发制人：经验等级乘数。默认值：2")
-                .defineInRange("preemptive_strike_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("collector");
-        ENCH_COLLECTOR_MAX_LEVEL = BUILDER
-                .comment("收藏家：附魔的最大等级。默认值：3")
-                .defineInRange("collector_max_level", 3, 1, 10);
         ENCH_COLLECTOR_DAMAGE_PERCENT_PER_LEVEL = BUILDER
                 .comment("收藏家：每级每个其他附魔增加的子弹伤害。默认值：5%")
                 .defineInRange("collector_damage_percent_per_level", 5.0, 0.0, 100.0);
-        ENCH_COLLECTOR_ANVIL_MULT = BUILDER
-                .comment("收藏家：经验等级乘数。默认值：4")
-                .defineInRange("collector_cost_multiplier", 4, 1, 100);
-        BUILDER.pop();
-
-        BUILDER.push("explosion_expert");
-        ENCH_EXPLOSION_EXPERT_MAX_LEVEL = BUILDER
-                .comment("爆破专家：附魔的最大等级。默认值：3")
-                .defineInRange("explosion_expert_max_level", 3, 1, 10);
-        ENCH_EXPLOSION_EXPERT_ANVIL_MULT = BUILDER
-                .comment("爆破专家：经验等级乘数。默认值：4")
-                .defineInRange("explosion_expert_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("life_leech");
-        ENCH_LIFE_LEECH_MAX_LEVEL = BUILDER
-                .comment("生命汲取：附魔的最大等级。默认值：2")
-                .defineInRange("life_leech_max_level", 2, 1, 10);
         ENCH_LIFE_LEECH_HEAL_PERCENT_PER_LEVEL = BUILDER
                 .comment("生命汲取：击杀实体回复生命值的量。默认值：10%")
                 .defineInRange("life_leech_heal_percent_per_level", 10.0, 0.0, 100.0);
-        ENCH_LIFE_LEECH_ANVIL_MULT = BUILDER
-                .comment("生命汲取：经验等级乘数。默认值：4")
-                .defineInRange("life_leech_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("sniper_elite");
-        ENCH_SNIPER_ELITE_MAX_LEVEL = BUILDER
-                .comment("狙击精英：附魔的最大等级。默认值：4")
-                .defineInRange("sniper_elite_max_level", 4, 1, 10);
         ENCH_SNIPER_ELITE_HEADSHOT_PERCENT_PER_LEVEL = BUILDER
                 .comment("狙击精英：每级增加的爆头伤害。默认值：25%")
                 .defineInRange("sniper_elite_headshot_percent_per_level", 25.0, 0.0, 1000.0);
-        ENCH_SNIPER_ELITE_ANVIL_MULT = BUILDER
-                .comment("狙击精英：经验等级乘数。默认值：2")
-                .defineInRange("sniper_elite_cost_multiplier", 2, 1, 100);
-        BUILDER.pop();
-
-        BUILDER.push("pandora_paradox");
-        ENCH_PANDORA_PARADOX_MAX_LEVEL = BUILDER
-                .comment("潘多拉悖论：附魔的最大等级。默认值：1")
-                .defineInRange("pandora_paradox_max_level", 1, 1, 10);
-        ENCH_PANDORA_PARADOX_ANVIL_MULT = BUILDER
-                .comment("潘多拉悖论：经验等级乘数。默认值：8")
-                .defineInRange("pandora_paradox_cost_multiplier", 8, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("smart_scope");
-        ENCH_SMART_SCOPE_MAX_LEVEL = BUILDER
-                .comment("智能瞄具：附魔的最大等级。默认值：1")
-                .defineInRange("smart_scope_max_level", 1, 1, 10);
         ENCH_SMART_SCOPE_MAX_DISTANCE = BUILDER
                 .comment("智能瞄具：准星射线检测实体的最大距离。默认值：200")
                 .defineInRange("smart_scope_max_distance", 200.0, 1.0, 1000.0);
-        ENCH_SMART_SCOPE_ANVIL_MULT = BUILDER
-                .comment("智能瞄具：经验等级乘数。默认值：4")
-                .defineInRange("smart_scope_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("deep_learning");
-        ENCH_DEEP_LEARNING_MAX_LEVEL = BUILDER
-                .comment("深度学习：附魔的最大等级。默认值：5")
-                .defineInRange("deep_learning_max_level", 5, 1, 10);
         ENCH_DEEP_LEARNING_DAMAGE_PERCENT_PER_GUN_LEVEL_PER_LEVEL = BUILDER
                 .comment("深度学习：枪械每有 1 级经验等级，每级附魔增加的子弹伤害。默认值：0.2%")
                 .defineInRange("deep_learning_damage_percent_per_gun_level_per_level", 0.2, 0.0, 100.0);
-        ENCH_DEEP_LEARNING_ANVIL_MULT = BUILDER
-                .comment("深度学习：经验等级乘数。默认值：1")
-                .defineInRange("deep_learning_cost_multiplier", 1, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("equalizer");
-        ENCH_EQUALIZER_MAX_LEVEL = BUILDER
-                .comment("众生平等：附魔的最大等级。默认值：3")
-                .defineInRange("equalizer_max_level", 3, 1, 10);
         ENCH_EQUALIZER_TRIGGER_CHANCE_PERCENT_PER_LEVEL = BUILDER
                 .comment("众生平等：子弹命中实体时每级触发的概率。默认值：5%")
                 .defineInRange("equalizer_trigger_chance_percent_per_level", 5.0, 0.0, 100.0);
-        ENCH_EQUALIZER_ANVIL_MULT = BUILDER
-                .comment("众生平等：经验等级乘数。默认值：4")
-                .defineInRange("equalizer_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("random");
-        ENCH_RANDOM_MAX_LEVEL = BUILDER
-                .comment("随机：附魔的最大等级。默认值：4")
-                .defineInRange("random_max_level", 4, 1, 10);
         ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL = BUILDER
                 .comment("随机：子弹命中实体时每级施加随机原版状态效果的概率。默认值：7%")
                 .defineInRange("random_effect_chance_percent_per_level", 7.0, 0.0, 100.0);
         ENCH_RANDOM_EFFECT_DURATION_TICKS = BUILDER
                 .comment("随机：状态效果的持续时长。默认值：140tick")
                 .defineInRange("random_effect_duration_ticks", 140, 1, 12000);
-        ENCH_RANDOM_ANVIL_MULT = BUILDER
-                .comment("随机：经验等级乘数。默认值：2")
-                .defineInRange("random_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("decapitation");
-        ENCH_DECAPITATION_MAX_LEVEL = BUILDER
-                .comment("枭首：附魔的最大等级。默认值：2")
-                .defineInRange("decapitation_max_level", 2, 1, 10);
         ENCH_DECAPITATION_HEADSHOT_BONUS_PERCENT_PER_LEVEL = BUILDER
                 .comment("枭首：每级每次爆头累积的伤害加成。默认值：5%")
                 .defineInRange("decapitation_headshot_bonus_percent_per_level", 5.0, 0.0, 100.0);
-        ENCH_DECAPITATION_ANVIL_MULT = BUILDER
-                .comment("枭首：经验等级乘数。默认值：2")
-                .defineInRange("decapitation_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("charge");
-        ENCH_CHARGE_MAX_LEVEL = BUILDER
-                .comment("冲锋：附魔的最大等级。默认值：5")
-                .defineInRange("charge_max_level", 5, 1, 10);
         ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL = BUILDER
                 .comment("冲锋：每级每有 1m/s 移动速度增加的子弹伤害。默认值：1%")
                 .defineInRange("charge_damage_percent_per_speed_per_level", 1.0, 0.0, 1000.0);
-        ENCH_CHARGE_ANVIL_MULT = BUILDER
-                .comment("冲锋：经验等级乘数。默认值：1")
-                .defineInRange("charge_cost_multiplier", 1, 1, 100);
-        BUILDER.pop();
-
-        BUILDER.push("abyss_gazer");
-        ENCH_ABYSSGAZER_MAX_LEVEL = BUILDER
-                .comment("凝渊者：附魔的最大等级。默认值：1")
-                .defineInRange("abyss_gazer_max_level", 1, 1, 10);
-        ENCH_ABYSSGAZER_ANVIL_MULT = BUILDER
-                .comment("凝渊者：经验等级乘数。默认值：8")
-                .defineInRange("abyss_gazer_cost_multiplier", 8, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("double_shot");
-        ENCH_DOUBLE_SHOT_MAX_LEVEL = BUILDER
-                .comment("双发弹药：附魔的最大等级。默认值：5")
-                .defineInRange("double_shot_max_level", 5, 1, 10);
         ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL = BUILDER
                 .comment("双发弹药：每级触发额外子弹的概率。默认值：0.2")
                 .defineInRange("double_shot_chance_per_level", 0.2, 0.0, 1.0);
-        ENCH_DOUBLE_SHOT_ANVIL_MULT = BUILDER
-                .comment("双发弹药：经验等级乘数。默认值：2")
-                .defineInRange("double_shot_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("focused_ammo");
-        ENCH_FOCUSED_AMMO_MAX_LEVEL = BUILDER
-                .comment("聚能弹药：附魔的最大等级。默认值：4")
-                .defineInRange("focused_ammo_max_level", 4, 1, 10);
         ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL = BUILDER
                 .comment("聚能弹药：每级每次穿透的伤害倍率增量。默认值：0.25")
                 .defineInRange("focused_ammo_damage_mult_per_level", 0.25, 0.0, 10.0);
-        ENCH_FOCUSED_AMMO_ANVIL_MULT = BUILDER
-                .comment("聚能弹药：经验等级乘数。默认值：2")
-                .defineInRange("focused_ammo_cost_multiplier", 2, 1, 100);
-        BUILDER.pop();
-
-        BUILDER.push("arcana_eden");
-        ENCH_ARCANA_EDEN_MAX_LEVEL = BUILDER
-                .comment("阿卡纳伊甸：附魔的最大等级。默认值：2")
-                .defineInRange("arcana_eden_max_level", 2, 1, 10);
-        ENCH_ARCANA_EDEN_ANVIL_MULT = BUILDER
-                .comment("阿卡纳伊甸：经验等级乘数。默认值：4")
-                .defineInRange("arcana_eden_cost_multiplier", 4, 1, 100);
         BUILDER.pop();
 
         BUILDER.push("patience");
-        ENCH_PATIENCE_MAX_LEVEL = BUILDER
-                .comment("耐心：附魔的最大等级。默认值：3")
-                .defineInRange("patience_max_level", 3, 1, 10);
         ENCH_PATIENCE_DELAY_MS = BUILDER
                 .comment("耐心：未开火多少毫秒后开始累积伤害加成。默认值：500")
                 .defineInRange("patience_delay_ms", 500, 0, 100000);
         ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL = BUILDER
                 .comment("耐心：每级每 tick 增加的子弹伤害百分比。默认值：0.5%")
                 .defineInRange("patience_damage_percent_per_tick_per_level", 0.5, 0.0, 100.0);
-        ENCH_PATIENCE_ANVIL_MULT = BUILDER
-                .comment("耐心：经验等级乘数。默认值：2")
-                .defineInRange("patience_cost_multiplier", 2, 1, 100);
         BUILDER.pop();
         BUILDER.pop();
         SPECS.put("gun_enchantment", BUILDER.build());

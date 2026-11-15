@@ -483,134 +483,72 @@ public class ConfigScreen {
         });
         sub(cat, entry, "overload", e -> {
             dbl_(e, entry, "enchantment.damage_percent_per_level", Config.ENCH_OVERLOAD_DAMAGE_PERCENT);
-            int_(e, entry, "enchantment.max_level", Config.ENCH_OVERLOAD_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_OVERLOAD_ANVIL_MULT);
-        });
+                });
         sub(cat, entry, "annihilation", e -> {
             dbl_(e, entry, "enchantment.annihilation_damage_percent", Config.ENCH_ANNIHILATION_DAMAGE_PERCENT);
-            int_(e, entry, "enchantment.max_level", Config.ENCH_ANNIHILATION_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_ANNIHILATION_ANVIL_MULT);
-        });
+                });
         sub(cat, entry, "stability", e -> {
             dbl_(e, entry, "enchantment.stability_recoil_reduction_per_level", Config.ENCH_STABILITY_RECOIL_REDUCTION_PER_LEVEL);
-            int_(e, entry, "enchantment.max_level", Config.ENCH_STABILITY_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_STABILITY_ANVIL_MULT);
-        });
-        sub(cat, entry, "anti_gravity", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_ANTIGRAVITY_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_ANTIGRAVITY_ANVIL_MULT);
-        });
+                });
         sub(cat, entry, "electromagnetic_coil", e -> {
             dbl_(e, entry, "enchantment.coil_speed_percent", Config.ENCH_COIL_SPEED_PERCENT);
             dbl_(e, entry, "enchantment.coil_spread_reduction_percent", Config.ENCH_COIL_SPREAD_REDUCTION_PERCENT);
             dbl_(e, entry, "enchantment.coil_lightning_chance_percent", Config.ENCH_COIL_LIGHTNING_CHANCE_PERCENT);
             dbl_(e, entry, "enchantment.coil_lightning_damage_per_level", Config.ENCH_COIL_LIGHTNING_DAMAGE_PER_LEVEL);
-            int_(e, entry, "enchantment.max_level", Config.ENCH_COIL_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_COIL_ANVIL_MULT);
-        });
-        sub(cat, entry, "standard_ammo", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_STANDARD_AMMO_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_STANDARD_AMMO_ANVIL_MULT);
-        });
+                });
         sub(cat, entry, "neurotoxin", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_NEUROTOXIN_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_NEUROTOXIN_TRIGGER_CHANCE_PERCENT_PER_LEVEL);
+                dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_NEUROTOXIN_TRIGGER_CHANCE_PERCENT_PER_LEVEL);
             int_(e, entry, "enchantment.effect_duration_ticks", Config.ENCH_NEUROTOXIN_DURATION_TICKS);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_NEUROTOXIN_ANVIL_MULT);
-        });
+            });
         sub(cat, entry, "chain_explosion", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_CHAIN_EXPLOSION_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.chain_explosion_base_chance_percent", Config.ENCH_CHAIN_EXPLOSION_BASE_CHANCE_PERCENT);
+                dbl_(e, entry, "enchantment.chain_explosion_base_chance_percent", Config.ENCH_CHAIN_EXPLOSION_BASE_CHANCE_PERCENT);
             dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_CHAIN_EXPLOSION_CHANCE_PERCENT_PER_LEVEL);
             dbl_(e, entry, "enchantment.chain_explosion_radius_min", Config.ENCH_CHAIN_EXPLOSION_RADIUS_MIN);
             dbl_(e, entry, "enchantment.chain_explosion_radius_scale_per_level", Config.ENCH_CHAIN_EXPLOSION_RADIUS_SCALE_PER_LEVEL);
             dbl_(e, entry, "enchantment.chain_explosion_damage_base", Config.ENCH_CHAIN_EXPLOSION_DAMAGE_BASE);
             dbl_(e, entry, "enchantment.chain_explosion_damage_scale_per_level", Config.ENCH_CHAIN_EXPLOSION_DAMAGE_SCALE_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_CHAIN_EXPLOSION_ANVIL_MULT);
-        });
+            });
         sub(cat, entry, "preemptive_strike", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_PREEMPTIVE_STRIKE_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.damage_percent_per_level", Config.ENCH_PREEMPTIVE_STRIKE_DAMAGE_PERCENT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_PREEMPTIVE_STRIKE_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.damage_percent_per_level", Config.ENCH_PREEMPTIVE_STRIKE_DAMAGE_PERCENT_PER_LEVEL);
+            });
         sub(cat, entry, "collector", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_COLLECTOR_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.collector_damage_percent_per_level", Config.ENCH_COLLECTOR_DAMAGE_PERCENT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_COLLECTOR_ANVIL_MULT);
-        });
-        sub(cat, entry, "explosion_expert", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_EXPLOSION_EXPERT_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_EXPLOSION_EXPERT_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.collector_damage_percent_per_level", Config.ENCH_COLLECTOR_DAMAGE_PERCENT_PER_LEVEL);
+            });
         sub(cat, entry, "life_leech", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_LIFE_LEECH_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.life_leech_heal_percent_per_level", Config.ENCH_LIFE_LEECH_HEAL_PERCENT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_LIFE_LEECH_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.life_leech_heal_percent_per_level", Config.ENCH_LIFE_LEECH_HEAL_PERCENT_PER_LEVEL);
+            });
         sub(cat, entry, "sniper_elite", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_SNIPER_ELITE_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.sniper_elite_headshot_percent_per_level", Config.ENCH_SNIPER_ELITE_HEADSHOT_PERCENT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_SNIPER_ELITE_ANVIL_MULT);
-        });
-        sub(cat, entry, "pandora_paradox", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_PANDORA_PARADOX_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_PANDORA_PARADOX_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.sniper_elite_headshot_percent_per_level", Config.ENCH_SNIPER_ELITE_HEADSHOT_PERCENT_PER_LEVEL);
+            });
         sub(cat, entry, "smart_scope", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_SMART_SCOPE_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.smart_scope_max_distance", Config.ENCH_SMART_SCOPE_MAX_DISTANCE);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_SMART_SCOPE_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.smart_scope_max_distance", Config.ENCH_SMART_SCOPE_MAX_DISTANCE);
+            });
         sub(cat, entry, "deep_learning", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_DEEP_LEARNING_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.deep_learning_damage_percent_per_gun_level_per_level", Config.ENCH_DEEP_LEARNING_DAMAGE_PERCENT_PER_GUN_LEVEL_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_DEEP_LEARNING_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.deep_learning_damage_percent_per_gun_level_per_level", Config.ENCH_DEEP_LEARNING_DAMAGE_PERCENT_PER_GUN_LEVEL_PER_LEVEL);
+            });
         sub(cat, entry, "equalizer", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_EQUALIZER_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_EQUALIZER_TRIGGER_CHANCE_PERCENT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_EQUALIZER_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_EQUALIZER_TRIGGER_CHANCE_PERCENT_PER_LEVEL);
+            });
         sub(cat, entry, "random", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_RANDOM_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL);
+                dbl_(e, entry, "enchantment.trigger_chance_percent_per_level", Config.ENCH_RANDOM_EFFECT_CHANCE_PERCENT_PER_LEVEL);
             int_(e, entry, "enchantment.effect_duration_ticks", Config.ENCH_RANDOM_EFFECT_DURATION_TICKS);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_RANDOM_ANVIL_MULT);
-        });
+            });
         sub(cat, entry, "decapitation", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_DECAPITATION_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.decapitation_headshot_bonus_percent_per_level", Config.ENCH_DECAPITATION_HEADSHOT_BONUS_PERCENT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_DECAPITATION_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.decapitation_headshot_bonus_percent_per_level", Config.ENCH_DECAPITATION_HEADSHOT_BONUS_PERCENT_PER_LEVEL);
+            });
         sub(cat, entry, "charge", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_CHARGE_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.charge_damage_percent_per_speed_per_level", Config.ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_CHARGE_ANVIL_MULT);
-        });
-        sub(cat, entry, "abyssgazer", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_ABYSSGAZER_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_ABYSSGAZER_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.charge_damage_percent_per_speed_per_level", Config.ENCH_CHARGE_DAMAGE_PERCENT_PER_SPEED_PER_LEVEL);
+            });
         sub(cat, entry, "double_shot", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_DOUBLE_SHOT_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.double_shot_chance_per_level", Config.ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_DOUBLE_SHOT_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.double_shot_chance_per_level", Config.ENCH_DOUBLE_SHOT_CHANCE_PER_LEVEL);
+            });
         sub(cat, entry, "focused_ammo", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_FOCUSED_AMMO_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.focused_ammo_damage_mult_per_level", Config.ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_FOCUSED_AMMO_ANVIL_MULT);
-        });
-        sub(cat, entry, "arcana_eden", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_ARCANA_EDEN_MAX_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_ARCANA_EDEN_ANVIL_MULT);
-        });
+                dbl_(e, entry, "enchantment.focused_ammo_damage_mult_per_level", Config.ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL);
+            });
         sub(cat, entry, "patience", e -> {
-            int_(e, entry, "enchantment.max_level", Config.ENCH_PATIENCE_MAX_LEVEL);
-            int_(e, entry, "enchantment.patience_delay_ms", Config.ENCH_PATIENCE_DELAY_MS);
+                int_(e, entry, "enchantment.patience_delay_ms", Config.ENCH_PATIENCE_DELAY_MS);
             dbl_(e, entry, "enchantment.patience_damage_percent_per_tick_per_level", Config.ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL);
-            int_(e, entry, "enchantment.anvil_mult", Config.ENCH_PATIENCE_ANVIL_MULT);
-        });
+            });
     }
 
     private interface EntryAdder {

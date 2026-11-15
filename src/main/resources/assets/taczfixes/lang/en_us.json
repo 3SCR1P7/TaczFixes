@@ -301,8 +301,6 @@
     "config.taczfixes.entry.enchantment.efficiency_fire_rate_percent_per_level": "Fire Rate Increase (%/level)",
     "config.taczfixes.entry.enchantment.efficiency_bolt_time_reduction_percent_per_level": "Bolt Time Reduction (%/level)",
     "config.taczfixes.entry.enchantment.damage_percent_per_level": "Damage Increase (%/level)",
-    "config.taczfixes.entry.enchantment.max_level": "Maximum Level",
-    "config.taczfixes.entry.enchantment.anvil_mult": "Experience Level Multiplier",
     "config.taczfixes.entry.enchantment.annihilation_damage_percent": "Void Damage (%/level)",
     "config.taczfixes.entry.enchantment.stability_recoil_reduction_per_level": "Recoil Reduction (%/level)",
     "config.taczfixes.entry.enchantment.coil_speed_percent": "Bullet Speed Increase (%/level)",

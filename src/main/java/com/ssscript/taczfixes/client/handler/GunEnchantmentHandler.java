@@ -559,12 +559,10 @@ public class GunEnchantmentHandler {
                 target.addEffect(new MobEffectInstance(effect, duration, 0));
             }
         }
-        float mult;
-        if (shooter.getRandom().nextFloat() < 0.5F) {
-            mult = 0.1F + shooter.getRandom().nextFloat() * 0.9F;
-        } else {
-            mult = 1.0F + shooter.getRandom().nextFloat() * 9.0F;
-        }
+        // 随机附魔: 伤害倍率在 (1 - 0.2n) ~ (1 + 0.25n) 之间均匀随机, n 为附魔等级; 最低钳制到 0
+        float minMult = Math.max(0.0F, 1.0F - 0.2F * level);
+        float maxMult = 1.0F + 0.25F * level;
+        float mult = minMult + shooter.getRandom().nextFloat() * (maxMult - minMult);
         event.setBaseAmount(event.getBaseAmount() * mult);
     }
 

@@ -302,8 +302,6 @@
     "config.taczfixes.entry.enchantment.efficiency_fire_rate_percent_per_level":  "射速提升(%)/级",
     "config.taczfixes.entry.enchantment.efficiency_bolt_time_reduction_percent_per_level":  "拉栓时长缩减(%)/级",
     "config.taczfixes.entry.enchantment.damage_percent_per_level":  "伤害提升(%)/级",
-    "config.taczfixes.entry.enchantment.max_level":  "最大等级",
-    "config.taczfixes.entry.enchantment.anvil_mult":  "经验等级乘数",
     "config.taczfixes.entry.enchantment.annihilation_damage_percent":  "虚空伤害(%)/级",
     "config.taczfixes.entry.enchantment.stability_recoil_reduction_per_level":  "后坐力降低(%)/级",
     "config.taczfixes.entry.enchantment.coil_speed_percent":  "子弹速度提升(%)/级",
