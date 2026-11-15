@@ -104,6 +104,12 @@ public final class DynamicCamo {
         return entry;
     }
 
+    /** 迷彩切换/清除后清掉按物品实例的缓存, 让界面里的预览当帧就生效。 */
+    public static void invalidate() {
+        cachedStack = null;
+        cachedEntry = null;
+    }
+
     /** 渲染上下文中的当前物品身上生效的迷彩 index(0 = 无)。 */
     public static int indexForRender() {
         if (!shaderActive) {

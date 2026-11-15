@@ -75,6 +75,8 @@ public final class ClientModEvents {
 
     private static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            // 迷彩切换后让渲染侧按物品实例的缓存失效, 改装界面里立即看到效果
+            com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.camo.DynamicCamo::invalidate);
             NeoForge.EVENT_BUS.register(new SteplessZoomHandler());
             NeoForge.EVENT_BUS.register(new ScopeSwitchHandler());
             NeoForge.EVENT_BUS.register(new ConfigKeyHandler());
