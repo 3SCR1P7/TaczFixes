@@ -140,6 +140,7 @@
     "config.taczfixes.entry.limb_damage.enabled": "Enable Limb Damage",
     "config.taczfixes.entry.limb_damage.show_in_charts": "Show in Property Charts",
     "config.taczfixes.entry.limb_damage.crawl_hitbox_enabled": "Enable Better Crawl Hitbox",
+    "config.taczfixes.entry.limb_damage.standing_hitbox_enabled": "Better Standing Hitbox",
     "config.taczfixes.entry.limb_damage.threshold_standing": "Limb Height Threshold (Standing)",
     "config.taczfixes.entry.limb_damage.threshold_sneaking": "Limb Height Threshold (Sneaking)",
     "config.taczfixes.entry.limb_damage.crawl_headshot_length": "Crawl Hitbox Head Length",

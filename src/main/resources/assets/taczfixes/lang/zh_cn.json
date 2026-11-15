@@ -142,6 +142,7 @@
     "config.taczfixes.entry.limb_damage.enabled":  "启用四肢伤害",
     "config.taczfixes.entry.limb_damage.show_in_charts":  "在显示图表中显示",
     "config.taczfixes.entry.limb_damage.crawl_hitbox_enabled":  "启用更好的爬行碰撞箱",
+    "config.taczfixes.entry.limb_damage.standing_hitbox_enabled": "更好的站立碰撞箱",
     "config.taczfixes.entry.limb_damage.threshold_standing":  "站立时四肢高度阈值",
     "config.taczfixes.entry.limb_damage.threshold_sneaking":  "潜行时四肢高度阈值",
     "config.taczfixes.entry.limb_damage.crawl_headshot_length":  "爬行受击箱头部长度",

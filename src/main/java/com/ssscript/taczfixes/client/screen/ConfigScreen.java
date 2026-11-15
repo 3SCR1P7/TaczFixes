@@ -223,6 +223,7 @@ public class ConfigScreen {
         bool_(cat, entry, "limb_damage.enabled", Config.LIMB_DAMAGE_ENABLED);
         bool_(cat, entry, "limb_damage.show_in_charts", Config.LIMB_DAMAGE_SHOW_IN_CHARTS);
         bool_(cat, entry, "limb_damage.crawl_hitbox_enabled", Config.CRAWL_HITBOX_ENABLED);
+        bool_(cat, entry, "limb_damage.standing_hitbox_enabled", Config.STANDING_HITBOX_ENABLED);
         List<AbstractConfigListEntry> player = new ArrayList<>();
         dbl_(player, entry, "limb_damage.threshold_standing", Config.LIMB_THRESHOLD_STANDING);
         dbl_(player, entry, "limb_damage.threshold_sneaking", Config.LIMB_THRESHOLD_SNEAKING);
