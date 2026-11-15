@@ -24,18 +24,12 @@ out vec2 texCoord0;
 out vec3 viewPosition;
 out vec3 viewNormal;
 out float skyExposure;
-flat out vec3 viewCol0;
-flat out vec3 viewCol1;
-flat out vec3 viewCol2;
 flat out int illuminatedGroup;
 
 void main() {
     vec4 position = ModelViewMat * vec4(Position, 1.0);
     gl_Position = ProjMat * position;
     viewPosition = position.xyz;
-    viewCol0 = ModelViewMat[0].xyz;
-    viewCol1 = ModelViewMat[1].xyz;
-    viewCol2 = ModelViewMat[2].xyz;
     viewNormal = normalize(transpose(inverse(mat3(ModelViewMat))) * Normal);
     skyExposure = clamp(float(UV2.y) / 240.0, 0.0, 1.0);
     vertexDistance = fog_distance(Position, FogShape);

@@ -46,15 +46,28 @@ public class ConfigScreen {
         bool_(cat, entry, "visual_effect.enabled", Config.PBR_ENABLED);
         dbl_(cat, entry, "visual_effect.reflection_strength", Config.PBR_REFLECTION);
         dbl_(cat, entry, "visual_effect.glare_strength", Config.PBR_GLARE_STRENGTH);
-        dbl_(cat, entry, "visual_effect.reflection_area", Config.PBR_REFLECTION_AREA);
         dbl_(cat, entry, "visual_effect.emission_strength", Config.PBR_EMISSION);
-        bool_(cat, entry, "visual_effect.bloom", Config.PBR_BLOOM);
-        dbl_(cat, entry, "visual_effect.bloom_strength", Config.PBR_BLOOM_STRENGTH);
-        dbl_(cat, entry, "visual_effect.bloom_radius", Config.PBR_BLOOM_RADIUS);
-        dbl_(cat, entry, "visual_effect.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
-        bool_(cat, entry, "visual_effect.bloom_tracer", Config.PBR_BLOOM_TRACER);
-        bool_(cat, entry, "visual_effect.bloom_laser", Config.PBR_BLOOM_LASER);
-        dbl_(cat, entry, "visual_effect.enchantment_glint_strength", Config.GUN_ENCHANT_GLINT_STRENGTH);
+        dbl_(cat, entry, "visual_effect.env_strength", Config.PBR_ENV_STRENGTH);
+        dbl_(cat, entry, "visual_effect.anisotropy", Config.PBR_ANISOTROPY);
+        bool_(cat, entry, "visual_effect.ssr", Config.PBR_SSR);
+        dbl_(cat, entry, "visual_effect.ssr_strength", Config.PBR_SSR_STRENGTH);
+        bool_(cat, entry, "visual_effect.wet_detail", Config.PBR_WET_DETAIL);
+        sub(cat, entry, "default_pbr", e -> {
+            bool_(e, entry, "visual_effect.fallback_material", Config.PBR_FALLBACK_MATERIAL);
+            dbl_(e, entry, "visual_effect.default_roughness", Config.PBR_DEFAULT_ROUGHNESS);
+            dbl_(e, entry, "visual_effect.default_metal", Config.PBR_DEFAULT_METAL);
+            dbl_(e, entry, "visual_effect.default_reflection", Config.PBR_DEFAULT_REFLECTION);
+        });
+        sub(cat, entry, "bloom", e -> {
+            bool_(e, entry, "visual_effect.bloom", Config.PBR_BLOOM);
+            dbl_(e, entry, "visual_effect.bloom_strength", Config.PBR_BLOOM_STRENGTH);
+            dbl_(e, entry, "visual_effect.bloom_radius", Config.PBR_BLOOM_RADIUS);
+            dbl_(e, entry, "visual_effect.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
+            bool_(e, entry, "visual_effect.bloom_tracer", Config.PBR_BLOOM_TRACER);
+            bool_(e, entry, "visual_effect.bloom_laser", Config.PBR_BLOOM_LASER);
+            bool_(e, entry, "visual_effect.bloom_wide", Config.PBR_BLOOM_WIDE);
+            dbl_(e, entry, "visual_effect.bloom_wide_strength", Config.PBR_BLOOM_WIDE_STRENGTH);
+        });
         sub(cat, entry, "gun_movement", e -> {
             dbl_(e, entry, "visual_effect.max_movement_roll_angle", Config.MOVEMENT_ROLL_MAX_ANGLE);
             dbl_(e, entry, "visual_effect.movement_roll_full_speed", Config.MOVEMENT_ROLL_FULL_SPEED);
@@ -68,6 +81,7 @@ public class ConfigScreen {
             dbl_(e, entry, "aim_blur.strength", Config.AIM_BLUR_STRENGTH);
             dbl_(e, entry, "aim_blur.focus_transition", Config.AIM_BLUR_FOCUS_TRANSITION);
         });
+        dbl_(cat, entry, "visual_effect.enchantment_glint_strength", Config.GUN_ENCHANT_GLINT_STRENGTH);
     }
 
     private static void buildSuppression(ConfigCategory cat, ConfigEntryBuilder entry) {

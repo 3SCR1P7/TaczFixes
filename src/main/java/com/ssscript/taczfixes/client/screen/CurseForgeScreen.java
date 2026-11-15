@@ -490,20 +490,39 @@ public class CurseForgeScreen extends Screen {
                             this.status = Component.translatable("gui.taczfixes.curseforge.status.success", name);
                         }
                         this.statusColor = 0xFF55FF55;
-                        PendingResourceReload.request();
                         // 记录安装来源, 供枪包管理界面自动检查更新
                         String namespace = GunPackInstaller.readGunPackNamespace(result.file());
                         CurseForgeInstalledPacks.recordInstall(file, result.file(), namespace);
                         GunPackUpdateChecker.invalidate();
-                        // 新安装的枪包默认放在“可用”列表, 由玩家自己决定何时启用
-                        if (namespace != null && !namespace.isBlank()) {
-                            String packId = GunPackIds.of(namespace, result.file());
+                        PendingResourceReload.request();
+                        // 新安装的枪包默认放在“可用”列表, 由玩家自己决定何时启用。
+                        // 优先用扫描结果里的真实枪包 ID(转换/重命名后文件名可能变化), 否则禁用项对不上会导致它自动出现在已选列表。
+                        String packId = resolveInstalledPackId(this.taczDir, result.file(), namespace);
+                        if (packId != null && !packId.isBlank()) {
                             this.pendingAvailableIds.add(packId);
                             GunPackSettings.addDisabled(packId);
                         }
                     }
                     this.updateButtons();
                 }));
+    }
+
+    /** 返回刚安装枪包在管理界面里的真实 ID; 扫描不到时退回 namespace@文件名。 */
+    private static String resolveInstalledPackId(java.nio.file.Path taczDir, java.nio.file.Path installed, String namespace) {
+        try {
+            String language = Minecraft.getInstance().getLanguageManager().getSelected();
+            for (com.ssscript.taczfixes.common.data.GunPackInfoScanner.PackInfoData info
+                    : com.ssscript.taczfixes.common.data.GunPackInfoScanner.scan(taczDir, language)) {
+                if (info.path() != null && info.path().equals(installed)) {
+                    return info.id();
+                }
+            }
+        } catch (Throwable ignored) {
+        }
+        if (namespace == null || namespace.isBlank()) {
+            return null;
+        }
+        return GunPackIds.of(namespace, installed);
     }
 
     // ------------------------------------------------------------------ 界面导航

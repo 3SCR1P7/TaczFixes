@@ -45,6 +45,8 @@ public final class ClientModEvents {
         modBus.addListener(ClientModEvents::onRegisterKeyMappings);
         modBus.addListener(ClientModEvents::onRegisterClientReloadListeners);
         modBus.addListener(ClientModEvents::onRegisterGuiLayers);
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+                com.ssscript.taczfixes.client.render.PbrRenderer::onRenderLevelStage);
     }
 
     private static void onRegisterGuiLayers(RegisterGuiLayersEvent event) {
