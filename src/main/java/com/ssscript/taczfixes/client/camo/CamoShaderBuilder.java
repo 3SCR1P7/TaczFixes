@@ -52,13 +52,7 @@ public final class CamoShaderBuilder {
 
     private CamoShaderBuilder() {
     }
-
-    /**
-     * 片段可直接调用的公共工具(名称以 tf 开头, 枪包片段不要重复定义)。
-     * 噪声/域扭曲/星点/星图/相位这组函数与 COD Dynamic Camouflage 的 dgs* 实现同源
-     * (MIT 之外的口头授权: 作者允许参考复用), 只是改名成 tf 前缀并统一收纳在这里,
-     * 这样多个迷彩片段共用同一份定义, 不会因为重复定义函数而整批编译失败。
-     */
+    
     private static final String HELPERS = """
             // ===== taczfixes 动态迷彩公共工具 =====
             // 哈希用无 sin 的整数混色写法(Dave Hoskins 风格): 视觉统计一致, 但比 sin 版快很多,
