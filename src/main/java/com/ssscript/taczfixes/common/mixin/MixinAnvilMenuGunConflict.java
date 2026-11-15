@@ -4,57 +4,29 @@ import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.world.entity.player.Abilities;
 import net.minecraft.world.inventory.AnvilMenu;
+import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
-import java.lang.reflect.Field;
 import java.util.Map;
 
 @Mixin(AnvilMenu.class)
 public class MixinAnvilMenuGunConflict {
-    @Unique
-    private static Field taczfixes$costField;
+    /** 铁砧费用是 DataSlot(不是 int 字段): 必须改它, 服务端才会按倍率扣经验等级。 */
+    @Shadow
+    private DataSlot cost;
 
     @Unique
     private boolean taczfixes$gunCreative;
-
-    @Unique
-    private static int taczfixes$getCost(AnvilMenu menu) {
-        try {
-            if (taczfixes$costField == null) {
-                try {
-                    taczfixes$costField = ObfuscationReflectionHelper.findField(AnvilMenu.class, "f_39002_");
-                } catch (Throwable ignored) {
-                    taczfixes$costField = ObfuscationReflectionHelper.findField(AnvilMenu.class, "cost");
-                }
-            }
-            return taczfixes$costField.getInt(menu);
-        } catch (Throwable ignored) {
-            return menu.getCost();
-        }
-    }
-
-    @Unique
-    private static void taczfixes$setCost(AnvilMenu menu, int value) {
-        try {
-            if (taczfixes$costField == null) {
-                taczfixes$getCost(menu);
-            }
-            if (taczfixes$costField != null) {
-                taczfixes$costField.setInt(menu, value);
-            }
-        } catch (Throwable ignored) {
-        }
-    }
 
     @Inject(method = "createResult", at = @At("HEAD"))
     private void taczfixes$markGunAnvil(CallbackInfo ci) {
@@ -118,10 +90,10 @@ public class MixinAnvilMenuGunConflict {
             bonus += (multiplier - 1) * mergedLevel;
         }
         if (bonus > 0) {
-            taczfixes$setCost((AnvilMenu) (Object) this, taczfixes$getCost((AnvilMenu) (Object) this) + bonus);
+            this.cost.set(this.cost.get() + bonus);
         }
         if (!this.taczfixes$gunCreative
-                && taczfixes$getCost((AnvilMenu) (Object) this) > target.getOrCreateTag().getInt("GunLevel") + 39) {
+                && this.cost.get() > target.getOrCreateTag().getInt("GunLevel") + 39) {
             menu.getSlot(2).set(ItemStack.EMPTY);
         }
         this.taczfixes$gunCreative = false;
