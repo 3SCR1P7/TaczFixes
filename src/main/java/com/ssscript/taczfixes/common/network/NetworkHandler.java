@@ -222,6 +222,11 @@ public class NetworkHandler {
                 ServerMessageSyncedConfig::decode,
                 ServerMessageSyncedConfig::handle,
                 false);
+        CHANNEL.registerMessage(41, ServerMessageHudParam.class,
+                ServerMessageHudParam::encode,
+                ServerMessageHudParam::decode,
+                ServerMessageHudParam::handle,
+                false);
 
     }
 }

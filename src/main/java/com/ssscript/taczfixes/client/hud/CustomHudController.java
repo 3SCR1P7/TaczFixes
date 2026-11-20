@@ -30,6 +30,7 @@ import net.neoforged.neoforge.client.event.ClientTickEvent;
 import net.neoforged.neoforge.event.level.LevelEvent;
 
 import java.util.Locale;
+import java.util.Map;
 import java.util.Optional;
 
 /**
@@ -65,12 +66,14 @@ public final class CustomHudController {
 
     @SubscribeEvent
     public void onLoggingOut(ClientPlayerNetworkEvent.LoggingOut event) {
+        HudParamStore.clear();
         reset();
     }
 
     @SubscribeEvent
     public void onLevelUnload(LevelEvent.Unload event) {
         if (event.getLevel().isClientSide()) {
+            HudParamStore.clear();
             reset();
         }
     }
@@ -295,6 +298,7 @@ public final class CustomHudController {
         String hudEmptyTexture = display == null || display.getHudEmptyTexture() == null
                 ? "" : display.getHudEmptyTexture().toString();
         boolean showCrosshair = display == null || display.isShowCrosshair();
+        Map<String, String> luaParams = HudParamStore.valuesFor(player, active.gunId);
 
         return new CustomHudSnapshot(
                 active.gunId.toString(),
@@ -329,6 +333,7 @@ public final class CustomHudController {
                 sneaking,
                 hudTexture,
                 hudEmptyTexture,
-                showCrosshair);
+                showCrosshair,
+                luaParams);
     }
 }

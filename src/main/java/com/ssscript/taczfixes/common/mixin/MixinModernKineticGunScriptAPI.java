@@ -250,6 +250,88 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
+    /** lua: api:setHudParam("energy", 4200) 发布一个自定义 HUD 参数, HTML HUD 页面按 key 显示。
+     *  value 支持 number / string / boolean; 传 nil 删除该参数。仅服务端主手逻辑机生效。 */
+    @Unique
+    public void setHudParam(String key, org.luaj.vm2.LuaValue value) {
+        String name = key == null ? "" : key.trim();
+        if (name.isEmpty()) {
+            return;
+        }
+        String text = com.ssscript.taczfixes.common.util.HudParamValues.toText(value);
+        java.util.Map<String, String> values = new java.util.HashMap<>();
+        java.util.Set<String> removed = new java.util.HashSet<>();
+        if (text == null) {
+            removed.add(name);
+        } else {
+            values.put(name, text);
+        }
+        taczfixes$publishHudParams(values, removed, false);
+    }
+
+    /** lua: api:setHudParams({ energy = 4200, mode = "burst" }) 批量发布自定义 HUD 参数。 */
+    @Unique
+    public void setHudParams(org.luaj.vm2.LuaValue params) {
+        if (params == null || !params.istable()) {
+            return;
+        }
+        java.util.Map<String, String> values = new java.util.HashMap<>();
+        org.luaj.vm2.LuaTable table = params.checktable();
+        org.luaj.vm2.LuaValue key = org.luaj.vm2.LuaValue.NIL;
+        while (true) {
+            key = table.next(key).arg1();
+            if (key.isnil()) {
+                break;
+            }
+            if (!key.isstring()) {
+                continue;
+            }
+            String name = key.tojstring().trim();
+            String text = com.ssscript.taczfixes.common.util.HudParamValues.toText(table.get(key));
+            if (name.isEmpty() || text == null) {
+                continue;
+            }
+            values.put(name, text);
+        }
+        if (!values.isEmpty()) {
+            taczfixes$publishHudParams(values, java.util.Set.of(), false);
+        }
+    }
+
+    /** lua: api:clearHudParams() 清空该枪械发布过的全部自定义 HUD 参数。 */
+    @Unique
+    public void clearHudParams() {
+        taczfixes$publishHudParams(java.util.Map.of(), java.util.Set.of(), true);
+    }
+
+    /** 把参数变更同步给主手枪械的主人; 副手/非玩家/客户端调用不发布。 */
+    @Unique
+    private void taczfixes$publishHudParams(java.util.Map<String, String> values,
+                                           java.util.Set<String> removed, boolean clear) {
+        if (this.itemStack == null || this.itemStack.isEmpty()) {
+            return;
+        }
+        if (this.shooter == null || this.shooter.level() == null || this.shooter.level().isClientSide) {
+            return;
+        }
+        if (!(this.shooter instanceof net.minecraft.server.level.ServerPlayer serverPlayer)) {
+            return;
+        }
+        if (com.ssscript.taczfixes.common.util.OffhandShooterManager.isOffhandData(this.dataHolder)) {
+            return;
+        }
+        com.tacz.guns.api.item.IGun gun = com.tacz.guns.api.item.IGun.getIGunOrNull(this.itemStack);
+        net.minecraft.resources.ResourceLocation gunId = gun == null ? null : gun.getGunId(this.itemStack);
+        if (gunId == null) {
+            return;
+        }
+        int slot = serverPlayer.getInventory().selected;
+        com.ssscript.taczfixes.common.network.NetworkHandler.CHANNEL.send(
+                com.ssscript.taczfixes.common.network.PacketDistributor.PLAYER.with(() -> serverPlayer),
+                new com.ssscript.taczfixes.common.network.ServerMessageHudParam(
+                        slot, gunId.toString(), clear, values, removed));
+    }
+
     /** 水下开火拦截: 眼部在水下且按配置/data 禁止时取消整个 shootOnce。 */
     @Inject(method = "shootOnce(Z)V", at = @At("HEAD"), cancellable = true, remap = false)
     private void taczfixes$blockUnderwater(boolean needConsumeAmmo, CallbackInfo ci) {
