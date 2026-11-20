@@ -5,27 +5,102 @@
     <!-- 使用 Minecraft GUI 坐标系, 方便和原版 HUD 对齐 -->
     <meta name="aui-viewport" content="mode=gui">
     <style>
+        /* ============================================================
+           TaCZ Fixes 自定义 HTML HUD 示例: "全息战术" 风格
+           - 纯 HTML + CSS, 不需要 JavaScript
+           - Java 端只会改写约定 id 的文本/属性 (见 README)
+           - 枪械 Lua 逻辑机脚本可用 api:setHudParam() 发布自定义参数,
+             页面用 body[data-taczfixes-param-*] / data-taczfixes-bind 读取
+           ============================================================ */
+
         body {
             margin: 0;
             padding: 0;
             pointer-events: none;
             font-family: "Minecraft", monospace;
-            color: #eaf6ff;
+            color: #e8f7ff;
         }
 
-        /* 右下角主面板 */
+        /* ---------- 主面板 ---------- */
+
         #hud {
             position: fixed;
-            right: 12px;
-            bottom: 12px;
-            width: 286px;
-            box-sizing: border-box;
-            padding: 10px 12px 9px;
-            background: linear-gradient(180deg, rgba(18, 24, 31, 0.94), rgba(8, 12, 17, 0.94));
-            border: 1px solid rgba(94, 190, 255, 0.38);
-            border-radius: 6px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+            right: 14px;
+            bottom: 14px;
+            width: 326px;
         }
+
+        /* 1px 渐变描边: 外层渐变 + 内层深色底 */
+        .frame {
+            padding: 1px;
+            border-radius: 10px;
+            background: linear-gradient(160deg,
+                rgba(96, 232, 255, 0.9),
+                rgba(34, 96, 150, 0.35) 42%,
+                rgba(255, 86, 168, 0.65));
+            box-shadow: 0 0 18px rgba(40, 180, 255, 0.28),
+                        0 10px 30px rgba(0, 0, 0, 0.6);
+        }
+
+        .panel {
+            position: relative;
+            overflow: hidden;
+            border-radius: 9px;
+            padding: 11px 14px 10px;
+            background: linear-gradient(180deg, rgba(9, 18, 28, 0.95), rgba(4, 8, 14, 0.97));
+        }
+
+        /* 扫描线 + 缓慢下移的光带 */
+        .panel::before {
+            content: "";
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(0deg,
+                rgba(120, 220, 255, 0.055) 0px,
+                rgba(120, 220, 255, 0.055) 1px,
+                transparent 1px,
+                transparent 3px);
+            pointer-events: none;
+        }
+
+        .sweep {
+            position: absolute;
+            left: -20px;
+            top: -60px;
+            width: 380px;
+            height: 60px;
+            background: linear-gradient(180deg,
+                transparent,
+                rgba(90, 225, 255, 0.16),
+                transparent);
+            animation: sweep 4.2s linear infinite;
+            pointer-events: none;
+        }
+
+        @keyframes sweep {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(360px); }
+        }
+
+        /* 四角装饰 */
+        .corner {
+            position: absolute;
+            width: 12px;
+            height: 12px;
+            border-color: rgba(120, 235, 255, 0.85);
+            border-style: solid;
+            pointer-events: none;
+        }
+
+        .corner.tl { left: 4px; top: 4px; border-width: 1px 0 0 1px; }
+        .corner.tr { right: 4px; top: 4px; border-width: 1px 1px 0 0; }
+        .corner.bl { left: 4px; bottom: 4px; border-width: 0 0 1px 1px; }
+        .corner.br { right: 4px; bottom: 4px; border-width: 0 1px 1px 0; }
+
+        /* ---------- 顶部: 枪械贴图 + 开火模式 ---------- */
 
         .top {
             display: flex;
@@ -35,10 +110,11 @@
         }
 
         #gun-hud {
-            width: 78px;
-            height: 26px;
+            width: 88px;
+            height: 28px;
             image-rendering: pixelated;
             opacity: 0.95;
+            filter: drop-shadow(0 0 4px rgba(70, 210, 255, 0.55));
         }
 
         .top-right {
@@ -46,7 +122,8 @@
             align-items: center;
             gap: 6px;
             font-size: 11px;
-            color: #8fb4ca;
+            color: #9fc9dd;
+            letter-spacing: 1px;
         }
 
         #fire-mode-icon {
@@ -55,64 +132,139 @@
             image-rendering: pixelated;
         }
 
+        #fire-mode {
+            color: #d7f6ff;
+        }
+
+        .live {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 9px;
+            color: #7fe9c3;
+            letter-spacing: 1px;
+        }
+
+        .live .dot {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: #54f7b8;
+            box-shadow: 0 0 6px #54f7b8;
+            animation: pulse 1.6s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.35; }
+        }
+
+        /* ---------- 弹药 ---------- */
+
         .ammo-line {
             display: flex;
             align-items: flex-end;
+            justify-content: space-between;
+            margin-top: 4px;
+        }
+
+        .ammo-main {
+            display: flex;
+            align-items: flex-end;
             gap: 8px;
-            margin-top: 5px;
         }
 
         #ammo-mag {
-            font-size: 30px;
-            line-height: 24px;
-            color: #eaf6ff;
+            font-size: 38px;
+            line-height: 30px;
+            letter-spacing: 2px;
+            color: #f2fdff;
+            filter: drop-shadow(0 0 6px rgba(80, 210, 255, 0.65));
+            transition: color 0.15s;
         }
 
-        #ammo-mag[data-empty="true"] {
-            color: #ff6464;
+        /* 低弹/空仓: 红色告警闪烁 */
+        body[data-taczfixes-ammo-empty="true"] #ammo-mag {
+            color: #ff6b74;
+            filter: drop-shadow(0 0 8px rgba(255, 70, 90, 0.75));
+            animation: warn 1s ease-in-out infinite;
+        }
+
+        @keyframes warn {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.55; }
+        }
+
+        .ammo-side {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            margin-bottom: 2px;
         }
 
         .reserve {
             display: flex;
             align-items: center;
             gap: 3px;
-            margin-bottom: 2px;
-            color: #9db4c4;
-            font-size: 14px;
+            color: #8fa9ba;
+            font-size: 13px;
+        }
+
+        .reserve .label {
+            font-size: 8px;
+            color: #5f7f93;
+            letter-spacing: 1px;
         }
 
         #ammo-inventory[data-hidden="true"] {
             display: none;
         }
 
-        .divider {
-            width: 1px;
-            height: 22px;
-            background: rgba(160, 210, 240, 0.28);
-        }
-
         .ammo-type {
             display: flex;
             align-items: center;
             gap: 5px;
-            margin-bottom: 2px;
-            font-size: 11px;
-            color: #a9c6d8;
+            font-size: 10px;
+            color: #a9c9db;
+            letter-spacing: 0.5px;
         }
 
         #ammo-type-icon {
-            width: 16px;
-            height: 16px;
+            width: 15px;
+            height: 15px;
             image-rendering: pixelated;
         }
+
+        /* 弹匣分段线, 随样式切换颜色 */
+        .mag-strip {
+            height: 3px;
+            margin-top: 7px;
+            border-radius: 2px;
+            background: repeating-linear-gradient(90deg,
+                rgba(90, 220, 255, 0.85) 0px,
+                rgba(90, 220, 255, 0.85) 7px,
+                rgba(10, 30, 44, 0.9) 7px,
+                rgba(10, 30, 44, 0.9) 10px);
+        }
+
+        body[data-taczfixes-ammo-empty="true"] .mag-strip {
+            background: repeating-linear-gradient(90deg,
+                rgba(255, 90, 110, 0.85) 0px,
+                rgba(255, 90, 110, 0.85) 7px,
+                rgba(40, 10, 16, 0.9) 7px,
+                rgba(40, 10, 16, 0.9) 10px);
+        }
+
+        /* ---------- 热量条 ---------- */
 
         .heat-row {
             display: flex;
             align-items: center;
-            gap: 6px;
-            margin-top: 6px;
-            font-size: 10px;
+            gap: 7px;
+            margin-top: 7px;
+            font-size: 9px;
             color: #8fb4ca;
+            letter-spacing: 1px;
         }
 
         body[data-taczfixes-has-heat="false"] .heat-row {
@@ -120,150 +272,330 @@
         }
 
         #heat-bar {
+            position: relative;
             flex: 1;
-            height: 5px;
-            background: rgba(150, 190, 220, 0.16);
+            height: 6px;
             border-radius: 3px;
             overflow: hidden;
+            background: rgba(150, 190, 220, 0.14);
+            box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.7);
         }
 
         #heat-fill {
             width: 0%;
-            height: 5px;
-            background: linear-gradient(90deg, #37d0ff, #ffc247, #ff5252);
+            height: 6px;
             border-radius: 3px;
+            background: linear-gradient(90deg, #37d0ff, #ffc247, #ff5252);
+            box-shadow: 0 0 8px rgba(255, 160, 60, 0.5);
+            transition: width 0.12s linear;
         }
 
         #heat-bar[data-locked="true"] #heat-fill {
             background: #ff4040;
+            box-shadow: 0 0 10px rgba(255, 60, 60, 0.8);
         }
+
+        /* 条上的分段刻度 */
+        .heat-ticks {
+            position: absolute;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background: repeating-linear-gradient(90deg,
+                transparent 0px,
+                transparent 9px,
+                rgba(2, 8, 12, 0.75) 9px,
+                rgba(2, 8, 12, 0.75) 10px);
+            pointer-events: none;
+        }
+
+        #heat-text {
+            min-width: 30px;
+            text-align: right;
+            color: #cfe9f6;
+        }
+
+        /* ---------- Lua 逻辑机自定义参数 ---------- */
+
+        .param-row {
+            display: none;
+            align-items: center;
+            gap: 7px;
+            margin-top: 7px;
+            font-size: 9px;
+            color: #8fb4ca;
+            letter-spacing: 1px;
+        }
+
+        /* 只要脚本发布过 energy 参数就显示; 没发布时整行隐藏 */
+        body[data-taczfixes-param-energy] .param-row {
+            display: flex;
+        }
+
+        .param-bar {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            overflow: hidden;
+            background: rgba(150, 190, 220, 0.14);
+            box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.7);
+        }
+
+        #energy-fill {
+            width: 0%;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, #7dffcf, #37d0ff);
+            box-shadow: 0 0 8px rgba(80, 255, 200, 0.5);
+            transition: width 0.12s linear;
+        }
+
+        #energy-text {
+            min-width: 34px;
+            text-align: right;
+            color: #cfe9f6;
+        }
+
+        #custom-mode {
+            color: #d7f6ff;
+        }
+
+        /* 脚本发布 overheated = true 时整块变红 */
+        body[data-taczfixes-param-overheated="true"] .param-row {
+            color: #ff8b93;
+        }
+
+        body[data-taczfixes-param-overheated="true"] #energy-fill {
+            background: #ff5252;
+            box-shadow: 0 0 10px rgba(255, 60, 60, 0.8);
+        }
+
+        /* ---------- 状态芯片 ---------- */
 
         .status-row {
             display: flex;
             gap: 4px;
-            margin-top: 6px;
+            margin-top: 8px;
         }
 
         .chip {
             padding: 1px 4px;
-            font-size: 9px;
+            font-size: 8px;
             color: #9fc4d8;
-            border: 1px solid rgba(120, 190, 230, 0.28);
+            border: 1px solid rgba(120, 190, 230, 0.25);
             border-radius: 3px;
-            opacity: 0.22;
+            opacity: 0.2;
+            transition: opacity 0.12s, color 0.12s, border-color 0.12s;
         }
 
         .chip[data-active="true"] {
-            color: #d9f3ff;
-            border-color: rgba(90, 210, 255, 0.7);
-            background: rgba(40, 140, 200, 0.18);
+            color: #e2fbff;
+            border-color: rgba(90, 225, 255, 0.8);
+            background: rgba(40, 150, 210, 0.22);
+            box-shadow: 0 0 8px rgba(60, 200, 255, 0.35);
             opacity: 1;
+            animation: chipglow 1.4s ease-in-out infinite;
         }
 
-        /* 准星: 只在未开镜/未换弹时显示 */
+        @keyframes chipglow {
+            0%, 100% { box-shadow: 0 0 6px rgba(60, 200, 255, 0.3); }
+            50% { box-shadow: 0 0 12px rgba(60, 200, 255, 0.7); }
+        }
+
+        /* ---------- 换弹旋转环 ---------- */
+
+        #reload-ring {
+            position: absolute;
+            right: 10px;
+            bottom: 42px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 2px solid rgba(90, 225, 255, 0.18);
+            border-top-color: rgba(90, 225, 255, 0.95);
+            opacity: 0;
+            transition: opacity 0.15s;
+        }
+
+        body[data-taczfixes-reloading="true"] #reload-ring {
+            opacity: 1;
+            animation: spin 0.9s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* ---------- 底部签名 ---------- */
+
+        .foot {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-top: 8px;
+            padding-top: 6px;
+            border-top: 1px solid rgba(110, 190, 230, 0.16);
+            font-size: 8px;
+            letter-spacing: 1px;
+            color: #5b7d90;
+        }
+
+        .foot .accent {
+            color: rgba(120, 235, 255, 0.75);
+        }
+
+        /* ---------- 准星 ---------- */
+
         #crosshair {
             position: fixed;
             left: 50%;
             top: 50%;
-            width: 22px;
-            height: 22px;
+            width: 34px;
+            height: 34px;
             transform: translate(-50%, -50%);
-            opacity: 0.9;
+            opacity: 0.92;
+            transition: opacity 0.12s;
         }
 
-        #crosshair[data-active="false"] {
-            opacity: 0;
-        }
-
+        #crosshair[data-active="false"],
         body[data-taczfixes-aiming="true"] #crosshair {
             opacity: 0;
         }
 
         #crosshair .bar {
             position: absolute;
-            background: #eaf6ff;
+            background: #eaf9ff;
+            box-shadow: 0 0 4px rgba(120, 235, 255, 0.9);
         }
 
-        #crosshair .bar.top {
-            left: 10px;
-            top: 0;
-            width: 2px;
-            height: 6px;
-        }
-
-        #crosshair .bar.bottom {
-            left: 10px;
-            bottom: 0;
-            width: 2px;
-            height: 6px;
-        }
-
-        #crosshair .bar.left {
-            left: 0;
-            top: 10px;
-            width: 6px;
-            height: 2px;
-        }
-
-        #crosshair .bar.right {
-            right: 0;
-            top: 10px;
-            width: 6px;
-            height: 2px;
-        }
+        #crosshair .bar.top { left: 16px; top: 0; width: 2px; height: 7px; }
+        #crosshair .bar.bottom { left: 16px; bottom: 0; width: 2px; height: 7px; }
+        #crosshair .bar.left { left: 0; top: 16px; width: 7px; height: 2px; }
+        #crosshair .bar.right { right: 0; top: 16px; width: 7px; height: 2px; }
 
         #crosshair .dot {
             position: absolute;
-            left: 10px;
-            top: 10px;
+            left: 16px;
+            top: 16px;
             width: 2px;
             height: 2px;
-            background: #eaf6ff;
+            background: #ffffff;
+            box-shadow: 0 0 5px rgba(150, 240, 255, 1);
+        }
+
+        /* 两层反向旋转的全息环 */
+        #crosshair .ring {
+            position: absolute;
+            left: 4px;
+            top: 4px;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            border: 1px solid rgba(120, 235, 255, 0.35);
+            border-top-color: rgba(120, 235, 255, 0.95);
+            border-bottom-color: rgba(120, 235, 255, 0.1);
+            animation: spin 6s linear infinite;
+        }
+
+        #crosshair .ring.inner {
+            left: 8px;
+            top: 8px;
+            width: 18px;
+            height: 18px;
+            border-color: rgba(255, 110, 190, 0.25);
+            border-bottom-color: rgba(255, 110, 190, 0.8);
+            border-top-color: rgba(255, 110, 190, 0.08);
+            animation: spinback 4.5s linear infinite;
+        }
+
+        @keyframes spinback {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(-360deg); }
         }
     </style>
 </head>
 <body>
     <div id="hud">
-        <div class="top">
-            <!-- Java 会把当前枪械的 TaCZ HUD 贴图写进 texture 的 src -->
-            <texture id="gun-hud"></texture>
-            <div class="top-right">
-                <texture id="fire-mode-icon"></texture>
-                <span id="fire-mode">AUTO</span>
+        <div class="frame">
+            <div class="panel">
+                <div class="sweep"></div>
+                <div class="corner tl"></div>
+                <div class="corner tr"></div>
+                <div class="corner bl"></div>
+                <div class="corner br"></div>
+
+                <div class="top">
+                    <!-- Java 会把当前枪械的 TaCZ HUD 贴图写进 texture 的 src -->
+                    <texture id="gun-hud"></texture>
+                    <div class="top-right">
+                        <texture id="fire-mode-icon"></texture>
+                        <span id="fire-mode">AUTO</span>
+                        <span class="live"><span class="dot"></span>LIVE</span>
+                    </div>
+                </div>
+
+                <div class="ammo-line">
+                    <div class="ammo-main">
+                        <span id="ammo-mag">030</span>
+                        <div class="ammo-side">
+                            <span class="reserve">
+                                <span class="label">RES</span>
+                                <span id="ammo-inventory">0120</span>
+                            </span>
+                            <span class="ammo-type">
+                                <item id="ammo-type-icon"></item>
+                                <span id="ammo-type">7.62x39mm</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mag-strip"></div>
+
+                <div class="heat-row">
+                    <span>HEAT</span>
+                    <div id="heat-bar" data-active="false" data-locked="false">
+                        <div id="heat-fill"></div>
+                        <div class="heat-ticks"></div>
+                    </div>
+                    <span id="heat-text">--</span>
+                </div>
+
+                <!-- 逻辑机脚本参数: data-taczfixes-bind 显示文本, data-taczfixes-bind-width 显示百分比 -->
+                <div class="param-row">
+                    <span>PWR</span>
+                    <div class="param-bar">
+                        <div id="energy-fill" data-taczfixes-bind-width="energy_percent"></div>
+                    </div>
+                    <span id="energy-text" data-taczfixes-bind="energy">--</span>
+                    <span id="custom-mode" data-taczfixes-bind="mode"></span>
+                </div>
+
+                <div class="status-row">
+                    <span id="status-aiming" class="chip" data-active="false">ADS</span>
+                    <span id="status-reloading" class="chip" data-active="false">RLD</span>
+                    <span id="status-sprinting" class="chip" data-active="false">SPR</span>
+                    <span id="status-hold-breath" class="chip" data-active="false">BRH</span>
+                    <span id="status-dual-wield" class="chip" data-active="false">DUAL</span>
+                    <span id="status-crawling" class="chip" data-active="false">CRL</span>
+                    <span id="status-sneaking" class="chip" data-active="false">SNK</span>
+                </div>
+
+                <div id="reload-ring"></div>
+
+                <div class="foot">
+                    <span>TACZ FIXES</span>
+                    <span class="accent">// CUSTOM HUD</span>
+                </div>
             </div>
-        </div>
-
-        <div class="ammo-line">
-            <span id="ammo-mag">030</span>
-            <span class="reserve">
-                <span id="ammo-inventory">0120</span>
-            </span>
-            <span class="divider"></span>
-            <span class="ammo-type">
-                <item id="ammo-type-icon"></item>
-                <span id="ammo-type">7.62x39mm</span>
-            </span>
-        </div>
-
-        <div class="heat-row">
-            <div id="heat-bar" data-active="false" data-locked="false">
-                <div id="heat-fill"></div>
-            </div>
-            <span id="heat-text">--</span>
-        </div>
-
-        <div class="status-row">
-            <span id="status-aiming" class="chip" data-active="false">ADS</span>
-            <span id="status-reloading" class="chip" data-active="false">RLD</span>
-            <span id="status-sprinting" class="chip" data-active="false">SPR</span>
-            <span id="status-hold-breath" class="chip" data-active="false">BREATH</span>
-            <span id="status-dual-wield" class="chip" data-active="false">DUAL</span>
-            <span id="status-crawling" class="chip" data-active="false">CRAWL</span>
-            <span id="status-sneaking" class="chip" data-active="false">SNEAK</span>
         </div>
     </div>
 
     <div id="crosshair" data-active="true">
+        <div class="ring"></div>
+        <div class="ring inner"></div>
         <div class="bar top"></div>
         <div class="bar bottom"></div>
         <div class="bar left"></div>

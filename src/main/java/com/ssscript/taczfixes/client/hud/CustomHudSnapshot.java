@@ -1,5 +1,7 @@
 package com.ssscript.taczfixes.client.hud;
 
+import java.util.Map;
+
 /**
  * 一帧需要写入 ApricityUI 页面的枪械状态。作为不可变快照使用,
  * 数值未变化时不会重复操作 DOM。
@@ -37,6 +39,7 @@ public record CustomHudSnapshot(
         boolean sneaking,
         String hudTexture,
         String hudEmptyTexture,
-        boolean showCrosshair
+        boolean showCrosshair,
+        Map<String, String> luaParams
 ) {
 }

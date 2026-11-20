@@ -8,10 +8,10 @@ An add-on mod for [Timeless and Classics Zero](https://www.curseforge.com/minecr
 
 | Branch | Minecraft | Loader | Mod version | TaCZ version |
 | --- | --- | --- | --- | --- |
-| `taczfixes` | 1.20.1 | Forge 47.4+ | 2.3.0 | tacz-forge 1.20.1 1.2.0 |
-| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.0.3 | tacz-neoforge 1.21.1 1.2.0 |
+| `taczfixes` | 1.20.1 | Forge 47.4+ | 3.1.1 | tacz-forge 1.20.1 1.2.0 |
+| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.1.1 | tacz-neoforge 1.21.1 1.2.0 |
 
-Client and server must run the same TaCZ Fixes version (network protocol version `2`). Single-player and client-side installation is enough to use every feature.
+Client and server must run the same TaCZ Fixes version (network protocol version `3`). Single-player and client-side installation is enough to use every feature.
 
 ## Dependencies
 
@@ -74,6 +74,7 @@ Optional (the related features degrade gracefully when missing, without crashing
 ### HUD
 
 - Custom HTML HUDs shipped by gun packs (ApricityUI)
+- HTML HUDs can display custom parameters published by the gun's Lua logic script
 - Offhand gun HUD, stamina bar, aiming stamina bar
 
 ### Gun pack management
@@ -123,6 +124,7 @@ The files contain comments. Changes take effect after reloading resources or res
 ## For gun pack authors
 
 - HTML HUDs go in `assets/<namespace>/hud/**.html`; the mod synchronizes them to ApricityUI automatically
+- Lua logic scripts can publish custom HUD values with `api:setHudParam(key, value)` / `api:setHudParams(table)`; pages read them via `data-taczfixes-bind="key"` and `data-taczfixes-param-*`. See `example/example_logic.lua` and `example/example_custom_hud.html`
 - Attachment slots, virtual attachments, refit point costs, enchantment compatibility, etc. are all defined through data JSON
 - See `example/` for attachment animation examples: `grip_emx_bipod` is a working bipod state machine with animation configuration
 - Besides the attachment's own bones, attachment animations can drive four of TaCZ's gun functional groups: `camera` (camera rotation, applied to both the first-person view and the hands), `root` (whole-gun translate/rotate/scale) and `lefthand_pos` / `righthand_pos` (first-person hand positions). Animating them overlays the same movement on the gun's matching group; the attachment model does not need those bones, placeholders are added automatically.

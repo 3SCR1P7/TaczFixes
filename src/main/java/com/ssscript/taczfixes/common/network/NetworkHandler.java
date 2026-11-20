@@ -10,9 +10,9 @@ import java.util.Optional;
 public class NetworkHandler {
     public static final SimpleChannel CHANNEL = NetworkRegistry.newSimpleChannel(
             ResourceLocation.fromNamespaceAndPath("taczfixes", "main"),
-            () -> "2",
-            "2"::equals,
-            "2"::equals);
+            () -> "3",
+            "3"::equals,
+            "3"::equals);
 
     private NetworkHandler() {
     }
@@ -222,6 +222,11 @@ public class NetworkHandler {
                 ServerMessageSyncedConfig::encode,
                 ServerMessageSyncedConfig::decode,
                 ServerMessageSyncedConfig::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(41, ServerMessageHudParam.class,
+                ServerMessageHudParam::encode,
+                ServerMessageHudParam::decode,
+                ServerMessageHudParam::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
     }

@@ -23,6 +23,7 @@ public final class ApricityHudBridge implements ApricityHudBackend {
     private String path;
     private long generation = -1L;
     private CustomHudSnapshot lastSnapshot;
+    private java.util.Set<String> appliedParamAttrs = java.util.Set.of();
 
     @Override
     public boolean open(String logicalPath) {
@@ -42,6 +43,7 @@ public final class ApricityHudBridge implements ApricityHudBackend {
             path = logicalPath;
             generation = created.getRefreshGeneration();
             lastSnapshot = null;
+            appliedParamAttrs = java.util.Set.of();
             return true;
         } catch (Throwable ignored) {
             close();
@@ -56,6 +58,7 @@ public final class ApricityHudBridge implements ApricityHudBackend {
         path = null;
         generation = -1L;
         lastSnapshot = null;
+        appliedParamAttrs = java.util.Set.of();
         if (current == null) return;
         try {
             current.remove();
@@ -135,6 +138,8 @@ public final class ApricityHudBridge implements ApricityHudBackend {
             setAttr(body, "data-taczfixes-sneaking", boolText(s.sneaking()));
             setAttr(body, "data-taczfixes-show-crosshair", boolText(s.showCrosshair()));
         }
+
+        applyLuaParams(doc, body, s.luaParams());
 
         Element magazine = doc.getElementById("ammo-mag");
         if (magazine != null) {
@@ -233,6 +238,101 @@ public final class ApricityHudBridge implements ApricityHudBackend {
             setAttr(crosshair, "data-active", boolText(visible));
             setAttr(crosshair, "data-aiming", boolText(s.aiming()));
             setAttr(crosshair, "data-reloading", boolText(s.reloading()));
+        }
+    }
+
+    /**
+     * 写入枪械 Lua 逻辑机脚本发布的自定义参数:
+     * <ul>
+     *     <li>body 上 {@code data-taczfixes-param-<key>="<value>"} 供 CSS 使用</li>
+     *     <li>带 {@code data-taczfixes-bind="key"} 的元素显示参数文本</li>
+     *     <li>带 {@code data-taczfixes-bind-width="key"} 的元素宽度设为参数百分比</li>
+     * </ul>
+     * 参数被删除或换枪后, 上一次写入的属性和文本会被清掉。
+     */
+    private void applyLuaParams(Document doc, Element body, java.util.Map<String, String> params) {
+        java.util.Map<String, String> values = params == null ? java.util.Map.of() : params;
+        java.util.Set<String> currentAttrs = new java.util.HashSet<>();
+        if (body != null) {
+            for (java.util.Map.Entry<String, String> entry : values.entrySet()) {
+                String attribute = paramAttribute(entry.getKey());
+                if (attribute == null) {
+                    continue;
+                }
+                currentAttrs.add(attribute);
+                setAttr(body, attribute, entry.getValue());
+            }
+            for (String previous : appliedParamAttrs) {
+                if (!currentAttrs.contains(previous)) {
+                    try {
+                        body.removeAttribute(previous);
+                    } catch (Throwable ignored) {
+                    }
+                }
+            }
+        }
+        appliedParamAttrs = currentAttrs;
+        try {
+            for (Element element : doc.querySelectorAll("[data-taczfixes-bind]")) {
+                String key = trimKey(element.getAttribute("data-taczfixes-bind"));
+                String value = key == null ? null : values.get(key);
+                setText(element, value == null ? "" : value);
+                setAttr(element, "data-value", value == null ? "" : value);
+            }
+        } catch (Throwable ignored) {
+        }
+        try {
+            for (Element element : doc.querySelectorAll("[data-taczfixes-bind-width]")) {
+                String key = trimKey(element.getAttribute("data-taczfixes-bind-width"));
+                String value = key == null ? null : values.get(key);
+                setAttr(element, "data-value", value == null ? "" : value);
+                setInlineStyle(element, "width", percentText(value));
+            }
+        } catch (Throwable ignored) {
+        }
+    }
+
+    private static String trimKey(String key) {
+        if (key == null) {
+            return null;
+        }
+        String trimmed = key.trim();
+        return trimmed.isEmpty() ? null : trimmed;
+    }
+
+    /** 参数 key 转成 HTML 属性名: 小写, 非 [a-z0-9_-] 的字符替换为 '-'。 */
+    private static String paramAttribute(String key) {
+        String trimmed = trimKey(key);
+        if (trimmed == null) {
+            return null;
+        }
+        StringBuilder builder = new StringBuilder("data-taczfixes-param-");
+        for (int i = 0; i < trimmed.length(); i++) {
+            char c = Character.toLowerCase(trimmed.charAt(i));
+            boolean allowed = (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9')
+                    || c == '_' || c == '-';
+            builder.append(allowed ? c : '-');
+        }
+        return builder.toString();
+    }
+
+    /** 进度条绑定: 数值按百分比写入, 非数字视为空。 */
+    private static String percentText(String value) {
+        if (value == null) {
+            return "";
+        }
+        String text = value.trim();
+        if (text.endsWith("%")) {
+            text = text.substring(0, text.length() - 1).trim();
+        }
+        if (text.isEmpty()) {
+            return "";
+        }
+        try {
+            float percent = Float.parseFloat(text);
+            return Float.isFinite(percent) ? percent + "%" : "";
+        } catch (NumberFormatException ignored) {
+            return "";
         }
     }
 
