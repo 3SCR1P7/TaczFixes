@@ -13,7 +13,11 @@ public abstract class MixinBedrockPartPbr {
     private int taczfixes$pbrMarkIlluminated(int packedLight) {
         if (!PbrRenderer.enabled()) return packedLight;
         for (BedrockPart part = (BedrockPart) (Object) this; part != null; part = part.getParent()) {
-            if (part.illuminated) return packedLight | 1;
+            if (part.illuminated) {
+                // 自发光骨骼(名字以 _illuminated 结尾): 本帧需要泛光链路。
+                PbrRenderer.markEmissionSource();
+                return packedLight | 1;
+            }
         }
         return packedLight;
     }

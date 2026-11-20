@@ -5,13 +5,10 @@
       "name": "Sampler0"
     },
     {
+      "name": "Wide"
+    },
+    {
       "name": "ScopeMask"
-    },
-    {
-      "name": "EmissionDepth"
-    },
-    {
-      "name": "SceneDepth"
     }
   ],
   "uniforms": [
@@ -21,6 +18,14 @@
       "name": "Strength",
       "values": [
         0.6
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "WideStrength",
+      "values": [
+        0.0
       ]
     },
     {

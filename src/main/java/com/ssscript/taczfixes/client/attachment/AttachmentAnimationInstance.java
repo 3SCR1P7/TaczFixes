@@ -27,6 +27,15 @@ public final class AttachmentAnimationInstance {
     private final BedrockAttachmentModel model;
     private final LuaAnimationStateMachine<AttachmentAnimationStateContext> stateMachine;
     private final AttachmentAnimationStateContext context;
+    /** camera / root / lefthand_pos / righthand_pos 四个功能组的最近一帧动画增量。 */
+    private final AttachmentGroupTransforms transforms = AttachmentGroupTransforms.create();
+    private ItemStack attachmentItem = ItemStack.EMPTY;
+    /** 本次枪械渲染入口是否已经推进过状态机（避免配件渲染时再推进一次）。 */
+    private boolean updatedByGunRender;
+    /** 最近一次真正被渲染的时间（纳秒），用于避免给已卸下的旧配件继续跑叠加动画。 */
+    private long lastRenderedNanos;
+    /** 最近一次由枪械渲染入口采集 camera 组的时间（纳秒），用于避免停止渲染后镜头残留倾斜。 */
+    private long lastCameraNanos;
     private boolean broken;
 
     private AttachmentAnimationInstance(AttachmentAnimationKey key, AttachmentAnimationDef def,
@@ -47,6 +56,7 @@ public final class AttachmentAnimationInstance {
                                               ItemStack attachmentItem, ItemStack gunItem,
                                               BedrockAttachmentModel model) {
         try {
+            AttachmentGroupTransforms.ensureNodes(model);
             BedrockAnimationFile animationFile = ClientAssetsManager.INSTANCE.getBedrockAnimations(def.animationId());
             if (animationFile == null) {
                 return null;
@@ -78,6 +88,7 @@ public final class AttachmentAnimationInstance {
         if (broken) {
             return;
         }
+        this.attachmentItem = attachmentItem == null ? ItemStack.EMPTY : attachmentItem;
         context.setRenderData(attachmentItem, gunItem, firstPerson, partialTicks);
         try {
             if (stateMachine.isInitialized()) {
@@ -86,7 +97,51 @@ public final class AttachmentAnimationInstance {
         } catch (Throwable throwable) {
             // 脚本运行时报错：停用本实例，回退到静态渲染，不影响其它配件。
             broken = true;
+            return;
         }
+        // 状态机跑完后把 camera/root/lefthand_pos/righthand_pos 的动画增量取出来,
+        // 由 AttachmentAnimationManager 叠加到枪械模型上。
+        transforms.capture(model);
+    }
+
+    AttachmentGroupTransforms transforms() {
+        return transforms;
+    }
+
+    ItemStack attachmentItem() {
+        return attachmentItem;
+    }
+
+    void markUpdatedByGunRender(boolean updated) {
+        this.updatedByGunRender = updated;
+    }
+
+    void markRendered() {
+        this.lastRenderedNanos = System.nanoTime();
+    }
+
+    /** 最近 1 秒内是否被真正渲染过（没被渲染的实例不参与枪械功能组叠加）。 */
+    boolean wasRenderedRecently() {
+        return lastRenderedNanos != 0L && System.nanoTime() - lastRenderedNanos <= 1_000_000_000L;
+    }
+
+    /** 记录一次由枪械渲染入口采集 camera 组的时间。 */
+    void markCameraUpdated() {
+        this.lastCameraNanos = System.nanoTime();
+    }
+
+    /** 最近是否由枪械渲染入口采集过 camera 组（停止渲染后不把最后一帧的镜头旋转继续挂着）。 */
+    boolean cameraFresh() {
+        return lastCameraNanos != 0L && System.nanoTime() - lastCameraNanos <= 200_000_000L;
+    }
+
+    boolean wasUpdatedByGunRender() {
+        return updatedByGunRender;
+    }
+
+    /** 清理共享模型上的残留变换（例如配件本帧没被渲染时）。 */
+    void cleanModelTransforms() {
+        AttachmentGroupTransforms.clean(model);
     }
 
     /** 转发一次状态机输入。 */

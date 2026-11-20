@@ -51,6 +51,8 @@ uniform float CelestialVisibility;
 uniform float SunOcclusion;
 uniform float LocalSkyExposure;
 uniform float Wetness;
+// 1 = 该物体露天接触雨水(或手持/水下), 0 = 被遮挡。由 CPU 用原版 isRainingAt 判定后传入。
+uniform float WetSurface;
 uniform vec3 LocalLightPos1;
 uniform vec3 LocalLightColor1;
 uniform float LocalLightStrength1;
@@ -75,13 +77,29 @@ in vec3 viewPosition;
 in vec3 viewNormal;
 flat in int illuminatedGroup;
 out vec4 fragColor;
+out vec4 fragEmission;
+out vec4 fragEmissionDepth;
 
 // 相机朝向(世界->视角空间), 由 CPU 传入。不能从 ModelViewMat 提取:
 // 手持枪械的 ModelViewMat 还包含枪械模型自身的旋转, 会让光照方向整体偏转。
 mat3 worldToView() { return mat3(ViewRotX, ViewRotY, ViewRotZ); }
 vec3 fragWorldPos() { return CameraPos + transpose(worldToView()) * viewPosition; }
 
+// 表面实际接触到的雨水: 由 CPU 在渲染提交时用原版降雨判定(高度图/群系)算好, 不靠光照等级估。
+// 手持物由 CPU 直接把 WetSurface 设为 1, 表示按玩家自己的淋雨/入水状态整片湿润。
+float surfaceRainGate() { return clamp(WetSurface, 0.0, 1.0); }
+float surfaceWetness() { return clamp(Wetness, 0.0, 1.0) * surfaceRainGate(); }
+float surfaceWetDetail() { return clamp(WetDetail, 0.0, 1.0) * surfaceRainGate(); }
+
 vec3 safeNormalize(vec3 v) { return v * inversesqrt(max(dot(v, v), 1e-8)); }
+
+// 把深度打包进 RGBA8 的第二/第三颜色附件, 供泛光的遮挡遮罩还原(手臂等后画的前景要挡住泛光)。
+vec4 taczfixesPackDepth(float depth) {
+    vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * depth;
+    enc = fract(enc);
+    enc -= enc.yzww * vec4(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0, 0.0);
+    return enc;
+}
 
 vec3 mappedNormal(vec3 n, vec2 xy) {
     vec3 dp1 = dFdx(viewPosition), dp2 = dFdy(viewPosition);
@@ -230,7 +248,7 @@ vec3 localAmbientSum() {
 vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
     float nv = max(dot(n, v), 0.001);
     float glareRoughness = max(roughness, 0.12);
-    float wet = clamp(Wetness, 0.0, 1.0);
+    float wet = surfaceWetness();
     float weatherGain = mix(1.6, 0.45, wet);
     float gr = clamp(glareRoughness * (0.75 + 1.0), 0.05, 1.0);
     float a2 = pow(gr, 4.0);
@@ -305,12 +323,15 @@ void main() {
         ao = normalMap.b;
     }
     // 湿润水膜: 在法线上叠一层细微波纹, 让雨天的反光有流动感。
-    if (Wetness > 0.001 && WetDetail > 0.001) {
+    // 波纹细节走 1s 快速包络(涨落远快于潮湿状态), 同样受表面接触雨水量约束。
+    float wet = surfaceWetness();
+    float wetDetail = surfaceWetDetail();
+    if (wetDetail > 0.001) {
         vec2 p = viewPosition.xy * 7.0;
         float ripple = sin(p.x * 1.7 + Time * 2.7) * cos(p.y * 1.3 - Time * 2.1)
                 + 0.5 * sin((p.x + p.y) * 2.3 - Time * 3.7);
         float ripple2 = cos(p.y * 1.9 + Time * 3.1) * sin(p.x * 1.1 - Time * 1.9);
-        vec3 bump = vec3(ripple, ripple2, 0.0) * (0.05 * Wetness * WetDetail);
+        vec3 bump = vec3(ripple, ripple2, 0.0) * (0.05 * wetDetail);
         n = safeNormalize(n + bump);
     }
     vec3 v = safeNormalize(-viewPosition);
@@ -318,7 +339,6 @@ void main() {
     vec3 b;
     tangentBasis(n, t, b);
 
-    float wet = clamp(Wetness, 0.0, 1.0);
     vec3 wetBase = base.rgb * mix(1.0, 0.7, wet);
     vec3 linearBase = pow(wetBase, vec3(2.2));
     float baseLuma = clamp(dot(linearBase, vec3(0.299, 0.587, 0.114)), 0.0, 1.0);
@@ -366,11 +386,13 @@ void main() {
         if (ScopeDivisionPass != 0) {
             if (emission <= 0.0 && dot(total, total) < 1.0e-6) discard;
             fragColor = vec4(total, 0.0);
+            fragEmission = taczfixesPackDepth(gl_FragCoord.z);
             return;
         }
         float sceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
         if (GlareDepthTest != 0 && gl_FragCoord.z > sceneDepth + 0.000001) discard;
         fragColor = vec4(total, alpha);
+        fragEmission = taczfixesPackDepth(gl_FragCoord.z);
         return;
     }
 
@@ -446,7 +468,12 @@ void main() {
     float litFacing = max(nl * sunVisibility,
             dot(n, safeNormalize(worldToView() * Lw1)) * LocalLightStrength1);
     float envFace = mix(0.55, 1.0, smoothstep(0.0, 0.4, litFacing));
-    vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * 0.70;
+    // 环境反射随局部亮度变化: 亮处(白天/被天空或灯光照到)约 1.4 倍, 暗处(洞穴/夜晚)约 0.4 倍。
+    // 以前这里是固定 0.70, 现在换成亮度驱动的增益, 整体也略微变强。
+    float envTorchBright = clamp(torchSum, 0.0, 1.0);
+    float envLocalBright = clamp(exposure * 0.80 + envTorchBright * 0.40, 0.0, 1.0);
+    float envGain = 0.40 + smoothstep(0.02, 0.90, envLocalBright);
+    vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * envGain;
     // 屏幕空间反射(深度步进 + 屏幕探针兜底)。
     vec4 ssr = screenSpaceReflection(n, envTint);
     float ssrWeight = clamp(SSRStrength * ssr.a * (0.45 + 0.55 * (1.0 - roughness)) * clamp(metallic, 0.0, 1.0), 0.0, 0.55);
@@ -487,9 +514,10 @@ void main() {
             + indirect + diskTerm + haloTerm + sheenTerm + celestialSheen) * metalAtten;
     float sunBehind = smoothstep(0.05, 0.75, l.z);
     reflection *= mix(1.0, 0.55, sunBehind);
-    // 主通道保留一份清晰眩光核心; 泛光链路只负责外圈光晕, 避免眩光本体被模糊。
-    vec3 glareCore = glareHighlight(n, v, roughness, f0, linearBase) * (GlareStrength * 0.25)
-            * mix(1.0, 0.2, sunBehind) * 0.35;
+    // 眩光: 主通道只加 0.35 倍作为清晰核心; 完整眩光值写进第二颜色附件, 由泛光链路模糊成外圈光晕。
+    vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * (GlareStrength * 0.25)
+            * mix(1.0, 0.2, sunBehind);
+    vec3 glareCore = glare * 0.35;
     if (GlareDepthTest != 0) {
         float glareSceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
         glareCore *= step(gl_FragCoord.z, glareSceneDepth + 0.000001);
@@ -521,5 +549,8 @@ void main() {
             color *= lim / hiMax;
         }
     }
+    // MRT: 第二颜色附件 = 泛光光源(自发光 + 眩光), 与主颜色同一次绘制写出, 不用再画一遍几何。
+    fragEmission = vec4((glow + glare) * fog, 1.0);
+    fragEmissionDepth = taczfixesPackDepth(gl_FragCoord.z);
     fragColor = linear_fog(vec4(color, alpha), vertexDistance, FogStart, FogEnd, FogColor);
 }

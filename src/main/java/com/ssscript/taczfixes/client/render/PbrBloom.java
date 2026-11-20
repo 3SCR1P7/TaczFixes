@@ -25,17 +25,45 @@ import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 
 
-/** Separate world/hand phases prevent the hand depth clear from invalidating world bloom. */
+/**
+ * 枪械自发光泛光(MRT 实现)。
+ *
+ * <p>发光不再单独画一遍几何: PBR 着色器在主绘制时把 {@code glow + glare} 和发光像素深度
+ * 写进主渲染目标的第二/第三颜色附件(全分辨率), 泛光链路只做遮罩、模糊和合成:</p>
+ * <ol>
+ *   <li>PBR 主绘制: 同一次着色同时写出主颜色、发光颜色、发光像素的打包深度;</li>
+ *   <li>可见性遮罩: 用发光深度和最终场景深度比较, 被后画的前景(第一人称手臂、瞄具玻璃等)挡住的部分
+ *       不参与泛光, 所以手臂能挡住泛光;</li>
+ *   <li>金字塔高斯: 遮罩结果在半分辨率/四分之一分辨率上模糊(光晕是低频信号, 与全分辨率模糊一致),
+ *       最后全分辨率合成。</li>
+ * </ol>
+ */
 public final class PbrBloom {
-    private static RenderTarget emission, horizontal, vertical, wideA, wideB, scopeMask;
+    private static RenderTarget emission, emissionDepth, masked, narrowA, narrowB, wideA, wideB, scopeMask;
     private static VertexBuffer quad, maskQuad;
-    private static boolean active, dirty, stencilCopied, scopeMaskValid;
+    private static boolean active, dirty, scopeMaskValid;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
+    /** 宽层高斯核相对窄层的倍数。旧实现是"窄层结果再乘 2.4 倍半径", 总 sigma = sqrt(1 + 2.4^2) ≈ 2.6。 */
+    private static final float WIDE_SIGMA_FACTOR = 2.6f;
+
+    /** 发光附件当前挂在哪个主 FBO 上(主目标重建后需要重新挂)。 */
+    private static int attachedFrameBufferId = -1;
+    /** MRT 不可用时(驱动/FBO 不完整)退回"单独补画一次发光", 保证不崩、不丢泛光。 */
+    private static boolean mrtUnavailable;
+    private static int fallbackFbo = -1;
+    private static boolean fallbackUnavailable;
+
+    private static final int[] MRT_DRAW_BUFFERS = {
+            GL30.GL_COLOR_ATTACHMENT0, GL30.GL_COLOR_ATTACHMENT1, GL30.GL_COLOR_ATTACHMENT2};
+    private static final int[] FALLBACK_DRAW_BUFFERS = {
+            GL30.GL_COLOR_ATTACHMENT0, GL30.GL_COLOR_ATTACHMENT1};
+    private static final int[] SINGLE_DRAW_BUFFER = {GL30.GL_COLOR_ATTACHMENT0};
+
     public static void beginFrame() {
+        PbrRenderer.beginFrame();
         active = true;
         dirty = false;
-        stencilCopied = false;
         scopeMaskValid = false;
         PbrRenderer.resetScopeDivision();
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
@@ -44,60 +72,199 @@ public final class PbrBloom {
         }
     }
 
-    public static boolean canCapture() {
+    /** 泛光配置与着色器是否就绪(与当前帧有没有自发光内容无关)。 */
+    static boolean configured() {
         return active && PbrRenderer.enabled() && Config.PBR_BLOOM.get()
                 && Config.PBR_EMISSION.get() > 0 && Config.PBR_BLOOM_STRENGTH.get() > 0
                 && PbrRenderer.blurShader != null && PbrRenderer.compositeShader != null
                 && PbrRenderer.maskShader != null;
     }
 
-    public static void bindCapture() {
-        var main = Minecraft.getInstance().getMainRenderTarget();
-        int width = scaledSize(main.width);
-        int height = scaledSize(main.height);
-        if (emission == null || emission.width != width || emission.height != height
-                || emission.isStencilEnabled() != main.isStencilEnabled()) {
-            releaseTargets();
-            emission = new TextureTarget(width, height, true, Minecraft.ON_OSX);
-            if (main.isStencilEnabled()) emission.enableStencil();
-            emission.setClearColor(0, 0, 0, 0);
-            emission.setFilterMode(GL11.GL_LINEAR);
-            // Bloom runs below main resolution; linear upsampling keeps it smooth while
-            // cutting both fill rate and blur taps. Direction is normalized by main size,
-            // so the on-screen radius is unchanged.
-            horizontal = new TextureTarget(width, height, false, Minecraft.ON_OSX);
-            vertical = new TextureTarget(horizontal.width, horizontal.height, false, Minecraft.ON_OSX);
-            horizontal.setFilterMode(GL11.GL_LINEAR);
-            vertical.setFilterMode(GL11.GL_LINEAR);
-            // 两层泛光: 窄光晕 + 更宽的光晕, 合成时叠加, 过渡比单层更自然。
-            wideA = new TextureTarget(width, height, false, Minecraft.ON_OSX);
-            wideB = new TextureTarget(width, height, false, Minecraft.ON_OSX);
-            wideA.setFilterMode(GL11.GL_LINEAR);
-            wideB.setFilterMode(GL11.GL_LINEAR);
-            dirty = false;
-        }
-        if (!dirty) {
-            // The caller enables depth writes before clearing this target.
-            emission.clear(Minecraft.ON_OSX);
-            dirty = true;
-        } else {
-        }
-        if (main.isStencilEnabled() && (!stencilCopied || pureScopeAiming()
-                || GL11.glIsEnabled(GL11.GL_STENCIL_TEST))) {
-            GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
-            GL30.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, emission.frameBufferId);
-            GL30.glBlitFramebuffer(0, 0, main.width, main.height, 0, 0, emission.width, emission.height,
-                    GL11.GL_STENCIL_BUFFER_BIT, GL11.GL_NEAREST);
-            stencilCopied = true;
-        }
-        emission.bindWrite(true);
-        RenderSystem.setShaderTexture(5, main.getDepthTextureId());
+    /**
+     * 本帧是否值得跑泛光链路: 配置就绪, 且这一帧真的画了自发光内容。
+     * 没有自发光(枪身没有 *_illuminated 骨骼、_s 贴图 alpha 全 0/255、没有镭射/曳光/发光迷彩)时,
+     * 第二/第三颜色附件不启用、遮罩/模糊/合成全部跳过, 不产生任何额外开销。
+     */
+    public static boolean canCapture() {
+        return configured() && PbrRenderer.hasEmissionSource();
     }
 
-    private static int scaledSize(int mainSize) {
-        double scale = Config.PBR_BLOOM_RESOLUTION.get();
-        if (scale > 1.0) scale = 1.0;
-        if (scale < 0.125) scale = 0.125;
+    /**
+     * 主绘制前调用: 让接下来这次绘制同时写出"发光颜色 + 发光深度"(绑定到主目标的第二/第三颜色附件)。
+     * 不需要时返回 false, 调用方按普通单目标绘制即可。
+     */
+    public static boolean beginEmissionWrite(boolean mainTarget) {
+        if (!mainTarget || !canCapture()) {
+            return false;
+        }
+        var main = Minecraft.getInstance().getMainRenderTarget();
+        ensureTargets(main);
+        if (!ensureAttached(main)) {
+            return false;
+        }
+        if (!dirty) {
+            clearEmissionTargets(main);
+            dirty = true;
+        }
+        GL30.glDrawBuffers(MRT_DRAW_BUFFERS);
+        return true;
+    }
+
+    /** 主绘制后调用: 恢复单颜色附件绘制状态。 */
+    public static void endEmissionWrite() {
+        GL30.glDrawBuffers(SINGLE_DRAW_BUFFER);
+    }
+
+    /** MRT 是否不可用(驱动/FBO 不完整等); 不可用时退回单独补画一次发光。 */
+    public static boolean mrtUnavailable() {
+        return mrtUnavailable;
+    }
+
+    /**
+     * 加速渲染补画(AR 加速时主绘制被跳过, 没有 MRT 写入)、或 MRT 不可用时的补画: 绑定补画 FBO,
+     * 只把发光颜色和发光深度画进两个附件, 不碰主画面。
+     */
+    public static boolean beginFallbackCapture() {
+        if (!canCapture()) {
+            return false;
+        }
+        var main = Minecraft.getInstance().getMainRenderTarget();
+        ensureTargets(main);
+        if (!dirty) {
+            clearEmissionTargets(main);
+            dirty = true;
+        }
+        if (!ensureFallbackFbo()) {
+            return false;
+        }
+        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fallbackFbo);
+        GL30.glDrawBuffers(FALLBACK_DRAW_BUFFERS);
+        return true;
+    }
+
+    private static void clearEmissionTargets(RenderTarget main) {
+        // 用各自的 FBO 清色+深度, 再把主目标绑回来。
+        emission.bindWrite(true);
+        emission.clear(Minecraft.ON_OSX);
+        emissionDepth.bindWrite(true);
+        emissionDepth.clear(Minecraft.ON_OSX);
+        main.bindWrite(true);
+    }
+
+    private static void ensureTargets(RenderTarget main) {
+        int halfW = scaledSize(main.width, narrowScale());
+        int halfH = scaledSize(main.height, narrowScale());
+        int quarterW = scaledSize(main.width, wideScale());
+        int quarterH = scaledSize(main.height, wideScale());
+        if (emission != null && emissionDepth != null && masked != null
+                && emission.width == main.width && emission.height == main.height
+                && masked.width == main.width && masked.height == main.height
+                && narrowA.width == halfW && wideA.width == quarterW
+                && wideA.height == quarterH) {
+            return;
+        }
+        releaseTargets();
+        emission = new TextureTarget(main.width, main.height, true, Minecraft.ON_OSX);
+        emission.setClearColor(0, 0, 0, 0);
+        emission.setFilterMode(GL11.GL_LINEAR);
+        emissionDepth = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+        emissionDepth.setClearColor(0, 0, 0, 0);
+        emissionDepth.setFilterMode(GL11.GL_NEAREST);
+        masked = new TextureTarget(main.width, main.height, false, Minecraft.ON_OSX);
+        masked.setClearColor(0, 0, 0, 0);
+        masked.setFilterMode(GL11.GL_LINEAR);
+        narrowA = new TextureTarget(halfW, halfH, false, Minecraft.ON_OSX);
+        narrowB = new TextureTarget(halfW, halfH, false, Minecraft.ON_OSX);
+        wideA = new TextureTarget(quarterW, quarterH, false, Minecraft.ON_OSX);
+        wideB = new TextureTarget(quarterW, quarterH, false, Minecraft.ON_OSX);
+        RenderTarget[] targets = {narrowA, narrowB, wideA, wideB};
+        for (RenderTarget target : targets) {
+            target.setClearColor(0, 0, 0, 0);
+            target.setFilterMode(GL11.GL_LINEAR);
+        }
+    }
+
+    /** 把发光颜色/发光深度挂到主 FBO 的 COLOR_ATTACHMENT1/2 上(主目标重建后自动重挂)。 */
+    private static boolean ensureAttached(RenderTarget main) {
+        if (mrtUnavailable || emission == null || emissionDepth == null) {
+            return false;
+        }
+        if (attachedFrameBufferId == main.frameBufferId) {
+            return true;
+        }
+        try {
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, main.frameBufferId);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT1,
+                    GL11.GL_TEXTURE_2D, emission.getColorTextureId(), 0);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT2,
+                    GL11.GL_TEXTURE_2D, emissionDepth.getColorTextureId(), 0);
+            int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+            if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
+                detachFromMainTarget();
+                mrtUnavailable = true;
+                return false;
+            }
+            attachedFrameBufferId = main.frameBufferId;
+            return true;
+        } catch (Throwable throwable) {
+            mrtUnavailable = true;
+            return false;
+        }
+    }
+
+    /** 补画 FBO: COLOR0 = 发光颜色, COLOR1 = 发光打包深度, 深度附件用发光目标的深度。 */
+    private static boolean ensureFallbackFbo() {
+        if (fallbackFbo >= 0) {
+            return true;
+        }
+        if (fallbackUnavailable || emission == null || emissionDepth == null) {
+            return false;
+        }
+        int previous = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        try {
+            int fbo = GL30.glGenFramebuffers();
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
+                    GL11.GL_TEXTURE_2D, emission.getColorTextureId(), 0);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT1,
+                    GL11.GL_TEXTURE_2D, emissionDepth.getColorTextureId(), 0);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT,
+                    GL11.GL_TEXTURE_2D, emission.getDepthTextureId(), 0);
+            int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+            if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
+                GL30.glDeleteFramebuffers(fbo);
+                fallbackUnavailable = true;
+                return false;
+            }
+            GL30.glDrawBuffers(FALLBACK_DRAW_BUFFERS);
+            fallbackFbo = fbo;
+            return true;
+        } catch (Throwable throwable) {
+            fallbackUnavailable = true;
+            return false;
+        } finally {
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previous);
+        }
+    }
+
+    /** 窄层缓冲相对主分辨率的比例(0.5 × 质量系数)。 */
+    private static double narrowScale() {
+        return 0.5D * quality();
+    }
+
+    /** 宽层缓冲相对主分辨率的比例(0.25 × 质量系数)。 */
+    private static double wideScale() {
+        return 0.25D * quality();
+    }
+
+    private static double quality() {
+        double value = Config.PBR_BLOOM_RESOLUTION.get();
+        if (value > 1.0D) value = 1.0D;
+        if (value < 0.25D) value = 0.25D;
+        return value;
+    }
+
+    private static int scaledSize(int mainSize, double scale) {
         return Math.max(1, (int) Math.round(mainSize * scale));
     }
 
@@ -136,41 +303,35 @@ public final class PbrBloom {
             ensureQuad();
             float radius = Config.PBR_BLOOM_RADIUS.get().floatValue();
             float strength = Config.PBR_BLOOM_STRENGTH.get().floatValue();
-            // Match 2.0.0: check scene depth only on the first blur pass.
-            RenderSystem.setShaderTexture(0, emission.getColorTextureId());
-            RenderSystem.setShaderTexture(1, emission.getDepthTextureId());
-            RenderSystem.setShaderTexture(2, main.getDepthTextureId());
-            draw(emission, horizontal, PbrRenderer.maskShader);
-            RenderSystem.setShaderTexture(1, 0);
-            RenderSystem.setShaderTexture(2, 0);
-            PbrRenderer.setBlurDirection(radius / main.width, 0f);
-            draw(horizontal, vertical, PbrRenderer.blurShader);
-            PbrRenderer.setBlurDirection(0f, radius / main.height);
-            draw(vertical, wideA, PbrRenderer.blurShader);
             boolean wide = wideB != null && Config.PBR_BLOOM_WIDE.get()
                     && Config.PBR_BLOOM_WIDE_STRENGTH.get() > 0.0D;
+            // 1) 可见性遮罩(半分辨率): 发光深度 vs 最终场景深度, 手臂等后画的前景会挡住泛光。
+            RenderSystem.setShaderTexture(0, emission.getColorTextureId());
+            RenderSystem.setShaderTexture(1, emissionDepth.getColorTextureId());
+            RenderSystem.setShaderTexture(2, main.getDepthTextureId());
+            draw(emission, masked, PbrRenderer.maskShader);
+            RenderSystem.setShaderTexture(1, 0);
+            RenderSystem.setShaderTexture(2, 0);
+            // 2) 可分离高斯: 窄层半分辨率、宽层 1/4 分辨率。方向按主分辨率归一化, on-screen 半径不变。
+            drawBlurPass(masked, narrowA, radius / main.width, 0f);
+            drawBlurPass(narrowA, narrowB, 0f, radius / main.height);
+            float wideSigma = radius * WIDE_SIGMA_FACTOR;
             if (wide) {
-                float wideRadius = radius * 2.4f;
-                PbrRenderer.setBlurDirection(wideRadius / main.width, 0f);
-                draw(wideA, vertical, PbrRenderer.blurShader);
-                PbrRenderer.setBlurDirection(0f, wideRadius / main.height);
-                draw(vertical, wideB, PbrRenderer.blurShader);
+                drawBlurPass(masked, wideA, wideSigma / main.width, 0f);
+                drawBlurPass(wideA, wideB, 0f, wideSigma / main.height);
             }
-            PbrRenderer.setBloomStrength(strength);
+            // 3) 全分辨率合成: 直接采样两张低分辨率模糊结果(线性放大), 加法混合到主画面。
             // ShaderInstance caches BlendMode. If its additive mode is already cached,
             // apply() will not undo the disableBlend() above, and the quad replaces the world.
             RenderSystem.enableBlend();
             RenderSystem.blendFuncSeparate(GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO, GL11.GL_ONE);
             main.bindWrite(true);
             int maskTexture = scopeMaskValid && scopeMask != null ? scopeMask.getColorTextureId() : 0;
-            compositeToMain(wideA, PbrRenderer.compositeShader, maskTexture);
-            if (wide) {
-                PbrRenderer.setBloomStrength(strength * Config.PBR_BLOOM_WIDE_STRENGTH.get().floatValue());
-                compositeToMain(wideB, PbrRenderer.compositeShader, maskTexture);
-            }
+            float wideStrength = wide ? strength * Config.PBR_BLOOM_WIDE_STRENGTH.get().floatValue() : 0f;
+            compositeToMain(narrowB, wide ? wideB : narrowB, PbrRenderer.compositeShader, maskTexture,
+                    strength, wideStrength);
         } finally {
             dirty = false;
-            stencilCopied = false;
             VertexBuffer.unbind();
             main.bindWrite(true);
             for (int i = 0; i < textures.length; i++) RenderSystem.setShaderTexture(i, textures[i]);
@@ -194,13 +355,15 @@ public final class PbrBloom {
         }
     }
 
-    private static void compositeToMain(RenderTarget input, ShaderInstance shader, int maskTexture) {
+    private static void compositeToMain(RenderTarget narrow, RenderTarget wide, ShaderInstance shader,
+                                        int maskTexture, float strength, float wideStrength) {
         // Apply the shader first, then establish the actual draw state. ShaderInstance
         // and third-party hooks may otherwise replace factors set before apply().
-        shader.setSampler("Sampler0", input.getColorTextureId());
+        shader.setSampler("Sampler0", narrow.getColorTextureId());
+        shader.setSampler("Wide", wide.getColorTextureId());
         shader.setSampler("ScopeMask", maskTexture);
-        shader.setSampler("EmissionDepth", emission.getDepthTextureId());
-        shader.setSampler("SceneDepth", Minecraft.getInstance().getMainRenderTarget().getDepthTextureId());
+        PbrRenderer.setBloomStrength(strength);
+        PbrRenderer.setWideBloomStrength(wideStrength);
         PbrRenderer.setHasScopeMask(maskTexture != 0 ? 1 : 0);
         quad.bind();
         shader.apply();
@@ -224,6 +387,12 @@ public final class PbrBloom {
         quad.drawWithShader(IDENTITY, IDENTITY, shader);
     }
 
+    /** 可分离高斯的一遍。 */
+    private static void drawBlurPass(RenderTarget input, RenderTarget output, float directionX, float directionY) {
+        PbrRenderer.setBlurDirection(directionX, directionY);
+        draw(input, output, PbrRenderer.blurShader);
+    }
+
     private static void ensureQuad() {
         if (quad != null) return;
         BufferBuilder b = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
@@ -237,21 +406,48 @@ public final class PbrBloom {
     }
 
     private static void releaseTargets() {
+        detachFromMainTarget();
+        if (fallbackFbo >= 0) {
+            GL30.glDeleteFramebuffers(fallbackFbo);
+            fallbackFbo = -1;
+        }
         if (emission != null) emission.destroyBuffers();
-        if (horizontal != null) horizontal.destroyBuffers();
-        if (vertical != null) vertical.destroyBuffers();
+        if (emissionDepth != null) emissionDepth.destroyBuffers();
+        if (masked != null) masked.destroyBuffers();
+        if (narrowA != null) narrowA.destroyBuffers();
+        if (narrowB != null) narrowB.destroyBuffers();
         if (wideA != null) wideA.destroyBuffers();
         if (wideB != null) wideB.destroyBuffers();
-        emission = horizontal = vertical = wideA = wideB = null;
+        emission = emissionDepth = masked = narrowA = narrowB = wideA = wideB = null;
+        attachedFrameBufferId = -1;
         releaseScopeMask();
         dirty = false;
-        stencilCopied = false;
+    }
+
+    /** 销毁发光贴图前先从主目标上摘掉, 避免主 FBO 因为附件被删除而变成不完整。 */
+    private static void detachFromMainTarget() {
+        if (attachedFrameBufferId < 0) {
+            return;
+        }
+        try {
+            int previous = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, attachedFrameBufferId);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT1,
+                    GL11.GL_TEXTURE_2D, 0, 0);
+            GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT2,
+                    GL11.GL_TEXTURE_2D, 0, 0);
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previous);
+        } catch (Throwable ignored) {
+        }
+        attachedFrameBufferId = -1;
     }
 
     public static void release() {
         releaseTargets();
         if (quad != null) { quad.close(); quad = null; }
         if (maskQuad != null) { maskQuad.close(); maskQuad = null; }
+        mrtUnavailable = false;
+        fallbackUnavailable = false;
     }
 
     public static boolean pureScopeAiming() {
@@ -269,8 +465,6 @@ public final class PbrBloom {
         ResourceLocation id = activeScopeId(iGun, gun);
         return id != null && TimelessAPI.getClientAttachmentIndex(id).isPresent();
     }
-
-    /** 褰撳墠娓叉煋鐨勯厤浠舵槸鍚︿负姝ｅ湪浣跨敤鐨?scope 瑙嗗浘鐬勫叿銆?*/
     public static boolean isActiveScopeItem(ItemStack attachment, ItemStack gun) {
         if (attachment == null || attachment.isEmpty() || gun == null || gun.isEmpty()) return false;
         LocalPlayer player = Minecraft.getInstance().player;
@@ -295,9 +489,9 @@ public final class PbrBloom {
         return Minecraft.getInstance().getMainRenderTarget().isStencilEnabled();
     }
 
-    /** 鎶婂綋鍓?scope 闀滃唴鍖哄煙(division 闄ゅ)璁板綍涓洪伄缃? 娉涘厜鍚堟垚鏃跺墧闄ら暅鍐呮硾鍏夈€?*/
     public static void captureScopeMask() {
-        if (!pureScopeAiming()) {
+        // 泛光链路本来就不跑时没必要为它做一次全屏 stencil 拷贝。
+        if (!configured() || !pureScopeAiming()) {
             scopeMaskValid = false;
             return;
         }

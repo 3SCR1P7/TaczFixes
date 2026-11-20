@@ -20,6 +20,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.material.FogType;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
@@ -47,14 +48,14 @@ public final class PbrRenderer {
     private static final AbstractUniform[] uLocalLightColor = new AbstractUniform[LOCAL_LIGHT_SLOTS];
     private static final AbstractUniform[] uLocalLightStrength = new AbstractUniform[LOCAL_LIGHT_SLOTS];
     private static AbstractUniform uCelestialDirection, uCelestialColor, uSkyAmbient;
-    private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness;
+    private static AbstractUniform uCelestialVisibility, uLocalSkyExposure, uWetness, uWetSurface;
     private static AbstractUniform uSkyZenith, uSkyHorizon, uSunHorizon, uSunAzimuth, uSunOcclusion;
     private static AbstractUniform uDefaultRoughness, uDefaultMetal, uDefaultReflection, uEnvStrength;
     private static AbstractUniform uAnisotropy, uWetDetail, uSSRStrength, uTime;
     private static AbstractUniform uViewRotX, uViewRotY, uViewRotZ;
     private static AbstractUniform uCameraPos;
     private static AbstractUniform uCamoIndex, uCamoStrength, uCamoEmissive;
-    private static AbstractUniform uBlurDirection, uCompositeStrength, uHasScopeMask;
+    private static AbstractUniform uBlurDirection, uCompositeStrength, uWideStrength, uHasScopeMask;
     private static VertexBuffer mesh;
     private static int emissionBlendOverride;
     private static boolean acceleratedPbrPass;
@@ -84,9 +85,12 @@ public final class PbrRenderer {
     }
 
     public static boolean shouldReplayEmission(RenderType type) {
-        return enabled() && PbrBloom.canCapture() && !isAcceleratedPbrPass()
+        // 加速渲染跳过了主绘制, 需要补画一次发光通道; 是否真的画由 draw() 里
+        // canCapture()+hasEmissionSource() 决定(发光骨骼在补画时才会打上标记)。
+        return !isEmissionReplay() && !isAcceleratedPbrPass() && PbrBloom.configured()
                 && com.tacz.guns.compat.ar.ARCompat.shouldAccelerate()
-                && resolve(type) instanceof PbrType;
+                && resolve(type) instanceof PbrType
+                && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get());
     }
 
     public static void beginEmissionReplay() {
@@ -120,10 +124,10 @@ public final class PbrRenderer {
                 }
             };
     private static final int TYPES_MAX = 512;
-    private static final Map<RenderType, RenderType> TYPES =
+    private static final Map<TypeKey, RenderType> TYPES =
             new java.util.LinkedHashMap<>(TYPES_MAX, 0.75f, true) {
                 @Override
-                protected boolean removeEldestEntry(Map.Entry<RenderType, RenderType> eldest) {
+                protected boolean removeEldestEntry(Map.Entry<TypeKey, RenderType> eldest) {
                     return size() > TYPES_MAX;
                 }
             };
@@ -139,14 +143,40 @@ public final class PbrRenderer {
             };
     private static volatile ShaderInstance camoShader;
 
-    private record CamoKey(RenderType original, int index, float strength, float emissive) {
+    private record CamoKey(RenderType original, int index, float strength, float emissive,
+                           boolean hand, boolean rainExposed) {
+    }
+
+    /** 同一 RenderType 按"手持物/世界物体"与"该物体是否被雨淋到"拆成变体, 湿润量来源不同。 */
+    private record TypeKey(RenderType original, boolean hand, boolean rainExposed) {
     }
 
     private record CamoUniforms(int index, float strength, float emissive) {
         static final CamoUniforms NONE = new CamoUniforms(0, 1.0f, 0.0f);
     }
 
-    private record Material(ResourceLocation specular, ResourceLocation normal) {}
+    private record Material(ResourceLocation specular, ResourceLocation normal, boolean emissive) {}
+
+    /**
+     * 本帧是否出现过真正的自发光来源: 自发光骨骼({@code *_illuminated})、自发光贴图(_s alpha)、
+     * 镭射光束、曳光弹、发光迷彩。泛光链路只在这类内容存在时才跑, 没有自发光时完全跳过。
+     */
+    private static boolean frameEmission;
+
+    /** 每帧开头清空自发光来源标记(由 {@link PbrBloom#beginFrame()} 调用)。 */
+    public static void beginFrame() {
+        frameEmission = false;
+    }
+
+    /** 记录一个自发光来源。 */
+    public static void markEmissionSource() {
+        frameEmission = true;
+    }
+
+    /** 本帧是否有自发光内容可泛。 */
+    public static boolean hasEmissionSource() {
+        return frameEmission;
+    }
 
     private static int tracerBloomSuppression;
     private static int materialFallbackSuppression;
@@ -229,6 +259,8 @@ public final class PbrRenderer {
         if (level == null) return;
         var camera = Minecraft.getInstance().gameRenderer.getMainCamera();
         var origin = camera.getPosition();
+        // 视线在水下(相机位于水中)时, 手持枪械也应算作被水浸湿。
+        boolean underwater = camera.getFluidInCamera() == FogType.WATER;
         // 世界->视角空间的旋转必须来自相机本身。手持枪械的 ModelViewMat 还包含枪械
         // 模型自身的变换, 直接取它的旋转会让太阳/火把方向整体偏转, 于是斜对光源的
         // 面在正确角度上却看不到反光。
@@ -249,7 +281,6 @@ public final class PbrRenderer {
         setUniform(uTime, (level.getGameTime() + partialTick) / 20f);
         setUniform(uEnvStrength, Config.PBR_ENV_STRENGTH.get().floatValue());
         setUniform(uAnisotropy, Config.PBR_ANISOTROPY.get().floatValue());
-        setUniform(uWetDetail, Config.PBR_WET_DETAIL.get() ? 1f : 0f);
         if (!level.dimensionType().hasSkyLight()
                 || level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL) {
             setUniform(uCelestialDirection, 0f, 1f, 0f);
@@ -257,7 +288,7 @@ public final class PbrRenderer {
             setUniform(uSkyAmbient, 0f);
             setUniform(uCelestialVisibility, updateCelestialVisibility(0f, dt));
             setUniform(uLocalSkyExposure, 0f);
-            setUniform(uWetness, updateWetness(0f));
+            updateWetnessState(underwater, false, 0f, false);
             setUniform(uSkyZenith, 0.02f, 0.02f, 0.03f);
             setUniform(uSkyHorizon, 0.04f, 0.03f, 0.03f);
             setUniform(uSunHorizon, 0f, 0f, 0f);
@@ -305,16 +336,14 @@ public final class PbrRenderer {
                 (float) (skyColor.z * (1f - sunriseA * 0.35f) + sunriseB * sunriseA * 0.65f));
         setUniform(uSunHorizon, sunriseR * sunriseA, sunriseG * sunriseA, sunriseB * sunriseA);
         setUniform(uSunAzimuth, light.x() >= 0f ? 1f : -1f, 0f);
-        float targetWetness = 0f;
+        // 手持物按"玩家自己是否被雨淋到"更新(慢变), 世界里的方块/实体按全维度降雨更新,
+        // 再由片元着色器用每个表面自己的天空可见度决定接触雨水量, 这样方块不会跟着玩家变湿。
+        boolean raining = level.isRaining();
         var wetnessAnchor = Minecraft.getInstance().player != null
                 ? Minecraft.getInstance().player.position() : origin;
-        if (level.dimension() == net.minecraft.world.level.Level.OVERWORLD && level.isRaining()) {
-            BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
-            if (level.canSeeSky(wetPos) && level.isRainingAt(wetPos)) {
-                targetWetness = level.getRainLevel(partialTick);
-            }
-        }
-        setUniform(uWetness, updateWetness(targetWetness));
+        BlockPos wetPos = BlockPos.containing(wetnessAnchor.x, wetnessAnchor.y + 0.2D, wetnessAnchor.z);
+        boolean rainAtPlayer = raining && level.canSeeSky(wetPos) && level.isRainingAt(wetPos);
+        updateWetnessState(underwater, rainAtPlayer, level.getRainLevel(partialTick), raining);
     }
 
     private static com.mojang.blaze3d.platform.NativeImage cloudImage;
@@ -369,24 +398,92 @@ public final class PbrRenderer {
     }
 
     private static float smoothedCloudDim = 1f;
-    private static float smoothedWetness = 0f;
+    /** 潮湿状态(暗化/降粗糙度): 淋雨 5s 变湿, 停雨 8s 阴干; 入水 1s 浸湿。 */
+    private static float handWetness, worldWetness;
+    /** 水膜细节(波纹): 约 1s 涨满 / 1s 退净, 明显快于潮湿状态。 */
+    private static float handWetDetail, worldWetDetail;
     private static long wetnessLastNanos;
+    private static boolean wetUnderwater;
+    /** 第一人称手部渲染期间提交的几何 = 手持物, 湿润跟随玩家自身而非每个表面的天空可见度。 */
+    private static boolean handGeometry;
     private static final float WET_SECONDS = 5.0f;
     private static final float DRY_SECONDS = 8.0f;
+    private static final float SUBMERGE_WET_SECONDS = 1.0f;
+    private static final float WET_DETAIL_SECONDS = 1.0f;
 
-    private static float updateWetness(float target) {
+    /** 手部渲染开始: 期间 resolve() 出来的 RenderType 变体会带上"手持物"标记。 */
+    public static void beginHandGeometry() {
+        handGeometry = true;
+    }
+
+    public static void endHandGeometry() {
+        handGeometry = false;
+    }
+
+    private static void updateWetnessState(boolean underwater, boolean rainAtPlayer, float rainLevel,
+                                           boolean raining) {
         long now = System.nanoTime();
         if (wetnessLastNanos == 0L) {
             wetnessLastNanos = now;
         }
         float dt = Math.min((now - wetnessLastNanos) / 1.0e9f, 0.25f);
         wetnessLastNanos = now;
-        if (target > smoothedWetness) {
-            smoothedWetness = Math.min(target, smoothedWetness + dt / WET_SECONDS);
-        } else if (target < smoothedWetness) {
-            smoothedWetness = Math.max(target, smoothedWetness - dt / DRY_SECONDS);
+        wetUnderwater = underwater;
+        playerRainExposed = rainAtPlayer;
+        handWetness = advanceWetness(handWetness, underwater ? 1f : (rainAtPlayer ? rainLevel : 0f), dt, underwater);
+        worldWetness = advanceWetness(worldWetness, underwater ? 1f : (raining ? rainLevel : 0f), dt, underwater);
+        handWetDetail = advanceWetDetail(handWetDetail, underwater || rainAtPlayer ? 1f : 0f, dt);
+        worldWetDetail = advanceWetDetail(worldWetDetail, underwater || raining ? 1f : 0f, dt);
+    }
+
+    /** 世界物体渲染期间压入的"该物体所在位置是否被雨淋到"(原版 isRainingAt 判定, 按需惰性求值)。 */
+    private static final java.util.ArrayDeque<RainProbe> RAIN_PROBE_STACK = new java.util.ArrayDeque<>();
+    private static boolean playerRainExposed;
+
+    private static final class RainProbe {
+        private final java.util.function.BooleanSupplier source;
+        private Boolean cached;
+
+        RainProbe(java.util.function.BooleanSupplier source) {
+            this.source = source;
         }
-        return smoothedWetness;
+
+        boolean exposed() {
+            if (cached == null) {
+                cached = source.getAsBoolean();
+            }
+            return cached;
+        }
+    }
+
+    public static void pushWorldRainProbe(java.util.function.BooleanSupplier source) {
+        RAIN_PROBE_STACK.push(new RainProbe(source));
+    }
+
+    public static void popWorldRainProbe() {
+        RAIN_PROBE_STACK.poll();
+    }
+
+    private static boolean currentWorldRainExposed() {
+        RainProbe probe = RAIN_PROBE_STACK.peek();
+        return probe == null ? playerRainExposed : probe.exposed();
+    }
+
+    private static float advanceWetness(float current, float target, float dt, boolean underwater) {
+        if (target > current) {
+            return Math.min(target, current + dt / (underwater ? SUBMERGE_WET_SECONDS : WET_SECONDS));
+        }
+        if (target < current) {
+            return Math.max(target, current - dt / DRY_SECONDS);
+        }
+        return current;
+    }
+
+    private static float advanceWetDetail(float current, float target, float dt) {
+        if (target > current) {
+            return Math.min(target, current + dt / WET_DETAIL_SECONDS);
+        }
+        return Math.max(target, current - dt / WET_DETAIL_SECONDS);
     }
 
     private static final float OCCLUSION_FADE_SECONDS = 0.1f;
@@ -641,6 +738,7 @@ public final class PbrRenderer {
                 ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_composite"), DefaultVertexFormat.POSITION_TEX), s -> {
                     compositeShader = s;
                     uCompositeStrength = s.safeGetUniform("Strength");
+                    uWideStrength = s.safeGetUniform("WideStrength");
                     uHasScopeMask = s.safeGetUniform("HasScopeMask");
                 });
     }
@@ -650,14 +748,14 @@ public final class PbrRenderer {
         uReflectionStrength = uGlareStrength = uEmissionStrength = null;
         uGlareDepthTest = uFallbackMaterial = null;
         uCelestialDirection = uCelestialColor = uSkyAmbient = null;
-        uCelestialVisibility = uLocalSkyExposure = uWetness = null;
+        uCelestialVisibility = uLocalSkyExposure = uWetness = uWetSurface = null;
         uSkyZenith = uSkyHorizon = uSunHorizon = uSunAzimuth = uSunOcclusion = null;
         uDefaultRoughness = uDefaultMetal = uDefaultReflection = uEnvStrength = null;
         uAnisotropy = uWetDetail = uSSRStrength = uTime = null;
         uViewRotX = uViewRotY = uViewRotZ = null;
         uCameraPos = null;
         uCamoIndex = uCamoStrength = uCamoEmissive = null;
-        uBlurDirection = uCompositeStrength = uHasScopeMask = null;
+        uBlurDirection = uCompositeStrength = uWideStrength = uHasScopeMask = null;
         for (int i = 0; i < LOCAL_LIGHT_SLOTS; i++) {
             uLocalLightDir[i] = null;
             uLocalLightColor[i] = null;
@@ -687,6 +785,7 @@ public final class PbrRenderer {
         uCelestialVisibility = s.safeGetUniform("CelestialVisibility");
         uLocalSkyExposure = s.safeGetUniform("LocalSkyExposure");
         uWetness = s.safeGetUniform("Wetness");
+        uWetSurface = s.safeGetUniform("WetSurface");
         uSkyZenith = s.safeGetUniform("SkyZenith");
         uSkyHorizon = s.safeGetUniform("SkyHorizon");
         uSunHorizon = s.safeGetUniform("SunHorizon");
@@ -729,14 +828,14 @@ public final class PbrRenderer {
         if (uniform != null) uniform.set(value);
     }
 
-    /** 与材质无关的全局 uniform: 兜底材质参数、天空环境强度、SSR 与屏幕尺寸。*/
-    private static void applyGlobalUniforms() {
+    /** 与材质无关的全局 uniform: 兜底材质参数、天空环境强度、湿润参数与屏幕尺寸。*/
+    private static void applyGlobalUniforms(boolean hand, boolean rainExposed) {
         setUniform(uFallbackMaterial, Config.PBR_FALLBACK_MATERIAL.get() ? 1 : 0);
         setUniform(uDefaultRoughness, Config.PBR_DEFAULT_ROUGHNESS.get().floatValue());
         setUniform(uDefaultMetal, Config.PBR_DEFAULT_METAL.get().floatValue());
         setUniform(uDefaultReflection, Config.PBR_DEFAULT_REFLECTION.get().floatValue());
         setUniform(uAnisotropy, Config.PBR_ANISOTROPY.get().floatValue());
-        setUniform(uWetDetail, Config.PBR_WET_DETAIL.get() ? 1f : 0f);
+        applyWetUniforms(hand, rainExposed);
         var main = Minecraft.getInstance().getMainRenderTarget();
         boolean ssr = sceneColorCaptured && sceneColorTexture != 0 && sceneDepthTexture != 0
                 && Config.PBR_SSR.get() && Config.PBR_SSR_STRENGTH.get() > 0.0D;
@@ -744,6 +843,24 @@ public final class PbrRenderer {
         if (ssr) {
             RenderSystem.setShaderTexture(6, sceneColorTexture);
             RenderSystem.setShaderTexture(7, sceneDepthTexture);
+        }
+    }
+
+    /**
+     * 湿润量分两套: 手持物用玩家自身的淋雨/入水状态(慢变), 世界物体用全维度降雨的慢变状态,
+     * 再用物体提交几何时算好的"是否被雨淋到"(原版 isRainingAt, 含高度图/群系判定)决定是否吃雨。
+     * 湿细节(水膜波纹)走 1s 快速包络, 涨落比潮湿状态快得多。
+     */
+    private static void applyWetUniforms(boolean hand, boolean rainExposed) {
+        boolean detail = Config.PBR_WET_DETAIL.get();
+        if (hand) {
+            setUniform(uWetness, handWetness);
+            setUniform(uWetDetail, detail ? handWetDetail : 0f);
+            setUniform(uWetSurface, 1f);
+        } else {
+            setUniform(uWetness, worldWetness);
+            setUniform(uWetDetail, detail ? worldWetDetail : 0f);
+            setUniform(uWetSurface, rainExposed || wetUnderwater ? 1f : 0f);
         }
     }
 
@@ -769,11 +886,15 @@ public final class PbrRenderer {
         if (uCompositeStrength != null) uCompositeStrength.set(value);
     }
 
+    static void setWideBloomStrength(float value) {
+        if (uWideStrength != null) uWideStrength.set(value);
+    }
+
     static void setHasScopeMask(int value) {
         if (uHasScopeMask != null) uHasScopeMask.set(value);
     }
 
-    static void applyMaterialState(Material material) {
+    static void applyMaterialState(Material material, boolean hand, boolean rainExposed) {
         if (shader == null) {
             return;
         }
@@ -783,7 +904,7 @@ public final class PbrRenderer {
         if (material.normal() != null) {
             RenderSystem.setShaderTexture(4, material.normal());
         }
-        applyGlobalUniforms();
+        applyGlobalUniforms(hand, rainExposed);
         setUniform(uHasSpecular, material.specular() == null ? 0 : 1);
         setUniform(uHasNormal, material.normal() == null ? 0 : 1);
         setUniform(uReflectionStrength, materialReflectionStrength(material));
@@ -879,15 +1000,19 @@ public final class PbrRenderer {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
         CamoUniforms camo = camoSuppression > 0 ? CamoUniforms.NONE : camoForCurrentItem();
+        boolean hand = handGeometry;
+        boolean rainExposed = currentWorldRainExposed();
         if (materialFallbackSuppression > 0) {
-            return resolveType(original, composite, false, camo);
+            return resolveType(original, composite, false, camo, hand, rainExposed);
         }
         if (camo.index() > 0) {
-            CamoKey key = new CamoKey(original, camo.index(), camo.strength(), camo.emissive());
+            CamoKey key = new CamoKey(original, camo.index(), camo.strength(), camo.emissive(), hand, rainExposed);
             return CAMO_TYPES.computeIfAbsent(key,
-                    k -> resolveType(k.original(), composite, true, camo));
+                    k -> resolveType(k.original(), composite, true, camo, k.hand(), k.rainExposed()));
         }
-        return TYPES.computeIfAbsent(original, key -> resolveType(key, composite, true, camo));
+        TypeKey key = new TypeKey(original, hand, rainExposed);
+        return TYPES.computeIfAbsent(key,
+                k -> resolveType(k.original(), composite, true, camo, k.hand(), k.rainExposed()));
     }
 
     /** 当前正在渲染的枪/配件是否挂了动态迷彩(读渲染上下文的 NBT)。 */
@@ -916,7 +1041,8 @@ public final class PbrRenderer {
     }
 
     private static RenderType resolveType(RenderType original, PbrCompositeAccessor composite,
-                                          boolean allowFallback, CamoUniforms camo) {
+                                          boolean allowFallback, CamoUniforms camo,
+                                          boolean hand, boolean rainExposed) {
         var textureState = ((PbrStateAccessor) (Object) composite.taczfixes$pbrState()).taczfixes$pbrTexture();
         var texture = ((PbrTextureAccessor) textureState).taczfixes$pbrTextureLocation();
         if (texture.isEmpty()) return original;
@@ -931,7 +1057,7 @@ public final class PbrRenderer {
                 }
             }
         }
-        return material == null ? original : new PbrType(original, material, camo);
+        return material == null ? original : new PbrType(original, material, camo, hand, rainExposed);
     }
 
     private static Material material(ResourceLocation base) {
@@ -947,20 +1073,56 @@ public final class PbrRenderer {
         var resources = Minecraft.getInstance().getResourceManager();
         ResourceLocation specularLocation = resources.getResource(specular).isPresent() ? specular : null;
         return Optional.of(new Material(specularLocation,
-                resources.getResource(normal).isPresent() ? normal : null));
+                resources.getResource(normal).isPresent() ? normal : null,
+                specularLocation != null && hasEmissionPixels(specularLocation)));
+    }
+
+    /**
+     * LabPBR 的 _s 贴图 alpha 通道是自发光强度: 0 与 255 都表示不发光, 1~254 才会发光。
+     * 扫一遍贴图判断这张材质是否可能产生泛光, 用来在没有自发光内容的枪上完全跳过泛光链路。
+     * 结果随 {@link Material} 缓存(每张贴图只扫一次), 不在渲染循环里做。
+     */
+    private static boolean hasEmissionPixels(ResourceLocation texture) {
+        try {
+            var resource = Minecraft.getInstance().getResourceManager().getResource(texture);
+            if (resource.isEmpty()) {
+                return false;
+            }
+            try (var input = resource.get().open();
+                 com.mojang.blaze3d.platform.NativeImage image =
+                         com.mojang.blaze3d.platform.NativeImage.read(
+                                 com.mojang.blaze3d.platform.NativeImage.Format.RGBA, input)) {
+                // 与 GunTransparency 相同的取 alpha 方式(渲染线程上一次性执行, 随后随 Material 缓存)。
+                for (int y = 0; y < image.getHeight(); y++) {
+                    for (int x = 0; x < image.getWidth(); x++) {
+                        int alpha = image.getPixelRGBA(x, y) >>> 24;
+                        if (alpha > 0 && alpha < 255) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        } catch (Throwable ignored) {
+            // 读不出来就当没有自发光: 宁可少一层泛光也不要出错。
+        }
+        return false;
     }
 
     private static final class PbrType extends RenderType {
         private final RenderType original;
         private final Material material;
         private final CamoUniforms camo;
+        private final boolean hand;
+        private final boolean rainExposed;
 
-        PbrType(RenderType original, Material material, CamoUniforms camo) {
+        PbrType(RenderType original, Material material, CamoUniforms camo, boolean hand, boolean rainExposed) {
             super("taczfixes_pbr", original.format(), original.mode(), original.bufferSize(),
                     original.affectsCrumbling(), true, original::setupRenderState, original::clearRenderState);
             this.original = original;
             this.material = material;
             this.camo = camo;
+            this.hand = hand;
+            this.rainExposed = rainExposed;
         }
 
         @Override public Optional<RenderType> outline() { return original.outline(); }
@@ -971,7 +1133,7 @@ public final class PbrRenderer {
             bindGlareDepth();
             boolean accelerated = isAcceleratedPbrPass();
             if (accelerated) {
-                applyMaterialState(material);
+                applyMaterialState(material, hand, rainExposed);
                 applyCamoUniforms(camo);
             }
         }
@@ -979,6 +1141,10 @@ public final class PbrRenderer {
         @Override
         public void draw(MeshData data) {
             if (data == null) return;
+            // 顶点数据在 upload 之后会被释放, 所以自发光来源标记必须在 upload 之前做。
+            if (material.emissive() || camo.emissive() > 0f) {
+                markEmissionSource();
+            }
             if (mesh == null) mesh = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
             setupRenderState();
             ShaderInstance previous = RenderSystem.getShader();
@@ -997,7 +1163,7 @@ public final class PbrRenderer {
                 lastPbrDrawAt = System.currentTimeMillis();
                 if (material.specular() != null) RenderSystem.setShaderTexture(3, material.specular());
                 if (material.normal() != null) RenderSystem.setShaderTexture(4, material.normal());
-                applyGlobalUniforms();
+                applyGlobalUniforms(hand, rainExposed);
                 setUniform(uHasSpecular, material.specular() == null ? 0 : 1);
                 setUniform(uHasNormal, material.normal() == null ? 0 : 1);
                 setUniform(uReflectionStrength, materialReflectionStrength(material));
@@ -1005,84 +1171,39 @@ public final class PbrRenderer {
                 setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
                 setUniform(uEmissionPass, 0);
                 applyCamoUniforms(camo);
+
                 RenderSystem.setShader(() -> shader);
                 bindGlareDepth();
-                if (!emissionReplay) {
-                    mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
-                }
                 int previousFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
                 int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
-                boolean lensDivision = previousFbo != mainFbo && isScopeDivision() && PbrBloom.pureScopeAiming();
-                if (PbrBloom.canCapture()
-                        && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get())
-                        && (previousFbo == mainFbo || lensDivision)) {
-                    boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
-                    boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
-                    int stencilFunc = GL11.glGetInteger(GL11.GL_STENCIL_FUNC);
-                    int stencilRef = GL11.glGetInteger(GL11.GL_STENCIL_REF);
-                    int stencilValueMask = GL11.glGetInteger(GL11.GL_STENCIL_VALUE_MASK);
-                    int stencilFail = GL11.glGetInteger(GL11.GL_STENCIL_FAIL);
-                    int stencilDepthFail = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_FAIL);
-                    int stencilDepthPass = GL11.glGetInteger(GL11.GL_STENCIL_PASS_DEPTH_PASS);
-                    int[] viewport = new int[4];
-                    GL11.glGetIntegerv(GL11.GL_VIEWPORT, viewport);
-                    boolean replaceEmission = !isScopeDivision();
-                    boolean blendWas = GL11.glIsEnabled(GL11.GL_BLEND);
-                    boolean depthTestWas = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
-                    int depthFuncWas = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
-                    if (replaceEmission) {
-                        // The emission target must keep the nearest surface, not add every
-                        // PBR draw. Additive blending made bloom from a rear workbench leak
-                        // through a workbench rendered in front of it.
-                        pushEmissionBlendOverride();
-                        RenderSystem.enableDepthTest();
-                        RenderSystem.depthFunc(GL11.GL_LEQUAL);
-                    }
+                boolean tracerAllowed = !isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get();
+                if (!emissionReplay) {
+                    // MRT: 主绘制同一遍着色同时把发光写进主目标的第二颜色附件, 不再单独重画一遍几何。
+                    boolean emissionWrite = tracerAllowed
+                            && PbrBloom.beginEmissionWrite(previousFbo == mainFbo);
                     try {
-                        RenderSystem.depthMask(true);
-                        PbrBloom.bindCapture();
-                        // The emission target carries a fresh copy of the main stencil,
-                        // so the draw's own stencil test keeps sight divisions visible.
-                        // Scope lens suppression only needs to cull everything outside
-                        // the division.
-                        if (PbrBloom.pureScopeAiming() && PbrBloom.scopeStencilAvailable() && !isScopeDivision()) {
-                            GL11.glEnable(GL11.GL_STENCIL_TEST);
-                            GL11.glStencilFunc(GL11.GL_EQUAL, 0, 255);
-                            GL11.glStencilOp(GL11.GL_KEEP, GL11.GL_KEEP, GL11.GL_KEEP);
-                        }
-                        setUniform(uEmissionPass, 1);
-                        setUniform(uScopeDivisionPass, isScopeDivision() ? 1 : 0);
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                     } finally {
-                        if (replaceEmission) {
-                            popEmissionBlendOverride();
-                            if (blendWas) {
-                                RenderSystem.enableBlend();
-                            } else {
-                                RenderSystem.disableBlend();
-                            }
-                            if (depthTestWas) {
-                                RenderSystem.enableDepthTest();
-                            } else {
-                                RenderSystem.disableDepthTest();
-                            }
-                            RenderSystem.depthFunc(depthFuncWas);
+                        if (emissionWrite) {
+                            PbrBloom.endEmissionWrite();
                         }
-                        setUniform(uEmissionPass, 0);
-                        setUniform(uScopeDivisionPass, 0);
-                        if (stencilWas) {
-                            GL11.glEnable(GL11.GL_STENCIL_TEST);
-                            GL11.glStencilFunc(stencilFunc, stencilRef, stencilValueMask);
-                            GL11.glStencilOp(stencilFail, stencilDepthFail, stencilDepthPass);
-                        } else {
-                            GL11.glDisable(GL11.GL_STENCIL_TEST);
-                        }
-                        RenderSystem.depthMask(depthMask);
-                        com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
-                        GL11.glViewport(viewport[0], viewport[1], viewport[2], viewport[3]);
                     }
-                }
-            } finally {
+                    if (!emissionWrite && tracerAllowed && previousFbo == mainFbo
+                            && PbrBloom.mrtUnavailable() && PbrBloom.beginFallbackCapture()) {
+                        try {
+                            drawEmissionFallback(shader);
+                        } finally {
+                            com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
+                        }
+                    }
+                } else if (tracerAllowed && previousFbo == mainFbo && PbrBloom.beginFallbackCapture()) {
+                    // 加速渲染时主绘制被跳过, 这里补画一次发光(只写发光目标, 不碰主画面)。
+                    try {
+                        drawEmissionFallback(shader);
+                    } finally {
+                        com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
+                    }
+                }            } finally {
                 VertexBuffer.unbind();
                 RenderSystem.setShaderTexture(3, specularSlot);
                 RenderSystem.setShaderTexture(4, normalSlot);
@@ -1095,6 +1216,46 @@ public final class PbrRenderer {
         }
 
     }
+
+        /** 只写发光目标的补画(MRT 不可用时 / 加速渲染主绘制被跳过时)。 */
+        private static void drawEmissionFallback(ShaderInstance shader) {
+            boolean blendWas = GL11.glIsEnabled(GL11.GL_BLEND);
+            boolean depthTestWas = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+            boolean depthMask = GL11.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+            int depthFuncWas = GL11.glGetInteger(GL11.GL_DEPTH_FUNC);
+            boolean stencilWas = GL11.glIsEnabled(GL11.GL_STENCIL_TEST);
+            try {
+                RenderSystem.depthMask(true);
+                RenderSystem.enableDepthTest();
+                RenderSystem.depthFunc(GL11.GL_LEQUAL);
+                GL11.glDisable(GL11.GL_STENCIL_TEST);
+                pushEmissionBlendOverride();
+                setUniform(uEmissionPass, 1);
+                setUniform(uScopeDivisionPass, 0);
+                mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
+            } finally {
+                setUniform(uEmissionPass, 0);
+                setUniform(uScopeDivisionPass, 0);
+                popEmissionBlendOverride();
+                if (blendWas) {
+                    RenderSystem.enableBlend();
+                } else {
+                    RenderSystem.disableBlend();
+                }
+                if (depthTestWas) {
+                    RenderSystem.enableDepthTest();
+                } else {
+                    RenderSystem.disableDepthTest();
+                }
+                RenderSystem.depthFunc(depthFuncWas);
+                RenderSystem.depthMask(depthMask);
+                if (stencilWas) {
+                    GL11.glEnable(GL11.GL_STENCIL_TEST);
+                } else {
+                    GL11.glDisable(GL11.GL_STENCIL_TEST);
+                }
+            }
+        }
 
     private PbrRenderer() {}
 }
