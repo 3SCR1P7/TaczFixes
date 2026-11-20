@@ -1807,40 +1807,40 @@ public class Config {
             int timeMin = adjust ? -60000 : 0;
             int levelMin = adjust ? -15 : 0;
             this.fireTime = builder
-                    .comment(adjust ? "开火光照时间增量（毫秒，可为负）。默认值：0"
-                            : "开火光照持续时间（毫秒）。0 表示不发光。默认值：0")
+                    .comment(adjust ? "开火光照时间增量。默认值：0"
+                            : "开火光照持续时间。0 表示不发光。默认值：0")
                     .defineInRange("fire_time", 0, timeMin, 60000);
             this.fireLevelMax = builder
-                    .comment(adjust ? "开火最大光照等级增量（可为负）。默认值：0"
-                            : "开火瞬间的光照等级（0-15）。默认值：15")
+                    .comment(adjust ? "开火最大光照等级增量。默认值：0"
+                            : "开火瞬间的光照等级。默认值：15")
                     .defineInRange("fire_level_max", adjust ? 0 : 15, levelMin, 15);
             this.fireLevelMin = builder
-                    .comment(adjust ? "开火最小光照等级增量（可为负）。默认值：0"
-                            : "开火光照结束时的光照等级（0-15，期间线性插值）。默认值：0")
+                    .comment(adjust ? "开火最小光照等级增量。默认值：0"
+                            : "开火光照结束时的光照等级。默认值：0")
                     .defineInRange("fire_level_min", 0, levelMin, 15);
             this.explosionTime = builder
-                    .comment(adjust ? "爆炸光照时间增量（毫秒，可为负）。默认值：0"
-                            : "爆炸光照持续时间（毫秒）。0 表示不发光。默认值：0")
+                    .comment(adjust ? "爆炸光照时间增量。默认值：0"
+                            : "爆炸光照持续时间。0 表示不发光。默认值：0")
                     .defineInRange("explosion_time", 0, timeMin, 60000);
             this.explosionLevelMax = builder
-                    .comment(adjust ? "爆炸最大光照等级增量（可为负）。默认值：0"
-                            : "爆炸瞬间的光照等级（0-15）。默认值：15")
+                    .comment(adjust ? "爆炸最大光照等级增量。默认值：0"
+                            : "爆炸瞬间的光照等级。默认值：15")
                     .defineInRange("explosion_level_max", adjust ? 0 : 15, levelMin, 15);
             this.explosionLevelMin = builder
-                    .comment(adjust ? "爆炸最小光照等级增量（可为负）。默认值：0"
-                            : "爆炸光照结束时的光照等级（0-15，期间线性插值）。默认值：0")
+                    .comment(adjust ? "爆炸最小光照等级增量。默认值：0"
+                            : "爆炸光照结束时的光照等级。默认值：0")
                     .defineInRange("explosion_level_min", 0, levelMin, 15);
             this.bulletTime = builder
-                    .comment(adjust ? "弹道光照时间增量（毫秒，可为负）。默认值：0"
-                            : "弹道光照持续时间（毫秒）。0 表示不发光。默认值：0")
+                    .comment(adjust ? "弹道光照时间增量。默认值：0"
+                            : "弹道光照持续时间。0 表示不发光。默认值：0")
                     .defineInRange("bullet_time", 0, timeMin, 60000);
             this.bulletLevelMax = builder
-                    .comment(adjust ? "弹道最大光照等级增量（可为负）。默认值：0"
-                            : "弹道光照初始等级（0-15）。默认值：15")
+                    .comment(adjust ? "弹道最大光照等级增量。默认值：0"
+                            : "弹道光照初始等级。默认值：15")
                     .defineInRange("bullet_level_max", adjust ? 0 : 15, levelMin, 15);
             this.bulletLevelMin = builder
-                    .comment(adjust ? "弹道最小光照等级增量（可为负）。默认值：0"
-                            : "弹道光照结束时的光照等级（0-15，期间线性插值）。默认值：0")
+                    .comment(adjust ? "弹道最小光照等级增量。默认值：0"
+                            : "弹道光照结束时的光照等级。默认值：0")
                     .defineInRange("bullet_level_min", 0, levelMin, 15);
         }
     }

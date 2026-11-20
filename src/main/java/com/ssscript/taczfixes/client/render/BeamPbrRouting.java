@@ -25,6 +25,8 @@ public final class BeamPbrRouting {
         if (entityType == null) {
             return source.getBuffer(original);
         }
+        // 镭射光束是自发光内容: 标记本帧需要泛光链路。
+        PbrRenderer.markEmissionSource();
         return new BeamEntityVertexConsumer(source.getBuffer(PbrRenderer.resolve(entityType)));
     }
 

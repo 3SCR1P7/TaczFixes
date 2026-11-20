@@ -73,6 +73,7 @@
         "model.attachment.MixinGunAttachmentSlotSelection",
         "model.MixinBedrockGunModelCustomSlot",
         "model.MixinBedrockGunModelGlint",
+    "model.MixinBedrockGunModelGroupAnimation",
 
 
         "model.MixinBedrockGunModelExtendMag",
@@ -174,8 +175,11 @@
         "MixinInnerThirdPersonManager",
         "MixinInventoryAttachmentSlotPreview",
         "MixinInventoryAttachmentSlotScale",
+        "renderer.MixinBlockEntityRenderDispatcherRain",
+        "renderer.MixinEntityRenderDispatcherRain",
         "renderer.MixinItemInHandRendererHeightAccessor",
         "renderer.MixinItemInHandRendererOffhandShieldRaise",
+        "renderer.MixinItemInHandRendererWetGeometry",
         "MixinItemStackChargeBar",
         "MixinLeftHandRender",
         "player.MixinLocalPlayerAim",

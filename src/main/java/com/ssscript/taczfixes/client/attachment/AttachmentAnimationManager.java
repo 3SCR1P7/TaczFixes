@@ -5,6 +5,9 @@ import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.item.IAttachment;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
+import com.tacz.guns.client.model.BedrockGunModel;
+import com.tacz.guns.client.model.bedrock.BedrockPart;
+import org.joml.Quaternionf;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.resource.index.ClientAttachmentVariantIndex;
 import net.minecraft.client.Minecraft;
@@ -60,6 +63,8 @@ public final class AttachmentAnimationManager {
 
     /** 渲染调用可能是嵌套的（配件内部再渲染配件），用栈保证每层都能正确清理。 */
     private static final java.util.LinkedList<BedrockAttachmentModel> RENDER_STACK = new java.util.LinkedList<>();
+    /** 枪械渲染入口的叠加层栈：枪械模型按 display 共享，渲染结束必须还原。 */
+    private static final java.util.LinkedList<Object> GUN_RENDER_STACK = new java.util.LinkedList<>();
     private static boolean lastAiming;
 
     private AttachmentAnimationManager() {
@@ -80,6 +85,7 @@ public final class AttachmentAnimationManager {
         failedDefinitionLookups.clear();
         definitionsByDisplayId = definitions == null ? Map.of() : Map.copyOf(definitions);
         RENDER_STACK.clear();
+        GUN_RENDER_STACK.clear();
         lastAiming = false;
     }
 
@@ -91,6 +97,7 @@ public final class AttachmentAnimationManager {
         INSTANCES.clear();
         failedInstances.clear();
         RENDER_STACK.clear();
+        GUN_RENDER_STACK.clear();
         lastAiming = false;
     }
 
@@ -206,6 +213,206 @@ public final class AttachmentAnimationManager {
     }
 
     // ------------------------------------------------------------------
+    // 枪械渲染入口: camera / root / lefthand_pos / righthand_pos 功能组
+    // ------------------------------------------------------------------
+
+    /**
+     * 枪械模型渲染前调用：统一推进匹配的配件状态机，并把配件动画里
+     * {@code camera} / {@code root} / {@code lefthand_pos} / {@code righthand_pos}
+     * 四个功能组的动画增量叠加到枪械模型的对应组上。
+     */
+    public static void beforeGunRender(BedrockGunModel model, ItemStack gunStack, ItemDisplayContext transformType) {
+        if (GUN_RENDER_STACK.size() > 8) {
+            // 极端情况下（渲染中途抛异常）防止栈不平衡
+            GUN_RENDER_STACK.clear();
+        }
+        GUN_RENDER_STACK.push(null);
+        GroupOverlay overlay = null;
+        try {
+            overlay = applyGroupOverlay(model, gunStack, transformType);
+        } catch (Throwable ignored) {
+        }
+        if (overlay != null) {
+            GUN_RENDER_STACK.pop();
+            GUN_RENDER_STACK.push(overlay);
+        }
+    }
+
+    /** 枪械模型渲染结束后调用：还原功能组并清理共享模型上的残留变换。 */
+    public static void afterGunRender() {
+        Object entry = GUN_RENDER_STACK.poll();
+        if (!(entry instanceof GroupOverlay overlay)) {
+            return;
+        }
+        overlay.revert();
+        for (AttachmentAnimationInstance instance : overlay.instances) {
+            instance.markUpdatedByGunRender(false);
+            instance.cleanModelTransforms();
+        }
+    }
+
+    /** 配件动画 camera 组的当前旋转（叠加给第一人称手部/视角用）；没有动画时返回 null。 */
+    @Nullable
+    public static Quaternionf cameraRotation(ItemStack gunStack) {
+        if (INSTANCES.isEmpty() || gunStack == null || gunStack.isEmpty()) {
+            return null;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !isLocalHeldStack(gunStack, player)) {
+            return null;
+        }
+        ResourceLocation gunId = gunIdOf(gunStack);
+        boolean offhand = isOffhandGun(gunStack, player);
+        Quaternionf total = null;
+        for (AttachmentAnimationInstance instance : INSTANCES.values()) {
+            AttachmentAnimationKey key = instance.key();
+            if (instance.isBroken() || !instance.cameraFresh() || key.offhand() != offhand
+                    || !key.firstPerson() || key.gunItem() != gunStack.getItem()) {
+                continue;
+            }
+            if (!instance.matchesLocalGun(gunId)) {
+                continue;
+            }
+            Quaternionf rotation = instance.transforms().cameraRotation();
+            if (rotation == null) {
+                continue;
+            }
+            total = total == null ? rotation : total.mul(rotation);
+        }
+        return total;
+    }
+
+    @Nullable
+    private static GroupOverlay applyGroupOverlay(BedrockGunModel model, ItemStack gunStack,
+                                                  ItemDisplayContext transformType) {
+        if (model == null || gunStack == null || gunStack.isEmpty() || transformType == null) {
+            return null;
+        }
+        boolean firstPerson = transformType.firstPerson();
+        boolean thirdPerson = transformType == ItemDisplayContext.THIRD_PERSON_LEFT_HAND
+                || transformType == ItemDisplayContext.THIRD_PERSON_RIGHT_HAND;
+        if (!firstPerson && !thirdPerson) {
+            return null;
+        }
+        LocalPlayer player = Minecraft.getInstance().player;
+        if (player == null || !isLocalHeldStack(gunStack, player)) {
+            return null;
+        }
+        ResourceLocation gunId = gunIdOf(gunStack);
+        boolean offhand = isOffhandGun(gunStack, player);
+        List<AttachmentAnimationInstance> matched = new ArrayList<>();
+        for (AttachmentAnimationInstance instance : INSTANCES.values()) {
+            AttachmentAnimationKey key = instance.key();
+            if (instance.isBroken() || !instance.wasRenderedRecently()
+                    || key.firstPerson() != firstPerson || key.offhand() != offhand
+                    || key.gunItem() != gunStack.getItem()) {
+                continue;
+            }
+            if (!instance.matchesLocalGun(gunId)) {
+                continue;
+            }
+            matched.add(instance);
+        }
+        if (matched.isEmpty()) {
+            return null;
+        }
+
+        float partialTicks = Minecraft.getInstance().getFrameTime();
+        AttachmentGroupTransforms.Group root = AttachmentGroupTransforms.Group.IDENTITY;
+        AttachmentGroupTransforms.Group leftHand = AttachmentGroupTransforms.Group.IDENTITY;
+        AttachmentGroupTransforms.Group rightHand = AttachmentGroupTransforms.Group.IDENTITY;
+        for (AttachmentAnimationInstance instance : matched) {
+            instance.update(instance.attachmentItem(), gunStack, firstPerson, partialTicks);
+            instance.markUpdatedByGunRender(true);
+            instance.markCameraUpdated();
+            root = root.combine(instance.transforms().root());
+            leftHand = leftHand.combine(instance.transforms().leftHand());
+            rightHand = rightHand.combine(instance.transforms().rightHand());
+        }
+        NodeSnapshot rootSnapshot = NodeSnapshot.apply(model.getNode(AttachmentGroupTransforms.ROOT), root);
+        NodeSnapshot leftSnapshot = NodeSnapshot.apply(model.getNode(AttachmentGroupTransforms.LEFT_HAND), leftHand);
+        NodeSnapshot rightSnapshot = NodeSnapshot.apply(model.getNode(AttachmentGroupTransforms.RIGHT_HAND), rightHand);
+        return new GroupOverlay(rootSnapshot, leftSnapshot, rightSnapshot, matched);
+    }
+
+    private static final class GroupOverlay {
+        private final NodeSnapshot root;
+        private final NodeSnapshot leftHand;
+        private final NodeSnapshot rightHand;
+        private final List<AttachmentAnimationInstance> instances;
+
+        private GroupOverlay(NodeSnapshot root, NodeSnapshot leftHand, NodeSnapshot rightHand,
+                             List<AttachmentAnimationInstance> instances) {
+            this.root = root;
+            this.leftHand = leftHand;
+            this.rightHand = rightHand;
+            this.instances = instances;
+        }
+
+        private void revert() {
+            if (root != null) {
+                root.revert();
+            }
+            if (leftHand != null) {
+                leftHand.revert();
+            }
+            if (rightHand != null) {
+                rightHand.revert();
+            }
+        }
+    }
+
+    /** 记录一个骨骼叠加前的变换，渲染结束后精确还原。 */
+    private static final class NodeSnapshot {
+        private final BedrockPart part;
+        private final float offsetX;
+        private final float offsetY;
+        private final float offsetZ;
+        private final Quaternionf rotation;
+        private final float scaleX;
+        private final float scaleY;
+        private final float scaleZ;
+
+        private NodeSnapshot(BedrockPart part, float offsetX, float offsetY, float offsetZ,
+                             Quaternionf rotation, float scaleX, float scaleY, float scaleZ) {
+            this.part = part;
+            this.offsetX = offsetX;
+            this.offsetY = offsetY;
+            this.offsetZ = offsetZ;
+            this.rotation = rotation;
+            this.scaleX = scaleX;
+            this.scaleY = scaleY;
+            this.scaleZ = scaleZ;
+        }
+
+        @Nullable
+        private static NodeSnapshot apply(@Nullable BedrockPart part, AttachmentGroupTransforms.Group group) {
+            if (part == null) {
+                return null;
+            }
+            NodeSnapshot snapshot = new NodeSnapshot(part, part.offsetX, part.offsetY, part.offsetZ,
+                    new Quaternionf(part.additionalQuaternion), part.xScale, part.yScale, part.zScale);
+            if (group != null) {
+                group.applyTo(part);
+            }
+            return snapshot;
+        }
+
+        private void revert() {
+            if (part == null) {
+                return;
+            }
+            part.offsetX = offsetX;
+            part.offsetY = offsetY;
+            part.offsetZ = offsetZ;
+            part.additionalQuaternion.set(rotation);
+            part.xScale = scaleX;
+            part.yScale = scaleY;
+            part.zScale = scaleZ;
+        }
+    }
+
+    // ------------------------------------------------------------------
     // 渲染
     // ------------------------------------------------------------------
 
@@ -285,7 +492,11 @@ public final class AttachmentAnimationManager {
                 instance.trigger(INPUT_AIM);
             }
         }
-        instance.update(attachmentItem, gunItem, firstPerson, Minecraft.getInstance().getFrameTime());
+        instance.markRendered();
+        if (!instance.wasUpdatedByGunRender()) {
+            // 没走到枪械渲染入口（老路径/其它调用方）时兜底更新；正常情况已在 beforeGunRender 里推进过。
+            instance.update(attachmentItem, gunItem, firstPerson, Minecraft.getInstance().getFrameTime());
+        }
         if (instance.isBroken()) {
             INSTANCES.remove(key);
             instance.exit();

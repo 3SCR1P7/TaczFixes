@@ -1,19 +1,16 @@
 #version 150
+// 窄光晕 + 宽光晕合成到主目标(一次全屏 pass)。可见性已经在模糊前的遮罩 pass 里处理过。
 uniform sampler2D Sampler0;
+uniform sampler2D Wide;
 uniform sampler2D ScopeMask;
-uniform sampler2D EmissionDepth;
-uniform sampler2D SceneDepth;
 uniform float Strength;
+uniform float WideStrength;
 uniform int HasScopeMask;
 in vec2 texCoord;
 out vec4 fragColor;
 void main() {
-    vec3 color = texture(Sampler0, texCoord).rgb * Strength * 1.6;
-    float emissionDepth = texture(EmissionDepth, texCoord).r;
-    float sceneDepth = texture(SceneDepth, texCoord).r;
-    bool foreground = sceneDepth < 0.999999;
-    bool visible = !foreground || (emissionDepth > 0.0 && emissionDepth <= sceneDepth + 0.000001);
-    color *= visible ? 1.0 : 0.0;
+    vec3 color = (texture(Sampler0, texCoord).rgb * Strength
+            + texture(Wide, texCoord).rgb * WideStrength) * 1.6;
     if (HasScopeMask != 0) {
         float lens = clamp(texture(ScopeMask, texCoord).r, 0.0, 1.0);
         color *= 1.0 - lens;

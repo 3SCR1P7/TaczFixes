@@ -3,7 +3,6 @@ package com.ssscript.taczfixes.common.util;
 import com.ssscript.taczfixes.common.config.Config;
 import com.tacz.guns.config.util.HeadShotAABBConfigRead;
 import com.tacz.guns.util.HitboxHelper;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.Pose;
@@ -11,6 +10,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.projectile.Projectile;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.Vec3;
+import net.minecraftforge.registries.ForgeRegistries;
 
 import java.util.Optional;
 
@@ -110,7 +110,7 @@ public final class CrawlHitboxHelper {
     /** 原版 TaCZ 爆头判定: 命中点相对实体坐标落在头部判定盒(或眼高 ±0.25 区间)内。 */
     public static boolean isStandingHeadshot(Entity entity, Vec3 hitPos) {
         Vec3 relative = hitPos.subtract(entity.position());
-        ResourceLocation typeId = BuiltInRegistries.ENTITY_TYPE.getKey(entity.getType());
+        ResourceLocation typeId = ForgeRegistries.ENTITY_TYPES.getKey(entity.getType());
         if (typeId != null) {
             AABB headBox = HeadShotAABBConfigRead.getAABB(typeId);
             if (headBox != null) {

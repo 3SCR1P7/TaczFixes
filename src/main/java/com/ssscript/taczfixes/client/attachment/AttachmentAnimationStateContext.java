@@ -1,40 +1,44 @@
 package com.ssscript.taczfixes.client.attachment;
 
-import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.api.client.animation.statemachine.AnimationStateContext;
-import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
-import com.tacz.guns.api.entity.IGunOperator;
+import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.entity.ReloadState;
-import com.tacz.guns.api.item.IGun;
-import com.tacz.guns.client.resource.index.ClientGunIndex;
-import com.tacz.guns.resource.pojo.data.gun.GunData;
-import com.tacz.guns.resource.pojo.data.gun.GunHeatData;
-import com.tacz.guns.util.AttachmentDataUtils;
+import com.tacz.guns.api.util.LuaNbtAccessor;
+import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
+import com.tacz.guns.client.animation.statemachine.ItemAnimationStateContext;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.Nullable;
 import org.luaj.vm2.LuaTable;
 
 /**
- * 配件动画状态机上下文。每个配件槽位/视角实例都有独立的上下文与状态机。
+ * 配件动画状态机上下文。
  *
- * <p>Lua 侧通过 {@code context:方法名()} 调用下列方法。所有方法在配件/枪械缺失时都会返回
- * 安全的默认值，不会抛异常。
+ * <p>TaCZ 已经有的上下文数据一律复用，本类不再重复实现：
+ * <ul>
+ *   <li>基类用 TaCZ 的 {@link ItemAnimationStateContext}（partialTicks / putAwayTime）；</li>
+ *   <li>枪械与玩家状态（弹药、瞄准、换弹、过热、蓄力、输入、移动距离、NBT 等）
+ *       全部委托给一个 TaCZ 的 {@link GunAnimationStateContext}，由 {@link #setRenderData}
+ *       在每次渲染前写入当前枪械。</li>
+ * </ul>
+ * 本类只补 TaCZ 上下文里没有的配件层数据：当前配件 id / ItemStack、配件 display 的
+ * {@code taczfixes.state_machine_param}、第一/第三人称标志，以及 TaCZ 没有的
+ * {@code isReloading} / {@code isSprinting} / {@code isWalking} / {@code isMoving} / {@code isProne}。
+ *
+ * <p>注意这里用组合而不是直接继承 {@code GunAnimationStateContext}：不少模组（含 Arcana）用
+ * {@code context instanceof GunAnimationStateContext} 判断"这是枪的动画"，配件上下文如果伪装成枪上下文，
+ * 会被它们按枪动画处理（改动画名、改播放速率、读枪 NBT），而且本模组转发枪械输入时也会递归触发。
  */
 @SuppressWarnings("unused")
-public class AttachmentAnimationStateContext extends AnimationStateContext {
+public class AttachmentAnimationStateContext extends ItemAnimationStateContext {
     private final ResourceLocation attachmentId;
     private final LuaTable stateMachineParams;
+    /** TaCZ 的枪械上下文，只用来复用其数据查询实现。 */
+    private final GunAnimationStateContext gunContext = new GunAnimationStateContext();
     private ItemStack attachmentItem = ItemStack.EMPTY;
     private ItemStack gunItem = ItemStack.EMPTY;
-    private @Nullable IGun iGun;
-    private @Nullable ResourceLocation gunId;
-    private @Nullable GunData gunData;
     private boolean firstPerson;
-    private float partialTicks;
 
     public AttachmentAnimationStateContext(ResourceLocation attachmentId, LuaTable stateMachineParams) {
         this.attachmentId = attachmentId;
@@ -48,17 +52,17 @@ public class AttachmentAnimationStateContext extends AnimationStateContext {
         this.attachmentItem = attachmentItem == null ? ItemStack.EMPTY : attachmentItem;
         this.gunItem = gunItem == null ? ItemStack.EMPTY : gunItem;
         this.firstPerson = firstPerson;
-        this.partialTicks = partialTicks;
-        this.iGun = IGun.getIGunOrNull(this.gunItem);
-        if (this.iGun != null) {
-            this.gunId = this.iGun.getGunId(this.gunItem);
-            this.gunData = this.gunId == null ? null
-                    : TimelessAPI.getClientGunIndex(this.gunId).map(ClientGunIndex::getGunData).orElse(null);
-        } else {
-            this.gunId = null;
-            this.gunData = null;
-        }
+        setPartialTicks(partialTicks);
+        gunContext.setPartialTicks(partialTicks);
+        gunContext.setCurrentGunItem(this.gunItem);
     }
+
+    /** TaCZ 的部分查询对"没有枪"不做空判断, 这里统一兜底, 避免脚本异常导致该配件状态机被停用。 */
+    private boolean hasGun() {
+        return !gunItem.isEmpty() && com.tacz.guns.api.item.IGun.getIGunOrNull(gunItem) != null;
+    }
+
+    // ---------------- 配件层新增（TaCZ 上下文没有的部分） ----------------
 
     /** 配件注册名（如 {@code mypack:my_scope}）。 */
     public String getAttachmentId() {
@@ -86,99 +90,20 @@ public class AttachmentAnimationStateContext extends AnimationStateContext {
         return firstPerson;
     }
 
-    /** 当前渲染帧的 partialTicks。 */
-    public float getPartialTicks() {
-        return partialTicks;
-    }
-
-    /** display JSON 的 {@code taczfixes.state_machine_param}。 */
+    /** display JSON 的 {@code taczfixes.state_machine_param}（覆盖枪械自己的状态机参数）。 */
     public LuaTable getStateMachineParams() {
         return stateMachineParams;
     }
 
-    /** 是否正在开镜/瞄准。 */
-    public boolean isAiming() {
-        return processOperator(IClientPlayerGunOperator::isAim).orElse(false);
-    }
-
-    /** 开镜进度 0~1。 */
-    public float getAimingProgress() {
-        return processOperator(operator -> operator.getClientAimingProgress(partialTicks)).orElse(0f);
-    }
-
-    /** 是否正在换弹。 */
+    /** 是否正在换弹。TaCZ 上下文只暴露 getReloadStateType()，这里补一个布尔便捷方法。 */
     public boolean isReloading() {
-        return getReloadStateTypeValue().isReloading();
-    }
-
-    /** 换弹状态 {@link ReloadState.StateType} 的 ordinal。 */
-    public int getReloadStateType() {
-        return getReloadStateTypeValue().ordinal();
-    }
-
-    /** 当前弹匣内子弹数。 */
-    public int getAmmoCount() {
-        return iGun == null ? 0 : Math.max(iGun.getCurrentAmmoCount(gunItem), 0);
-    }
-
-    /** 当前弹匣容量（含扩容弹匣）。 */
-    public int getMaxAmmoCount() {
-        if (gunData == null) {
-            return 0;
+        try {
+            ReloadState.StateType[] types = ReloadState.StateType.values();
+            int ordinal = getReloadStateType();
+            return ordinal >= 0 && ordinal < types.length && types[ordinal].isReloading();
+        } catch (Throwable ignored) {
+            return false;
         }
-        return Math.max(AttachmentDataUtils.getAmmoCountWithAttachment(gunItem, gunData), 0);
-    }
-
-    /** 枪膛内是否有子弹。 */
-    public boolean hasBulletInBarrel() {
-        return iGun != null && iGun.hasBulletInBarrel(gunItem);
-    }
-
-    /** 开火模式 {@code FireMode} 的 ordinal。 */
-    public int getFireMode() {
-        return iGun == null ? 0 : iGun.getFireMode(gunItem).ordinal();
-    }
-
-    /** 是否处于过热锁定状态。 */
-    public boolean isOverHeat() {
-        return iGun != null && iGun.hasHeatData(gunItem) && iGun.isOverheatLocked(gunItem);
-    }
-
-    /** 过热进度 0~1。 */
-    public float getHeatProgress() {
-        if (iGun == null || gunData == null) {
-            return 0f;
-        }
-        GunHeatData heatData = gunData.getHeatData();
-        if (heatData == null || heatData.getHeatMax() <= 0f) {
-            return 0f;
-        }
-        return Mth.clamp(iGun.getHeatAmount(gunItem) / heatData.getHeatMax(), 0f, 1f);
-    }
-
-    /** 客户端射击冷却（毫秒）。 */
-    public long getShootCoolDown() {
-        return processOperator(IClientPlayerGunOperator::getClientShootCoolDown).orElse(0L);
-    }
-
-    /** 上次射击的时间戳（毫秒），未射击过为 -1。 */
-    public long getLastShootTimestamp() {
-        return processOperator(operator -> operator.getDataHolder().clientLastShootTimestamp).orElse(-1L);
-    }
-
-    /** 当前系统时间（毫秒）。 */
-    public long getCurrentTimestamp() {
-        return System.currentTimeMillis();
-    }
-
-    /** 蓄力进度 0~1。 */
-    public float getChargeProgress() {
-        return processOperator(IClientPlayerGunOperator::getChargeProgress).orElse(0f);
-    }
-
-    /** 是否正在蓄力。 */
-    public boolean isCharging() {
-        return processOperator(IClientPlayerGunOperator::isCharging).orElse(false);
     }
 
     /** 玩家是否正在疾跑。 */
@@ -196,21 +121,10 @@ public class AttachmentAnimationStateContext extends AnimationStateContext {
         return player.input.getMoveVector().length() > 0.01f;
     }
 
-    /** 玩家是否潜行。 */
-    public boolean isCrouching() {
+    /** 玩家是否正在移动（任意方向）。 */
+    public boolean isMoving() {
         LocalPlayer player = getShooter();
-        return player != null && player.isCrouching();
-    }
-
-    /** 玩家是否在地面。 */
-    public boolean isOnGround() {
-        LocalPlayer player = getShooter();
-        return player != null && player.onGround();
-    }
-
-    /** 玩家是否匍匐。 */
-    public boolean isCrawl() {
-        return processOperator(IClientPlayerGunOperator::isCrawl).orElse(false);
+        return player != null && player.input != null && player.input.getMoveVector().length() > 0.01f;
     }
 
     /**
@@ -233,32 +147,176 @@ public class AttachmentAnimationStateContext extends AnimationStateContext {
         return isCrawl();
     }
 
-    /** 玩家是否正在移动（任意方向）。 */
-    public boolean isMoving() {
-        LocalPlayer player = getShooter();
-        return player != null && player.input != null && player.input.getMoveVector().length() > 0.01f;
+    // ---------------- 以下全部复用 TaCZ GunAnimationStateContext 的实现 ----------------
+
+    /** 枪膛内是否有子弹。 */
+    public boolean hasBulletInBarrel() {
+        return gunContext.hasBulletInBarrel();
     }
 
-    private ReloadState.StateType getReloadStateTypeValue() {
-        LocalPlayer player = getShooter();
-        if (player != null) {
-            try {
-                return IGunOperator.fromLivingEntity(player).getSynReloadState().getStateType();
-            } catch (Throwable ignored) {
-            }
-        }
-        return ReloadState.StateType.NOT_RELOADING;
+    /** 是否处于过热锁定状态。 */
+    public boolean isOverHeat() {
+        return hasGun() && gunContext.isOverHeat();
     }
 
-    private <T> java.util.Optional<T> processOperator(java.util.function.Function<IClientPlayerGunOperator, T> processor) {
-        LocalPlayer player = getShooter();
-        if (player == null) {
-            return java.util.Optional.empty();
+    /** 过热进度 0~1。 */
+    public float getHeatProgress() {
+        return hasGun() ? gunContext.getHeatProgress() : 0.0F;
+    }
+
+    /** 射击间隔（毫秒）。 */
+    public long getShootInterval() {
+        return hasGun() ? gunContext.getShootInterval() : 0L;
+    }
+
+    /** 上次射击的时间戳（毫秒），未射击过为 -1。 */
+    public long getLastShootTimestamp() {
+        return gunContext.getLastShootTimestamp();
+    }
+
+    /** 当前时间戳（毫秒，TaCZ 的 GunTime 时间轴）。 */
+    public long getCurrentTimestamp() {
+        return gunContext.getCurrentTimestamp();
+    }
+
+    /** 真实系统时间（毫秒，不受游戏暂停影响）。 */
+    public long getRealSystemTimestamp() {
+        return gunContext.getRealSystemTimestamp();
+    }
+
+    /** 调整客户端射击间隔（TaCZ 原实现）。 */
+    public void adjustClientShootInterval(long alpha) {
+        gunContext.adjustClientShootInterval(alpha);
+    }
+
+    /** 当前弹匣内子弹数。 */
+    public int getAmmoCount() {
+        return gunContext.getAmmoCount();
+    }
+
+    /** 当前弹匣容量（含扩容弹匣）。 */
+    public int getMaxAmmoCount() {
+        return gunContext.getMaxAmmoCount();
+    }
+
+    /** 是否还有可消耗的弹药（弹匣/备弹/虚拟弹药）。 */
+    public boolean hasAmmoToConsume() {
+        return hasGun() && gunContext.hasAmmoToConsume();
+    }
+
+    /** 扩容弹匣等级。 */
+    public int getMagExtentLevel() {
+        return gunContext.getMagExtentLevel();
+    }
+
+    /** 开火模式 {@code FireMode} 的 ordinal。 */
+    public int getFireMode() {
+        return gunContext.getFireMode();
+    }
+
+    /** 开镜进度 0~1。 */
+    public float getAimingProgress() {
+        return gunContext.getAimingProgress();
+    }
+
+    /** 是否正在开镜/瞄准。 */
+    public boolean isAiming() {
+        return gunContext.isAiming();
+    }
+
+    /** 客户端射击冷却（毫秒）。 */
+    public long getShootCoolDown() {
+        return gunContext.getShootCoolDown();
+    }
+
+    /** 换弹状态 {@link ReloadState.StateType} 的 ordinal。 */
+    public int getReloadStateType() {
+        return gunContext.getReloadStateType();
+    }
+
+    public boolean isInputUp() {
+        return gunContext.isInputUp();
+    }
+
+    public boolean isInputDown() {
+        return gunContext.isInputDown();
+    }
+
+    public boolean isInputLeft() {
+        return gunContext.isInputLeft();
+    }
+
+    public boolean isInputRight() {
+        return gunContext.isInputRight();
+    }
+
+    public boolean isInputJumping() {
+        return gunContext.isInputJumping();
+    }
+
+    /** 是否匍匐（TaCZ 匍匐标志）。 */
+    public boolean isCrawl() {
+        return gunContext.isCrawl();
+    }
+
+    /** 是否在地面（TaCZ 按相机实体判断）。 */
+    public boolean isOnGround() {
+        return gunContext.isOnGround();
+    }
+
+    /** 是否潜行（TaCZ 按相机实体判断）。 */
+    public boolean isCrouching() {
+        return gunContext.isCrouching();
+    }
+
+    public boolean shouldSlide() {
+        return hasGun() && gunContext.shouldSlide();
+    }
+
+    public void anchorWalkDist() {
+        gunContext.anchorWalkDist();
+    }
+
+    public float getWalkDist() {
+        return gunContext.getWalkDist();
+    }
+
+    /** 抛出弹壳（枪械弹壳渲染；配件脚本正常不会调用）。 */
+    public void popShellFrom(int index) {
+        if (!hasGun()) {
+            return;
         }
         try {
-            return java.util.Optional.ofNullable(processor.apply(IClientPlayerGunOperator.fromLocalPlayer(player)));
+            gunContext.popShellFrom(index);
         } catch (Throwable ignored) {
-            return java.util.Optional.empty();
         }
+    }
+
+    /** 枪械 NBT 访问器。 */
+    public LuaNbtAccessor getNbtAccessor() {
+        return gunContext.getNbtAccessor();
+    }
+
+    /** 当前枪械某个槽位的配件 id 字符串。 */
+    public String getAttachment(String type) {
+        return hasGun() ? gunContext.getAttachment(type) : DefaultAssets.EMPTY_ATTACHMENT_ID.toString();
+    }
+
+    /** 蓄力进度 0~1。 */
+    public float getChargeProgress() {
+        return gunContext.getChargeProgress();
+    }
+
+    public float getMaxCharge() {
+        return gunContext.getMaxCharge();
+    }
+
+    public float getChargeThreshold() {
+        return gunContext.getChargeThreshold();
+    }
+
+    /** 是否正在蓄力。 */
+    public boolean isCharging() {
+        return gunContext.isCharging();
     }
 }

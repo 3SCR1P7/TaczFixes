@@ -230,6 +230,7 @@ public class TaczFixesMod {
                     com.ssscript.taczfixes.client.render.PbrRenderer::onRenderLevelStage);
             // 迷彩切换后让渲染侧按物品实例的缓存失效, 改装界面里立即看到效果
             com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.camo.DynamicCamo::invalidate);
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationCameraHandler());
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());

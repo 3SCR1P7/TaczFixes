@@ -124,6 +124,7 @@
 - HTML HUD 放在 `assets/<namespace>/hud/**.html`，模组会自动同步给 ApricityUI
 - 配件槽位、虚拟配件、改装点数、附魔兼容等均通过 data json 定义
 - 配件动画示例见 `example/`：`grip_emx_bipod` 为可用的两脚架状态机与动画配置
+- 配件动画除驱动配件自身骨骼外，还支持 TaCZ 枪械的四个功能组：`camera`（镜头旋转，同时作用于第一人称视角和手部）、`root`（整枪平移/旋转/缩放）、`lefthand_pos` / `righthand_pos`（第一人称左右手位置）。动画里移动这些组时，枪械对应组会叠加同样的移动；配件模型不需要声明这些骨骼，模组会自动补占位骨骼。
 
 ### 动态迷彩
 

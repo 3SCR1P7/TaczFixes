@@ -36,6 +36,7 @@
     { "name": "SunHorizon", "type": "float", "count": 3, "values": [0.0, 0.0, 0.0] },
     { "name": "SunAzimuth", "type": "float", "count": 2, "values": [1.0, 0.0] },
     { "name": "Wetness", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "WetSurface", "type": "float", "count": 1, "values": [1.0] },
     { "name": "WetDetail", "type": "float", "count": 1, "values": [1.0] },
     { "name": "Time", "type": "float", "count": 1, "values": [0.0] },
     { "name": "CamoIndex", "type": "int", "count": 1, "values": [0] },

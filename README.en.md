@@ -125,6 +125,7 @@ The files contain comments. Changes take effect after reloading resources or res
 - HTML HUDs go in `assets/<namespace>/hud/**.html`; the mod synchronizes them to ApricityUI automatically
 - Attachment slots, virtual attachments, refit point costs, enchantment compatibility, etc. are all defined through data JSON
 - See `example/` for attachment animation examples: `grip_emx_bipod` is a working bipod state machine with animation configuration
+- Besides the attachment's own bones, attachment animations can drive four of TaCZ's gun functional groups: `camera` (camera rotation, applied to both the first-person view and the hands), `root` (whole-gun translate/rotate/scale) and `lefthand_pos` / `righthand_pos` (first-person hand positions). Animating them overlays the same movement on the gun's matching group; the attachment model does not need those bones, placeholders are added automatically.
 
 ### Dynamic camoflage
 
