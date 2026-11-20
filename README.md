@@ -143,7 +143,7 @@
 ./gradlew build --offline
 ```
 
-产物位于 `build/libs/taczfixes-<version>.jar`。
+产物位于 `build/libs/taczfixes-<version>-neoforge.jar`。
 
 ## 许可
 

@@ -144,7 +144,7 @@ Requires JDK 21. Dependencies must be placed under `repo/` (not provided here); 
 ./gradlew build --offline
 ```
 
-The artifact is produced at `build/libs/taczfixes-<version>.jar`.
+The artifact is produced at `build/libs/taczfixes-<version>-neoforge.jar`.
 
 ## License
 

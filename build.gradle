@@ -108,6 +108,9 @@ tasks.named('processResources', ProcessResources).configure {
 }
 
 tasks.named('jar', Jar).configure {
+    // 产物命名区分加载器: taczfixes-<version>-neoforge.jar
+    archiveFileName = "${mod_id}-${project.version}-neoforge.jar"
+
     exclude 'group/taczexpands/**'
 
     // Jar-in-Jar: 把移植到 1.21.1 的 tacz_charms 打进本模组 jar, 由 NeoForge 在启动时加载。
