@@ -611,5 +611,6 @@
     "attribute.name.taczfixes.stamina_recovery":  "耐力恢复速度",
     "attribute.name.taczfixes.stamina_consumption":  "耐力消耗倍率",
     "advancement.taczfixes.arms_dealer.title": "军火贩",
-    "advancement.taczfixes.arms_dealer.description": "用下界合金锭向猪灵交换军火"
+    "advancement.taczfixes.arms_dealer.description": "用下界合金锭向猪灵交换军火",
+    "taczfixes.freeze.text": "我在此发誓——我要特别献给你一处无间地狱"
 }

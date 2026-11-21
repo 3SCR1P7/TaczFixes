@@ -248,7 +248,6 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.SmartScopeHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.FreezeInputHandler());
-            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.FreezeVignetteHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.EditDataKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDataMessageHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.InputSyncHandler());

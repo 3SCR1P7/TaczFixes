@@ -604,5 +604,6 @@
     "attribute.name.taczfixes.stamina_recovery": "Stamina Recovery",
     "attribute.name.taczfixes.stamina_consumption": "Stamina Consumption Multiplier",
     "advancement.taczfixes.arms_dealer.title": "Arms Dealer",
-    "advancement.taczfixes.arms_dealer.description": "Barter with a piglin using a netherite ingot"
+    "advancement.taczfixes.arms_dealer.description": "Barter with a piglin using a netherite ingot",
+    "taczfixes.freeze.text": "I swear here — I shall give you a special Avici hell"
 }

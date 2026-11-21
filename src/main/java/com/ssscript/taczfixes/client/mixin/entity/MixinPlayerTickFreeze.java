@@ -16,7 +16,8 @@ public class MixinPlayerTickFreeze {
         if (!self.level().isClientSide || !FreezeClientState.isEntityFrozen(self)) {
             return;
         }
-        FreezeClientState.freezePose(self);
+        self.setOldPosAndRot();
+        self.setDeltaMovement(0.0D, 0.0D, 0.0D);
         ci.cancel();
     }
 }

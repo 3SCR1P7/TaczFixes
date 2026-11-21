@@ -23,6 +23,8 @@ public abstract class MixinGameRendererPbr {
         // 压制效果必须挪到 renderLevel 结束(而不是 render 结束): 此时 HUD/GUI 尚未绘制, 只作用于世界与手部;
         // 放在 endFrame() 之后, 模糊/色散/暗角才会叠加到泛光结果上。
         com.ssscript.taczfixes.client.render.SuppressionEffect.composite();
+        // 常凪冻结: 冻结期间画面静止(快照覆盖)+红色边缘, 解冻时淡出。
+        com.ssscript.taczfixes.client.render.FreezeScreenEffect.composite();
     }
 
     @Inject(method = "renderLevel", at = @At(value = "INVOKE", target = "Lcom/mojang/blaze3d/systems/RenderSystem;clear(IZ)V", shift = At.Shift.BEFORE))

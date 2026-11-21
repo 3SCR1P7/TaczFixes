@@ -22,6 +22,8 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.init.ModDamageTypes;
 import com.tacz.guns.util.AttachmentDataUtils;
 import com.tacz.guns.util.ExplodeUtil;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
@@ -1149,13 +1151,30 @@ public class GunEnchantmentHandler {
         if (target instanceof ServerPlayer player) {
             // 客户端需要通过冻结状态来丢弃全部输入。
             syncFreeze(player, ticks);
+            showFreezeActionBar(player);
         }
+    }
+
+    /** 常凪冻结: 在原版 action bar 上显示红色提示。 */
+    private static void showFreezeActionBar(ServerPlayer player) {
+        player.displayClientMessage(Component.translatable("taczfixes.freeze.text")
+                .withStyle(ChatFormatting.RED), true);
+    }
+
+    private static void clearFreezeActionBar(ServerPlayer player) {
+        player.displayClientMessage(Component.empty(), true);
     }
 
     /** 把"该实体被冻结"广播给追踪它的玩家(0 = 解除), 用于客户端暂停动画/声音。 */
     private static void syncFreezeEntity(LivingEntity entity, int ticks) {
-        NetworkHandler.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity),
-                new ServerMessageTokonagiFreezeEntity(entity.getId(), ticks));
+        ServerMessageTokonagiFreezeEntity message =
+                new ServerMessageTokonagiFreezeEntity(entity.getId(), ticks);
+        NetworkHandler.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
+        // 追踪列表在实体刚被冻结/换维度时可能还没刷新, 附近玩家也补发一次(客户端按更久时间合并, 重复无害)。
+        if (entity.level() instanceof ServerLevel serverLevel) {
+            NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                    entity.getX(), entity.getY(), entity.getZ(), 128.0D, serverLevel.dimension())), message);
+        }
     }
 
     /** 把冻结的剩余 tick 同步给被冻结的玩家(0 = 解除)。 */
@@ -1209,6 +1228,7 @@ public class GunEnchantmentHandler {
                 }
                 if (entity instanceof ServerPlayer player) {
                     syncFreeze(player, 0);
+                    clearFreezeActionBar(player);
                 }
                 continue;
             }
@@ -1217,6 +1237,7 @@ public class GunEnchantmentHandler {
                 syncFreezeEntity(living, 0);
                 if (living instanceof ServerPlayer player) {
                     syncFreeze(player, 0);
+                    clearFreezeActionBar(player);
                 }
                 if (freeze.hadNoAi() && living instanceof Mob mob && !freeze.wasNoAi()) {
                     mob.setNoAi(false);
@@ -1232,6 +1253,9 @@ public class GunEnchantmentHandler {
             }
             if (level.getGameTime() % 10L == 0L) {
                 syncFreezeEntity(living, (int) (freeze.until() - level.getGameTime()));
+            }
+            if (living instanceof ServerPlayer player && level.getGameTime() % 20L == 0L) {
+                showFreezeActionBar(player);
             }
             living.setDeltaMovement(0.0D, 0.0D, 0.0D);
             living.fallDistance = 0.0F;

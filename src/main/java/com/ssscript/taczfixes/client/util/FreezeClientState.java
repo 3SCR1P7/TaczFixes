@@ -26,7 +26,7 @@ public final class FreezeClientState {
             frozenUntilMillis = 0L;
             return;
         }
-        long until = System.currentTimeMillis() + ticks * 50L;
+        long until = System.currentTimeMillis() + ticks * 50L + 1000L;
         if (until > frozenUntilMillis) {
             frozenUntilMillis = until;
         }
@@ -42,7 +42,7 @@ public final class FreezeClientState {
             FROZEN_ENTITIES.remove(entityId);
             return;
         }
-        long until = System.currentTimeMillis() + ticks * 50L;
+        long until = System.currentTimeMillis() + ticks * 50L + 1000L;
         FROZEN_ENTITIES.merge(entityId, until, Math::max);
     }
 
@@ -77,22 +77,6 @@ public final class FreezeClientState {
         }
     }
 
-    /** 冻结实体的渲染姿态: 固定位置/朝向插值基准, 清空行走/攻击/受伤/死亡等动画状态, 避免抽搐。 */
-    public static void freezePose(net.minecraft.world.entity.LivingEntity entity) {
-        entity.setOldPosAndRot();
-        entity.setDeltaMovement(0.0D, 0.0D, 0.0D);
-        entity.yHeadRot = entity.getYRot();
-        entity.yHeadRotO = entity.getYRot();
-        entity.yBodyRot = entity.getYRot();
-        entity.yBodyRotO = entity.getYRot();
-        entity.walkAnimation.setSpeed(0.0F);
-        entity.attackAnim = 0.0F;
-        entity.oAttackAnim = 0.0F;
-        entity.swinging = false;
-        entity.swingTime = 0;
-        entity.hurtTime = 0;
-        entity.deathTime = 0;
-    }
     public static void clear() {
         frozenUntilMillis = 0L;
         FROZEN_ENTITIES.clear();

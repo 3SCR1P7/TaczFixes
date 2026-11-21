@@ -197,6 +197,8 @@
         "player.MixinLocalPlayerShootPreCheck",
         "player.MixinLocalPlayerShootRecoilKnockback",
         "renderer.MixinItemInHandRendererFreeze",
+        "renderer.MixinLivingEntityRendererFreezePartial",
+        "entity.MixinLevelGuardTickFreezeClient",
         "entity.MixinLivingEntityTickFreeze",
         "entity.MixinPlayerTickFreeze",
         "entity.MixinLocalPlayerTickFreeze",
