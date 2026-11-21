@@ -234,7 +234,11 @@ final class OffhandShooter {
         }
 
         boolean matchesBoundStack(UUID expectedStackId) {
-            return expectedStackId != null && IGun.getIGunOrNull(this.player.getOffhandItem()) != null;
+            // 客户端每个副手包都带 stackId: 必须与实际绑定的副手枪一致, 否则换枪/丢枪后的滞后包
+            // 会被应用到当前副手枪上(主手/副手切换时尤其危险)。
+            return expectedStackId != null && this.boundStackId != null
+                    && expectedStackId.equals(this.boundStackId)
+                    && IGun.getIGunOrNull(this.player.getOffhandItem()) != null;
         }
 
         void interruptReloadBeforeRemoval() {

@@ -276,7 +276,7 @@ public abstract class MixinGunRefitScreenCustomSlot extends Screen implements co
                 CustomSlotGuiState.setPendingViewReset(false);
                 CustomSlotGuiState.set(slotId);
             }
-            this.init();
+            ((com.tacz.guns.client.gui.GunRefitScreen) (Object) this).m_7856_();
         });
         int size = com.ssscript.taczfixes.client.util.RefitSlotLayout.size();
         button.setWidth(size);

@@ -127,8 +127,6 @@
     "config.taczfixes.entry.gun_level.kill_xp_max":  "每次击杀获得枪械经验最大值",
     "config.taczfixes.entry.gun_level.player_xp_bonus_min":  "目标每掉落1点玩家经验额外获得枪械经验最小值",
     "config.taczfixes.entry.gun_level.player_xp_bonus_max":  "目标每掉落1点玩家经验额外获得枪械经验最大值",
-    "config.taczfixes.entry.gun_level.base_kills":  "0级到1级所需击杀数",
-    "config.taczfixes.entry.gun_level.increment":  "每升1级额外所需击杀数",
     "config.taczfixes.entry.gun_level.bottle_enabled":  "铁砧使用附魔之瓶增加枪械经验",
     "config.taczfixes.entry.gun_level.bottle_exp_per_bottle":  "每瓶附魔之瓶增加的枪械经验值",
     "config.taczfixes.entry.gun_level.bottle_cost":  "铁砧使用附魔之瓶消耗的玩家经验等级",

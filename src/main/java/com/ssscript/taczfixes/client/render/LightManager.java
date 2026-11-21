@@ -114,10 +114,6 @@ public enum LightManager {
         return UV_LIGHT.size() + NO_UV_LIGHT.size();
     }
 
-    public FloatBuffer getBuffer() {
-        return BUFFER;
-    }
-
     public void renderLevelPre(int blockLightSize, float camX, float camY, float camZ) {
         if (lightUBO == null || envUBO == null) {
             return;

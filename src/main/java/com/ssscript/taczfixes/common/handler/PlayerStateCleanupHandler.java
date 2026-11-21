@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.util.DecapitationHelper;
 import com.ssscript.taczfixes.common.util.GunBlocking;
 import com.ssscript.taczfixes.common.util.GunShieldHelper;
 import com.ssscript.taczfixes.common.util.LimbDamageHelper;
+import com.ssscript.taczfixes.common.util.OverloadDamage;
 import com.ssscript.taczfixes.common.util.PatienceHelper;
 import com.ssscript.taczfixes.common.util.ReloadExtraTracker;
 import com.ssscript.taczfixes.common.util.SpreadState;
@@ -37,6 +38,7 @@ public class PlayerStateCleanupHandler {
         GunShieldHelper.clear(id);
         PatienceHelper.clear(id);
         ReloadExtraTracker.clear(id);
+        OverloadDamage.clear(id);
         DecapitationHelper.clear(id);
         GunBlocking.clearState(id);
         if (net.minecraftforge.fml.ModList.get().isLoaded("irons_spellbooks")) {

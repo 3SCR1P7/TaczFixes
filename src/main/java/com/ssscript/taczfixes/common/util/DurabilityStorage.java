@@ -30,10 +30,6 @@ public final class DurabilityStorage {
         return Math.max(0, cfg.durability);
     }
 
-    public static boolean isDurableGun(ItemStack stack) {
-        return getMax(stack) > 0;
-    }
-
     public static int get(ItemStack stack) {
         if (stack == null || stack.isEmpty()) {
             return 0;

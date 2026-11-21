@@ -93,9 +93,6 @@ public final class DualWieldClient {
     private static boolean lastOffhandUseActive;
     private static boolean lastOffhandShieldRaised;
     private static boolean lastMainItemUseDown;
-    private static boolean mainItemUseRepeat;
-    private static int mainItemUseCooldown;
-    private static long lastOffhandItemAttackMs;
 
     private static boolean lastRightDown;
     private static boolean lastLeftShootSuccess;
@@ -192,12 +189,6 @@ public final class DualWieldClient {
 
     static boolean isOffhandShotPending() {
         return offhandShotPending;
-    }
-
-    public static boolean isOffhandGunMode(LocalPlayer player) {
-        return player != null
-                && IGun.getIGunOrNull(player.getOffhandItem()) != null
-                && !DualWieldEligibility.isForbiddenDualItem(player.getMainHandItem());
     }
 
     /**
@@ -971,56 +962,6 @@ public final class DualWieldClient {
         }
     }
 
-    private static boolean useMainItemOrAttack(LocalPlayer player) {
-        net.minecraft.client.multiplayer.MultiPlayerGameMode gameMode = Minecraft.getInstance().gameMode;
-        if (gameMode == null) {
-            return false;
-        }
-        ItemStack stack = player.getMainHandItem();
-        if (stack.isEmpty()) {
-            return false;
-        }
-        if (player.isUsingItem() && player.getUsedItemHand() == InteractionHand.MAIN_HAND) {
-            return true;
-        }
-        net.minecraft.world.phys.HitResult hit = Minecraft.getInstance().hitResult;
-        if (hit instanceof net.minecraft.world.phys.EntityHitResult entityHit) {
-            net.minecraft.world.InteractionResult result =
-                    gameMode.interactAt(player, entityHit.getEntity(), entityHit, InteractionHand.MAIN_HAND);
-            if (!result.consumesAction()) {
-                result = gameMode.interact(player, entityHit.getEntity(), InteractionHand.MAIN_HAND);
-            }
-            if (result.consumesAction()) {
-                player.swing(InteractionHand.MAIN_HAND, true);
-                return true;
-            }
-        } else if (hit instanceof net.minecraft.world.phys.BlockHitResult blockHit
-                && !player.level().getBlockState(blockHit.getBlockPos()).isAir()) {
-            if (gameMode.useItemOn(player, InteractionHand.MAIN_HAND, blockHit).consumesAction()) {
-                player.swing(InteractionHand.MAIN_HAND, true);
-                return true;
-            }
-        }
-        if (!(stack.getItem() instanceof net.minecraft.world.item.BlockItem)) {
-            net.minecraft.world.InteractionResult result = gameMode.useItem(player, InteractionHand.MAIN_HAND);
-            if (result.consumesAction()) {
-                return true;
-            }
-            if (stack.getUseDuration() > 0) {
-                var food = stack.getItem().getFoodProperties();
-                if (food != null && !player.canEat(food.canAlwaysEat())) {
-                    return true;
-                }
-                if (!player.isUsingItem()) {
-                    player.startUsingItem(InteractionHand.MAIN_HAND);
-                }
-                return true;
-            }
-        }
-        attackMainHand(player);
-        return false;
-    }
-
     private static void startOffhandUse(LocalPlayer player) {
         ItemStack stack = player.getOffhandItem();
         // 盾牌仍然走原版 "举起" 流程; 其它物品一律交给 item 自己的 use() 决定:
@@ -1196,13 +1137,6 @@ public final class DualWieldClient {
         } catch (RuntimeException exception) {
             TaczFixesMod.LOGGER.error("Failed to play offhand third-person animation {}", animation, exception);
         }
-    }
-
-    private static boolean hasClientDisplay(ItemStack stack) {
-        IGun gun = IGun.getIGunOrNull(stack);
-        return gun != null && TimelessAPI.getClientGunIndex(gun.getGunId(stack)).isPresent() && ((Boolean) TimelessAPI.getGunDisplay(stack).map(display -> {
-            return Boolean.valueOf((display.getGunModel() == null || display.getAnimationStateMachine() == null) ? false : true);
-        }).orElse(false)).booleanValue();
     }
 
     private static boolean sameLogicalStack(ItemStack first, ItemStack second) {

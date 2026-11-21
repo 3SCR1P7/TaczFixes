@@ -73,7 +73,6 @@ public final class PbrBloom {
         active = true;
         dirty = false;
         scopeMaskValid = false;
-        PbrRenderer.resetScopeDivision();
         int interval = Math.max(1, Config.PBR_BLOOM_UPDATE_INTERVAL.get());
         buildThisFrame = (bloomFrameCounter++ % interval) == 0L;
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
@@ -82,11 +81,6 @@ public final class PbrBloom {
             chainValid = false;
             Minecraft.getInstance().getMainRenderTarget().bindWrite(true);
         }
-    }
-
-    /** 本帧是否在构建泛光链路(隔帧更新时为 false, 合成继续复用上一帧结果)。 */
-    public static boolean isBuildingEmission() {
-        return buildThisFrame;
     }
 
     /** 泛光配置与着色器是否就绪(与当前帧有没有自发光内容无关)。 */
@@ -306,6 +300,7 @@ public final class PbrBloom {
      * 回读发光附件, 确认加速渲染的主绘制真的把发光写进去了(alpha = 1 的位置)。
      * 验证通过后 {@link PbrRenderer#shouldReplayEmission} 才不再为泛光补画整个模型;
      * 验证不通过就继续走补画, 观感与以前一致, 不会出现"开了 AR 就没泛光"。
+     * 只做最多 3 次整图回读, 保证"发光只在屏幕某一条带"时也不会误判。
      */
     private static void verifyAcceleratedEmission() {
         if (emission == null || !PbrRenderer.requestAcceleratedEmissionVerify()) {
@@ -316,8 +311,7 @@ public final class PbrBloom {
         if (width <= 0 || height <= 0) {
             return;
         }
-        int bandHeight = Math.max(1, Math.min(64, height / 8));
-        int size = width * bandHeight * 4;
+        int size = width * height * 4;
         java.nio.ByteBuffer buffer = verifyBuffer;
         if (buffer == null || buffer.capacity() < size) {
             buffer = BufferUtils.createByteBuffer(size);
@@ -327,17 +321,18 @@ public final class PbrBloom {
         try {
             GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, emission.frameBufferId);
             GL11.glReadBuffer(GL30.GL_COLOR_ATTACHMENT0);
-            for (int band = 0; band < 4; band++) {
-                int y = (int) ((long) height * (band + 1) / 5) - bandHeight / 2;
-                y = Math.max(0, Math.min(height - bandHeight, y));
-                buffer.clear();
-                GL11.glReadPixels(0, y, width, bandHeight, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
-                for (int i = 3; i < size; i += 4) {
-                    if (buffer.get(i) != 0) {
-                        PbrRenderer.confirmAcceleratedEmission();
-                        return;
-                    }
+            buffer.clear();
+            GL11.glReadPixels(0, 0, width, height, GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, buffer);
+            int found = -1;
+            for (int i = 3; i < size; i += 4) {
+                if (buffer.get(i) != 0) {
+                    found = i / 4;
+                    break;
                 }
+            }
+            if (found >= 0) {
+                PbrRenderer.confirmAcceleratedEmission();
+                return;
             }
         } catch (Throwable ignored) {
         } finally {
@@ -654,10 +649,6 @@ public final class PbrBloom {
             id = iGun.getBuiltInAttachmentId(gun, AttachmentType.SCOPE);
         }
         return id == null || DefaultAssets.isEmptyAttachmentId(id) ? null : id;
-    }
-
-    public static boolean scopeStencilAvailable() {
-        return Minecraft.getInstance().getMainRenderTarget().isStencilEnabled();
     }
 
     public static void captureScopeMask() {

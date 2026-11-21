@@ -1,6 +1,5 @@
 package com.ssscript.taczfixes.client.camo;
 
-import com.ssscript.taczfixes.client.util.GunRecolorManager;
 import com.ssscript.taczfixes.common.util.GunColorStorage;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
@@ -108,14 +107,5 @@ public final class DynamicCamo {
     public static void invalidate() {
         cachedStack = null;
         cachedEntry = null;
-    }
-
-    /** 渲染上下文中的当前物品身上生效的迷彩 index(0 = 无)。 */
-    public static int indexForRender() {
-        if (!shaderActive) {
-            return 0;
-        }
-        Entry entry = appliedOn(GunRecolorManager.currentRenderItem());
-        return entry == null ? 0 : entry.index();
     }
 }

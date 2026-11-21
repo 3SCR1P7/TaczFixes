@@ -34,32 +34,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(value = {AttachmentRender.class}, remap = false)
 public abstract class MixinAttachmentRender {
-    @Unique
-    private static boolean taczfixes$scopeBloomPushed;
-
-    @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("HEAD")}, remap = false)
-    private static void taczfixes$pushScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
-                                                  ResourceLocation location, Consumer<IFunctionalRenderer> consumer,
-                                                  ItemDisplayContext transformType, PoseStack poseStack,
-                                                  MultiBufferSource bufferSource, int light, int overlay,
-                                                  ClientAttachmentIndex index, CallbackInfo callback) {
-        taczfixes$scopeBloomPushed = type == AttachmentType.SCOPE && index != null && index.isScope();
-        if (taczfixes$scopeBloomPushed) {
-            PbrRenderer.pushScopeAttachment();
-        }
-    }
-
-    @Inject(method = {RENDER_ATTACHMENT_LAMBDA}, at = {@At("TAIL")}, remap = false)
-    private static void taczfixes$popScopeBloom(ItemStack attachmentStack, ItemStack gunStack, AttachmentType type,
-                                                 ResourceLocation location, Consumer<IFunctionalRenderer> consumer,
-                                                 ItemDisplayContext transformType, PoseStack poseStack,
-                                                 MultiBufferSource bufferSource, int light, int overlay,
-                                                 ClientAttachmentIndex index, CallbackInfo callback) {
-        if (taczfixes$scopeBloomPushed) {
-            taczfixes$scopeBloomPushed = false;
-            PbrRenderer.popScopeAttachment();
-        }
-    }
 
     private static final String RENDER_ATTACHMENT_LAMBDA =
             "lambda$renderAttachment$1(Lnet/minecraft/world/item/ItemStack;Lnet/minecraft/world/item/ItemStack;"

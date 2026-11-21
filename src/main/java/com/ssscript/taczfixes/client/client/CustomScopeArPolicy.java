@@ -29,10 +29,6 @@ public final class CustomScopeArPolicy {
         if (frames.isEmpty()) FRAMES.remove();
     }
 
-    public static boolean requiresConventionalRendering() {
-        return Boolean.TRUE.equals(FRAMES.get().peek());
-    }
-
     private static boolean hasCustomScope(ItemStack gun) {
         if (gun == null || gun.isEmpty()) return false;
         IGun igun = IGun.getIGunOrNull(gun);

@@ -418,7 +418,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         }
         if (wasActive) {
             taczfixes$appliedSearch = "";
-            this.init();
+            ((GunRefitScreen) (Object) this).m_7856_();
         }
     }
 
@@ -435,7 +435,7 @@ public abstract class MixinGunRefitScreenPresetButtons extends Screen {
         if (query.isEmpty() || type == AttachmentType.NONE) {
             com.ssscript.taczfixes.client.util.RefitSearchState.clear();
             if (wasActive) {
-                this.init();
+                ((GunRefitScreen) (Object) this).m_7856_();
             }
         } else {
             com.ssscript.taczfixes.client.util.RefitSearchState.setQuery(query);

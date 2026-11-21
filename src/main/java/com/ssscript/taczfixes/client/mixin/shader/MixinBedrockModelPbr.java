@@ -29,6 +29,10 @@ public abstract class MixinBedrockModelPbr {
                                              MultiBufferSource source, CallbackInfo ci) {
         taczfixes$modelIlluminated = PbrRenderer.enabled()
                 && PbrRenderer.modelHasIlluminated(((BedrockModel) (Object) this).getShouldRender());
+        if (taczfixes$modelIlluminated) {
+            // 加速渲染路径下补画可能被关闭, 这里在模型层标记本帧有发光来源, 保证主绘制会打开发光 MRT。
+            PbrRenderer.markEmissionSource();
+        }
     }
 
     @ModifyVariable(method = RENDER, at = @At("HEAD"), argsOnly = true, remap = false)
@@ -40,9 +44,13 @@ public abstract class MixinBedrockModelPbr {
     private void taczfixes$replayEmission(PoseStack pose, ItemDisplayContext context, RenderType type,
                                           int light, int overlay, float red, float green, float blue, float alpha,
                                           MultiBufferSource source, CallbackInfo ci) {
-        if (PbrRenderer.isEmissionReplay() || !PbrRenderer.shouldReplayEmission(type)) return;
+        if (PbrRenderer.isEmissionReplay() || !PbrRenderer.shouldReplayEmission(type)) {
+            return;
+        }
         // 不可能发光的模型(没有自发光骨骼、材质也不发光)不需要补画整遍几何。
-        if (!taczfixes$modelIlluminated && !PbrRenderer.emissionPossible(type)) return;
+        if (!taczfixes$modelIlluminated && !PbrRenderer.emissionPossible(type)) {
+            return;
+        }
         PbrRenderer.beginEmissionReplay();
         com.tacz.guns.compat.ar.ARCompat.disableAcceleration();
         try {

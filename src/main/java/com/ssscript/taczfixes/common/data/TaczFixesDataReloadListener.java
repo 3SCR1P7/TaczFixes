@@ -44,6 +44,8 @@ public class TaczFixesDataReloadListener implements PreparableReloadListener {
                     TaczFixesDataManager.clear();
                     TaczFixesDataManager.putAll(result.gunData);
                     TaczFixesDataManager.putAll(scanFileSystemGunData());
+                    // 重载可能删掉/改名自定义开火模式: 先清空再重建, 否则旧 id 仍可被 NBT 激活。
+                    CustomFireModeManager.clear();
                     syncCustomFireModes();
                     TaczFixesDataManager.syncPosAlterRanges();
                     CustomSlotManager.putAllTags(result.allowTags);

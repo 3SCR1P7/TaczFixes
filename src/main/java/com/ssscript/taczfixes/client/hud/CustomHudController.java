@@ -128,6 +128,9 @@ public final class CustomHudController {
 
         // 界面打开时 HUD 不可见; 保留 Document, 关闭界面后的下一 tick 再刷新数据。
         if (minecraft.screen != null) {
+            // 复位 AUI 渲染标志: 不复位会让 MixinGunHudOverlay/MixinHeatBarOverlay 一直吞掉原生 HUD,
+            // 关闭界面后本方法末尾会重新置 true, 恢复过程与原逻辑一致。
+            CustomHudManager.setApricityRendering(false);
             return;
         }
 

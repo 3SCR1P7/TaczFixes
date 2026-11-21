@@ -31,6 +31,7 @@ public class ClientMessageStaminaConsumeRaw {
             ServerPlayer player = context.getSender();
             if (player == null) return;
             if (!Config.STAMINA_ENABLED.get()) return;
+            if (!Float.isFinite(message.amount)) return;
             StaminaHelper.consumeWithGunMultiplier(player, Math.max(0f, message.amount));
         });
         context.setPacketHandled(true);

@@ -212,7 +212,9 @@ public class TaczFixesMod {
         event.registerReloadListener(new com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
-                        .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor));
+                        .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor)
+                        // 圆形准星动态贴图缓存也要在资源重载后失效并释放, 否则旧贴图残留且无限增长。
+                        .thenRunAsync(com.ssscript.taczfixes.client.client.ExpandedCircleCrosshair::clear, gameExecutor));
     }
 
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {

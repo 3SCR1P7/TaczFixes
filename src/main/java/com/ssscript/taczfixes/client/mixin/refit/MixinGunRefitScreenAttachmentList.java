@@ -181,7 +181,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen implement
                 RefitTurnPageButton prev = new RefitTurnPageButton(x, y0 - 10, true,
                         btn -> {
                             CustomSlotGuiState.setPage(page - 1);
-                            this.init();
+                            ((GunRefitScreen) (Object) this).m_7856_();
                         });
                 prev.setWidth(slotSize);
                 this.addRenderableWidget(prev);
@@ -190,7 +190,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen implement
                 RefitTurnPageButton next = new RefitTurnPageButton(x, y0 + slotSize * 8 + 2, false,
                         btn -> {
                             CustomSlotGuiState.setPage(page + 1);
-                            this.init();
+                            ((GunRefitScreen) (Object) this).m_7856_();
                         });
                 next.setWidth(slotSize);
                 this.addRenderableWidget(next);
@@ -250,7 +250,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen implement
                 RefitTurnPageButton prev = new RefitTurnPageButton(x, y0 - 10, true,
                         btn -> {
                             CustomSlotGuiState.setPage(page - 1);
-                            this.init();
+                            ((GunRefitScreen) (Object) this).m_7856_();
                         });
                 prev.setWidth(slotSize);
                 this.addRenderableWidget(prev);
@@ -259,7 +259,7 @@ public abstract class MixinGunRefitScreenAttachmentList extends Screen implement
                 RefitTurnPageButton next = new RefitTurnPageButton(x, y0 + slotSize * 8 + 2, false,
                         btn -> {
                             CustomSlotGuiState.setPage(page + 1);
-                            this.init();
+                            ((GunRefitScreen) (Object) this).m_7856_();
                         });
                 next.setWidth(slotSize);
                 this.addRenderableWidget(next);

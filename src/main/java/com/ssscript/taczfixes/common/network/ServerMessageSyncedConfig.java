@@ -24,7 +24,17 @@ public final class ServerMessageSyncedConfig {
     }
 
     public static void encode(ServerMessageSyncedConfig message, FriendlyByteBuf buffer) {
-        List<ConfigSync.Entry> entries = message.entries;
+        // 超长条目会让 writeUtf 抛异常并打断玩家登录流程: 先过滤并告警, 其余条目照常同步。
+        List<ConfigSync.Entry> entries = new ArrayList<>(message.entries.size());
+        for (ConfigSync.Entry entry : message.entries) {
+            if (entry.json() == null || entry.json().length() > MAX_JSON_LENGTH) {
+                com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn(
+                        "taczfixes: synced config value too long ({} chars > {}), skipping {}",
+                        entry.json() == null ? 0 : entry.json().length(), MAX_JSON_LENGTH, entry.path());
+                continue;
+            }
+            entries.add(entry);
+        }
         buffer.writeVarInt(entries.size());
         for (ConfigSync.Entry entry : entries) {
             buffer.writeUtf(entry.spec(), MAX_SPEC_LENGTH);

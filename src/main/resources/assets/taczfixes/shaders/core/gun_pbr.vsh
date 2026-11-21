@@ -38,6 +38,8 @@ void main() {
     vertexDistance = fog_distance(ModelViewMat, IViewRotMat * Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
     rawVertexColor = Color;
+    // 打包光照最低位 = 发光组标记。原版路径由 MixinBedrockPartPbr 写入,
+    // 加速路径由 MixinAcceleratedBufferBuilderPbr 在每次部件绘制前写入。
     illuminatedGroup = UV2.x & 1;
     lightMapColor = texelFetch(Sampler2, UV2 / 16, 0);
     overlayColor = texelFetch(Sampler1, UV1, 0);

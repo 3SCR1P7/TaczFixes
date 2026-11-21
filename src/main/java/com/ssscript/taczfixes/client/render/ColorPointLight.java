@@ -64,12 +64,6 @@ public class ColorPointLight {
         }
     }
 
-    public void update() {
-        if (lightManager != null && offset >= 0 && uv) {
-            lightManager.bufferSubData(offset, getData());
-        }
-    }
-
     protected float[] getData() {
         return new float[]{r, g, b, a, x, y, z, radius};
     }

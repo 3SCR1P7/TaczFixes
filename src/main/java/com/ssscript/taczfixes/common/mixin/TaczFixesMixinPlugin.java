@@ -18,6 +18,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean CREATE_PRESENT;
     private static final boolean ACCELERATED_PRESENT;
     private static final boolean PLAYER_ANIMATOR_PRESENT;
+    private static final boolean ARCANA_PRESENT;
 
     static {
         GD656PEEK_PRESENT = hasResource("org/mods/gd656peek/compat/tacz/TaczPeekHitboxHelper.class");
@@ -30,6 +31,8 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         CREATE_PRESENT = hasResource("com/simibubi/create/content/contraptions/AbstractContraptionEntity.class");
         ACCELERATED_PRESENT = hasResource("com/github/argon4w/acceleratedrendering/core/buffers/accelerated/AcceleratedBufferSource.class");
         PLAYER_ANIMATOR_PRESENT = hasResource("dev/kosmx/playerAnim/api/layered/modifier/AdjustmentModifier.class");
+        // Arcana 的兼容 mixin 直接把 group.taczexpands.* 类型写进了方法签名/调用点, 类不存在时不能应用。
+        ARCANA_PRESENT = hasResource("group/taczexpands/common/accessor/IAccessorAttachmentData.class");
     }
 
     private static boolean hasResource(String path) {
@@ -44,6 +47,14 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     public boolean shouldApplyMixin(String targetClassName, String mixinClassName) {
         if ("com.ssscript.taczfixes.common.mixin.MixinTaczPeekHeadshotLimit".equals(mixinClassName)) {
             return GD656PEEK_PRESENT;
+        }
+        // 客户端 peek 兼容 mixin 直接 @Mixin(gd656peek 的 PeekHandler), 同样要按模组存在与否过滤。
+        if ("com.ssscript.taczfixes.client.mixin.compat.MixinPeekHandler".equals(mixinClassName)) {
+            return GD656PEEK_PRESENT;
+        }
+        // Arcana 兼容 mixin 依赖 group.taczexpands.*, 未安装时直接跳过。
+        if (mixinClassName.contains(".MixinArcana")) {
+            return ARCANA_PRESENT;
         }
         if ("com.ssscript.taczfixes.common.mixin.MixinEntityKineticBulletCreateCollision".equals(mixinClassName)) {
             return CREATE_PRESENT;

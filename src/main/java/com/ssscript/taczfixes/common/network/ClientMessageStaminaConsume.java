@@ -31,6 +31,7 @@ public class ClientMessageStaminaConsume {
             ServerPlayer player = context.getSender();
             if (player == null) return;
             if (!Config.STAMINA_ENABLED.get()) return;
+            if (!Float.isFinite(message.parcoolAmount)) return;
             float amount = Math.max(0f, message.parcoolAmount)
                     * Config.STAMINA_PARCOOL_CONSUMPTION_MULTIPLIER.get().floatValue()
                     * (1f + StaminaHelper.gunWeight(player) * Config.STAMINA_WEIGHT_CONSUMPTION_PER_KG.get().floatValue())

@@ -48,7 +48,7 @@ public class MixinLivingEntityReloadExtraAmmo {
         if (iGun == null) {
             return;
         }
-        ReloadExtraTracker.capture(this.shooter.getUUID(), iGun.getCurrentAmmoCount(gun));
+        ReloadExtraTracker.capture(this.shooter.getUUID(), this.data, iGun.getCurrentAmmoCount(gun));
     }
 
     @Inject(method = "tickReloadState", at = @At("HEAD"), remap = false)
@@ -82,11 +82,11 @@ public class MixinLivingEntityReloadExtraAmmo {
         if (n == null || n == 0) {
             return;
         }
-        if (ReloadExtraTracker.isApplied(this.shooter.getUUID())) {
+        if (ReloadExtraTracker.isApplied(this.data)) {
             return;
         }
-        ReloadExtraTracker.markApplied(this.shooter.getUUID());
-        int extra = Math.min(ReloadExtraTracker.getPreAmmo(this.shooter.getUUID()), n);
+        ReloadExtraTracker.markApplied(this.data);
+        int extra = Math.min(ReloadExtraTracker.getPreAmmo(this.data), n);
         if (extra == 0) {
             return;
         }

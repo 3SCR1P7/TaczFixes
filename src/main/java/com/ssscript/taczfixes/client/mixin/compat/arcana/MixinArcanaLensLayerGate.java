@@ -23,7 +23,7 @@ public class MixinArcanaLensLayerGate {
                     "(Lnet/minecraft/world/item/ItemStack;" +
                     "Lcom/tacz/guns/api/item/attachment/AttachmentType;)" +
                     "Lnet/minecraft/resources/ResourceLocation;",
-            remap = false), remap = false)
+            remap = false), require = 0, remap = false)
     private static ResourceLocation taczfixes$customScopeId(IGun gun, ItemStack stack, AttachmentType type) {
         if (type == AttachmentType.SCOPE) {
             ResourceLocation custom = ScopeSwitchState.activeCustomScopeId(stack);

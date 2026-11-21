@@ -9,13 +9,18 @@ import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.common.util.DualReloadTimeController;
 import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
 import com.ssscript.taczfixes.common.util.OffhandShooterManager;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.config.common.GunConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
+import com.tacz.guns.network.message.ServerMessageSound;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
+import com.tacz.guns.resource.pojo.data.gun.Bolt;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.sound.SoundManager;
 import com.tacz.guns.util.CycleTaskHelper;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -24,6 +29,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -399,6 +405,10 @@ public abstract class MixinModernKineticGunScriptAPI {
         if (com.ssscript.taczfixes.common.util.ChargeStorage.getMax(this.itemStack) <= 0) {
             return;
         }
+        // 本注入早于 reduceAmmoOnce: 空仓/弹药被抢时原版不会消耗弹药, 因此也不应扣电
+        if (!taczfixes$hasConsumableAmmo(needConsumeAmmo)) {
+            return;
+        }
         if (!com.ssscript.taczfixes.common.util.ChargeStorage.consume(this.itemStack, cfg.fire_consumption.intValue())
                 && Boolean.TRUE.equals(cfg.blocking_fire)) {
             taczfixes$playDryFire();
@@ -406,12 +416,30 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
+    /** 空仓反馈: 服务端通过 TaCZ 已有的 ServerMessageSound 包把 dry_fire 声音发给开火玩家, 由客户端解析
+     *  枪械 display 音效后播放。旧实现要求 level().isClientSide, 但 shootOnce 只在服务端执行, 空仓音效永远不播。 */
     @Unique
     private void taczfixes$playDryFire() {
-        if (this.shooter == null || this.shooter.level() == null || !this.shooter.level().isClientSide) {
+        if (this.shooter == null || this.shooter.level() == null || this.shooter.level().isClientSide) {
             return;
         }
-        ClientOnlyDispatch.playDryFireFeedback(this.shooter, this.itemStack);
+        if (!(this.shooter instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        IGun gun = IGun.getIGunOrNull(this.itemStack);
+        if (gun == null) {
+            return;
+        }
+        ResourceLocation gunId = gun.getGunId(this.itemStack);
+        ResourceLocation displayId = gun.getGunDisplayId(this.itemStack);
+        if (gunId == null || displayId == null) {
+            return;
+        }
+        // 与 ClientOnlyDispatch.playDryFireFeedback 语义一致: 只让开火玩家自己听到空仓音效
+        com.tacz.guns.network.NetworkHandler.sendToClientPlayer(
+                new ServerMessageSound(serverPlayer.getId(), gunId, displayId, SoundManager.DRY_FIRE_SOUND,
+                        1.0F, 1.0F, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get().intValue()),
+                serverPlayer);
     }
 
     /** 耐久为 0 时的开火前处理: disable 阻拦开火(播放 dry_fire), remove 移除枪械。 */
@@ -459,10 +487,58 @@ public abstract class MixinModernKineticGunScriptAPI {
         if (consumption <= 0) {
             return;
         }
+        // 与电量同理: 本发不会被 reduceAmmoOnce 消耗弹药时不扣耐久(空仓/手动枪无膛内弹等)
+        if (!taczfixes$hasConsumableAmmo(needConsumeAmmo)) {
+            return;
+        }
         int remaining = com.ssscript.taczfixes.common.util.DurabilityStorage.consume(this.itemStack, consumption);
         if (remaining <= 0 && "remove".equals(com.ssscript.taczfixes.common.util.DurabilityStorage.damageAction(cfg))) {
             taczfixes$removeBrokenGun();
         }
+    }
+
+    /** 本发是否真的会消耗一发弹药。按 reduceAmmoOnce 的判定复刻(无副作用): 空仓/弹药被抢/手动枪无膛内弹时
+     *  原版开火会中止且不消耗, 因此电量与耐久都不应被扣。needConsumeAmmo 为 false(Lua/无限弹药)时按原逻辑放行。 */
+    @Unique
+    private boolean taczfixes$hasConsumableAmmo(boolean needConsumeAmmo) {
+        if (!needConsumeAmmo) {
+            return true;
+        }
+        IGun gun = IGun.getIGunOrNull(this.itemStack);
+        if (gun == null) {
+            return false;
+        }
+        ResourceLocation gunId = gun.getGunId(this.itemStack);
+        if (gunId == null) {
+            return false;
+        }
+        GunData gunData = TimelessAPI.getCommonGunIndex(gunId)
+                .map(index -> index.getGunData()).orElse(null);
+        Bolt bolt = gunData == null ? null : gunData.getBolt();
+        if (bolt == null) {
+            return false;
+        }
+        // 手动枪(reduceAmmoOnce 只消耗膛内那发)必须膛内有弹; 开膛枪不消耗膛内弹
+        boolean hasAmmoInBarrel = gun.hasBulletInBarrel(this.itemStack) && bolt != Bolt.OPEN_BOLT;
+        if (bolt == Bolt.MANUAL_ACTION) {
+            return hasAmmoInBarrel;
+        }
+        boolean hasInventoryAmmo;
+        if (!gun.useInventoryAmmo(this.itemStack)) {
+            hasInventoryAmmo = false;
+        } else {
+            boolean needCheck = gunData.getReloadData() == null
+                    || IGunOperator.fromLivingEntity(this.shooter).needCheckAmmo() && !gunData.getReloadData().isInfinite();
+            hasInventoryAmmo = gun.hasInventoryAmmo(this.shooter, this.itemStack, needCheck);
+        }
+        boolean noAmmo = gun.useInventoryAmmo(this.itemStack)
+                ? !hasInventoryAmmo
+                : gun.getCurrentAmmoCount(this.itemStack) < 1;
+        if (!noAmmo) {
+            return true;
+        }
+        // 弹匣/背包无弹时, 闭膛枪只有膛内还留有一发才会被 reduceAmmoOnce 消耗
+        return bolt == Bolt.CLOSED_BOLT && hasAmmoInBarrel;
     }
 
     /** 移除损坏的枪械并播放原版损坏音效(仅服务端)。 */
@@ -585,9 +661,6 @@ public abstract class MixinModernKineticGunScriptAPI {
                 boolean continueTask = task.getAsBoolean();
                 completedNormally = true;
                 OffhandShooterManager.popActiveData();
-                if (1 == 0 && completionReported.compareAndSet(false, true)) {
-                    OffhandShooterManager.finishManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
-                }
                 int invocationCount = completedInvocations.incrementAndGet();
                 boolean reachedCycleLimit = cycles > 0 && invocationCount >= cycles;
                 if ((!continueTask || reachedCycleLimit) && completionReported.compareAndSet(false, true)) {

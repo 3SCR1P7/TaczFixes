@@ -122,7 +122,7 @@ public abstract class MixinGunRefitScreenSlotAdapter extends Screen {
         CustomSlotStorage.setAdapter(gun, selected, adapterId);
         NetworkHandler.CHANNEL.sendToServer(new ClientMessageSetCustomSlotAdapter(selected, adapterId));
         this.currentPage = 0;
-        this.init();
+        ((GunRefitScreen) (Object) this).m_7856_();
         ci.cancel();
     }
 }

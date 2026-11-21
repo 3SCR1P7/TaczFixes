@@ -23,7 +23,7 @@ public class MixinArcanaLaserToggle {
     @Unique
     private static Method taczfixes$laserFlagMethod;
 
-    @Inject(method = "YroxkNPW", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "YroxkNPW", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void taczfixes$mirrorMainHandLaserToggle(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || stack == null || stack.isEmpty()) {

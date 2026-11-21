@@ -89,6 +89,10 @@ public class GunDataEditorHelper {
                 }
             }
             TaczFixesDataManager.put(dataId, data);
+            // 游戏内编辑同样要刷新运行时缓存, 否则界面上"已保存"但必须 /reload 才生效。
+            com.ssscript.taczfixes.common.data.CustomFireModeManager.put(dataId, data.fire_mode);
+            com.ssscript.taczfixes.common.data.CustomSlotManager.bumpDataStamp();
+            TaczFixesDataManager.syncPosAlterRanges();
         } catch (Exception ignored) {
         }
     }

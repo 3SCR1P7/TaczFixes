@@ -1,12 +1,15 @@
 package com.ssscript.taczfixes.client.client;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.ssscript.taczfixes.TaczFixesMod;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.client.renderer.texture.TextureManager;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.util.Mth;
 import net.minecraftforge.api.distmarker.Dist;
@@ -15,7 +18,10 @@ import net.minecraftforge.api.distmarker.OnlyIn;
 @OnlyIn(Dist.CLIENT)
 public final class ExpandedCircleCrosshair {
     private static final int SIZE = 256;
-    private static final Map<String, ResourceLocation> CACHE = new HashMap<>();
+    /** 动态贴图缓存上限: 3 种圆形准星贴图 × 约 37 个半像素偏移档, 再留余量。 */
+    private static final int MAX_TEXTURES = 128;
+    /** accessOrder=true: 读缓存即算一次访问, 超限时淘汰最久未使用的贴图。 */
+    private static final Map<String, ResourceLocation> CACHE = new LinkedHashMap<>(16, 0.75f, true);
     private static final AtomicInteger NEXT_ID = new AtomicInteger();
 
     private ExpandedCircleCrosshair() {
@@ -23,7 +29,8 @@ public final class ExpandedCircleCrosshair {
 
     public static ResourceLocation get(CrosshairPartLayout layout, float offset) {
         float quantized = Math.round(offset * 2.0f) * 0.5f;
-        String key = System.identityHashCode(layout) + ":" + quantized;
+        // 用布局来源贴图代替 identityHashCode: 布局对象被回收后哈希可能被复用, 会取到别的准星的错误贴图。
+        String key = (layout.sourceTexture() == null ? "empty" : layout.sourceTexture().toString()) + ":" + quantized;
         ResourceLocation cached = CACHE.get(key);
         if (cached != null) {
             return cached;
@@ -35,7 +42,41 @@ public final class ExpandedCircleCrosshair {
                 "dynamic_crosshair/" + NEXT_ID.incrementAndGet());
         Minecraft.getInstance().getTextureManager().register(location, texture);
         CACHE.put(key, location);
+        evictOverflow();
         return location;
+    }
+
+    /** 资源重载时由客户端资源重载链调用: 释放全部已注册动态贴图并清空缓存。 */
+    public static void clear() {
+        int count = CACHE.size();
+        if (count > 0) {
+            if (RenderSystem.isOnRenderThread()) {
+                TextureManager manager = Minecraft.getInstance().getTextureManager();
+                // 在渲染线程才能安全释放 GL 贴图。
+                for (ResourceLocation location : CACHE.values()) {
+                    manager.release(location);
+                }
+            } else {
+                // 不在渲染线程时释放贴图不安全: 只清缓存并记录, 宁可泄漏也不能崩溃。
+                TaczFixesMod.LOGGER.warn(
+                        "taczfixes: skipped releasing {} dynamic crosshair textures outside the render thread", count);
+            }
+        }
+        CACHE.clear();
+    }
+
+    /** 超过上限时按访问顺序淘汰最久未用的贴图并立即释放, 避免动态贴图无限增长。 */
+    private static void evictOverflow() {
+        if (CACHE.size() <= MAX_TEXTURES) {
+            return;
+        }
+        Minecraft minecraft = Minecraft.getInstance();
+        Iterator<Map.Entry<String, ResourceLocation>> iterator = CACHE.entrySet().iterator();
+        while (CACHE.size() > MAX_TEXTURES && iterator.hasNext()) {
+            ResourceLocation stale = iterator.next().getValue();
+            iterator.remove();
+            minecraft.getTextureManager().release(stale);
+        }
     }
 
     private static NativeImage render(CrosshairPartLayout layout, float offset) {
