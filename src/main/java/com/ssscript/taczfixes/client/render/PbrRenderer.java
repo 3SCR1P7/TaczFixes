@@ -3,6 +3,9 @@ import com.ssscript.taczfixes.client.mixin.shader.PbrCompositeAccessor;
 import com.ssscript.taczfixes.client.mixin.shader.PbrStateAccessor;
 import com.ssscript.taczfixes.client.mixin.shader.PbrTextureAccessor;
 
+import com.mojang.blaze3d.pipeline.RenderTarget;
+import java.nio.ByteBuffer;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.mojang.blaze3d.shaders.AbstractUniform;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.ssscript.taczfixes.common.config.Config;
@@ -39,7 +42,7 @@ import java.util.Optional;
 
 @net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT)
 public final class PbrRenderer {
-    static ShaderInstance shader, blurShader, compositeShader, maskShader;
+    static ShaderInstance shader, blurShader, compositeShader, maskShader, smoothShader;
     private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
     private static AbstractUniform uReflectionStrength, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uGlareDepthTest, uFallbackMaterial;
@@ -52,10 +55,13 @@ public final class PbrRenderer {
     private static AbstractUniform uSkyZenith, uSkyHorizon, uSunHorizon, uSunAzimuth, uSunOcclusion;
     private static AbstractUniform uDefaultRoughness, uDefaultMetal, uDefaultReflection, uEnvStrength;
     private static AbstractUniform uAnisotropy, uWetDetail, uSSRStrength, uTime;
+    private static AbstractUniform uSSRSteps, uScreenSize;
     private static AbstractUniform uViewRotX, uViewRotY, uViewRotZ;
     private static AbstractUniform uCameraPos;
     private static AbstractUniform uCamoIndex, uCamoStrength, uCamoEmissive;
     private static AbstractUniform uBlurDirection, uCompositeStrength, uWideStrength, uHasScopeMask;
+    private static AbstractUniform uCompositeScissorRect, uCompositeScissorFade, uCompositeHasScissor;
+    private static AbstractUniform uSmoothAlpha;
     private static VertexBuffer mesh;
     private static int emissionBlendOverride;
     private static boolean acceleratedPbrPass;
@@ -84,13 +90,67 @@ public final class PbrRenderer {
         return emissionReplay;
     }
 
+    /**
+     * 加速渲染主绘制里写出的发光是否已被验证为"真的落到了发光附件上"。
+     * 验证通过前不关闭补画, 避免驱动/状态原因导致泛光直接消失。
+     */
+    private static boolean acceleratedEmissionVerified;
+    private static int acceleratedEmissionVerifyAttempts;
+    private static int acceleratedEmissionWrites;
+
     public static boolean shouldReplayEmission(RenderType type) {
-        // 加速渲染跳过了主绘制, 需要补画一次发光通道; 是否真的画由 draw() 里
-        // canCapture()+hasEmissionSource() 决定(发光骨骼在补画时才会打上标记)。
+        // 加速路径的主绘制已验证能写出泛光光源: 不再为泛光把整个模型补画一遍。
+        if (acceleratedEmissionVerified) {
+            return false;
+        }
         return !isEmissionReplay() && !isAcceleratedPbrPass() && PbrBloom.configured()
                 && com.tacz.guns.compat.ar.ARCompat.shouldAccelerate()
                 && resolve(type) instanceof PbrType
                 && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get());
+    }
+
+    /** 加速路径写入计数(供 {@link PbrBloom} 决定是否要做一次发光附件回读验证)。 */
+    static int acceleratedEmissionWrites() {
+        return acceleratedEmissionWrites;
+    }
+
+    /** 是否还需要一次回读验证; 最多尝试几次, 失败就继续走补画, 不影响观感。 */
+    static boolean requestAcceleratedEmissionVerify() {
+        if (acceleratedEmissionVerified || acceleratedEmissionWrites <= 0
+                || acceleratedEmissionVerifyAttempts >= 3) {
+            return false;
+        }
+        acceleratedEmissionVerifyAttempts++;
+        return true;
+    }
+
+    /** 回读确认发光附件里真的有像素被写入(alpha = 1)后, 才算 AR 路径的发光可用。 */
+    static void confirmAcceleratedEmission() {
+        acceleratedEmissionVerified = true;
+    }
+
+    /** 本模型是否有自发光骨骼(部件或其父链), 用于避免给不可能发光的模型补画。 */
+    public static boolean modelHasIlluminated(java.util.List<? extends com.tacz.guns.client.model.bedrock.BedrockPart> parts) {
+        if (parts == null) {
+            return false;
+        }
+        for (com.tacz.guns.client.model.bedrock.BedrockPart part : parts) {
+            for (com.tacz.guns.client.model.bedrock.BedrockPart node = part; node != null; node = node.getParent()) {
+                if (node.illuminated) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 这个渲染类型背后的材质本身是否会发光(_s 贴图 alpha / 发光迷彩)。 */
+    public static boolean emissionPossible(RenderType type) {
+        RenderType resolved = resolve(type);
+        if (resolved instanceof PbrType pbr) {
+            return pbr.material.emissive() || pbr.camo.emissive() > 0f;
+        }
+        return false;
     }
 
     public static void beginEmissionReplay() {
@@ -166,11 +226,207 @@ public final class PbrRenderer {
     /** 每帧开头清空自发光来源标记(由 {@link PbrBloom#beginFrame()} 调用)。 */
     public static void beginFrame() {
         frameEmission = false;
+        enabledFrameValid = false;
+        acceleratedEmissionWrites = 0;
+        beginEmissionBoundsFrame();
+        // 加速路径的发光在主绘制里写出, 拿不到顶点包围盒: 清掉上一帧的包围盒, 防止用过期区域裁掉光晕。
+        if (acceleratedEmissionVerified) {
+            previousBoundsValid = false;
+        }
+    }
+
+    // ----- 自发光几何的屏幕包围盒(用于泛光 mask/模糊/合成的 glScissor 裁剪) -----
+    private static boolean emissionBoundsValid;
+    private static float emissionMinX, emissionMaxX, emissionMinY, emissionMaxY;
+    private static boolean previousBoundsValid;
+    private static float previousMinX, previousMaxX, previousMinY, previousMaxY;
+
+    private static void beginEmissionBoundsFrame() {
+        if (emissionBoundsValid) {
+            previousBoundsValid = true;
+            previousMinX = emissionMinX;
+            previousMaxX = emissionMaxX;
+            previousMinY = emissionMinY;
+            previousMaxY = emissionMaxY;
+        } else {
+            previousBoundsValid = false;
+        }
+        emissionBoundsValid = false;
+        emissionMinX = Float.POSITIVE_INFINITY;
+        emissionMaxX = Float.NEGATIVE_INFINITY;
+        emissionMinY = Float.POSITIVE_INFINITY;
+        emissionMaxY = Float.NEGATIVE_INFINITY;
+    }
+
+    /**
+     * 检查这批几何是否真的产生自发光像素, 同时累积这些顶点的屏幕 NDC 包围盒。
+     * 材质整体自发光时所有顶点都算; 否则只算 *_illuminated 顶点(打包光照 x 位为 1)。
+     */
+    private static boolean analyzeEmissionGeometry(MeshData data, boolean allEmitted) {
+        // 泛光链路没开时发光附件不会写: 这批几何既不需要标记, 也不需要包围盒, 直接跳过整趟扫描。
+        if (!PbrBloom.configured()) {
+            return false;
+        }
+        try {
+            var state = data.drawState();
+            var format = state.format();
+            int stride = format.getVertexSize();
+            int vertexCount = state.vertexCount();
+            ByteBuffer buffer = data.vertexBuffer();
+            if (stride <= 0 || vertexCount <= 0 || buffer == null) {
+                return allEmitted;
+            }
+            int positionOffset = -1;
+            int uv2Offset = -1;
+            int offset = 0;
+            for (VertexFormatElement element : format.getElements()) {
+                if (element.usage() == VertexFormatElement.Usage.POSITION) {
+                    positionOffset = offset;
+                } else if (element.usage() == VertexFormatElement.Usage.UV && element.index() == 2) {
+                    uv2Offset = offset;
+                }
+                offset += element.byteSize();
+            }
+            if (positionOffset < 0) {
+                return allEmitted;
+            }
+            var projection = RenderSystem.getProjectionMatrix();
+            float p00 = projection.m00(), p10 = projection.m10(), p20 = projection.m20(), p30 = projection.m30();
+            float p01 = projection.m01(), p11 = projection.m11(), p21 = projection.m21(), p31 = projection.m31();
+            float p03 = projection.m03(), p13 = projection.m13(), p23 = projection.m23(), p33 = projection.m33();
+            boolean found = false;
+            float minX = Float.POSITIVE_INFINITY, maxX = Float.NEGATIVE_INFINITY;
+            float minY = Float.POSITIVE_INFINITY, maxY = Float.NEGATIVE_INFINITY;
+            for (int i = 0; i < vertexCount; i++) {
+                int base = i * stride;
+                if (!allEmitted) {
+                    if (uv2Offset < 0) {
+                        continue;
+                    }
+                    short lightMapX = buffer.getShort(base + uv2Offset);
+                    if ((lightMapX & 1) == 0) {
+                        continue;
+                    }
+                }
+                float x = buffer.getFloat(base + positionOffset);
+                float y = buffer.getFloat(base + positionOffset + 4);
+                float z = buffer.getFloat(base + positionOffset + 8);
+                float clipX = p00 * x + p10 * y + p20 * z + p30;
+                float clipY = p01 * x + p11 * y + p21 * z + p31;
+                float clipW = p03 * x + p13 * y + p23 * z + p33;
+                if (clipW <= 1.0E-5F) {
+                    continue;
+                }
+                float ndcX = clipX / clipW;
+                float ndcY = clipY / clipW;
+                if (ndcX < -3.0F || ndcX > 3.0F || ndcY < -3.0F || ndcY > 3.0F) {
+                    continue;
+                }
+                found = true;
+                minX = Math.min(minX, ndcX);
+                maxX = Math.max(maxX, ndcX);
+                minY = Math.min(minY, ndcY);
+                maxY = Math.max(maxY, ndcY);
+            }
+            if (!found) {
+                return false;
+            }
+            emissionBoundsValid = true;
+            emissionMinX = Math.min(emissionMinX, minX);
+            emissionMaxX = Math.max(emissionMaxX, maxX);
+            emissionMinY = Math.min(emissionMinY, minY);
+            emissionMaxY = Math.max(emissionMaxY, maxY);
+            return true;
+        } catch (Throwable ignored) {
+            return allEmitted;
+        }
+    }
+
+    /** 发光屏幕区域换算成指定渲染目标的 scissor 矩形; marginPixels 以主分辨率像素计。 */
+    static boolean emissionScissorRect(int targetWidth, int targetHeight, int mainWidth, int mainHeight,
+                                       float marginPixels, int[] out) {
+        boolean hasCurrent = emissionBoundsValid;
+        boolean hasPrevious = previousBoundsValid;
+        if ((!hasCurrent && !hasPrevious) || targetWidth <= 0 || targetHeight <= 0
+                || mainWidth <= 0 || mainHeight <= 0) {
+            return false;
+        }
+        float minX = hasCurrent ? emissionMinX : previousMinX;
+        float maxX = hasCurrent ? emissionMaxX : previousMaxX;
+        float minY = hasCurrent ? emissionMinY : previousMinY;
+        float maxY = hasCurrent ? emissionMaxY : previousMaxY;
+        if (hasCurrent && hasPrevious) {
+            minX = Math.min(minX, previousMinX);
+            maxX = Math.max(maxX, previousMaxX);
+            minY = Math.min(minY, previousMinY);
+            maxY = Math.max(maxY, previousMaxY);
+        }
+        float marginX = 2.0F * marginPixels / mainWidth;
+        float marginY = 2.0F * marginPixels / mainHeight;
+        minX = Math.max(-1.0F, minX - marginX);
+        maxX = Math.min(1.0F, maxX + marginX);
+        minY = Math.max(-1.0F, minY - marginY);
+        maxY = Math.min(1.0F, maxY + marginY);
+        if (maxX <= minX || maxY <= minY) {
+            return false;
+        }
+        int x0 = (int) Math.floor((minX + 1.0F) * 0.5F * targetWidth);
+        int y0 = (int) Math.floor((minY + 1.0F) * 0.5F * targetHeight);
+        int x1 = (int) Math.ceil((maxX + 1.0F) * 0.5F * targetWidth);
+        int y1 = (int) Math.ceil((maxY + 1.0F) * 0.5F * targetHeight);
+        x0 = Math.max(0, x0);
+        y0 = Math.max(0, y0);
+        x1 = Math.min(targetWidth, x1);
+        y1 = Math.min(targetHeight, y1);
+        if (x1 <= x0 || y1 <= y0) {
+            return false;
+        }
+        out[0] = x0;
+        out[1] = y0;
+        out[2] = x1 - x0;
+        out[3] = y1 - y0;
+        return true;
+    }
+
+    /** enabled() 在一帧内的结果不会变(只受配置/光影包/资源重载影响), 缓存到下一帧开头。 */
+    private static boolean enabledFrameValid;
+    private static boolean enabledFrameValue;
+
+    /** 记录最近一次设色掩码(由 GlStateManager._colorMask 的 mixin 维护), 省掉每个部件一次 GL 查询。 */
+    private static boolean colorWriteRed = true, colorWriteGreen = true, colorWriteBlue = true;
+
+    public static void setTrackedColorMask(boolean red, boolean green, boolean blue) {
+        colorWriteRed = red;
+        colorWriteGreen = green;
+        colorWriteBlue = blue;
+    }
+
+    /** 彩色通道是否可写; 阴影阶段(关色写)不参与 PBR 路由。 */
+    public static boolean colorWritesEnabled() {
+        return colorWriteRed || colorWriteGreen || colorWriteBlue;
     }
 
     /** 记录一个自发光来源。 */
     public static void markEmissionSource() {
         frameEmission = true;
+    }
+
+    /**
+     * 从模型层兜底判断有没有自发光骨骼: 加速渲染会在部件 {@code compile()} 的 HEAD 直接接管并取消,
+     * 部件层的发光标记可能拿不到, 这里按"模型 -> 部件 -> 父链"扫一遍补上。
+     */
+    public static void markModelEmissionSource(java.util.List<? extends com.tacz.guns.client.model.bedrock.BedrockPart> parts) {
+        if (parts == null) {
+            return;
+        }
+        for (com.tacz.guns.client.model.bedrock.BedrockPart part : parts) {
+            for (com.tacz.guns.client.model.bedrock.BedrockPart node = part; node != null; node = node.getParent()) {
+                if (node.illuminated) {
+                    frameEmission = true;
+                    return;
+                }
+            }
+        }
     }
 
     /** 本帧是否有自发光内容可泛。 */
@@ -303,12 +559,20 @@ public final class PbrRenderer {
         setUniform(uCelestialColor, light.red(), light.green(), light.blue());
         setUniform(uSkyAmbient, light.ambient());
         // A bounded ray catches ceilings and walls in the light's actual direction.
-        var end = origin.add(new Vec3(light.x(), light.y(), 0).scale(96));
-        var cameraEntity = camera.getEntity();
-        boolean visible = cameraEntity == null
-                || level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE, cameraEntity)).getType() == HitResult.Type.MISS;
-        setUniform(uCelestialVisibility, updateCelestialVisibility(visible ? 1f : 0f, dt));
+        // 天空可见度本来就做了指数平滑, 射线 ~10Hz 重算 + 移动超过 1 格才重算, 省掉每帧一次 96 格拾取。
+        long skyNow = System.currentTimeMillis();
+        if (skyNow - skyVisibilityCheckedAt >= 100L || skyVisibilityOrigin.distanceToSqr(origin) > 1.0D
+                || skyVisibilityLevel != level) {
+            skyVisibilityCheckedAt = skyNow;
+            skyVisibilityOrigin = origin;
+            skyVisibilityLevel = level;
+            var end = origin.add(new Vec3(light.x(), light.y(), 0).scale(96));
+            var cameraEntity = camera.getEntity();
+            skyVisibilityResult = cameraEntity == null
+                    || level.clip(new ClipContext(origin, end, ClipContext.Block.COLLIDER,
+                    ClipContext.Fluid.NONE, cameraEntity)).getType() == HitResult.Type.MISS;
+        }
+        setUniform(uCelestialVisibility, updateCelestialVisibility(skyVisibilityResult ? 1f : 0f, dt));
         float skyExposure = level.getBrightness(LightLayer.SKY, BlockPos.containing(origin)) / 15f;
         setUniform(uLocalSkyExposure, skyExposure);
         // 原版云层遮挡: 太阳/月亮被云挡住时减弱直射反光。
@@ -398,6 +662,11 @@ public final class PbrRenderer {
     }
 
     private static float smoothedCloudDim = 1f;
+    /** 天空可见度射线节流状态(见 updateCelestialLight)。 */
+    private static long skyVisibilityCheckedAt;
+    private static Vec3 skyVisibilityOrigin = Vec3.ZERO;
+    private static net.minecraft.world.level.Level skyVisibilityLevel;
+    private static boolean skyVisibilityResult = true;
     /** 潮湿状态(暗化/降粗糙度): 淋雨 5s 变湿, 停雨 8s 阴干; 入水 1s 浸湿。 */
     private static float handWetness, worldWetness;
     /** 水膜细节(波纹): 约 1s 涨满 / 1s 退净, 明显快于潮湿状态。 */
@@ -525,20 +794,48 @@ public final class PbrRenderer {
     private static final Vec3[] lightSlotPos = new Vec3[LOCAL_LIGHT_SLOTS];
     private static final java.util.List<LightCandidate> LIGHT_CANDIDATES = new java.util.ArrayList<>();
     private static long localLightNextScan = 0L;
+    private static Vec3 lastLocalLightScanOrigin = Vec3.ZERO;
+    private static net.minecraft.world.level.Level lastLocalLightScanLevel;
+    private static int lastLocalLightBlockLight = -1;
     private static long lastPbrDrawAt = 0L;
 
     private record LightCandidate(double score, Vec3 position, float red, float green, float blue, float target) {
     }
 
+    /** 客户端方块更新(放/拆光源、放/拆遮挡物)时调用: 变化落在扫描范围内就立刻重扫。 */
+    public static void invalidateLocalLights(BlockPos pos) {
+        if (pos == null) {
+            return;
+        }
+        Vec3 origin = lastLocalLightScanOrigin;
+        if (Math.abs(pos.getX() - origin.x) <= 7.0D
+                && Math.abs(pos.getY() - origin.y) <= 5.0D
+                && Math.abs(pos.getZ() - origin.z) <= 7.0D) {
+            localLightNextScan = 0L;
+        }
+    }
+
     private static void updateLocalLights(net.minecraft.world.level.Level level, Vec3 origin, float dt) {
         long now = System.currentTimeMillis();
-        if (now >= localLightNextScan) {
-            localLightNextScan = now + 200L;
-            LIGHT_CANDIDATES.clear();
+        BlockPos center = BlockPos.containing(origin);
+        int blockLight = level.getBrightness(LightLayer.BLOCK, center);
+        // 附近只要有可见光源, 玩家所在格几乎一定有方块光; 方块光为 0 时不可能有可见的方块光源, 直接跳过扫描。
+        // 重扫触发: 玩家移动超过 1.5 格 / 光照等级变化(放拆光源) / 超过 1s 兜底。
+        boolean moved = lastLocalLightScanOrigin.distanceToSqr(origin) > 1.0D;
+        boolean changed = blockLight != lastLocalLightBlockLight || lastLocalLightScanLevel != level;
+        if (!moved && !changed && now < localLightNextScan) {
+            updateLocalLightSlots(origin, dt);
+            return;
+        }
+        localLightNextScan = now + 1000L;
+        lastLocalLightScanOrigin = origin;
+        lastLocalLightScanLevel = level;
+        lastLocalLightBlockLight = blockLight;
+        LIGHT_CANDIDATES.clear();
+        if (blockLight > 0) {
             Minecraft minecraft = Minecraft.getInstance();
             var player = minecraft.player;
             Vec3 visibilityAnchor = player != null ? player.getEyePosition(1.0F) : origin;
-            BlockPos center = BlockPos.containing(origin);
             for (BlockPos pos : BlockPos.betweenClosed(center.offset(-6, -4, -6), center.offset(6, 4, 6))) {
                 var state = level.getBlockState(pos);
                 int emission = state.getLightEmission(level, pos);
@@ -562,7 +859,8 @@ public final class PbrRenderer {
                 LIGHT_CANDIDATES.add(new LightCandidate(score, Vec3.atCenterOf(immutable), red, green, blue,
                         (float) Math.min(1.0D, score / 7.0D)));
             }
-            // 开火/镭射/爆炸等动态光只照亮世界, 不参与枪身反光:
+        }
+        // 开火/镭射/爆炸等动态光只照亮世界, 不参与枪身反光:
             // 枪口闪光离枪太近, 参与反光会变成逐帧闪烁的假高光。
             LIGHT_CANDIDATES.sort((a, b) -> Double.compare(b.score(), a.score()));
             int count = Math.min(LOCAL_LIGHT_SLOTS, LIGHT_CANDIDATES.size());
@@ -605,7 +903,6 @@ public final class PbrRenderer {
                 lightColorB[slot] = candidate.blue();
                 lightTargetStrength[slot] = candidate.target();
             }
-        }
         updateLocalLightSlots(origin, dt);
     }
 
@@ -679,6 +976,16 @@ public final class PbrRenderer {
         return false;
     }
     public static boolean enabled() {
+        if (enabledFrameValid) {
+            return enabledFrameValue;
+        }
+        boolean value = computeEnabled();
+        enabledFrameValue = value;
+        enabledFrameValid = true;
+        return value;
+    }
+
+    private static boolean computeEnabled() {
         if (shader == null || !Config.PBR_ENABLED.get()
                 || com.ssscript.taczfixes.client.util.IrisShaderCompat.isShaderPackInUse()) return false;
         // TaCZ's AR compatibility entry point selects conventional gun rendering
@@ -702,8 +1009,15 @@ public final class PbrRenderer {
         PbrBloom.release();
         if (mesh != null) { mesh.close(); mesh = null; }
         releaseSceneColor();
-        shader = blurShader = compositeShader = maskShader = null;
+        shader = blurShader = compositeShader = maskShader = smoothShader = null;
+        sceneCaptureShader = null;
         clearUniformCache();
+        enabledFrameValid = false;
+        // 着色器重载后需要重新验证加速路径的发光写入。
+        acceleratedEmissionVerified = false;
+        acceleratedEmissionVerifyAttempts = 0;
+        lastResolveOriginal = null;
+        lastResolveResult = null;
         reloadCloudTexture();
         event.registerShader(new ShaderInstance(event.getResourceProvider(),
                 ResourceLocation.fromNamespaceAndPath("taczfixes", "gun_pbr"), DefaultVertexFormat.NEW_ENTITY), s -> {
@@ -740,7 +1054,18 @@ public final class PbrRenderer {
                     uCompositeStrength = s.safeGetUniform("Strength");
                     uWideStrength = s.safeGetUniform("WideStrength");
                     uHasScopeMask = s.safeGetUniform("HasScopeMask");
+                    uCompositeScissorRect = s.safeGetUniform("ScissorRect");
+                    uCompositeScissorFade = s.safeGetUniform("ScissorFade");
+                    uCompositeHasScissor = s.safeGetUniform("HasScissor");
                 });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_bloom_smooth"), DefaultVertexFormat.POSITION_TEX), s -> {
+                    smoothShader = s;
+                    uSmoothAlpha = s.safeGetUniform("Alpha");
+                });
+        event.registerShader(new ShaderInstance(event.getResourceProvider(),
+                ResourceLocation.fromNamespaceAndPath("taczfixes", "pbr_scene_capture"), DefaultVertexFormat.POSITION_TEX),
+                s -> sceneCaptureShader = s);
     }
 
     private static void clearUniformCache() {
@@ -752,10 +1077,13 @@ public final class PbrRenderer {
         uSkyZenith = uSkyHorizon = uSunHorizon = uSunAzimuth = uSunOcclusion = null;
         uDefaultRoughness = uDefaultMetal = uDefaultReflection = uEnvStrength = null;
         uAnisotropy = uWetDetail = uSSRStrength = uTime = null;
+        uSSRSteps = uScreenSize = null;
         uViewRotX = uViewRotY = uViewRotZ = null;
         uCameraPos = null;
         uCamoIndex = uCamoStrength = uCamoEmissive = null;
         uBlurDirection = uCompositeStrength = uWideStrength = uHasScopeMask = null;
+        uCompositeScissorRect = uCompositeScissorFade = uCompositeHasScissor = null;
+        uSmoothAlpha = null;
         for (int i = 0; i < LOCAL_LIGHT_SLOTS; i++) {
             uLocalLightDir[i] = null;
             uLocalLightColor[i] = null;
@@ -798,6 +1126,8 @@ public final class PbrRenderer {
         uAnisotropy = s.safeGetUniform("Anisotropy");
         uWetDetail = s.safeGetUniform("WetDetail");
         uSSRStrength = s.safeGetUniform("SSRStrength");
+        uSSRSteps = s.safeGetUniform("SSRSteps");
+        uScreenSize = s.safeGetUniform("ScreenSize");
         uViewRotX = s.safeGetUniform("ViewRotX");
         uViewRotY = s.safeGetUniform("ViewRotY");
         uViewRotZ = s.safeGetUniform("ViewRotZ");
@@ -840,6 +1170,7 @@ public final class PbrRenderer {
         boolean ssr = sceneColorCaptured && sceneColorTexture != 0 && sceneDepthTexture != 0
                 && Config.PBR_SSR.get() && Config.PBR_SSR_STRENGTH.get() > 0.0D;
         setUniform(uSSRStrength, ssr ? Config.PBR_SSR_STRENGTH.get().floatValue() : 0f);
+        setUniform(uSSRSteps, ssr ? Config.PBR_SSR_STEPS.get() : 0);
         if (ssr) {
             RenderSystem.setShaderTexture(6, sceneColorTexture);
             RenderSystem.setShaderTexture(7, sceneDepthTexture);
@@ -890,8 +1221,20 @@ public final class PbrRenderer {
         if (uWideStrength != null) uWideStrength.set(value);
     }
 
+    static void setSmoothAlpha(float value) {
+        if (uSmoothAlpha != null) uSmoothAlpha.set(value);
+    }
+
     static void setHasScopeMask(int value) {
         if (uHasScopeMask != null) uHasScopeMask.set(value);
+    }
+
+    /** 合成 pass 的裁剪矩形(x0,y0,x1,y1 像素)与边缘淡出宽度。 */
+    static void setCompositeScissor(boolean enabled, int x0, int y0, int x1, int y1, float fade) {
+        if (uCompositeHasScissor != null) uCompositeHasScissor.set(enabled ? 1 : 0);
+        if (!enabled) return;
+        if (uCompositeScissorRect != null) uCompositeScissorRect.set((float) x0, (float) y0, (float) x1, (float) y1);
+        if (uCompositeScissorFade != null) uCompositeScissorFade.set(fade);
     }
 
     static void applyMaterialState(Material material, boolean hand, boolean rainExposed) {
@@ -918,69 +1261,180 @@ public final class PbrRenderer {
 
     private static void bindGlareDepth() {
         var main = Minecraft.getInstance().getMainRenderTarget();
-        boolean mainTarget = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING) == main.frameBufferId;
+        int fbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        boolean mainTarget = fbo == main.frameBufferId;
         if (mainTarget) {
             RenderSystem.setShaderTexture(5, main.getDepthTextureId());
+            setUniform(uScreenSize, (float) main.width, (float) main.height);
         }
         setUniform(uGlareDepthTest, mainTarget ? 1 : 0);
+        lastDrawFramebuffer = fbo;
+        lastDrawFramebufferKnown = true;
     }
 
+    /** bindGlareDepth() 顺手记下的当前绘制 FBO, 供 draw 时复用, 省一次 GL 查询。 */
+    private static int lastDrawFramebuffer = -1;
+    private static boolean lastDrawFramebufferKnown;
+
+    private static int sceneCaptureFbo = -1;
+    private static boolean sceneCaptureUnavailable;
+    private static VertexBuffer sceneCaptureQuad;
+    private static ShaderInstance sceneCaptureShader;
+    private static final int[] SCENE_CAPTURE_DRAW_BUFFERS = {
+            GL30.GL_COLOR_ATTACHMENT0, GL30.GL_COLOR_ATTACHMENT1};
+    private static final org.joml.Matrix4f SCENE_CAPTURE_IDENTITY = new org.joml.Matrix4f();
+
     /**
-     * 场景渲染结束(手部之前)复制一份主目标颜色, 供屏幕空间反射采样。
-     * 复制到独立纹理可避免渲染枪械时采样正在写入的颜色附件。
+     * 场景渲染结束(手部之前)把主目标的颜色与深度按半分辨率捕获到独立纹理, 供屏幕空间反射采样。
+     * 用一次半分辨率全屏 pass 采样主目标的颜色/深度纹理完成(渲染到自己的 FBO, 不构成反馈回路),
+     * 深度按 16 位打包进 RG 通道: 比两次全屏拷贝便宜, 也不依赖驱动是否支持"缩放 blit 深度格式"。
      */
     public static void onRenderLevelStage(net.neoforged.neoforge.client.event.RenderLevelStageEvent event) {
         if (event.getStage() != net.neoforged.neoforge.client.event.RenderLevelStageEvent.Stage.AFTER_LEVEL) {
             return;
         }
         sceneColorCaptured = false;
-        if (!Config.PBR_SSR.get() || shader == null || !enabled()) {
+        if (!Config.PBR_SSR.get() || shader == null || sceneCaptureShader == null || !enabled()) {
+            return;
+        }
+        // 最近没有 PBR 几何在画(手里不是枪/没画世界里的枪)时, 不需要为 SSR 捕获场景。
+        if (System.currentTimeMillis() - lastPbrDrawAt > 500L) {
             return;
         }
         var main = Minecraft.getInstance().getMainRenderTarget();
         if (main == null || main.width <= 0 || main.height <= 0) {
             return;
         }
-        if (sceneColorTexture == 0) {
-            sceneColorTexture = com.mojang.blaze3d.platform.GlStateManager._genTexture();
+        if (!ensureSceneCaptureTargets(main)) {
+            return;
         }
-        int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
-        com.mojang.blaze3d.platform.GlStateManager._bindTexture(sceneColorTexture);
-        if (sceneColorWidth != main.width || sceneColorHeight != main.height) {
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, main.width, main.height, 0,
-                    GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (java.nio.ByteBuffer) null);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
-            sceneColorWidth = main.width;
-            sceneColorHeight = main.height;
+        int halfW = sceneColorWidth;
+        int halfH = sceneColorHeight;
+        ensureSceneCaptureQuad();
+        ShaderInstance previous = RenderSystem.getShader();
+        int colorSlot = RenderSystem.getShaderTexture(0);
+        int depthSlot = RenderSystem.getShaderTexture(1);
+        boolean blend = GL11.glIsEnabled(GL11.GL_BLEND);
+        boolean depthTest = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
+        boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
+        int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+        try {
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, sceneCaptureFbo);
+            GL30.glDrawBuffers(SCENE_CAPTURE_DRAW_BUFFERS);
+            RenderSystem.disableBlend();
+            RenderSystem.disableDepthTest();
+            RenderSystem.disableCull();
+            RenderSystem.viewport(0, 0, halfW, halfH);
+            RenderSystem.setShaderTexture(0, main.getColorTextureId());
+            RenderSystem.setShaderTexture(1, main.getDepthTextureId());
+            RenderSystem.setShader(() -> sceneCaptureShader);
+            sceneCaptureQuad.bind();
+            sceneCaptureQuad.drawWithShader(SCENE_CAPTURE_IDENTITY, SCENE_CAPTURE_IDENTITY, sceneCaptureShader);
+        } catch (Throwable ignored) {
+        } finally {
+            VertexBuffer.unbind();
+            GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousDraw);
+            RenderSystem.setShaderTexture(0, colorSlot);
+            RenderSystem.setShaderTexture(1, depthSlot);
+            RenderSystem.setShader(() -> previous);
+            if (blend) RenderSystem.enableBlend(); else RenderSystem.disableBlend();
+            if (depthTest) RenderSystem.enableDepthTest(); else RenderSystem.disableDepthTest();
+            if (cull) RenderSystem.enableCull(); else RenderSystem.disableCull();
+            main.bindWrite(true);
         }
-        int previousRead = GL11.glGetInteger(GL30.GL_READ_FRAMEBUFFER_BINDING);
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, main.frameBufferId);
-        GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, main.width, main.height);
-        // 世界深度(手部渲染会清空主目标深度, 所以必须在手部之前复制一份)。
-        if (sceneDepthTexture == 0) {
-            sceneDepthTexture = com.mojang.blaze3d.platform.GlStateManager._genTexture();
-        }
-        com.mojang.blaze3d.platform.GlStateManager._bindTexture(sceneDepthTexture);
-        if (sceneDepthWidth != main.width || sceneDepthHeight != main.height) {
-            GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, org.lwjgl.opengl.GL14.GL_DEPTH_COMPONENT24, main.width, main.height, 0,
-                    GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (java.nio.ByteBuffer) null);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
-            GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
-            sceneDepthWidth = main.width;
-            sceneDepthHeight = main.height;
-        }
-        GL11.glCopyTexSubImage2D(GL11.GL_TEXTURE_2D, 0, 0, 0, 0, 0, main.width, main.height);
-        GL30.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, previousRead);
-        com.mojang.blaze3d.platform.GlStateManager._bindTexture(previousTexture);
         sceneColorCaptured = true;
     }
 
+    /** 半分辨率捕获目标: 颜色 LINEAR、打包深度 NEAREST; 两张 RGBA8 做 MRT, 一次 pass 同时写。 */
+    private static boolean ensureSceneCaptureTargets(RenderTarget main) {
+        if (sceneCaptureUnavailable) {
+            return false;
+        }
+        int halfW = Math.max(1, main.width / 2);
+        int halfH = Math.max(1, main.height / 2);
+        int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+        try {
+            if (sceneColorTexture == 0) {
+                sceneColorTexture = com.mojang.blaze3d.platform.GlStateManager._genTexture();
+            }
+            com.mojang.blaze3d.platform.GlStateManager._bindTexture(sceneColorTexture);
+            if (sceneColorWidth != halfW || sceneColorHeight != halfH) {
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, halfW, halfH, 0,
+                        GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (java.nio.ByteBuffer) null);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_LINEAR);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_LINEAR);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
+                sceneColorWidth = halfW;
+                sceneColorHeight = halfH;
+            }
+            if (sceneDepthTexture == 0) {
+                sceneDepthTexture = com.mojang.blaze3d.platform.GlStateManager._genTexture();
+            }
+            com.mojang.blaze3d.platform.GlStateManager._bindTexture(sceneDepthTexture);
+            if (sceneDepthWidth != halfW || sceneDepthHeight != halfH) {
+                GL11.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_RGBA8, halfW, halfH, 0,
+                        GL11.GL_RGBA, GL11.GL_UNSIGNED_BYTE, (java.nio.ByteBuffer) null);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
+                GL11.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, org.lwjgl.opengl.GL12.GL_CLAMP_TO_EDGE);
+                sceneDepthWidth = halfW;
+                sceneDepthHeight = halfH;
+            }
+            return ensureSceneCaptureFbo();
+        } catch (Throwable throwable) {
+            sceneCaptureUnavailable = true;
+            return false;
+        } finally {
+            com.mojang.blaze3d.platform.GlStateManager._bindTexture(previousTexture);
+        }
+    }
+
+    private static boolean ensureSceneCaptureFbo() {
+        if (sceneCaptureFbo >= 0) {
+            return true;
+        }
+        int fbo = GL30.glGenFramebuffers();
+        GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, fbo);
+        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT0,
+                GL11.GL_TEXTURE_2D, sceneColorTexture, 0);
+        GL30.glFramebufferTexture2D(GL30.GL_FRAMEBUFFER, GL30.GL_COLOR_ATTACHMENT1,
+                GL11.GL_TEXTURE_2D, sceneDepthTexture, 0);
+        int status = GL30.glCheckFramebufferStatus(GL30.GL_FRAMEBUFFER);
+        if (status != GL30.GL_FRAMEBUFFER_COMPLETE) {
+            GL30.glDeleteFramebuffers(fbo);
+            sceneCaptureUnavailable = true;
+            return false;
+        }
+        sceneCaptureFbo = fbo;
+        return true;
+    }
+
+    private static void ensureSceneCaptureQuad() {
+        if (sceneCaptureQuad != null) {
+            return;
+        }
+        BufferBuilder builder = Tesselator.getInstance().begin(VertexFormat.Mode.QUADS, DefaultVertexFormat.POSITION_TEX);
+        builder.addVertex(-1, -1, 0).setUv(0, 0);
+        builder.addVertex(1, -1, 0).setUv(1, 0);
+        builder.addVertex(1, 1, 0).setUv(1, 1);
+        builder.addVertex(-1, 1, 0).setUv(0, 1);
+        sceneCaptureQuad = new VertexBuffer(VertexBuffer.Usage.STATIC);
+        sceneCaptureQuad.bind();
+        sceneCaptureQuad.upload(builder.buildOrThrow());
+    }
+
     private static void releaseSceneColor() {
+        if (sceneCaptureFbo >= 0) {
+            GL30.glDeleteFramebuffers(sceneCaptureFbo);
+            sceneCaptureFbo = -1;
+        }
+        if (sceneCaptureQuad != null) {
+            sceneCaptureQuad.close();
+            sceneCaptureQuad = null;
+        }
+        sceneCaptureUnavailable = false;
         if (sceneColorTexture != 0) {
             com.mojang.blaze3d.platform.GlStateManager._deleteTexture(sceneColorTexture);
             sceneColorTexture = 0;
@@ -995,13 +1449,28 @@ public final class PbrRenderer {
         sceneDepthHeight = 0;
         sceneColorCaptured = false;
     }
-
     public static RenderType resolve(RenderType original) {
         if (!enabled() || original instanceof PbrType || original.format() != DefaultVertexFormat.NEW_ENTITY
                 || !(original instanceof PbrCompositeAccessor composite)) return original;
-        CamoUniforms camo = camoSuppression > 0 ? CamoUniforms.NONE : camoForCurrentItem();
         boolean hand = handGeometry;
         boolean rainExposed = currentWorldRainExposed();
+        // 绝大多数几何提交是同一个 RenderType 连续解析: 命中上一次的结果就不用再查表/建 key。
+        // 动态迷彩/材质兜底抑制会改变结果, 这两类情况不走快路径。
+        if (camoShader == null && camoSuppression == 0 && materialFallbackSuppression == 0) {
+            if (lastResolveOriginal == original && lastResolveResult != null
+                    && lastResolveHand == hand && lastResolveRain == rainExposed) {
+                return lastResolveResult;
+            }
+            RenderType resolved = TYPES.computeIfAbsent(new TypeKey(original, hand, rainExposed),
+                    k -> resolveType(k.original(), composite, true, CamoUniforms.NONE,
+                            k.hand(), k.rainExposed()));
+            lastResolveOriginal = original;
+            lastResolveResult = resolved;
+            lastResolveHand = hand;
+            lastResolveRain = rainExposed;
+            return resolved;
+        }
+        CamoUniforms camo = camoSuppression > 0 ? CamoUniforms.NONE : camoForCurrentItem();
         if (materialFallbackSuppression > 0) {
             return resolveType(original, composite, false, camo, hand, rainExposed);
         }
@@ -1014,6 +1483,11 @@ public final class PbrRenderer {
         return TYPES.computeIfAbsent(key,
                 k -> resolveType(k.original(), composite, true, camo, k.hand(), k.rainExposed()));
     }
+
+    private static RenderType lastResolveOriginal;
+    private static RenderType lastResolveResult;
+    private static boolean lastResolveHand;
+    private static boolean lastResolveRain;
 
     /** 当前正在渲染的枪/配件是否挂了动态迷彩(读渲染上下文的 NBT)。 */
     private static CamoUniforms camoForCurrentItem() {
@@ -1114,6 +1588,8 @@ public final class PbrRenderer {
         private final CamoUniforms camo;
         private final boolean hand;
         private final boolean rainExposed;
+        /** 本次加速绘制里是否开着发光 MRT(在 clearRenderState() 里恢复)。 */
+        private boolean acceleratedEmissionWrite;
 
         PbrType(RenderType original, Material material, CamoUniforms camo, boolean hand, boolean rainExposed) {
             super("taczfixes_pbr", original.format(), original.mode(), original.bufferSize(),
@@ -1130,29 +1606,70 @@ public final class PbrRenderer {
         @Override
         public void setupRenderState() {
             original.setupRenderState();
-            bindGlareDepth();
-            boolean accelerated = isAcceleratedPbrPass();
-            if (accelerated) {
+            // 加速渲染时 PbrType.draw() 不会执行(几何由 AR 自己提交), 这里也记一次时间:
+            // SSR 场景捕获与局部光更新都靠它判断"最近有没有 PBR 几何在画"。
+            lastPbrDrawAt = System.currentTimeMillis();
+            if (isAcceleratedPbrPass()) {
+                // applyMaterialState() 内部会 bindGlareDepth(), 不需要在这之前再查一次绘制 FBO。
                 applyMaterialState(material, hand, rainExposed);
                 applyCamoUniforms(camo);
+                // AR 的 drawBuffers 会在 setupRenderState() 之后紧接着 drawElements():
+                // 这里把发光 MRT 打开, 主绘制一次就同时写出泛光光源, 不用再补画整遍几何。
+                acceleratedEmissionWrite = false;
+                if (material.emissive() || camo.emissive() > 0f) {
+                    markEmissionSource();
+                }
+                boolean tracerAllowed = !isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get();
+                if (tracerAllowed && PbrBloom.canCapture()) {
+                    int fbo = lastDrawFramebufferKnown ? lastDrawFramebuffer
+                            : GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+                    boolean mainTarget = fbo == Minecraft.getInstance().getMainRenderTarget().frameBufferId;
+                    acceleratedEmissionWrite = PbrBloom.beginEmissionWrite(mainTarget);
+                    if (acceleratedEmissionWrite) {
+                        acceleratedEmissionWrites++;
+                    }
+                }
+            } else {
+                bindGlareDepth();
             }
+        }
+
+        /** AR 绘制结束后(或普通路径 draw() 收尾时)恢复单颜色附件。 */
+        @Override
+        public void clearRenderState() {
+            if (acceleratedEmissionWrite) {
+                acceleratedEmissionWrite = false;
+                PbrBloom.endEmissionWrite();
+            }
+            original.clearRenderState();
         }
 
         @Override
         public void draw(MeshData data) {
             if (data == null) return;
-            // 顶点数据在 upload 之后会被释放, 所以自发光来源标记必须在 upload 之前做。
-            if (material.emissive() || camo.emissive() > 0f) {
+            // 顶点数据在 upload 之后会被释放: 先判断这批几何是否真的会发光(材质自发光或 *_illuminated 顶点),
+            // 顺便累积发光顶点的屏幕包围盒, 供泛光裁剪用。
+            boolean allEmitted = material.emissive() || camo.emissive() > 0f;
+            boolean geometryEmitted = analyzeEmissionGeometry(data, allEmitted);
+            if (geometryEmitted) {
                 markEmissionSource();
             }
             if (mesh == null) mesh = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
             setupRenderState();
+            // setupRenderState() 内的 bindGlareDepth() 已记录当前绘制 FBO, 这里直接复用, 不再重复查询。
             ShaderInstance previous = RenderSystem.getShader();
-            int specularSlot = RenderSystem.getShaderTexture(3);
-            int normalSlot = RenderSystem.getShaderTexture(4);
-            int depthSlot = RenderSystem.getShaderTexture(5);
-            int sceneSlot = RenderSystem.getShaderTexture(6);
-            int sceneDepthSlot = RenderSystem.getShaderTexture(7);
+            int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
+            int previousFbo = lastDrawFramebufferKnown
+                    ? lastDrawFramebuffer : GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            boolean mainTarget = previousFbo == mainFbo;
+            boolean ssrActive = sceneColorCaptured && Config.PBR_SSR.get()
+                    && Config.PBR_SSR_STRENGTH.get() > 0.0D;
+            // 只保存本 draw 真正会改动的纹理槽位。
+            int specularSlot = material.specular() != null ? RenderSystem.getShaderTexture(3) : 0;
+            int normalSlot = material.normal() != null ? RenderSystem.getShaderTexture(4) : 0;
+            int depthSlot = mainTarget ? RenderSystem.getShaderTexture(5) : 0;
+            int sceneSlot = ssrActive ? RenderSystem.getShaderTexture(6) : 0;
+            int sceneDepthSlot = ssrActive ? RenderSystem.getShaderTexture(7) : 0;
             try {
                 mesh.bind();
                 mesh.upload(data);
@@ -1173,14 +1690,11 @@ public final class PbrRenderer {
                 applyCamoUniforms(camo);
 
                 RenderSystem.setShader(() -> shader);
-                bindGlareDepth();
-                int previousFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
-                int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
                 boolean tracerAllowed = !isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get();
                 if (!emissionReplay) {
                     // MRT: 主绘制同一遍着色同时把发光写进主目标的第二颜色附件, 不再单独重画一遍几何。
-                    boolean emissionWrite = tracerAllowed
-                            && PbrBloom.beginEmissionWrite(previousFbo == mainFbo);
+                    boolean emissionWrite = geometryEmitted && tracerAllowed
+                            && PbrBloom.beginEmissionWrite(mainTarget);
                     try {
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
                     } finally {
@@ -1188,7 +1702,7 @@ public final class PbrRenderer {
                             PbrBloom.endEmissionWrite();
                         }
                     }
-                    if (!emissionWrite && tracerAllowed && previousFbo == mainFbo
+                    if (!emissionWrite && geometryEmitted && tracerAllowed && mainTarget
                             && PbrBloom.mrtUnavailable() && PbrBloom.beginFallbackCapture()) {
                         try {
                             drawEmissionFallback(shader);
@@ -1196,7 +1710,7 @@ public final class PbrRenderer {
                             com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
                         }
                     }
-                } else if (tracerAllowed && previousFbo == mainFbo && PbrBloom.beginFallbackCapture()) {
+                } else if (geometryEmitted && tracerAllowed && mainTarget && PbrBloom.beginFallbackCapture()) {
                     // 加速渲染时主绘制被跳过, 这里补画一次发光(只写发光目标, 不碰主画面)。
                     try {
                         drawEmissionFallback(shader);
@@ -1205,11 +1719,13 @@ public final class PbrRenderer {
                     }
                 }            } finally {
                 VertexBuffer.unbind();
-                RenderSystem.setShaderTexture(3, specularSlot);
-                RenderSystem.setShaderTexture(4, normalSlot);
-                RenderSystem.setShaderTexture(5, depthSlot);
-                RenderSystem.setShaderTexture(6, sceneSlot);
-                RenderSystem.setShaderTexture(7, sceneDepthSlot);
+                if (material.specular() != null) RenderSystem.setShaderTexture(3, specularSlot);
+                if (material.normal() != null) RenderSystem.setShaderTexture(4, normalSlot);
+                if (mainTarget) RenderSystem.setShaderTexture(5, depthSlot);
+                if (ssrActive) {
+                    RenderSystem.setShaderTexture(6, sceneSlot);
+                    RenderSystem.setShaderTexture(7, sceneDepthSlot);
+                }
                 RenderSystem.setShader(() -> previous);
                 clearRenderState();
             }
