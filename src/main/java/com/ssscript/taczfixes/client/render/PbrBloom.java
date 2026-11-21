@@ -455,8 +455,13 @@ public final class PbrBloom {
             main.bindWrite(true);
             int maskTexture = scopeMaskValid && scopeMask != null ? scopeMask.getColorTextureId() : 0;
             float wideStrength = wide ? strength * Config.PBR_BLOOM_WIDE_STRENGTH.get().floatValue() : 0f;
+            // 模糊链的 alpha 里存着"光源窗口深度": 合成时用它和场景深度比较, 被后画前景(手臂)挡住
+            // 的光晕不会漏到前景上。平滑链只平滑颜色, 深度直接取最新一条链的结果。
+            int sceneDepthTexture = main.getDepthTextureId();
+            int narrowDepthTexture = narrowB != null ? narrowB.getColorTextureId() : 0;
+            int wideDepthTexture = wide && wideB != null ? wideB.getColorTextureId() : narrowDepthTexture;
             compositeToMain(narrowSource, wideSource, PbrRenderer.compositeShader, maskTexture,
-                    strength, wideStrength);
+                    strength, wideStrength, sceneDepthTexture, narrowDepthTexture, wideDepthTexture);
         } finally {
             dirty = false;
             endPassScissor();
@@ -511,12 +516,16 @@ public final class PbrBloom {
     }
 
     private static void compositeToMain(RenderTarget narrow, RenderTarget wide, ShaderInstance shader,
-                                        int maskTexture, float strength, float wideStrength) {
+                                        int maskTexture, float strength, float wideStrength,
+                                        int sceneDepthTexture, int narrowDepthTexture, int wideDepthTexture) {
         // Apply the shader first, then establish the actual draw state. ShaderInstance
         // and third-party hooks may otherwise replace factors set before apply().
         shader.setSampler("Sampler0", narrow.getColorTextureId());
         shader.setSampler("Wide", wide.getColorTextureId());
         shader.setSampler("ScopeMask", maskTexture);
+        shader.setSampler("SceneDepth", sceneDepthTexture);
+        shader.setSampler("NarrowDepth", narrowDepthTexture);
+        shader.setSampler("WideDepth", wideDepthTexture);
         PbrRenderer.setBloomStrength(strength);
         PbrRenderer.setWideBloomStrength(wideStrength);
         PbrRenderer.setHasScopeMask(maskTexture != 0 ? 1 : 0);

@@ -1710,8 +1710,8 @@ public class Config {
                 .comment("是否叠加一层更大半径的宽泛光，让光晕过渡更自然。默认值：true")
                 .define("bloom_wide", true);
         PBR_BLOOM_UPDATE_INTERVAL = BUILDER
-                .comment("泛光光晕的更新间隔（帧）。默认值：2")
-                .defineInRange("bloom_update_interval", 2, 1, 8);
+                .comment("泛光光晕的更新间隔（帧）。默认值：1")
+                .defineInRange("bloom_update_interval", 1, 1, 4);
         PBR_BLOOM_WIDE_STRENGTH = BUILDER
                 .comment("宽泛光层强度。默认值：0.25")
                 .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);

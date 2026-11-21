@@ -45,7 +45,7 @@ import java.util.Optional;
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader, smoothShader;
-    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uArEmissive;
+    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass;
     private static AbstractUniform uReflectionStrength, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uGlareDepthTest, uFallbackMaterial;
     private static final int LOCAL_LIGHT_SLOTS = 4;
@@ -1032,7 +1032,7 @@ public final class PbrRenderer {
     }
 
     private static void clearUniformCache() {
-        uHasSpecular = uHasNormal = uEmissionPass = uArEmissive = null;
+        uHasSpecular = uHasNormal = uEmissionPass = null;
         uReflectionStrength = uGlareStrength = uEmissionStrength = null;
         uGlareDepthTest = uFallbackMaterial = null;
         uCelestialDirection = uCelestialColor = uSkyAmbient = null;
@@ -1058,7 +1058,6 @@ public final class PbrRenderer {
         uHasSpecular = s.safeGetUniform("HasSpecular");
         uHasNormal = s.safeGetUniform("HasNormal");
         uEmissionPass = s.safeGetUniform("EmissionPass");
-        uArEmissive = s.safeGetUniform("ArEmissive");
         uReflectionStrength = s.safeGetUniform("ReflectionStrength");
         uGlareStrength = s.safeGetUniform("GlareStrength");
         uGlareDepthTest = s.safeGetUniform("GlareDepthTest");
@@ -1571,8 +1570,6 @@ public final class PbrRenderer {
             // SSR 场景捕获与局部光更新都靠它判断"最近有没有 PBR 几何在画"。
             lastPbrDrawAt = System.currentTimeMillis();
             if (isAcceleratedPbrPass()) {
-                // 加速路径: 允许用每帧写入的 FULL_BRIGHT 光照识别 *_illuminated 发光组(见 gun_pbr.vsh)。
-                setUniform(uArEmissive, 1);
                 // 主绘制会绑定枪械贴图(3/4)、主深度(5)、场景色/深度(6/7): 先记下旧值, clearRenderState() 里还回去。
                 savedSpecularSlot = RenderSystem.getShaderTexture(3);
                 savedNormalSlot = RenderSystem.getShaderTexture(4);
@@ -1600,7 +1597,6 @@ public final class PbrRenderer {
                     }
                 }
             } else {
-                setUniform(uArEmissive, 0);
                 bindGlareDepth();
             }
         }

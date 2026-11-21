@@ -7,8 +7,8 @@
 
 | 分支 | Minecraft | 加载器 | 模组版本 | 对应 TaCZ |
 | --- | --- | --- | --- | --- |
-| `taczfixes` | 1.20.1 | Forge 47.4+ | 3.1.2 | tacz-forge 1.20.1 1.2.0 |
-| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.1.2 | tacz-neoforge 1.21.1 1.2.0 |
+| `taczfixes` | 1.20.1 | Forge 47.4+ | 3.1.3 | tacz-forge 1.20.1 1.2.0 |
+| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.1.3 | tacz-neoforge 1.21.1 1.2.0 |
 
 客户端与服务端需要安装相同版本的 TaCZ Fixes（网络协议版本 `3`），单机/客户端安装即可使用全部功能。
 
