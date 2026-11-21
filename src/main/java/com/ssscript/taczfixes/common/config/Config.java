@@ -1448,7 +1448,7 @@ public class Config {
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
         PBR_FALLBACK_MATERIAL = BUILDER
-                .comment("没有 _s 贴图的枪械是否按底色推导材质，使这类枪包也有反光。默认值：true")
+                .comment("没有 _s 贴图的枪械是否按底色推导材质。默认值：true")
                 .define("fallback_material", true);
         PBR_DEFAULT_ROUGHNESS = BUILDER
                 .comment("无 _s 贴图时的默认粗糙度，越大越哑光。默认值：0.45")
