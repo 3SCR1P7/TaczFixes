@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.At;
  * 于是 PBR 着色器与发光附件写入都照常生效 —— 不需要关闭加速分支, 也不会丢掉 AR 的性能收益。
  * 光束顶点的"发光组"标记由 {@code MixinAcceleratedBufferBuilderPbr} 在 doRender 里补上。</p>
  */
-@Mixin(targets = "com.tacz.guns.client.model.functional.BeamRenderer$LaserBeamRenderState", remap = false)
+@Mixin(value = com.tacz.guns.client.model.functional.BeamRenderer.LaserBeamRenderState.class, remap = false)
 public class MixinLaserBeamRenderState {
     @ModifyReturnValue(method = "getLaserBeamEntity", at = @At("RETURN"), remap = false)
     private static RenderType taczfixes$pbrLaserBeamEntity(RenderType original) {

@@ -13,9 +13,10 @@ public class MixinPlayerTickFreeze {
     @Inject(method = "tick()V", at = @At("HEAD"), cancellable = true)
     private void taczfixes$freezeClientTick(CallbackInfo ci) {
         Player self = (Player) (Object) this;
-        if (self.level().isClientSide && FreezeClientState.isEntityFrozen(self)) {
-            self.setOldPosAndRot();
-            ci.cancel();
+        if (!self.level().isClientSide || !FreezeClientState.isEntityFrozen(self)) {
+            return;
         }
+        FreezeClientState.freezePose(self);
+        ci.cancel();
     }
 }
