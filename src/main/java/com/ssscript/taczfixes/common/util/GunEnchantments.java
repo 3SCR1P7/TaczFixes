@@ -48,6 +48,11 @@ public final class GunEnchantments {
     public static final Def FOCUSED_AMMO = new Def("focused_ammo");
     public static final Def ARCANA_EDEN = new Def("arcana_eden");
     public static final Def PATIENCE = new Def("patience");
+    public static final Def SCARLET_DEATH = new Def("scarlet_death");
+    public static final Def TOKONAGI = new Def("tokonagi");
+    public static final Def EMBER = new Def("ember");
+    public static final Def POISED = new Def("poised");
+    public static final Def SEAL_FLARE = new Def("seal_flare");
 
     private GunEnchantments() {
     }

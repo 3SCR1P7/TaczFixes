@@ -1,10 +1,18 @@
 package com.ssscript.taczfixes.client.attachment;
 
 import com.tacz.guns.api.DefaultAssets;
+import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.entity.ReloadState;
+import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.api.item.attachment.AttachmentType;
+import com.tacz.guns.api.item.nbt.AttachmentItemDataAccessor;
 import com.tacz.guns.api.util.LuaNbtAccessor;
 import com.tacz.guns.client.animation.statemachine.GunAnimationStateContext;
 import com.tacz.guns.client.animation.statemachine.ItemAnimationStateContext;
+import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
+import com.ssscript.taczfixes.client.handler.SteplessZoomHandler;
+import com.ssscript.taczfixes.client.util.ScopeSwitchState;
+import com.ssscript.taczfixes.common.util.ItemNbt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
@@ -318,5 +326,71 @@ public class AttachmentAnimationStateContext extends ItemAnimationStateContext {
     /** 是否正在蓄力。 */
     public boolean isCharging() {
         return gunContext.isCharging();
+    }
+
+    // ---------------- 瞄具相关(TaCZ 上下文没有的部分) ----------------
+
+    /**
+     * 本配件是否是玩家当前正在使用的那个瞄具。
+     *
+     * <p>本模组支持多个瞄具槽: 玩家用切换键选中的那个瞄具才算激活; 没有切换过时,
+     * 原生 SCOPE 槽的瞄具在枪上没有其它瞄具的情况下视为激活。</p>
+     */
+    public boolean isActiveScope() {
+        ResourceLocation id = attachmentId;
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
+            return false;
+        }
+        ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(id).orElse(null);
+        if (index == null || (!index.isScope() && !index.isSight())) {
+            return false;
+        }
+        if (!hasGun()) {
+            return false;
+        }
+        IGun gun = IGun.getIGunOrNull(gunItem);
+        if (gun == null) {
+            return false;
+        }
+        // 已经切到自定义槽的某个瞄具: 只有那一个算激活。
+        if (ScopeSwitchState.getActiveSlot(gunItem) != null) {
+            return id.equals(ScopeSwitchState.activeCustomOpticId(gunItem));
+        }
+        // 没有切换过: 原生 SCOPE 槽的瞄具是当前瞄具(枪上没有其它瞄具时同样成立)。
+        ResourceLocation nativeScope = gun.getAttachmentId(gunItem, AttachmentType.SCOPE);
+        if (nativeScope == null || DefaultAssets.isEmptyAttachmentId(nativeScope)) {
+            nativeScope = gun.getBuiltInAttachmentId(gunItem, AttachmentType.SCOPE);
+        }
+        return id.equals(nativeScope) && !ScopeSwitchState.hasOtherOptics(gunItem, id);
+    }
+
+    /**
+     * 本配件的当前放大倍率(不是瞄具时返回 1.0)。
+     *
+     * <p>按配件自己的倍率档位(切换倍率键改的那个值)计算; 若本瞄具正被使用且开了本模组的
+     * 无极变倍, 则返回无极变倍的实时倍率。</p>
+     */
+    public float getMagnification() {
+        ResourceLocation id = attachmentId;
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
+            return 1.0F;
+        }
+        ClientAttachmentIndex index = TimelessAPI.getClientAttachmentIndex(id).orElse(null);
+        if (index == null || (!index.isScope() && !index.isSight())) {
+            return 1.0F;
+        }
+        // 无极变倍只作用于当前使用的瞄具: 直接取相机实际使用的倍率。
+        if (hasGun() && isActiveScope()) {
+            float stepless = SteplessZoomHandler.getSteplessZoom(gunItem);
+            if (stepless > 0.0F) {
+                return stepless;
+            }
+        }
+        float[] zooms = index.getZoom();
+        if (zooms == null || zooms.length == 0) {
+            return 1.0F;
+        }
+        int zoomNumber = AttachmentItemDataAccessor.getZoomNumberFromTag(ItemNbt.get(attachmentItem));
+        return zooms[Math.floorMod(zoomNumber, zooms.length)];
     }
 }

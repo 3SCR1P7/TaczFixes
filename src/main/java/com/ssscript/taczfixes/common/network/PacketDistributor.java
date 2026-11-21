@@ -8,6 +8,7 @@ import net.minecraft.world.level.Level;
 public final class PacketDistributor {
     public static final PlayerTarget PLAYER = new PlayerTarget();
     public static final NearTarget NEAR = new NearTarget();
+    public static final EntityTarget TRACKING_ENTITY = new EntityTarget();
 
     public record TargetPoint(double x, double y, double z, double radius, ResourceKey<Level> dimension) {
     }
@@ -16,6 +17,9 @@ public final class PacketDistributor {
     }
 
     public record Near(Supplier<TargetPoint> supplier) {
+    }
+
+    public record Entity(Supplier<net.minecraft.world.entity.Entity> supplier) {
     }
 
     public static final class PlayerTarget {
@@ -33,6 +37,15 @@ public final class PacketDistributor {
 
         public Near with(Supplier<TargetPoint> supplier) {
             return new Near(supplier);
+        }
+    }
+
+    public static final class EntityTarget {
+        private EntityTarget() {
+        }
+
+        public Entity with(Supplier<net.minecraft.world.entity.Entity> supplier) {
+            return new Entity(supplier);
         }
     }
 

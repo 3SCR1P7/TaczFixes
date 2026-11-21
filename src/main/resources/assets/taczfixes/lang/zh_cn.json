@@ -24,6 +24,13 @@
     "enchantment.taczfixes.focused_ammo":  "聚能弹药",
     "enchantment.taczfixes.arcana_eden":  "阿卡纳伊甸",
     "enchantment.taczfixes.patience":  "耐心",
+    "enchantment.taczfixes.scarlet_death":  "猩红终焉",
+    "enchantment.taczfixes.tokonagi":  "常凪",
+    "enchantment.taczfixes.ember":  "余烬",
+    "enchantment.taczfixes.poised":  "蓄势待发",
+    "enchantment.taczfixes.seal_flare":  "封焰时刻",
+    "death.attack.taczfixes.cardiac_arrest":  "%1$s死于%2$s导致的心脏骤停",
+    "death.attack.taczfixes.abyss_gaze":  "%1$s正在凝视深渊。",
 
 
     "key.taczfixes.switch_scope":  "切换瞄具",
@@ -43,6 +50,7 @@
 
     "config.taczfixes.category.auto_craft":  "自动合成",
     "config.taczfixes.category.suppression": "压制机制",
+    "config.taczfixes.category.heavy_weapons": "重型武器",
     "config.taczfixes.category.visual_effect": "视觉效果",
     "config.taczfixes.category.default_pbr": "默认 PBR",
     "config.taczfixes.category.bloom": "泛光",
@@ -120,6 +128,11 @@
     "config.taczfixes.category.focused_ammo":  "聚能弹药",
     "config.taczfixes.category.arcana_eden":  "阿卡纳伊甸",
     "config.taczfixes.category.patience":  "耐心",
+    "config.taczfixes.category.scarlet_death":  "猩红终焉",
+    "config.taczfixes.category.tokonagi":  "常凪",
+    "config.taczfixes.category.ember":  "余烬",
+    "config.taczfixes.category.poised":  "蓄势待发",
+    "config.taczfixes.category.seal_flare":  "封焰时刻",
 
     "config.taczfixes.entry.gun_level.max_level":  "枪械等级上限",
     "config.taczfixes.entry.gun_level.xp_formula":  "枪械升级经验公式 (Lua，x 为等级，y 为累计经验)",
@@ -270,6 +283,14 @@
     "config.taczfixes.entry.enchantment.value":  "枪械附魔能力值",
     "config.taczfixes.entry.enchantment.whitelist":  "允许的附魔列表",
     "config.taczfixes.entry.enchantment.ignore_conflict":  "允许冲突附魔同时存在",
+    "config.taczfixes.entry.enchantment.tokonagi_ticks_per_damage":  "每点伤害冻结 tick 倍率",
+    "config.taczfixes.entry.enchantment.ember_explosion_power_base":  "爆炸基础威力",
+    "config.taczfixes.entry.enchantment.ember_explosion_power_per_level":  "每级爆炸威力",
+    "config.taczfixes.entry.enchantment.poised_reduction_percent_per_level":  "每级减伤百分比",
+    "config.taczfixes.entry.enchantment.seal_flare_damage_percent_per_heat_per_level":  "每级每点过热伤害加成百分比",
+    "config.taczfixes.entry.enchantment.seal_flare_heat_threshold_percent":  "降射速/点燃过热阈值百分比",
+    "config.taczfixes.entry.enchantment.seal_flare_min_fire_rate_percent":  "满过热射速百分比",
+    "config.taczfixes.entry.enchantment.seal_flare_ignite_ticks":  "点燃时长（tick）",
     "config.taczfixes.entry.enchantment.power_bullet_mult":  "力量：每级子弹伤害倍率",
     "config.taczfixes.entry.enchantment.smite_bullet_mult":  "亡灵杀手：每级子弹伤害倍率",
     "config.taczfixes.entry.enchantment.bane_bullet_mult":  "节肢杀手：每级子弹伤害倍率",
@@ -422,6 +443,8 @@
     "config.taczfixes.entry.visual_effect.default_reflection": "默认反光强度",
     "config.taczfixes.entry.visual_effect.env_strength": "环境反射强度",
     "config.taczfixes.entry.visual_effect.anisotropy": "各向异性反光",
+    "config.taczfixes.entry.visual_effect.metalness_boost": "金属度增幅",
+    "config.taczfixes.entry.visual_effect.roughness_boost": "粗糙度增幅",
     "config.taczfixes.entry.visual_effect.ssr": "屏幕空间反射",
     "config.taczfixes.entry.visual_effect.ssr_strength": "屏幕空间反射强度",
     "config.taczfixes.entry.visual_effect.ssr_steps": "屏幕空间反射步数",
@@ -586,5 +609,6 @@
     "attribute.name.taczfixes.stamina_recovery":  "耐力恢复速度",
     "attribute.name.taczfixes.stamina_consumption":  "耐力消耗倍率",
     "advancement.taczfixes.arms_dealer.title": "军火贩",
-    "advancement.taczfixes.arms_dealer.description": "用下界合金锭向猪灵交换军火"
+    "advancement.taczfixes.arms_dealer.description": "用下界合金锭向猪灵交换军火",
+    "taczfixes.freeze.text": "我在此发誓——我要特别献给你一处无间地狱"
 }

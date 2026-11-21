@@ -51,6 +51,13 @@ public final class SimpleChannel {
         }
     }
 
+    public void send(PacketDistributor.Entity target, Object message) {
+        net.minecraft.world.entity.Entity entity = target.supplier().get();
+        if (entity != null) {
+            net.neoforged.neoforge.network.PacketDistributor.sendToPlayersTrackingEntity(entity, encode(message));
+        }
+    }
+
     public void send(PacketDistributor.Near target, Object message) {
         PacketDistributor.TargetPoint point = target.supplier().get();
         if (point == null) {

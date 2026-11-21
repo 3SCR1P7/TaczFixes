@@ -1,12 +1,16 @@
-package com.ssscript.taczfixes.client.handler;
+package com.ssscript.taczfixes.common.handler;
 
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.DecapitationHelper;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
+import com.ssscript.taczfixes.common.util.GunEnchantmentUtil;
+import com.ssscript.taczfixes.common.network.NetworkHandler;
+import com.ssscript.taczfixes.common.network.PacketDistributor;
+import com.ssscript.taczfixes.common.network.ServerMessageTokonagiFreeze;
+import com.ssscript.taczfixes.common.network.ServerMessageTokonagiFreezeEntity;
 import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
-import com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator;
 import com.tacz.guns.api.event.common.EntityHurtByGunEvent;
 import com.tacz.guns.api.event.common.EntityKillByGunEvent;
 import com.tacz.guns.api.event.common.GunFireEvent;
@@ -18,15 +22,20 @@ import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.init.ModDamageTypes;
 import com.tacz.guns.util.AttachmentDataUtils;
 import com.tacz.guns.util.ExplodeUtil;
+import net.minecraft.network.chat.Component;
+import net.minecraft.ChatFormatting;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.Holder;
+import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.damagesource.DamageType;
 import net.minecraft.world.damagesource.DamageTypes;
-import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
@@ -34,6 +43,7 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.LightningBolt;
+import net.minecraft.world.entity.Mob;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import net.minecraft.world.entity.ai.attributes.Attribute;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
@@ -45,17 +55,19 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.EnchantmentHelper;
 import net.minecraft.world.item.enchantment.Enchantments;
 import net.minecraft.world.level.ClipContext;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.Vec3;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.player.LocalPlayer;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.event.entity.living.LivingIncomingDamageEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
@@ -69,6 +81,19 @@ public class GunEnchantmentHandler {
 
     private static final Map<UUID, Long> LAST_LIGHTNING = new ConcurrentHashMap<>();
 
+    // ---------------------------------------------------------------- 新增五附魔的运行时状态
+    /** 猩红终焉: 死亡提示用的伤害类型。 */
+    private static final ResourceLocation CARDIAC_DAMAGE_ID =
+            ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "cardiac_arrest");
+    /** 凝渊者秒杀使用的伤害类型(死亡提示: 正在凝视深渊)。 */
+    public static final ResourceLocation ABYSS_DAMAGE_ID =
+            ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "abyss_gaze");
+
+    /** 被猩红终焉标记: 目标 UUID -> 射手 UUID。 */
+    private static final Map<UUID, UUID> CARDIAC_TARGETS = new ConcurrentHashMap<>();
+    /** 被常凪冻结: 目标 UUID -> 冻结状态。 */
+    private static final Map<UUID, Freeze> FROZEN = new ConcurrentHashMap<>();
+
     @SubscribeEvent
     public void onGunHurt(EntityHurtByGunEvent.Pre event) {
         if (event.getLogicalSide().isClient()) {
@@ -81,6 +106,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
+        applySealFlareDamage(event, shooter, target);
         int power = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.POWER);
         int smite = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.SMITE);
         int bane = GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.BANE_OF_ARTHROPODS);
@@ -116,6 +142,7 @@ public class GunEnchantmentHandler {
         if (!(event.getHurtEntity() instanceof LivingEntity target)) {
             return;
         }
+        applyScarletAndTokonagi(event, shooter, target);
         if (GunEnchantmentHelper.getLevelFromShooter(event.getGunId(), shooter, Enchantments.CHANNELING) <= 0) {
             return;
         }
@@ -678,67 +705,11 @@ public class GunEnchantmentHandler {
     }
 
     @SubscribeEvent
-    public void onClientTickSmartScope(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        Minecraft mc = Minecraft.getInstance();
-        if (mc.level == null || mc.player == null) {
-            return;
-        }
-        if (!GunEnchantmentHelper.isEnabled()) {
-            return;
-        }
-        LocalPlayer player = mc.player;
-        IClientPlayerGunOperator operator = IClientPlayerGunOperator.fromLocalPlayer(player);
-        if (operator == null || !operator.isAim()) {
-            return;
-        }
-        ItemStack stack = player.getMainHandItem();
-        int level = GunEnchantmentHelper.getLevel(stack, TaczFixesMod.SMART_SCOPE_ENCHANTMENT.get());
-        if (level <= 0) {
-            return;
-        }
-        if (!(stack.getItem() instanceof IGun)) {
-            return;
-        }
-        double distance = Config.ENCH_SMART_SCOPE_MAX_DISTANCE.get();
-        // 只在准星附近有实体时才做射线/实体查询, 避免每 tick 全量查询。
-        if (!(mc.hitResult instanceof net.minecraft.world.phys.EntityHitResult)) {
-            return;
-        }
-        Vec3 start = player.getEyePosition(1.0F);
-        Vec3 look = player.getViewVector(1.0F);
-        Vec3 end = start.add(look.scale(distance));
-        BlockHitResult blockHit = player.level().clip(new ClipContext(start, end, ClipContext.Block.COLLIDER,
-                ClipContext.Fluid.NONE, player));
-        double maxDistSqr = blockHit.getType() == HitResult.Type.MISS
-                ? distance * distance
-                : start.distanceToSqr(blockHit.getLocation());
-        if (maxDistSqr <= 0.0) {
-            return;
-        }
-        AABB box = player.getBoundingBox().expandTowards(look.scale(distance)).inflate(1.0);
-        List<Entity> entities = player.level().getEntities(player, box,
-                e -> e.isAlive() && e.isPickable() && !e.isSpectator());
-        double bestDistSqr = maxDistSqr;
-        for (Entity e : entities) {
-            Optional<Vec3> hit = e.getBoundingBox().clip(start, end);
-            if (hit.isEmpty()) {
-                continue;
-            }
-            double d = start.distanceToSqr(hit.get());
-            if (d < bestDistSqr) {
-                bestDistSqr = d;
-            }
-        }
-        if (bestDistSqr < maxDistSqr) {
-            operator.shoot();
-        }
-    }
-
-    @SubscribeEvent
     public void onGunKill(EntityKillByGunEvent event) {
         if (event.getLogicalSide().isClient()) {
             return;
         }
+        applyEmberExplosion(event);
         LivingEntity shooter = event.getAttacker();
         if (shooter == null || event.getKilledEntity() == null) {
             return;
@@ -915,12 +886,7 @@ public class GunEnchantmentHandler {
         if (chance < 1.0 && shooter.getRandom().nextDouble() >= chance) {
             return;
         }
-        Entity bullet = event.getBullet();
-        Holder<DamageType> voidType = (bullet == null ? target.level() : bullet.level())
-                .registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ModDamageTypes.BULLET_VOID);
-        DamageSource source = new DamageSource(voidType, shooter, shooter);
-        target.setHealth(0.0F);
-        target.die(source);
+        instantKill(target, shooter, ABYSS_DAMAGE_ID);
     }
 
     private static final Map<UUID, Integer> BULLET_PENETRATION = new ConcurrentHashMap<>();
@@ -970,6 +936,8 @@ public class GunEnchantmentHandler {
         UUID id = event.getEntity().getUUID();
         LAST_LIGHTNING.remove(id);
         CHARGE_PLAYER_SPEED.remove(id);
+        CARDIAC_TARGETS.entrySet().removeIf(entry -> entry.getValue().equals(id));
+        FROZEN.remove(id);
     }
 
     @SubscribeEvent
@@ -977,5 +945,338 @@ public class GunEnchantmentHandler {
         if (event.getEntity() instanceof com.tacz.guns.entity.EntityKineticBullet bullet) {
             BULLET_PENETRATION.remove(bullet.getUUID());
         }
+    }
+
+    // ================================================================================
+    // 猩红终焉 / 常凪 / 余烬 / 蓄势待发 / 封焰时刻(与旧附魔统一放在本处理器)
+    // ================================================================================
+
+    private record Freeze(ResourceKey<Level> dimension, UUID target, double x, double y, double z,
+                          long until, boolean hadNoAi, boolean wasNoAi) {
+    }
+
+    /** 封焰时刻: 命中伤害随过热进度提升(0~100% 线性 × 等级 × 每级百分比)。 */
+    private static void applySealFlareDamage(EntityHurtByGunEvent.Pre event, LivingEntity shooter,
+                                             LivingEntity target) {
+        if (!GunEnchantmentHelper.isEnabled()) {
+            return;
+        }
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
+        int level = GunEnchantmentUtil.level(gun, TaczFixesMod.SEAL_FLARE_ENCHANTMENT);
+        if (level <= 0) {
+            return;
+        }
+        float heat = GunEnchantmentUtil.heatProgress(gun);
+        if (heat <= 0.0F) {
+            return;
+        }
+        float multiplier = 1.0F + heat * level
+                * (float) (Config.ENCH_SEAL_FLARE_DAMAGE_PERCENT_PER_HEAT_PER_LEVEL.get() / 100.0D);
+        event.setBaseAmount(event.getBaseAmount() * multiplier);
+    }
+
+    /** 猩红终焉(标记目标) + 常凪(冻结): 命中后触发。 */
+    private static void applyScarletAndTokonagi(EntityHurtByGunEvent.Post event, LivingEntity shooter,
+                                               LivingEntity target) {
+        if (!GunEnchantmentHelper.isEnabled() || !target.isAlive()) {
+            return;
+        }
+        ItemStack gun = GunEnchantmentHelper.getGunStack(event.getGunId(), shooter);
+        if (gun.isEmpty()) {
+            return;
+        }
+        if (GunEnchantmentUtil.level(gun, TaczFixesMod.SCARLET_DEATH_ENCHANTMENT) > 0) {
+            CARDIAC_TARGETS.put(target.getUUID(), shooter.getUUID());
+        }
+        int tokonagi = GunEnchantmentUtil.level(gun, TaczFixesMod.TOKONAGI_ENCHANTMENT);
+        if (tokonagi > 0) {
+            int ticks = (int) (Math.floor(event.getAmount()) * tokonagi
+                    * Config.ENCH_TOKONAGI_TICKS_PER_DAMAGE.get());
+            applyFreeze(target, ticks);
+        }
+    }
+
+    /** 余烬: 枪械击杀时在原位置引发带火爆炸。 */
+    private static void applyEmberExplosion(EntityKillByGunEvent event) {
+        if (!GunEnchantmentHelper.isEnabled()) {
+            return;
+        }
+        LivingEntity shooter = event.getAttacker();
+        LivingEntity killed = event.getKilledEntity();
+        if (shooter == null || killed == null) {
+            return;
+        }
+        int level = GunEnchantmentUtil.level(GunEnchantmentHelper.getGunStack(event.getGunId(), shooter),
+                TaczFixesMod.EMBER_ENCHANTMENT);
+        if (level <= 0) {
+            return;
+        }
+        Level levelObj = killed.level();
+        if (levelObj.isClientSide) {
+            return;
+        }
+        float power = (float) (Config.ENCH_EMBER_EXPLOSION_POWER_BASE.get()
+                + level * Config.ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL.get());
+        levelObj.explode(null, killed.getX(), killed.getY(), killed.getZ(),
+                power, true, Level.ExplosionInteraction.BLOCK);
+    }
+
+    /** 蓄势待发: 持枪蓄力时受到的伤害减少 等级×15%。 */
+    @SubscribeEvent
+    public void onLivingHurtPoised(LivingIncomingDamageEvent event) {
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
+        if (!GunEnchantmentHelper.isEnabled()) {
+            return;
+        }
+        LivingEntity entity = event.getEntity();
+        ItemStack gun = GunEnchantmentHelper.getGunStack(entity);
+        if (gun.isEmpty()) {
+            return;
+        }
+        int level = GunEnchantmentUtil.level(gun, TaczFixesMod.POISED_ENCHANTMENT);
+        if (level <= 0 || !GunEnchantmentUtil.isCharging(entity)) {
+            return;
+        }
+        float reduction = Math.min(1.0F, level
+                * (float) (Config.ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL.get() / 100.0D));
+        event.setAmount(event.getAmount() * (1.0F - reduction));
+    }
+
+    /** 猩红终焉: 射手死亡时, 其标记过的目标全部因心脏骤停死亡。 */
+    @SubscribeEvent
+    public void onLivingDeathScarletDeath(LivingDeathEvent event) {
+        UUID dead = event.getEntity().getUUID();
+        CARDIAC_TARGETS.remove(dead);
+        if (event.getEntity().level().isClientSide) {
+            return;
+        }
+        List<UUID> owned = new ArrayList<>();
+        for (Map.Entry<UUID, UUID> entry : CARDIAC_TARGETS.entrySet()) {
+            if (entry.getValue().equals(dead)) {
+                owned.add(entry.getKey());
+            }
+        }
+        if (owned.isEmpty()) {
+            return;
+        }
+        LivingEntity owner = event.getEntity();
+        for (UUID targetId : owned) {
+            CARDIAC_TARGETS.remove(targetId);
+            Entity entity = findEntity(owner, targetId);
+            if (entity instanceof LivingEntity target && target.isAlive()) {
+                instantKill(target, owner, CARDIAC_DAMAGE_ID);
+            }
+        }
+    }
+
+    /** 猩红终焉标记的红色药水粒子 + 常凪冻结状态维护。 */
+    @SubscribeEvent
+    public void onServerTickNewEnchants(ServerTickEvent.Post event) {
+        MinecraftServer server = ServerLifecycleHooks.getCurrentServer();
+        if (server == null) {
+            return;
+        }
+        if (!CARDIAC_TARGETS.isEmpty()) {
+            tickCardiac(server);
+        }
+        if (!FROZEN.isEmpty()) {
+            tickFreeze(server);
+        }
+    }
+
+    /**
+     * 瞬间击杀: 直接把血量置 0 再走正常死亡流程(绕过伤害减免/图腾), 保留击杀者与自定义死亡提示。
+     * 猩红终焉与凝渊者共用。
+     */
+    public static void instantKill(LivingEntity target, LivingEntity attacker, ResourceLocation damageTypeId) {
+        if (target == null || !target.isAlive()) {
+            return;
+        }
+        DamageSource source;
+        try {
+            Holder<DamageType> holder = target.level().registryAccess()
+                    .registryOrThrow(Registries.DAMAGE_TYPE)
+                    .getHolderOrThrow(ResourceKey.create(Registries.DAMAGE_TYPE, damageTypeId));
+            source = new DamageSource(holder, attacker, attacker);
+        } catch (Throwable throwable) {
+            source = target.damageSources().magic();
+        }
+        target.setHealth(0.0F);
+        if (!target.isRemoved()) {
+            // 玩家死亡界面/聊天栏的死亡提示取的是 CombatTracker 里最后一条战斗记录, 而不是 die() 的入参。
+            // 直接 setHealth(0)+die() 不经过 hurt(), 战斗记录里最后一条还是之前那发子弹(玩家击杀),
+            // 于是玩家死亡时仍然显示"被 xxx 击倒"。这里把自定义伤害源补进战斗记录, 再用它走死亡流程。
+            try {
+                target.getCombatTracker().recordDamage(source, 0.0F);
+            } catch (Throwable ignored) {
+                // 记录失败不影响击杀本身。
+            }
+            ((com.ssscript.taczfixes.common.mixin.LivingEntityDieInvoker) target).taczfixes$die(source);
+        }
+    }
+
+    private static void applyFreeze(LivingEntity target, int ticks) {
+        if (ticks <= 0 || !(target.level() instanceof ServerLevel serverLevel)) {
+            return;
+        }
+        long now = serverLevel.getGameTime();
+        long until = now + ticks;
+        Freeze existing = FROZEN.get(target.getUUID());
+        if (existing != null) {
+            until = Math.max(existing.until(), until);
+        }
+        boolean mob = target instanceof Mob;
+        boolean wasNoAi = mob && ((Mob) target).isNoAi();
+        if (mob) {
+            ((Mob) target).setNoAi(true);
+        }
+        FROZEN.put(target.getUUID(), new Freeze(serverLevel.dimension(), target.getUUID(),
+                target.getX(), target.getY(), target.getZ(), until, true, wasNoAi));
+        syncFreezeEntity(target, ticks);
+        if (target instanceof ServerPlayer player) {
+            // 客户端需要通过冻结状态来丢弃全部输入。
+            syncFreeze(player, ticks);
+            showFreezeActionBar(player);
+        }
+    }
+
+    /** 常凪冻结: 在原版 action bar 上显示红色提示。 */
+    private static void showFreezeActionBar(ServerPlayer player) {
+        player.displayClientMessage(Component.translatable("taczfixes.freeze.text")
+                .withStyle(ChatFormatting.RED), true);
+    }
+
+    private static void clearFreezeActionBar(ServerPlayer player) {
+        player.displayClientMessage(Component.empty(), true);
+    }
+
+    /** 把"该实体被冻结"广播给追踪它的玩家(0 = 解除), 用于客户端暂停动画/声音。 */
+    private static void syncFreezeEntity(LivingEntity entity, int ticks) {
+        ServerMessageTokonagiFreezeEntity message =
+                new ServerMessageTokonagiFreezeEntity(entity.getId(), ticks);
+        NetworkHandler.CHANNEL.send(PacketDistributor.TRACKING_ENTITY.with(() -> entity), message);
+        // 追踪列表在实体刚被冻结/换维度时可能还没刷新, 附近玩家也补发一次(客户端按更久时间合并, 重复无害)。
+        if (entity.level() instanceof ServerLevel serverLevel) {
+            NetworkHandler.CHANNEL.send(PacketDistributor.NEAR.with(() -> new PacketDistributor.TargetPoint(
+                    entity.getX(), entity.getY(), entity.getZ(), 128.0D, serverLevel.dimension())), message);
+        }
+    }
+
+    /** 把冻结的剩余 tick 同步给被冻结的玩家(0 = 解除)。 */
+    private static void syncFreeze(ServerPlayer player, int ticks) {
+        NetworkHandler.CHANNEL.send(PacketDistributor.PLAYER.with(() -> player),
+                new ServerMessageTokonagiFreeze(ticks));
+    }
+
+    public static boolean isFrozen(Entity entity) {
+        return entity != null && FROZEN.containsKey(entity.getUUID());
+    }
+
+    private static void tickCardiac(MinecraftServer server) {
+        long time = server.overworld() == null ? 0L : server.overworld().getGameTime();
+        for (Map.Entry<UUID, UUID> entry : CARDIAC_TARGETS.entrySet()) {
+            Entity target = findEntity(server, entry.getKey());
+            if (!(target instanceof LivingEntity living) || !living.isAlive()) {
+                CARDIAC_TARGETS.remove(entry.getKey());
+                continue;
+            }
+            Entity owner = findEntity(server, entry.getValue());
+            if (!(owner instanceof LivingEntity)) {
+                CARDIAC_TARGETS.remove(entry.getKey());
+                continue;
+            }
+            if (time % 5L != 0L || !(living.level() instanceof ServerLevel serverLevel)) {
+                continue;
+            }
+            double x = living.getX() + (living.getRandom().nextDouble() - 0.5D) * living.getBbWidth();
+            double y = living.getY() + living.getBbHeight() * (0.35D + living.getRandom().nextDouble() * 0.5D);
+            double z = living.getZ() + (living.getRandom().nextDouble() - 0.5D) * living.getBbWidth();
+            // ENTITY_EFFECT = 药水粒子; 颜色通过 xDist/yDist/zDist 传入(红色)。
+            serverLevel.sendParticles(ColorParticleOption.create(ParticleTypes.ENTITY_EFFECT, 0.95F, 0.05F, 0.05F),
+                    x, y, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+    }
+
+    private static void tickFreeze(MinecraftServer server) {
+        for (Map.Entry<UUID, Freeze> entry : FROZEN.entrySet()) {
+            Freeze freeze = entry.getValue();
+            ServerLevel level = server.getLevel(freeze.dimension());
+            if (level == null) {
+                FROZEN.remove(entry.getKey());
+                continue;
+            }
+            Entity entity = level.getEntity(freeze.target());
+            if (!(entity instanceof LivingEntity living) || !living.isAlive()) {
+                FROZEN.remove(entry.getKey());
+                if (entity instanceof LivingEntity removed) {
+                    syncFreezeEntity(removed, 0);
+                }
+                if (entity instanceof ServerPlayer player) {
+                    syncFreeze(player, 0);
+                    clearFreezeActionBar(player);
+                }
+                continue;
+            }
+            if (level.getGameTime() >= freeze.until()) {
+                FROZEN.remove(entry.getKey());
+                syncFreezeEntity(living, 0);
+                if (living instanceof ServerPlayer player) {
+                    syncFreeze(player, 0);
+                    clearFreezeActionBar(player);
+                }
+                if (freeze.hadNoAi() && living instanceof Mob mob && !freeze.wasNoAi()) {
+                    mob.setNoAi(false);
+                }
+                continue;
+            }
+            if (living instanceof ServerPlayer player) {
+                // 每 10 tick 刷新一次剩余时长, 防止丢包/重连后客户端还处于冻结或提前解除。
+                int remaining = (int) (freeze.until() - level.getGameTime());
+                if (remaining % 10 == 0) {
+                    syncFreeze(player, remaining);
+                }
+            }
+            if (level.getGameTime() % 10L == 0L) {
+                syncFreezeEntity(living, (int) (freeze.until() - level.getGameTime()));
+            }
+            if (living instanceof ServerPlayer player && level.getGameTime() % 20L == 0L) {
+                showFreezeActionBar(player);
+            }
+            living.setDeltaMovement(0.0D, 0.0D, 0.0D);
+            living.fallDistance = 0.0F;
+            living.setPos(freeze.x(), freeze.y(), freeze.z());
+            if (living instanceof Mob mob) {
+                mob.getNavigation().stop();
+                mob.setNoAi(true);
+            }
+            if (living instanceof ServerPlayer player) {
+                player.connection.teleport(freeze.x(), freeze.y(), freeze.z(), player.getYRot(), player.getXRot());
+            }
+        }
+    }
+
+    private static Entity findEntity(MinecraftServer server, UUID id) {
+        for (ServerLevel level : server.getAllLevels()) {
+            Entity entity = level.getEntity(id);
+            if (entity != null) {
+                return entity;
+            }
+        }
+        return null;
+    }
+
+    private static Entity findEntity(LivingEntity context, UUID id) {
+        if (context != null && context.level() instanceof ServerLevel serverLevel) {
+            Entity entity = serverLevel.getEntity(id);
+            if (entity != null) {
+                return entity;
+            }
+        }
+        if (context != null && context.level().getServer() != null) {
+            return findEntity(context.level().getServer(), id);
+        }
+        return null;
     }
 }

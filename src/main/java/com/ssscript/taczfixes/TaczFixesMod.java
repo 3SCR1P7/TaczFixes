@@ -85,6 +85,11 @@ public class TaczFixesMod {
     public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def FOCUSED_AMMO_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.FOCUSED_AMMO;
     public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def ARCANA_EDEN_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.ARCANA_EDEN;
     public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def PATIENCE_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.PATIENCE;
+    public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def SCARLET_DEATH_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.SCARLET_DEATH;
+    public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def TOKONAGI_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.TOKONAGI;
+    public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def EMBER_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.EMBER;
+    public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def POISED_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.POISED;
+    public static final com.ssscript.taczfixes.common.util.GunEnchantments.Def SEAL_FLARE_ENCHANTMENT = com.ssscript.taczfixes.common.util.GunEnchantments.SEAL_FLARE;
 
     public TaczFixesMod(IEventBus modBus, ModContainer modContainer) {
         for (java.util.Map.Entry<String, net.neoforged.neoforge.common.ModConfigSpec> entry : Config.SPECS.entrySet()) {
@@ -109,6 +114,7 @@ public class TaczFixesMod {
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.StaminaHandler());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.compat.ArcanaSkillBridge());
         NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CompatCommand());
+        NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunEnchantmentHandler());
         if (net.neoforged.fml.ModList.get().isLoaded("irons_spellbooks")) {
             try {
                 NeoForge.EVENT_BUS.register(Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")

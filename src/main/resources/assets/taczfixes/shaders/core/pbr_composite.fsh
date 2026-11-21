@@ -1,8 +1,13 @@
 #version 150
-// 窄光晕 + 宽光晕合成到主目标(一次全屏 pass)。可见性已经在模糊前的遮罩 pass 里处理过。
+// 窄光晕 + 宽光晕合成到主目标(一次全屏 pass)。
+// 遮挡: 模糊链把每个像素的光源深度留在 alpha 里, 这里和场景深度比较, 前景(手臂等)比光源近时
+// 光晕就衰减掉 —— 只在模糊前按光源像素剔除是不够的, 光晕本身会从旁边漏到前景上。
 uniform sampler2D Sampler0;
 uniform sampler2D Wide;
 uniform sampler2D ScopeMask;
+uniform sampler2D SceneDepth;
+uniform sampler2D NarrowDepth;
+uniform sampler2D WideDepth;
 uniform float Strength;
 uniform float WideStrength;
 uniform int HasScopeMask;
@@ -12,11 +17,23 @@ uniform float ScissorFade;
 uniform int HasScissor;
 in vec2 texCoord;
 out vec4 fragColor;
+
+// blurDepth 为模糊后的光源窗口深度(0 表示附近没有光源)。场景比光源近就判定被遮挡。
+float occlusion(float sceneDepth, float blurDepth) {
+    if (blurDepth <= 0.0) {
+        return 1.0;
+    }
+    return smoothstep(-0.06, -0.01, sceneDepth - blurDepth);
+}
+
 void main() {
-    vec3 color = texture(Sampler0, texCoord).rgb * Strength;
+    float sceneDepth = texture(SceneDepth, texCoord).r;
+    float narrowDepth = texture(NarrowDepth, texCoord).a;
+    vec3 color = texture(Sampler0, texCoord).rgb * Strength * occlusion(sceneDepth, narrowDepth);
     // 没开宽泛光层时连采样都省掉。
     if (WideStrength > 0.0) {
-        color += texture(Wide, texCoord).rgb * WideStrength;
+        float wideDepth = texture(WideDepth, texCoord).a;
+        color += texture(Wide, texCoord).rgb * WideStrength * occlusion(sceneDepth, wideDepth);
     }
     color *= 1.6;
     if (HasScopeMask != 0) {

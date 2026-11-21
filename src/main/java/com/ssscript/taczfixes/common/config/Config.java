@@ -25,6 +25,8 @@ public class Config {
     public static final ModConfigSpec.DoubleValue PBR_DEFAULT_REFLECTION;
     public static final ModConfigSpec.DoubleValue PBR_ENV_STRENGTH;
     public static final ModConfigSpec.DoubleValue PBR_ANISOTROPY;
+    public static final ModConfigSpec.DoubleValue PBR_METALNESS_BOOST;
+    public static final ModConfigSpec.DoubleValue PBR_ROUGHNESS_BOOST;
     public static final ModConfigSpec.BooleanValue PBR_SSR;
     public static final ModConfigSpec.DoubleValue PBR_SSR_STRENGTH;
     public static final ModConfigSpec.IntValue PBR_SSR_STEPS;
@@ -246,7 +248,14 @@ public class Config {
     public static final ModConfigSpec.DoubleValue ENCH_FOCUSED_AMMO_DAMAGE_MULT_PER_LEVEL;
     public static final ModConfigSpec.IntValue ENCH_PATIENCE_DELAY_MS;
     public static final ModConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
-
+    public static final ModConfigSpec.DoubleValue ENCH_TOKONAGI_TICKS_PER_DAMAGE;
+    public static final ModConfigSpec.DoubleValue ENCH_EMBER_EXPLOSION_POWER_BASE;
+    public static final ModConfigSpec.DoubleValue ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_SEAL_FLARE_DAMAGE_PERCENT_PER_HEAT_PER_LEVEL;
+    public static final ModConfigSpec.DoubleValue ENCH_SEAL_FLARE_HEAT_THRESHOLD_PERCENT;
+    public static final ModConfigSpec.DoubleValue ENCH_SEAL_FLARE_MIN_FIRE_RATE_PERCENT;
+    public static final ModConfigSpec.IntValue ENCH_SEAL_FLARE_IGNITE_TICKS;
     public static final ModConfigSpec.BooleanValue AIMING_STAMINA_ENABLED;
     public static final ModConfigSpec.DoubleValue AIMING_STAMINA_MAX;
     public static final ModConfigSpec.DoubleValue AIMING_STAMINA_CONSUMPTION;
@@ -958,7 +967,12 @@ public class Config {
                         "taczfixes:equalizer",
                         "taczfixes:random",
                         "taczfixes:decapitation",
-                        "taczfixes:charge"), it -> it instanceof String);
+                        "taczfixes:charge",
+                        "taczfixes:scarlet_death",
+                        "taczfixes:tokonagi",
+                        "taczfixes:ember",
+                        "taczfixes:poised",
+                        "taczfixes:seal_flare"), it -> it instanceof String);
         GUN_ENCHANT_IGNORE_CONFLICT = BUILDER
                 .comment("是否允许冲突附魔同时存在。",
                         "默认值：true")
@@ -1224,6 +1238,42 @@ public class Config {
                 .comment("耐心：每级每 tick 增加的子弹伤害百分比。默认值：0.5%")
                 .defineInRange("patience_damage_percent_per_tick_per_level", 0.5, 0.0, 100.0);
         BUILDER.pop();
+
+        BUILDER.push("tokonagi");
+        ENCH_TOKONAGI_TICKS_PER_DAMAGE = BUILDER
+                .comment("常凪：冻结 tick 数 = floor(子弹伤害) × 等级 × 此倍率。默认值：1.0")
+                .defineInRange("tokonagi_ticks_per_damage", 1.0, 0.0, 10.0);
+        BUILDER.pop();
+
+        BUILDER.push("ember");
+        ENCH_EMBER_EXPLOSION_POWER_BASE = BUILDER
+                .comment("余烬：击杀爆炸的基础威力。默认值：3.0")
+                .defineInRange("ember_explosion_power_base", 3.0, 0.0, 100.0);
+        ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL = BUILDER
+                .comment("余烬：每级附魔增加的爆炸威力。默认值：1.0")
+                .defineInRange("ember_explosion_power_per_level", 1.0, 0.0, 100.0);
+        BUILDER.pop();
+
+        BUILDER.push("poised");
+        ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL = BUILDER
+                .comment("蓄势待发：蓄力时每级减少的受伤百分比。默认值：15")
+                .defineInRange("poised_damage_reduction_percent_per_level", 15.0, 0.0, 100.0);
+        BUILDER.pop();
+
+        BUILDER.push("seal_flare");
+        ENCH_SEAL_FLARE_DAMAGE_PERCENT_PER_HEAT_PER_LEVEL = BUILDER
+                .comment("封焰时刻：伤害加成 = 过热进度 × 等级 × 此百分比。默认值：21")
+                .defineInRange("seal_flare_damage_percent_per_heat_per_level", 21.0, 0.0, 100.0);
+        ENCH_SEAL_FLARE_HEAT_THRESHOLD_PERCENT = BUILDER
+                .comment("封焰时刻：开始降低射速、点燃目标的过热进度阈值(百分比)。默认值：70")
+                .defineInRange("seal_flare_heat_threshold_percent", 70.0, 0.0, 100.0);
+        ENCH_SEAL_FLARE_MIN_FIRE_RATE_PERCENT = BUILDER
+                .comment("封焰时刻：过热100%时的射速百分比。默认值：77.5")
+                .defineInRange("seal_flare_min_fire_rate_percent", 77.5, 1.0, 100.0);
+        ENCH_SEAL_FLARE_IGNITE_TICKS = BUILDER
+                .comment("封焰时刻：过热阈值以上射击点燃目标的时长(tick)。默认值：80")
+                .defineInRange("seal_flare_ignite_ticks", 80, 0, 1200);
+        BUILDER.pop();
         BUILDER.pop();
         SPECS.put("gun_enchantment", BUILDER.build());
 
@@ -1465,6 +1515,12 @@ public class Config {
         PBR_ANISOTROPY = BUILDER
                 .comment("各向异性反光强度，表现拉丝金属与枪管沿轴向的细长高光。默认值：0.5")
                 .defineInRange("anisotropy", 0.5, 0.0, 1.0);
+        PBR_METALNESS_BOOST = BUILDER
+                .comment("金属度增幅：最终金属度 = 原金属度 × (1 + 增幅)。1.0 即 +100%，-1.0 即 -100%。默认值：0.0")
+                .defineInRange("metalness_boost", 0.0, -1.0, 1.0);
+        PBR_ROUGHNESS_BOOST = BUILDER
+                .comment("粗糙度增幅：最终粗糙度 = 原粗糙度 × (1 + 增幅)。1.0 即 +100%，-1.0 即 -100%。默认值：0.0")
+                .defineInRange("roughness_boost", 0.0, -1.0, 1.0);
         PBR_SSR = BUILDER
                 .comment("是否启用屏幕空间反射，让枪械金属反射出场景中的方块与实体。默认值：true")
                 .define("ssr", true);
@@ -1481,8 +1537,8 @@ public class Config {
                 .comment("是否叠加一层更大半径的宽泛光，让光晕过渡更自然。默认值：true")
                 .define("bloom_wide", true);
         PBR_BLOOM_UPDATE_INTERVAL = BUILDER
-                .comment("泛光光晕的更新间隔（帧）。默认值：2")
-                .defineInRange("bloom_update_interval", 2, 1, 8);
+                .comment("泛光光晕的更新间隔（帧）。默认值：1")
+                .defineInRange("bloom_update_interval", 1, 1, 4);
         PBR_BLOOM_WIDE_STRENGTH = BUILDER
                 .comment("宽泛光层强度。默认值：0.25")
                 .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);
@@ -1540,6 +1596,7 @@ public class Config {
         SUPPRESSION_DARKEN_DURATION_MS = BUILDER
                 .comment("变暗持续时长。默认值：750")
                 .defineInRange("darken_duration_ms", 750, 0, 10000);
+        BUILDER.push("heavy_weapons");
         SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER = BUILDER
                 .comment("sniper/rpg 类型武器子弹的色散强度倍率。默认值：2.0")
                 .defineInRange("sniper_rpg_exposure_strength_multiplier", 2.0, 0.0, 10.0);
@@ -1561,6 +1618,7 @@ public class Config {
         SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER = BUILDER
                 .comment("sniper/rpg 类型武器子弹的检测子弹范围倍率。默认值：2.0")
                 .defineInRange("sniper_rpg_detection_range_multiplier", 2.0, 0.0, 10.0);
+        BUILDER.pop();
         BUILDER.pop();
         SPECS.put("suppression", BUILDER.build());
     }

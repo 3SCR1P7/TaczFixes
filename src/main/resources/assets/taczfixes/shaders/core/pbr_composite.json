@@ -9,6 +9,15 @@
     },
     {
       "name": "ScopeMask"
+    },
+    {
+      "name": "SceneDepth"
+    },
+    {
+      "name": "NarrowDepth"
+    },
+    {
+      "name": "WideDepth"
     }
   ],
   "uniforms": [

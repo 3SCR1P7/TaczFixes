@@ -1,0 +1,25 @@
+{
+  "attributes": [
+    "Position",
+    "UV0"
+  ],
+  "fragment": "taczfixes:freeze_screen",
+  "vertex": "taczfixes:pbr_screen",
+  "uniforms": [
+    {
+      "type": "float",
+      "count": 1,
+      "name": "FreezeOpacity",
+      "values": [1.0]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "RedStrength",
+      "values": [1.0]
+    }
+  ],
+  "samplers": [
+    { "name": "Sampler0" }
+  ]
+}

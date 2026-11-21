@@ -1,0 +1,22 @@
+{
+  "anvil_cost": 8,
+  "description": {
+    "translate": "enchantment.taczfixes.scarlet_death"
+  },
+  "effects": {},
+  "max_cost": {
+    "base": 20,
+    "per_level_above_first": 14
+  },
+  "max_level": 1,
+  "min_cost": {
+    "base": 6,
+    "per_level_above_first": 8
+  },
+  "primary_items": "#taczfixes:enchantable/gun",
+  "slots": [
+    "mainhand"
+  ],
+  "supported_items": "#taczfixes:enchantable/gun",
+  "weight": 2
+}

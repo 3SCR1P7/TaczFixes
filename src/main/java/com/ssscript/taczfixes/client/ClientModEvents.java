@@ -9,7 +9,6 @@ import com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler;
 import com.ssscript.taczfixes.client.handler.EditDataKeyHandler;
 import com.ssscript.taczfixes.client.handler.GunDataMessageHandler;
 import com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler;
-import com.ssscript.taczfixes.client.handler.GunEnchantmentHandler;
 import com.ssscript.taczfixes.client.handler.GunPackKeyHandler;
 import com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler;
 import com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler;
@@ -83,7 +82,8 @@ public final class ClientModEvents {
             NeoForge.EVENT_BUS.register(new SteplessZoomHandler());
             NeoForge.EVENT_BUS.register(new ScopeSwitchHandler());
             NeoForge.EVENT_BUS.register(new ConfigKeyHandler());
-            NeoForge.EVENT_BUS.register(new GunEnchantmentHandler());
+            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.SmartScopeHandler());
+            NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.FreezeInputHandler());
             NeoForge.EVENT_BUS.register(new EditDataKeyHandler());
             NeoForge.EVENT_BUS.register(new GunDataMessageHandler());
             NeoForge.EVENT_BUS.register(new InputSyncHandler());

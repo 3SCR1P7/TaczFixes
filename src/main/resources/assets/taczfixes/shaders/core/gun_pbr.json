@@ -9,7 +9,6 @@
     ],
     "uniforms": [
         { "name": "CelestialVisibility", "type": "float", "count": 1, "values": [0.0] },
-    { "name": "ArEmissive", "type": "int", "count": 1, "values": [0] },
         { "name": "LocalSkyExposure", "type": "float", "count": 1, "values": [0.0] },
         { "name": "SunOcclusion", "type": "float", "count": 1, "values": [0.0] },
         { "name": "CelestialDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
@@ -61,6 +60,8 @@
         { "name": "DefaultReflection", "type": "float", "count": 1, "values": [0.35] },
         { "name": "EnvStrength", "type": "float", "count": 1, "values": [1.0] },
         { "name": "Anisotropy", "type": "float", "count": 1, "values": [0.5] },
+    { "name": "MetalnessBoost", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "RoughnessBoost", "type": "float", "count": 1, "values": [0.0] },
 
         { "name": "SSRStrength", "type": "float", "count": 1, "values": [0.0] },
         { "name": "SSRSteps", "type": "int", "count": 1, "values": [24] },

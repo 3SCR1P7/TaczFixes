@@ -43,7 +43,7 @@ import java.util.Optional;
 @net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader, smoothShader;
-    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uArEmissive;
+    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass;
     private static AbstractUniform uReflectionStrength, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uGlareDepthTest, uFallbackMaterial;
     private static final int LOCAL_LIGHT_SLOTS = 4;
@@ -55,6 +55,7 @@ public final class PbrRenderer {
     private static AbstractUniform uSkyZenith, uSkyHorizon, uSunHorizon, uSunAzimuth, uSunOcclusion;
     private static AbstractUniform uDefaultRoughness, uDefaultMetal, uDefaultReflection, uEnvStrength;
     private static AbstractUniform uAnisotropy, uWetDetail, uSSRStrength, uTime;
+    private static AbstractUniform uMetalnessBoost, uRoughnessBoost;
     private static AbstractUniform uSSRSteps, uScreenSize;
     private static AbstractUniform uViewRotX, uViewRotY, uViewRotZ;
     private static AbstractUniform uCameraPos;
@@ -503,6 +504,8 @@ public final class PbrRenderer {
         setUniform(uTime, (level.getGameTime() + partialTick) / 20f);
         setUniform(uEnvStrength, Config.PBR_ENV_STRENGTH.get().floatValue());
         setUniform(uAnisotropy, Config.PBR_ANISOTROPY.get().floatValue());
+        setUniform(uMetalnessBoost, Config.PBR_METALNESS_BOOST.get().floatValue());
+        setUniform(uRoughnessBoost, Config.PBR_ROUGHNESS_BOOST.get().floatValue());
         if (!level.dimensionType().hasSkyLight()
                 || level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL) {
             setUniform(uCelestialDirection, 0f, 1f, 0f);
@@ -1035,7 +1038,7 @@ public final class PbrRenderer {
     }
 
     private static void clearUniformCache() {
-        uHasSpecular = uHasNormal = uEmissionPass = uArEmissive = null;
+        uHasSpecular = uHasNormal = uEmissionPass = null;
         uReflectionStrength = uGlareStrength = uEmissionStrength = null;
         uGlareDepthTest = uFallbackMaterial = null;
         uCelestialDirection = uCelestialColor = uSkyAmbient = null;
@@ -1043,6 +1046,7 @@ public final class PbrRenderer {
         uSkyZenith = uSkyHorizon = uSunHorizon = uSunAzimuth = uSunOcclusion = null;
         uDefaultRoughness = uDefaultMetal = uDefaultReflection = uEnvStrength = null;
         uAnisotropy = uWetDetail = uSSRStrength = uTime = null;
+        uMetalnessBoost = uRoughnessBoost = null;
         uSSRSteps = uScreenSize = null;
         uViewRotX = uViewRotY = uViewRotZ = null;
         uCameraPos = null;
@@ -1089,6 +1093,8 @@ public final class PbrRenderer {
         uDefaultReflection = s.safeGetUniform("DefaultReflection");
         uEnvStrength = s.safeGetUniform("EnvStrength");
         uAnisotropy = s.safeGetUniform("Anisotropy");
+        uMetalnessBoost = s.safeGetUniform("MetalnessBoost");
+        uRoughnessBoost = s.safeGetUniform("RoughnessBoost");
         uWetDetail = s.safeGetUniform("WetDetail");
         uSSRStrength = s.safeGetUniform("SSRStrength");
         uSSRSteps = s.safeGetUniform("SSRSteps");
@@ -1130,6 +1136,8 @@ public final class PbrRenderer {
         setUniform(uDefaultMetal, Config.PBR_DEFAULT_METAL.get().floatValue());
         setUniform(uDefaultReflection, Config.PBR_DEFAULT_REFLECTION.get().floatValue());
         setUniform(uAnisotropy, Config.PBR_ANISOTROPY.get().floatValue());
+        setUniform(uMetalnessBoost, Config.PBR_METALNESS_BOOST.get().floatValue());
+        setUniform(uRoughnessBoost, Config.PBR_ROUGHNESS_BOOST.get().floatValue());
         applyWetUniforms(hand, rainExposed);
         var main = Minecraft.getInstance().getMainRenderTarget();
         boolean ssr = sceneColorCaptured && sceneColorTexture != 0 && sceneDepthTexture != 0
@@ -1577,8 +1585,6 @@ public final class PbrRenderer {
             // SSR 场景捕获与局部光更新都靠它判断"最近有没有 PBR 几何在画"。
             lastPbrDrawAt = System.currentTimeMillis();
             if (isAcceleratedPbrPass()) {
-                // 加速路径: 允许用每帧写入的 FULL_BRIGHT 光照识别 *_illuminated 发光组(见 gun_pbr.vsh)。
-                setUniform(uArEmissive, 1);
                 // 主绘制会绑定枪械贴图(3/4)、主深度(5)、场景色/深度(6/7): 先记下旧值, clearRenderState() 里还回去。
                 savedSpecularSlot = RenderSystem.getShaderTexture(3);
                 savedNormalSlot = RenderSystem.getShaderTexture(4);
@@ -1606,7 +1612,6 @@ public final class PbrRenderer {
                     }
                 }
             } else {
-                setUniform(uArEmissive, 0);
                 bindGlareDepth();
             }
         }

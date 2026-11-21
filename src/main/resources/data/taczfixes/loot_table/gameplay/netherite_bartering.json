@@ -30,7 +30,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:enchanted_book",
-          "weight": 25,
+          "weight": 30,
           "functions": [
             {
               "function": "taczfixes:barter_pick",
@@ -41,7 +41,7 @@
         {
           "type": "minecraft:item",
           "name": "tacz:attachment",
-          "weight": 111,
+          "weight": 100,
           "functions": [
             {
               "function": "taczfixes:barter_pick",
@@ -52,7 +52,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:iron_ingot",
-          "weight": 40,
+          "weight": 50,
           "functions": [
             {
               "function": "minecraft:set_count",
@@ -112,7 +112,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:gunpowder",
-          "weight": 20,
+          "weight": 30,
           "functions": [
             {
               "function": "minecraft:set_count",
@@ -127,7 +127,7 @@
         {
           "type": "minecraft:item",
           "name": "minecraft:quartz",
-          "weight": 14,
+          "weight": 20,
           "functions": [
             {
               "function": "minecraft:set_count",

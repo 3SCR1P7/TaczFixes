@@ -22,7 +22,7 @@ public abstract class MixinARCompatGate {
         }
         // 动态迷彩启用时, 带迷彩的枪/配件不走加速路径:
         // 加速渲染会把模型绘制延后到镜片合成之后, 迷彩会漏进瞄具镜内且无法可靠遮罩;
-        // 退回原版渲染路径后镜片会正常盖住镜内区域, 视觉与不开加速时一致。
+        // 退回原版渲染路径后镜片会正常盖住镜内区域。
         if (hasCamoOn(GunRecolorManager.currentRenderItem()) || hasCamoOn(GunRecolorManager.currentCamoSource())) {
             callback.setReturnValue(false);
             return;

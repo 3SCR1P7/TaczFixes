@@ -25,6 +25,9 @@ uniform float DefaultMetal;
 uniform float DefaultReflection;
 uniform float EnvStrength;
 uniform float Anisotropy;
+// 视觉效果配置的金属度/粗糙度增幅: 最终值 = 原值 × (1 + 增幅), 1.0 即 +100%。
+uniform float MetalnessBoost;
+uniform float RoughnessBoost;
 uniform float WetDetail;
 uniform float SSRStrength;
 // SSR 射线步数(CPU 传 pbr_ssr_steps, 0 = 本帧不跑 SSR)。循环上限用 uniform, 低配可调低。
@@ -96,12 +99,16 @@ float surfaceWetDetail() { return clamp(WetDetail, 0.0, 1.0) * surfaceRainGate()
 
 vec3 safeNormalize(vec3 v) { return v * inversesqrt(max(dot(v, v), 1e-8)); }
 
-// 把深度打包进 RGBA8 的第二/第三颜色附件, 供泛光的遮挡遮罩还原(手臂等后画的前景要挡住泛光)。
+// 把深度打包进第二/第三颜色附件的 RGB(24 位), alpha 固定写 1。
+// 透明枪身绘制时颜色附件的混合是开着的: 如果 alpha 也参与打包, 深度附件会被混合成接近 0,
+// 遮罩就认为"没有光源深度", 于是被手臂挡住的光源像素会漏到前景上。alpha=1 时混合结果等于源值。
 vec4 taczfixesPackDepth(float depth) {
-    vec4 enc = vec4(1.0, 255.0, 65025.0, 16581375.0) * depth;
-    enc = fract(enc);
-    enc -= enc.yzww * vec4(1.0 / 255.0, 1.0 / 255.0, 1.0 / 255.0, 0.0);
-    return enc;
+    float d = clamp(depth, 0.0, 1.0) * 255.0;
+    float b0 = floor(d);
+    d = (d - b0) * 255.0;
+    float b1 = floor(d);
+    float b2 = floor((d - b1) * 255.0);
+    return vec4(b0 / 255.0, b1 / 255.0, b2 / 255.0, 1.0);
 }
 
 // 法线贴图: 切线基由 UV 导数构造。导数值由 main() 算一次后传入(mappedNormal 与
@@ -387,6 +394,9 @@ void main() {
         f0 = vec3(0.04);
     }
     roughness = mix(roughness, max(roughness * 0.25, 0.05), wet);
+    // 视觉增幅: 对最终材质值统一生效(金属度/粗糙度)。
+    metallic = clamp(metallic * (1.0 + clamp(MetalnessBoost, -1.0, 1.0)), 0.0, 1.0);
+    roughness = clamp(roughness * (1.0 + clamp(RoughnessBoost, -1.0, 1.0)), 0.045, 1.0);
     float aniso = clamp(Anisotropy, 0.0, 1.0) * clamp(metallic, 0.0, 1.0);
     // 配置里的 1.0 对应旧版 0.5 的实际强度, 这里统一折半。
     float reflectionGain = hasSpecular ? ReflectionStrength * 0.5
@@ -506,13 +516,10 @@ void main() {
             * (0.15 + 0.85 * baseLuma);
     float litFacing = max(nl * sunVisibility, dot(n, l1v) * s1);
     float envFace = mix(0.55, 1.0, smoothstep(0.0, 0.4, litFacing));
-    // 环境反射随局部亮度变化: 亮处(白天/被天空或灯光照到)约 1.4 倍, 暗处(洞穴/夜晚)约 0.4 倍。
-    // 以前这里是固定 0.70, 现在换成亮度驱动的增益, 整体也略微变强。
     float envTorchBright = clamp(torchSum, 0.0, 1.0);
     float envLocalBright = clamp(exposure * 0.80 + envTorchBright * 0.40, 0.0, 1.0);
-    float envGain = 0.40 + smoothstep(0.02, 0.90, envLocalBright);
-    vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * envGain;
-    // 屏幕空间反射(深度步进 + 屏幕探针兜底)。
+    float envGain = 0.50 + 2.0 * smoothstep(0.02, 0.90, envLocalBright);
+    vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * envGain;  // 屏幕空间反射(深度步进 + 屏幕探针兜底)。
     // 非金属像素的 SSR 权重恒为 0, 直接跳过整条射线步进(原实现每像素最多 24 次深度采样)。
     vec4 ssr = vec4(0.0);
     float ssrWeight = 0.0;

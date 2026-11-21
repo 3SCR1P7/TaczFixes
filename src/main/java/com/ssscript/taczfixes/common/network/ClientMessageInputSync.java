@@ -16,9 +16,16 @@ public class ClientMessageInputSync {
     private static final int MAX_KEYS = 128;
 
     private final List<String> keys;
+    /** 本地玩家当前的枪械蓄力状态(供服务端附魔判断"正在蓄力")。 */
+    private final boolean charging;
 
     public ClientMessageInputSync(List<String> keys) {
+        this(keys, false);
+    }
+
+    public ClientMessageInputSync(List<String> keys, boolean charging) {
         this.keys = keys;
+        this.charging = charging;
     }
 
     public static void encode(ClientMessageInputSync message, FriendlyByteBuf buf) {
@@ -27,6 +34,7 @@ public class ClientMessageInputSync {
         for (int i = 0; i < keys.size() && i < MAX_KEYS; i++) {
             buf.writeUtf(keys.get(i) == null ? "" : keys.get(i), 64);
         }
+        buf.writeBoolean(message.charging);
     }
 
     public static ClientMessageInputSync decode(FriendlyByteBuf buf) {
@@ -37,7 +45,7 @@ public class ClientMessageInputSync {
         for (int i = 0; i < count; i++) {
             keys.add(buf.readUtf(64));
         }
-        return new ClientMessageInputSync(keys);
+        return new ClientMessageInputSync(keys, buf.readBoolean());
     }
 
     public static void handle(ClientMessageInputSync message, Supplier<NetworkEvent.Context> contextSupplier) {
@@ -58,5 +66,6 @@ public class ClientMessageInputSync {
             }
         }
         PlayerInputState.set(player.getUUID(), set);
+        PlayerInputState.setCharging(player.getUUID(), message.charging);
     }
 }

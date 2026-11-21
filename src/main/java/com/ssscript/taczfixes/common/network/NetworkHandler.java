@@ -227,6 +227,15 @@ public class NetworkHandler {
                 ServerMessageHudParam::decode,
                 ServerMessageHudParam::handle,
                 false);
+        CHANNEL.registerMessage(42, ServerMessageTokonagiFreeze.class,
+                ServerMessageTokonagiFreeze::encode,
+                ServerMessageTokonagiFreeze::decode,
+                ServerMessageTokonagiFreeze::handle,
+                false);        CHANNEL.registerMessage(43, ServerMessageTokonagiFreezeEntity.class,
+                ServerMessageTokonagiFreezeEntity::encode,
+                ServerMessageTokonagiFreezeEntity::decode,
+                ServerMessageTokonagiFreezeEntity::handle,
+                false);
 
     }
 }

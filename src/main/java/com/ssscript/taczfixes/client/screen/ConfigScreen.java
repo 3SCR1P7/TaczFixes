@@ -26,19 +26,19 @@ public class ConfigScreen {
         buildRecoilModifier(builder.getOrCreateCategory(cat("recoil_modifier")), entry);
         buildInaccuracy(builder.getOrCreateCategory(cat("inaccuracy")), entry);
         buildRicochet(builder.getOrCreateCategory(cat("ricochet")), entry);
-        buildRecoilKnockback(builder.getOrCreateCategory(cat("recoil_knockback")), entry);
+        buildDualWield(builder.getOrCreateCategory(cat("dual_wield")), entry);
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
-        buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
-        buildSteplessZoom(builder.getOrCreateCategory(cat("stepless_zoom")), entry);
+        buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
+        buildStamina(builder.getOrCreateCategory(cat("stamina")), entry);
         buildDynamicCrosshair(builder.getOrCreateCategory(cat("dynamic_crosshair")), entry);
         buildBlocking(builder.getOrCreateCategory(cat("blocking")), entry);
         buildRefit(builder.getOrCreateCategory(cat("refit")), entry);
         buildAutoCraft(builder.getOrCreateCategory(cat("auto_craft")), entry);
         buildCompat(builder.getOrCreateCategory(cat("compat")), entry);
         buildEnchantment(builder.getOrCreateCategory(cat("enchantment")), entry);
-        buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
-        buildStamina(builder.getOrCreateCategory(cat("stamina")), entry);
-        buildDualWield(builder.getOrCreateCategory(cat("dual_wield")), entry);
+        buildRecoilKnockback(builder.getOrCreateCategory(cat("recoil_knockback")), entry);
+        buildGunSpell(builder.getOrCreateCategory(cat("gun_spell")), entry);
+        buildSteplessZoom(builder.getOrCreateCategory(cat("stepless_zoom")), entry);
         return builder.build();
     }
 
@@ -49,6 +49,8 @@ public class ConfigScreen {
         dbl_(cat, entry, "visual_effect.emission_strength", Config.PBR_EMISSION);
         dbl_(cat, entry, "visual_effect.env_strength", Config.PBR_ENV_STRENGTH);
         dbl_(cat, entry, "visual_effect.anisotropy", Config.PBR_ANISOTROPY);
+        dbl_(cat, entry, "visual_effect.metalness_boost", Config.PBR_METALNESS_BOOST);
+        dbl_(cat, entry, "visual_effect.roughness_boost", Config.PBR_ROUGHNESS_BOOST);
         bool_(cat, entry, "visual_effect.ssr", Config.PBR_SSR);
         dbl_(cat, entry, "visual_effect.ssr_strength", Config.PBR_SSR_STRENGTH);
         intSlider_(cat, entry, "visual_effect.ssr_steps", Config.PBR_SSR_STEPS, 4, 32);
@@ -98,20 +100,22 @@ public class ConfigScreen {
         dbl_(cat, entry, "suppression.darken_strength", Config.SUPPRESSION_DARKEN_STRENGTH);
         dbl_(cat, entry, "suppression.darken_range", Config.SUPPRESSION_DARKEN_RANGE);
         int_(cat, entry, "suppression.darken_duration_ms", Config.SUPPRESSION_DARKEN_DURATION_MS);
-        dbl_(cat, entry, "suppression.sniper_rpg_exposure_strength_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER);
-        dbl_(cat, entry, "suppression.sniper_rpg_exposure_duration_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER);
-        dbl_(cat, entry, "suppression.sniper_rpg_blur_strength_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER);
-        dbl_(cat, entry, "suppression.sniper_rpg_blur_duration_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER);
-        dbl_(cat, entry, "suppression.sniper_rpg_darken_strength_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER);
-        dbl_(cat, entry, "suppression.sniper_rpg_darken_duration_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER);
-        dbl_(cat, entry, "suppression.sniper_rpg_detection_range_multiplier",
-                Config.SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER);
+        sub(cat, entry, "heavy_weapons", e -> {
+            dbl_(e, entry, "suppression.sniper_rpg_exposure_strength_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_EXPOSURE_STRENGTH_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_exposure_duration_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_EXPOSURE_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_blur_strength_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_BLUR_STRENGTH_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_blur_duration_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_BLUR_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_darken_strength_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_DARKEN_STRENGTH_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_darken_duration_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_DARKEN_DURATION_MULTIPLIER);
+            dbl_(e, entry, "suppression.sniper_rpg_detection_range_multiplier",
+                    Config.SUPPRESSION_SNIPER_RPG_RANGE_MULTIPLIER);
+        });
     }
 
     private static void buildDualWield(ConfigCategory cat, ConfigEntryBuilder entry) {
@@ -551,6 +555,22 @@ public class ConfigScreen {
                 int_(e, entry, "enchantment.patience_delay_ms", Config.ENCH_PATIENCE_DELAY_MS);
             dbl_(e, entry, "enchantment.patience_damage_percent_per_tick_per_level", Config.ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL);
             });
+        sub(cat, entry, "tokonagi", e -> {
+            dbl_(e, entry, "enchantment.tokonagi_ticks_per_damage", Config.ENCH_TOKONAGI_TICKS_PER_DAMAGE);
+        });
+        sub(cat, entry, "ember", e -> {
+            dbl_(e, entry, "enchantment.ember_explosion_power_base", Config.ENCH_EMBER_EXPLOSION_POWER_BASE);
+            dbl_(e, entry, "enchantment.ember_explosion_power_per_level", Config.ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL);
+        });
+        sub(cat, entry, "poised", e -> {
+            dbl_(e, entry, "enchantment.poised_reduction_percent_per_level", Config.ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL);
+        });
+        sub(cat, entry, "seal_flare", e -> {
+            dbl_(e, entry, "enchantment.seal_flare_damage_percent_per_heat_per_level", Config.ENCH_SEAL_FLARE_DAMAGE_PERCENT_PER_HEAT_PER_LEVEL);
+            dbl_(e, entry, "enchantment.seal_flare_heat_threshold_percent", Config.ENCH_SEAL_FLARE_HEAT_THRESHOLD_PERCENT);
+            dbl_(e, entry, "enchantment.seal_flare_min_fire_rate_percent", Config.ENCH_SEAL_FLARE_MIN_FIRE_RATE_PERCENT);
+            int_(e, entry, "enchantment.seal_flare_ignite_ticks", Config.ENCH_SEAL_FLARE_IGNITE_TICKS);
+        });
     }
 
     private interface EntryAdder {

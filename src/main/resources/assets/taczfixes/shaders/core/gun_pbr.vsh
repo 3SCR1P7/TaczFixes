@@ -13,9 +13,6 @@ uniform sampler2D Sampler2;
 uniform mat4 ModelViewMat;
 uniform mat4 ProjMat;
 uniform int FogShape;
-// AR 加速绘制时, 用 TaCZ 对 *_illuminated 骨骼强制写入的 FULL_BRIGHT 光照来识别发光组
-// (加速缓存的网格路径上顶点标记位不可靠, 但光照值本身是每帧写入的)。
-uniform int ArEmissive;
 uniform vec3 Light0_Direction;
 uniform vec3 Light1_Direction;
 out float vertexDistance;
@@ -38,8 +35,9 @@ void main() {
     vertexDistance = fog_distance(Position, FogShape);
     vertexColor = minecraft_mix_light(Light0_Direction, Light1_Direction, Normal, Color);
     rawVertexColor = Color;
-    illuminatedGroup = (((UV2.x & 1) != 0) || ((UV2.y & 1) != 0)
-            || (ArEmissive != 0 && UV2.x == 240 && UV2.y == 240)) ? 1 : 0;
+    // 打包光照最低位 = 发光组标记。原版路径由 MixinBedrockPartPbr 写入,
+    // 加速路径由 MixinAcceleratedBufferBuilderPbr 在每次部件绘制前写入。
+    illuminatedGroup = UV2.x & 1;
     lightMapColor = texelFetch(Sampler2, UV2 / 16, 0);
     overlayColor = texelFetch(Sampler1, UV1, 0);
     texCoord0 = UV0;
