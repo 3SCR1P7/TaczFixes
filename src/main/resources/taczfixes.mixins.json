@@ -83,8 +83,6 @@
         "MixinLivingEntityShootBoltCooldown",
         "LivingEntityDieInvoker",
         "MixinAnvilMenuRestrictedEnchants",
-        "MixinLivingEntityShootNewEnchants",
-        "MixinPlayerAttackFreeze",
         "MixinLrConsumableOffhandUse",
         "MixinLrMeleeItemAttack",
         "MixinLrMeleeWeaponIndex",

@@ -228,6 +228,15 @@ public class NetworkHandler {
                 ServerMessageHudParam::decode,
                 ServerMessageHudParam::handle,
                 Optional.of(NetworkDirection.PLAY_TO_CLIENT));
+        CHANNEL.registerMessage(42, ServerMessageTokonagiFreeze.class,
+                ServerMessageTokonagiFreeze::encode,
+                ServerMessageTokonagiFreeze::decode,
+                ServerMessageTokonagiFreeze::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));        CHANNEL.registerMessage(43, ServerMessageTokonagiFreezeEntity.class,
+                ServerMessageTokonagiFreezeEntity::encode,
+                ServerMessageTokonagiFreezeEntity::decode,
+                ServerMessageTokonagiFreezeEntity::handle,
+                Optional.of(NetworkDirection.PLAY_TO_CLIENT));
 
     }
 }

@@ -6,7 +6,6 @@ import com.ssscript.taczfixes.common.data.TaczFixesDataHandler;
 import com.ssscript.taczfixes.common.loot.BarterPickFunction;
 import com.ssscript.taczfixes.common.util.GunEnchantments;
 import com.ssscript.taczfixes.common.handler.GunAnvilHandler;
-import com.ssscript.taczfixes.client.handler.GunEnchantmentHandler;
 import com.ssscript.taczfixes.common.handler.GunLevelHandler;
 import com.ssscript.taczfixes.common.handler.JumpInaccuracyHandler;
 import com.ssscript.taczfixes.common.handler.LimbDamageHandler;
@@ -154,7 +153,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunSmithTableEnergyHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.compat.ArcanaSkillBridge());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CompatCommand());
-        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.NewGunEnchantmentHandler());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunEnchantmentHandler());
         if (net.minecraftforge.fml.ModList.get().isLoaded("irons_spellbooks")) {
             try {
                 MinecraftForge.EVENT_BUS.register(Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")
@@ -247,7 +246,8 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ConfigKeyHandler());
-            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunEnchantmentHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.SmartScopeHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.FreezeInputHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.EditDataKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDataMessageHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.InputSyncHandler());
