@@ -29,6 +29,10 @@ public abstract class MixinBedrockModelPbr {
                                              MultiBufferSource source, CallbackInfo ci) {
         taczfixes$modelIlluminated = PbrRenderer.enabled()
                 && PbrRenderer.modelHasIlluminated(((BedrockModel) (Object) this).getShouldRender());
+        if (taczfixes$modelIlluminated) {
+            // 加速渲染路径下补画可能被关闭, 这里在模型层标记本帧有发光来源, 保证主绘制会打开发光 MRT。
+            PbrRenderer.markEmissionSource();
+        }
     }
 
     @ModifyVariable(method = RENDER, at = @At("HEAD"), argsOnly = true, remap = false)

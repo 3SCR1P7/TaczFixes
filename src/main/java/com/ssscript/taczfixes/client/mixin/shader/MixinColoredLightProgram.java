@@ -32,8 +32,6 @@ public abstract class MixinColoredLightProgram {
         String injectedShader;
         if (isVsh && ShaderInjection.hasInjectVSH(shaderName)) {
             injectedShader = ShaderInjection.injectVSH(shaderName, shader);
-        } else if (type == Program.Type.FRAGMENT && ShaderInjection.hasInjectFSH(shaderName)) {
-            injectedShader = ShaderInjection.injectFSH(shaderName, shader);
         } else {
             return shader;
         }

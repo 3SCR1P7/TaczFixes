@@ -45,7 +45,7 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
         if (GunRecolorGuiState.isOpen()) {
             GunRecolorGuiState.buildPanel((Screen) (Object) this,
                     widget -> this.addRenderableWidget(widget),
-                    () -> this.init());
+                    () -> ((GunRefitScreen) (Object) this).init());
             return;
         }
         if (!com.ssscript.taczfixes.common.config.Config.REFITSCREEN_SHOW_RECOLOR_BUTTON.get()) {
@@ -56,7 +56,7 @@ public abstract class MixinGunRefitScreenRecolor extends Screen {
         FlatColorButton button = new FlatColorButton(303, 11, 48, 16,
                 Component.translatable("gui.taczfixes.recolor.button"), pressed -> {
             GunRecolorGuiState.open();
-            this.init();
+            ((GunRefitScreen) (Object) this).init();
         });
         this.addRenderableWidget(button);
     }

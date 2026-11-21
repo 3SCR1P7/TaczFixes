@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.hud;
 
+import com.ssscript.taczfixes.TaczFixesMod;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 
@@ -16,6 +17,9 @@ public final class HudParamStore {
 
     private static final int MAX_PARAMS = 64;
     private static final int HOTBAR_SLOTS = 9;
+    /** 超限丢弃告警的全局最短间隔(每个上传周期最多一条), 避免服务器持续超发时刷屏。 */
+    private static final long DROP_WARN_INTERVAL_MS = 5000L;
+    private static volatile long lastDropWarnMs;
 
     private static final Map<Integer, Entry> BY_SLOT = new ConcurrentHashMap<>();
 
@@ -41,17 +45,34 @@ public final class HudParamStore {
             }
         }
         if (values != null) {
+            int dropped = 0;
             for (Map.Entry<String, String> entry : values.entrySet()) {
                 if (entry.getKey() == null || entry.getKey().isEmpty() || entry.getValue() == null) {
                     continue;
                 }
                 if (next.size() >= MAX_PARAMS && !next.containsKey(entry.getKey())) {
+                    // 超限不再完全静默: 每个上传周期汇总一次被丢弃的 key 数(带限流)。
+                    dropped++;
                     continue;
                 }
                 next.put(entry.getKey(), entry.getValue());
             }
+            warnDropped(dropped);
         }
         BY_SLOT.put(slot, new Entry(id, Map.copyOf(next)));
+    }
+
+    /** 限流记录超限丢弃告警, 说明丢弃的 key 数与上限。 */
+    private static void warnDropped(int dropped) {
+        if (dropped <= 0) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastDropWarnMs < DROP_WARN_INTERVAL_MS) {
+            return;
+        }
+        lastDropWarnMs = now;
+        TaczFixesMod.LOGGER.warn("taczfixes: HUD params exceed limit {}, dropped {} key(s)", MAX_PARAMS, dropped);
     }
 
     /** 当前主手枪械的参数快照; 没有发布过时返回空表。 */

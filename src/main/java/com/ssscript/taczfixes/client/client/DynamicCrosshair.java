@@ -301,36 +301,4 @@ public final class DynamicCrosshair {
             pose.popPose();
         }
     }
-
-    private static void drawRadialRing(GuiGraphics graphics, PoseStack pose, ResourceLocation texture,
-                                       float x, float y, CrosshairPartLayout layout,
-                                       CrosshairPartLayout.Part part, float offset,
-                                       float scaleX, float scaleY) {
-        int centerX = Math.round(x + 8.0f);
-        int centerY = Math.round(y + 8.0f);
-        int range = (int) Math.ceil(offset + Math.max(layout.width() * scaleX, layout.height() * scaleY) * 0.5f + 2.0f);
-        float halfWidth = layout.width() * 0.5f;
-        float halfHeight = layout.height() * 0.5f;
-        for (int dy = -range; dy <= range; dy++) {
-            for (int dx = -range; dx <= range; dx++) {
-                float distance = Mth.sqrt((float) (dx * dx + dy * dy));
-                if (distance <= 0.001f) {
-                    continue;
-                }
-                float sourceDistance = distance - offset;
-                if (sourceDistance < 0.0f) {
-                    continue;
-                }
-                float ratio = sourceDistance / distance;
-                int sourceX = Math.round(halfWidth + dx * ratio / scaleX);
-                int sourceY = Math.round(halfHeight + dy * ratio / scaleY);
-                int alpha = layout.alphaAt(sourceX, sourceY);
-                if (alpha == 0) {
-                    continue;
-                }
-                int color = (Math.min(255, alpha) * 9 / 10) << 24 | 0xFFFFFF;
-                graphics.fill(centerX + dx, centerY + dy, centerX + dx + 1, centerY + dy + 1, color);
-            }
-        }
-    }
 }

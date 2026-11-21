@@ -572,14 +572,4 @@ public final class AttachmentAnimationManager {
         IGun iGun = IGun.getIGunOrNull(stack);
         return iGun == null ? null : iGun.getGunId(stack);
     }
-
-    /** 当前存活实例数量（仅用于自测/文档，不参与逻辑）。 */
-    public static int instanceCount() {
-        return INSTANCES.size();
-    }
-
-    /** 当前已解析的 display 定义数量（仅用于自测/文档）。 */
-    public static int definitionCount() {
-        return definitionsByDisplayId.size();
-    }
 }

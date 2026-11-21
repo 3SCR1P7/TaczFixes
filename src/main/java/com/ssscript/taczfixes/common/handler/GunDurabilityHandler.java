@@ -19,7 +19,11 @@ import net.neoforged.fml.LogicalSide;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.server.level.ServerPlayer;
+import com.tacz.guns.api.TimelessAPI;
+import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.resource.pojo.data.gun.Bolt;
+import com.tacz.guns.resource.pojo.data.gun.GunData;
 import net.neoforged.bus.api.SubscribeEvent;
 
 import java.util.HashMap;
@@ -55,6 +59,10 @@ public class GunDurabilityHandler {
         if (consumption <= 0) {
             return;
         }
+        // 与电量同理: 本发不会被 reduceAmmoOnce 消耗弹药时不扣耐久(空仓/手动枪无膛内弹等)
+        if (!shotWouldConsumeAmmo(shooter, gun)) {
+            return;
+        }
         int remaining = DurabilityStorage.consume(gun, consumption);
         if (remaining <= 0 && "remove".equals(action)) {
             removeBrokenGun(shooter, gun);
@@ -78,6 +86,10 @@ public class GunDurabilityHandler {
         if (consumption <= 0) {
             return;
         }
+        // 本注入早于 reduceAmmoOnce: 空仓/弹药被抢时原版不会消耗弹药, 因此也不应扣电
+        if (!shotWouldConsumeAmmo(shooter, gun)) {
+            return;
+        }
         if (ChargeStorage.get(gun) < consumption) {
             if (Boolean.TRUE.equals(cfg.blocking_fire)) {
                 event.setCanceled(true);
@@ -86,6 +98,50 @@ public class GunDurabilityHandler {
         }
         ChargeStorage.consume(gun, consumption);
         syncGun(shooter, gun);
+    }
+
+    /** 本发是否真的会消耗一发弹药。按 reduceAmmoOnce 的判定复刻(无副作用): 空仓/弹药被抢/手动枪无膛内弹时
+     *  原版开火会中止且不消耗, 因此电量与耐久都不应被扣。consumesAmmoOrNot 为 false(Lua/无限弹药)时按原逻辑放行。 */
+    private static boolean shotWouldConsumeAmmo(LivingEntity shooter, ItemStack gunStack) {
+        IGunOperator operator = IGunOperator.fromLivingEntity(shooter);
+        if (operator == null || !operator.consumesAmmoOrNot()) {
+            return true;
+        }
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) {
+            return false;
+        }
+        var gunId = gun.getGunId(gunStack);
+        if (gunId == null) {
+            return false;
+        }
+        GunData gunData = TimelessAPI.getCommonGunIndex(gunId)
+                .map(index -> index.getGunData()).orElse(null);
+        Bolt bolt = gunData == null ? null : gunData.getBolt();
+        if (bolt == null) {
+            return false;
+        }
+        // 手动枪(reduceAmmoOnce 只消耗膛内那发)必须膛内有弹; 开膛枪不消耗膛内弹
+        boolean hasAmmoInBarrel = gun.hasBulletInBarrel(gunStack) && bolt != Bolt.OPEN_BOLT;
+        if (bolt == Bolt.MANUAL_ACTION) {
+            return hasAmmoInBarrel;
+        }
+        boolean hasInventoryAmmo;
+        if (!gun.useInventoryAmmo(gunStack)) {
+            hasInventoryAmmo = false;
+        } else {
+            boolean needCheck = gunData.getReloadData() == null
+                    || operator.needCheckAmmo() && !gunData.getReloadData().isInfinite();
+            hasInventoryAmmo = gun.hasInventoryAmmo(shooter, gunStack, needCheck);
+        }
+        boolean noAmmo = gun.useInventoryAmmo(gunStack)
+                ? !hasInventoryAmmo
+                : gun.getCurrentAmmoCount(gunStack) < 1;
+        if (!noAmmo) {
+            return true;
+        }
+        // 弹匣/背包无弹时, 闭膛枪只有膛内还留有一发才会被 reduceAmmoOnce 消耗
+        return bolt == Bolt.CLOSED_BOLT && hasAmmoInBarrel;
     }
 
     private static ItemStack actualGunStack(LivingEntity shooter, ItemStack eventStack) {

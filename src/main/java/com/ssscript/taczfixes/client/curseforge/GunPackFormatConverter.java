@@ -186,27 +186,6 @@ public final class GunPackFormatConverter {
     }
 
     /**
-     * 是否是"新格式布局, 但根目录缺少 gunpack.meta.json"的枪包。
-     *
-     * <p>判定条件: 不存在根目录 {@code gunpack.meta.json}, 且存在
-     * {@code assets/<namespace>/gunpack_info.json}(允许外面多包一层文件夹)。</p>
-     *
-     * @param zip 枪包 zip 路径
-     * @return 满足上述条件返回 true; 文件不可读、不是 zip 或缺少 gunpack_info.json 都返回 false
-     */
-    public static boolean looksLikeNewLayoutZip(Path zip) {
-        if (zip == null) {
-            return false;
-        }
-        try {
-            ZipScan scan = scan(zip);
-            return !scan.hasMeta() && scan.newLayoutNamespace() != null;
-        } catch (IOException e) {
-            return false;
-        }
-    }
-
-    /**
      * 找出"新格式布局" zip 里的 namespace(来自 {@code assets/<namespace>/gunpack_info.json})。
      *
      * @param zip 枪包 zip 路径

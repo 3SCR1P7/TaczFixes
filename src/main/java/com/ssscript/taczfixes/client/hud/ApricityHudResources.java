@@ -43,10 +43,6 @@ public final class ApricityHudResources {
         return LOGICAL_ROOT + "/" + id.getNamespace() + "/hud/" + id.getPath() + ".html";
     }
 
-    public static List<String> syncedHtmlPaths() {
-        return syncedHtml;
-    }
-
     public static synchronized void clearAttempts() {
         ATTEMPTED_NAMESPACES.clear();
     }

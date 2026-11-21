@@ -35,6 +35,33 @@
       "values": [
         0
       ]
+    },
+    {
+      "type": "float",
+      "count": 4,
+      "name": "ScissorRect",
+      "values": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    },
+    {
+      "type": "float",
+      "count": 1,
+      "name": "ScissorFade",
+      "values": [
+        16.0
+      ]
+    },
+    {
+      "type": "int",
+      "count": 1,
+      "name": "HasScissor",
+      "values": [
+        0
+      ]
     }
   ],
   "blend": {

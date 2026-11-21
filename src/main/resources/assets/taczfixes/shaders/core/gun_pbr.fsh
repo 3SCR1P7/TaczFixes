@@ -16,7 +16,6 @@ uniform int HasNormal;
 uniform int HasSpecular;
 uniform int FallbackMaterial;
 uniform int EmissionPass;
-uniform int ScopeDivisionPass;
 uniform int GlareDepthTest;
 uniform float ReflectionStrength;
 uniform float GlareStrength;
@@ -420,12 +419,6 @@ void main() {
                     * (GlareStrength * 0.25) * backDim;
         }
         vec3 total = (glow + glare) * fog;
-        if (ScopeDivisionPass != 0) {
-            if (emission <= 0.0 && dot(total, total) < 1.0e-6) discard;
-            fragColor = vec4(total, 0.0);
-            fragEmission = taczfixesPackDepth(gl_FragCoord.z);
-            return;
-        }
         float sceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
         if (GlareDepthTest != 0 && gl_FragCoord.z > sceneDepth + 0.000001) discard;
         fragColor = vec4(total, alpha);

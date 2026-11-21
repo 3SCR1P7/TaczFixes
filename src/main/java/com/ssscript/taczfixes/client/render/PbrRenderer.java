@@ -43,7 +43,7 @@ import java.util.Optional;
 @net.neoforged.fml.common.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, value = Dist.CLIENT)
 public final class PbrRenderer {
     static ShaderInstance shader, blurShader, compositeShader, maskShader, smoothShader;
-    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uScopeDivisionPass;
+    private static AbstractUniform uHasSpecular, uHasNormal, uEmissionPass, uArEmissive;
     private static AbstractUniform uReflectionStrength, uGlareStrength, uEmissionStrength;
     private static AbstractUniform uGlareDepthTest, uFallbackMaterial;
     private static final int LOCAL_LIGHT_SLOTS = 4;
@@ -107,11 +107,6 @@ public final class PbrRenderer {
                 && com.tacz.guns.compat.ar.ARCompat.shouldAccelerate()
                 && resolve(type) instanceof PbrType
                 && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get());
-    }
-
-    /** 加速路径写入计数(供 {@link PbrBloom} 决定是否要做一次发光附件回读验证)。 */
-    static int acceleratedEmissionWrites() {
-        return acceleratedEmissionWrites;
     }
 
     /** 是否还需要一次回读验证; 最多尝试几次, 失败就继续走补画, 不影响观感。 */
@@ -228,6 +223,12 @@ public final class PbrRenderer {
         frameEmission = false;
         enabledFrameValid = false;
         acceleratedEmissionWrites = 0;
+        // 这些抑制计数器是 push/pop 配对的临时状态: 万一某次渲染异常导致 pop 丢失,
+        // 不清零会让曳光泛光/迷彩/材质兜底在本局游戏里永久失效。
+        tracerBloomSuppression = 0;
+        materialFallbackSuppression = 0;
+        camoSuppression = 0;
+        emissionBlendOverride = 0;
         beginEmissionBoundsFrame();
         // 加速路径的发光在主绘制里写出, 拿不到顶点包围盒: 清掉上一帧的包围盒, 防止用过期区域裁掉光晕。
         if (acceleratedEmissionVerified) {
@@ -461,8 +462,6 @@ public final class PbrRenderer {
         return tracerBloomSuppression > 0;
     }
 
-    private static final java.util.ArrayDeque<Boolean> DIVISION_RENDER_STACK = new java.util.ArrayDeque<>();
-
     /** 镜片/分划/目镜之类"镜内可见"的部件: 渲染期间禁用动态迷彩(否则开镜后镜内会看到迷彩与光晕)。 */
     private static int camoSuppression;
 
@@ -472,39 +471,6 @@ public final class PbrRenderer {
 
     public static void popCamoSuppression() {
         if (camoSuppression > 0) camoSuppression--;
-    }
-
-    public static void pushScopeDivision(boolean division) {
-        DIVISION_RENDER_STACK.push(division);
-    }
-
-    public static void popScopeDivision() {
-        DIVISION_RENDER_STACK.poll();
-    }
-
-    public static boolean isScopeDivision() {
-        return Boolean.TRUE.equals(DIVISION_RENDER_STACK.peek());
-    }
-
-    public static void resetScopeDivision() {
-        DIVISION_RENDER_STACK.clear();
-        scopeAttachmentDepth = 0;
-    }
-
-    private static int scopeAttachmentDepth;
-
-    public static void pushScopeAttachment() {
-        scopeAttachmentDepth++;
-    }
-
-    public static void popScopeAttachment() {
-        if (scopeAttachmentDepth > 0) {
-            scopeAttachmentDepth--;
-        }
-    }
-
-    public static boolean isRenderingScopeAttachment() {
-        return scopeAttachmentDepth > 0;
     }
 
     public static void updateCelestialLight(float partialTick) {
@@ -1069,7 +1035,7 @@ public final class PbrRenderer {
     }
 
     private static void clearUniformCache() {
-        uHasSpecular = uHasNormal = uEmissionPass = uScopeDivisionPass = null;
+        uHasSpecular = uHasNormal = uEmissionPass = uArEmissive = null;
         uReflectionStrength = uGlareStrength = uEmissionStrength = null;
         uGlareDepthTest = uFallbackMaterial = null;
         uCelestialDirection = uCelestialColor = uSkyAmbient = null;
@@ -1095,7 +1061,6 @@ public final class PbrRenderer {
         uHasSpecular = s.safeGetUniform("HasSpecular");
         uHasNormal = s.safeGetUniform("HasNormal");
         uEmissionPass = s.safeGetUniform("EmissionPass");
-        uScopeDivisionPass = s.safeGetUniform("ScopeDivisionPass");
         uReflectionStrength = s.safeGetUniform("ReflectionStrength");
         uGlareStrength = s.safeGetUniform("GlareStrength");
         uGlareDepthTest = s.safeGetUniform("GlareDepthTest");
@@ -1254,7 +1219,6 @@ public final class PbrRenderer {
         setUniform(uGlareStrength, materialGlareStrength(material));
         setUniform(uEmissionStrength, Config.PBR_EMISSION.get().floatValue());
         setUniform(uEmissionPass, 0);
-        setUniform(uScopeDivisionPass, 0);
         RenderSystem.setShader(() -> shader);
         bindGlareDepth();
     }
@@ -1590,6 +1554,9 @@ public final class PbrRenderer {
         private final boolean rainExposed;
         /** 本次加速绘制里是否开着发光 MRT(在 clearRenderState() 里恢复)。 */
         private boolean acceleratedEmissionWrite;
+        /** 加速绘制前保存的纹理槽 3/4/5/6/7: 主绘制绑定了枪械贴图/主深度, 结束后必须还回去。 */
+        private boolean texturesSaved;
+        private int savedSpecularSlot, savedNormalSlot, savedDepthSlot, savedSceneSlot, savedSceneDepthSlot;
 
         PbrType(RenderType original, Material material, CamoUniforms camo, boolean hand, boolean rainExposed) {
             super("taczfixes_pbr", original.format(), original.mode(), original.bufferSize(),
@@ -1610,6 +1577,15 @@ public final class PbrRenderer {
             // SSR 场景捕获与局部光更新都靠它判断"最近有没有 PBR 几何在画"。
             lastPbrDrawAt = System.currentTimeMillis();
             if (isAcceleratedPbrPass()) {
+                // 加速路径: 允许用每帧写入的 FULL_BRIGHT 光照识别 *_illuminated 发光组(见 gun_pbr.vsh)。
+                setUniform(uArEmissive, 1);
+                // 主绘制会绑定枪械贴图(3/4)、主深度(5)、场景色/深度(6/7): 先记下旧值, clearRenderState() 里还回去。
+                savedSpecularSlot = RenderSystem.getShaderTexture(3);
+                savedNormalSlot = RenderSystem.getShaderTexture(4);
+                savedDepthSlot = RenderSystem.getShaderTexture(5);
+                savedSceneSlot = RenderSystem.getShaderTexture(6);
+                savedSceneDepthSlot = RenderSystem.getShaderTexture(7);
+                texturesSaved = true;
                 // applyMaterialState() 内部会 bindGlareDepth(), 不需要在这之前再查一次绘制 FBO。
                 applyMaterialState(material, hand, rainExposed);
                 applyCamoUniforms(camo);
@@ -1630,16 +1606,25 @@ public final class PbrRenderer {
                     }
                 }
             } else {
+                setUniform(uArEmissive, 0);
                 bindGlareDepth();
             }
         }
 
-        /** AR 绘制结束后(或普通路径 draw() 收尾时)恢复单颜色附件。 */
+        /** AR 绘制结束后(或普通路径 draw() 收尾时)恢复单颜色附件与纹理槽。 */
         @Override
         public void clearRenderState() {
             if (acceleratedEmissionWrite) {
                 acceleratedEmissionWrite = false;
                 PbrBloom.endEmissionWrite();
+            }
+            if (texturesSaved) {
+                texturesSaved = false;
+                RenderSystem.setShaderTexture(3, savedSpecularSlot);
+                RenderSystem.setShaderTexture(4, savedNormalSlot);
+                RenderSystem.setShaderTexture(5, savedDepthSlot);
+                RenderSystem.setShaderTexture(6, savedSceneSlot);
+                RenderSystem.setShaderTexture(7, savedSceneDepthSlot);
             }
             original.clearRenderState();
         }
@@ -1655,12 +1640,9 @@ public final class PbrRenderer {
                 markEmissionSource();
             }
             if (mesh == null) mesh = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
-            setupRenderState();
-            // setupRenderState() 内的 bindGlareDepth() 已记录当前绘制 FBO, 这里直接复用, 不再重复查询。
-            ShaderInstance previous = RenderSystem.getShader();
+            // 纹理槽的"旧值"必须在 setupRenderState() 之前读: 它会把 slot5 绑成主深度。
             int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
-            int previousFbo = lastDrawFramebufferKnown
-                    ? lastDrawFramebuffer : GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
+            int previousFbo = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
             boolean mainTarget = previousFbo == mainFbo;
             boolean ssrActive = sceneColorCaptured && Config.PBR_SSR.get()
                     && Config.PBR_SSR_STRENGTH.get() > 0.0D;
@@ -1670,6 +1652,8 @@ public final class PbrRenderer {
             int depthSlot = mainTarget ? RenderSystem.getShaderTexture(5) : 0;
             int sceneSlot = ssrActive ? RenderSystem.getShaderTexture(6) : 0;
             int sceneDepthSlot = ssrActive ? RenderSystem.getShaderTexture(7) : 0;
+            setupRenderState();
+            ShaderInstance previous = RenderSystem.getShader();
             try {
                 mesh.bind();
                 mesh.upload(data);
@@ -1747,11 +1731,9 @@ public final class PbrRenderer {
                 GL11.glDisable(GL11.GL_STENCIL_TEST);
                 pushEmissionBlendOverride();
                 setUniform(uEmissionPass, 1);
-                setUniform(uScopeDivisionPass, 0);
                 mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
             } finally {
                 setUniform(uEmissionPass, 0);
-                setUniform(uScopeDivisionPass, 0);
                 popEmissionBlendOverride();
                 if (blendWas) {
                     RenderSystem.enableBlend();

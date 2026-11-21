@@ -17,7 +17,7 @@ public class MixinTaczProjectileExplosion {
     private boolean knockback;
 
     @Redirect(method = "explode", at = @At(value = "FIELD",
-            target = "Lcom/tacz/guns/util/block/ProjectileExplosion;knockback:Z", remap = false), remap = false)
+            target = "Lcom/tacz/guns/util/block/ProjectileExplosion;knockback:Z", remap = false), require = 0, remap = false)
     private boolean taczfixes$redirectKnockback(com.tacz.guns.util.block.ProjectileExplosion instance) {
         if (Config.EXPLOSION_BULLET_ONLY.get()) {
             return instance instanceof com.tacz.guns.util.block.ProjectileExplosion

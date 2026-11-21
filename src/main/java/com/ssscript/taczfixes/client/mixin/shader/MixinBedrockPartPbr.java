@@ -33,14 +33,37 @@ public abstract class MixinBedrockPartPbr {
                                                   int light, int overlay, float red, float green, float blue,
                                                   float alpha) {
         int packedLight = light;
-        if (self.illuminated && PbrRenderer.enabled()) {
-            // 自发光骨骼: 本帧需要泛光链路; 最低位让着色器识别这批顶点是发光组。
-            PbrRenderer.markEmissionSource();
-            packedLight = light | 1;
+        if (PbrRenderer.enabled()) {
+            // 沿父链判断: 自发光骨骼的子部件继承父级光照值, 也必须继承发光组标记,
+            // 否则只有骨骼本身有泛光、子部件没有(加速渲染路径的 compile() 被 HEAD 取消, 父链标记只能在这里补)。
+            for (BedrockPart part = self; part != null; part = part.getParent()) {
+                if (part.illuminated) {
+                    // 自发光骨骼/其子部件: 本帧需要泛光链路; 最低位让着色器识别这批顶点是发光组。
+                    PbrRenderer.markEmissionSource();
+                    packedLight = light | 1;
+                    break;
+                }
+            }
         }
         self.compile(pose, consumer, packedLight, overlay, red, green, blue, alpha);
     }
 
+    /**
+     * 在 render 入口给"发光骨骼及其子部件"的打包光照打一个安全标记位(bit16, 落在 UV2.y 最低位)。
+     * 这条注入挂在 render 上, 不会像 compile 那样被加速渲染在 HEAD 取消, 加速路径也一定生效;
+     * UV2/16 做 lightmap 采样时该位会被整数除法丢掉, 不影响光照贴图。
+     */
+    @ModifyVariable(method = RENDER, at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false)
+    private int taczfixes$pbrMarkRenderLight(int packedLight) {
+        if (!PbrRenderer.enabled()) return packedLight;
+        for (BedrockPart part = (BedrockPart) (Object) this; part != null; part = part.getParent()) {
+            if (part.illuminated) {
+                PbrRenderer.markEmissionSource();
+                return packedLight | (1 << 16);
+            }
+        }
+        return packedLight;
+    }
     @ModifyVariable(method = COMPILE, at = @At("HEAD"), argsOnly = true, ordinal = 0, remap = false)
     private int taczfixes$pbrMarkIlluminated(int packedLight) {
         if (!PbrRenderer.enabled()) return packedLight;

@@ -35,10 +35,6 @@ public class BarterPickFunction implements LootItemFunction {
         this.kind = kind;
     }
 
-    public NetheriteBarter.Kind getKind() {
-        return this.kind;
-    }
-
     @Override
     public ItemStack apply(ItemStack stack, LootContext context) {
         return NetheriteBarter.create(this.kind, context);

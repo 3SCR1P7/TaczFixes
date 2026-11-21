@@ -20,10 +20,6 @@ public class BuiltinAttachmentSlot extends Button implements IStackTooltip {
         this.stack = stack;
     }
 
-    public ItemStack getStack() {
-        return stack;
-    }
-
     @Override
     public void renderTooltip(Consumer<ItemStack> consumer) {
         if (this.isHoveredOrFocused()) {

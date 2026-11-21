@@ -19,6 +19,11 @@ public class CustomFireModeManager {
     private CustomFireModeManager() {
     }
 
+    /** 资源重载时清空, 避免已删除/改名的旧模式 id 继续被 NBT 激活。 */
+    public static void clear() {
+        GUN_MODES.clear();
+    }
+
     public static void put(ResourceLocation dataId, Map<String, GunTaczFixesData.CustomFireModeConfig> modes) {
         if (dataId == null) return;
         if (modes == null || modes.isEmpty()) {

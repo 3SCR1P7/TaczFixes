@@ -24,7 +24,7 @@ public class MixinArcanaAttachmentData {
                     "(Lnet/minecraft/world/item/ItemStack;" +
                     "Lcom/tacz/guns/api/item/attachment/AttachmentType;)" +
                     "Lgroup/taczexpands/dist/YKThsud9;",
-            remap = false), remap = false)
+            remap = false), require = 0, remap = false)
     private YKThsud9 taczfixes$useActiveCustomScope(ItemStack stack, AttachmentType type) {
         YKThsud9 custom = taczfixes$activeCustomScopeData(stack);
         if (custom != null) {

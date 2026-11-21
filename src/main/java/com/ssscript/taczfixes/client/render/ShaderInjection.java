@@ -14,25 +14,12 @@ import java.util.function.Function;
  */
 public final class ShaderInjection {
     private static final Map<String, List<Function<String, String>>> VSH_INJECTIONS = new HashMap<>();
-    private static final Map<String, List<Function<String, String>>> FSH_INJECTIONS = new HashMap<>();
 
     private ShaderInjection() {
     }
 
     public static void registerVSHInjection(String shaderName, Function<String, String> injection) {
         VSH_INJECTIONS.computeIfAbsent(shaderName, s -> new ArrayList<>()).add(injection);
-    }
-
-    public static boolean hasInjectFSH(String shaderName) {
-        return FSH_INJECTIONS.containsKey(shaderName);
-    }
-
-    public static String injectFSH(String shaderName, String content) {
-        TaczFixesMod.LOGGER.info("Injecting colored light into shader fsh {}.", shaderName);
-        for (Function<String, String> function : FSH_INJECTIONS.getOrDefault(shaderName, Collections.emptyList())) {
-            content = function.apply(content);
-        }
-        return content;
     }
 
     public static boolean hasInjectVSH(String shaderName) {

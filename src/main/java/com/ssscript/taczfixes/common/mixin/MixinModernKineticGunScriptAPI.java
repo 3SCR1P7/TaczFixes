@@ -13,11 +13,14 @@ import com.ssscript.taczfixes.common.util.OffhandGunPropertyResolver;
 import com.ssscript.taczfixes.common.util.OffhandShooterManager;
 import com.tacz.guns.api.entity.IGunOperator;
 import com.tacz.guns.api.item.IGun;
+import com.tacz.guns.config.common.GunConfig;
 import com.tacz.guns.entity.shooter.ShooterDataHolder;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
+import com.tacz.guns.network.message.ServerMessageSound;
 import com.tacz.guns.resource.modifier.AttachmentCacheProperty;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
+import com.tacz.guns.sound.SoundManager;
 import com.tacz.guns.util.CycleTaskHelper;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -26,6 +29,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
@@ -366,12 +370,30 @@ public abstract class MixinModernKineticGunScriptAPI {
         }
     }
 
+    /** 空仓反馈: 服务端通过 TaCZ 已有的 ServerMessageSound 包把 dry_fire 声音发给开火玩家, 由客户端解析
+     *  枪械 display 音效后播放。旧实现要求 level().isClientSide, 但 shootOnce 只在服务端执行, 空仓音效永远不播。 */
     @Unique
     private void taczfixes$playDryFire() {
-        if (this.shooter == null || this.shooter.level() == null || !this.shooter.level().isClientSide) {
+        if (this.shooter == null || this.shooter.level() == null || this.shooter.level().isClientSide) {
             return;
         }
-        ClientOnlyDispatch.playDryFireFeedback(this.shooter, this.itemStack);
+        if (!(this.shooter instanceof ServerPlayer serverPlayer)) {
+            return;
+        }
+        IGun gun = IGun.getIGunOrNull(this.itemStack);
+        if (gun == null) {
+            return;
+        }
+        ResourceLocation gunId = gun.getGunId(this.itemStack);
+        ResourceLocation displayId = gun.getGunDisplayId(this.itemStack);
+        if (gunId == null || displayId == null) {
+            return;
+        }
+        // 与 ClientOnlyDispatch.playDryFireFeedback 语义一致: 只让开火玩家自己听到空仓音效
+        com.tacz.guns.network.NetworkHandler.sendToClientPlayer(
+                new ServerMessageSound(serverPlayer.getId(), gunId, displayId, SoundManager.DRY_FIRE_SOUND,
+                        1.0F, 1.0F, GunConfig.DEFAULT_GUN_OTHER_SOUND_DISTANCE.get().intValue()),
+                serverPlayer);
     }
 
     /** 耐久为 0 时的开火前处理: disable 阻拦开火(播放 dry_fire), remove 移除枪械。 */
@@ -517,9 +539,6 @@ public abstract class MixinModernKineticGunScriptAPI {
                 boolean continueTask = task.getAsBoolean();
                 completedNormally = true;
                 OffhandShooterManager.popActiveData();
-                if (1 == 0 && completionReported.compareAndSet(false, true)) {
-                    OffhandShooterManager.finishManualSafeAsyncTask(this.dataHolder, this.itemStack, generation);
-                }
                 int invocationCount = completedInvocations.incrementAndGet();
                 boolean reachedCycleLimit = cycles > 0 && invocationCount >= cycles;
                 if ((!continueTask || reachedCycleLimit) && completionReported.compareAndSet(false, true)) {

@@ -153,17 +153,6 @@ public final class GunSmithTableEnergy {
         return true;
     }
 
-    public static boolean hasManualPower(Level level, BlockPos pos, ResourceLocation recipeId) {
-        GunSmithTableEnergyConfig.Recipe config = recipeConfig(recipeId, level);
-        int cost = manualConsumption(config);
-        return cost <= 0 || get(level, pos) >= cost;
-    }
-
-    public static boolean consumeManual(Level level, BlockPos pos, ResourceLocation recipeId) {
-        GunSmithTableEnergyConfig.Recipe config = recipeConfig(recipeId, level);
-        return consume(table(level, pos), manualConsumption(config));
-    }
-
     public static ManualResult consumeManualIfPossible(Level level, BlockPos pos, ResourceLocation recipeId,
                                                        Player player) {
         GunSmithTableEnergyConfig.Recipe config = recipeConfig(recipeId, level);

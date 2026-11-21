@@ -18,6 +18,7 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
     private static final boolean PLAYER_ANIMATOR_PRESENT;
     private static final boolean TOUHOU_LITTLE_MAID_PRESENT;
     private static final boolean YES_STEVE_MODEL_PRESENT;
+    private static final boolean ARCANA_PRESENT;
 
     static {
         PARCOOL_PRESENT = hasResource("com/alrex/parcool/common/attachment/common/Parkourability.class");
@@ -31,6 +32,8 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         PLAYER_ANIMATOR_PRESENT = hasResource("dev/kosmx/playerAnim/api/layered/modifier/AdjustmentModifier.class");
         TOUHOU_LITTLE_MAID_PRESENT = hasResource("com/github/tartaricacid/touhoulittlemaid/TouhouLittleMaid.class");
         YES_STEVE_MODEL_PRESENT = hasResource("com/elfmcys/yesstevemodel/YesSteveModel.class");
+        // Arcana 的兼容 mixin 直接把 group.taczexpands.* 类型写进了方法签名/调用点, 类不存在时不能应用。
+        ARCANA_PRESENT = hasResource("group/taczexpands/common/accessor/IAccessorAttachmentData.class");
     }
 
     private static boolean hasResource(String path) {
@@ -78,6 +81,10 @@ public class TaczFixesMixinPlugin implements IMixinConfigPlugin {
         }
         if (mixinClassName.startsWith("com.ssscript.taczfixes.client.mixin.compat.sodium.")) {
             return SODIUM_PRESENT;
+        }
+        // Arcana 兼容 mixin 依赖 group.taczexpands.*, 未安装时直接跳过。
+        if (mixinClassName.contains(".MixinArcana")) {
+            return ARCANA_PRESENT;
         }
         return true;
     }

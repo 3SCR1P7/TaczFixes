@@ -13,7 +13,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class MixinArcanaBeamPbr {
 
     @Redirect(method = "D0LEgR5p", at = @At(value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/MultiBufferSource;getBuffer(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;", remap = true), remap = false)
+            target = "Lnet/minecraft/client/renderer/MultiBufferSource;getBuffer(Lnet/minecraft/client/renderer/RenderType;)Lcom/mojang/blaze3d/vertex/VertexConsumer;", remap = true), require = 0, remap = false)
     private static VertexConsumer taczfixes$pbrBeamConsumer(MultiBufferSource source, RenderType type) {
         return BeamPbrRouting.buffer(source, type);
     }

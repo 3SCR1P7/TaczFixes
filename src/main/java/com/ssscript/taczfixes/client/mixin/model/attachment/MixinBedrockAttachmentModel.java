@@ -102,8 +102,7 @@ public abstract class MixinBedrockAttachmentModel {
 
     @Unique
     private boolean taczfixes$isPhysicalOpticRender(ItemDisplayContext transformType) {
-        return com.ssscript.taczfixes.client.util.ScopeCullHelper.isPhysicalOpticPass()
-                || DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND
+        return DualRenderContext.getPhase() == DualRenderContext.HandPhase.OFFHAND
                 || transformType == ItemDisplayContext.FIRST_PERSON_LEFT_HAND
                 || transformType != ItemDisplayContext.FIRST_PERSON_RIGHT_HAND;
     }

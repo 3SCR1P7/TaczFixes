@@ -58,6 +58,10 @@ public class ClientDisplayDataReloadListener implements PreparableReloadListener
                     CustomHudController.onResourceReload();
                     com.ssscript.taczfixes.client.util.GunPackIconLoader.clear();
                     com.ssscript.taczfixes.client.util.GunRecolorManager.clearTextures();
+                    // 静态贴图透明度缓存不随资源重载失效: 重载后新贴图 alpha 变化 / 旧异常结果必须重新扫描。
+                    com.ssscript.taczfixes.client.util.GunTransparency.clear();
+                    // 枪械模型 ground 中心(PIVOT_CACHE)来自枪包 geo json, 重载后必须重新读取。
+                    com.ssscript.taczfixes.client.util.GunModelPivot.clear();
                 }, gameExecutor);
     }
 

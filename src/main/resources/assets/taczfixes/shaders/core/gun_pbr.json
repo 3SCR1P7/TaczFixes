@@ -9,6 +9,7 @@
     ],
     "uniforms": [
         { "name": "CelestialVisibility", "type": "float", "count": 1, "values": [0.0] },
+    { "name": "ArEmissive", "type": "int", "count": 1, "values": [0] },
         { "name": "LocalSkyExposure", "type": "float", "count": 1, "values": [0.0] },
         { "name": "SunOcclusion", "type": "float", "count": 1, "values": [0.0] },
         { "name": "CelestialDirection", "type": "float", "count": 3, "values": [0.0, 1.0, 0.0] },
@@ -51,7 +52,6 @@
         { "name": "HasNormal", "type": "int", "count": 1, "values": [0] },
         { "name": "FallbackMaterial", "type": "int", "count": 1, "values": [1] },
         { "name": "EmissionPass", "type": "int", "count": 1, "values": [0] },
-        { "name": "ScopeDivisionPass", "type": "int", "count": 1, "values": [0] },
         { "name": "GlareDepthTest", "type": "int", "count": 1, "values": [0] },
         { "name": "ReflectionStrength", "type": "float", "count": 1, "values": [0.35] },
         { "name": "GlareStrength", "type": "float", "count": 1, "values": [0.5] },

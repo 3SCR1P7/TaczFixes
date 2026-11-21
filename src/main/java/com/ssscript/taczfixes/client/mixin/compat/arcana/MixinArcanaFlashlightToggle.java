@@ -22,7 +22,7 @@ public class MixinArcanaFlashlightToggle {
     @Unique
     private static Method taczfixes$flashlightFlagMethod;
 
-    @Inject(method = "y4ac6dDI", at = @At("HEAD"), cancellable = true, remap = false)
+    @Inject(method = "y4ac6dDI", at = @At("HEAD"), cancellable = true, require = 0, remap = false)
     private void taczfixes$mirrorMainHandFlashlightToggle(ItemStack stack, CallbackInfoReturnable<Boolean> cir) {
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || stack == null || stack.isEmpty()) {

@@ -50,7 +50,7 @@ public abstract class MixinGunRefitScreenSlotPressFix extends Screen {
                             try {
                                 if (AttachmentType.valueOf(def.type.toUpperCase(Locale.US)) == type) {
                                     RefitTransform.changeRefitScreenView(type);
-                                    this.init();
+                                    ((GunRefitScreen) (Object) this).init();
                                     return;
                                 }
                             } catch (IllegalArgumentException ignored) {

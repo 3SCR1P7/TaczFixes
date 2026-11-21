@@ -248,43 +248,6 @@ public final class ClientGunLightManager {
         addSegmentLights(new Vec3(bullet.xo, bullet.yo, bullet.zo), bullet.position(), tracked.bullet);
     }
 
-    /** PBR 反光用: 收集相机附近的动态彩色光源, 供枪身多光源高光使用。 */
-    public record LightSample(Vec3 position, float red, float green, float blue, float level) {
-    }
-
-    public static void collectLights(Vec3 origin, double range, List<LightSample> out) {
-        out.clear();
-        if (origin == null) {
-            return;
-        }
-        long now = System.currentTimeMillis();
-        double rangeSqr = range * range;
-        for (ActiveLight light : LIGHTS.values()) {
-            if (now >= light.endMillis || light.position == null) {
-                continue;
-            }
-            if (light.position.distanceToSqr(origin) > rangeSqr) {
-                continue;
-            }
-            long span = Math.max(1L, light.endMillis - light.startMillis);
-            float progress = (float) (now - light.startMillis) / (float) span;
-            int level = Mth.clamp(Math.round(Mth.lerp(progress, light.levelMax, light.levelMin)), 0, 15);
-            if (level <= 0) {
-                continue;
-            }
-            int rgb = light.color;
-            float red = 1.0f;
-            float green = 0.86f;
-            float blue = 0.67f;
-            if (rgb >= 0) {
-                red = ((rgb >> 16) & 255) / 255f;
-                green = ((rgb >> 8) & 255) / 255f;
-                blue = (rgb & 255) / 255f;
-            }
-            out.add(new LightSample(light.position, red, green, blue, level));
-        }
-    }
-
     /** 光照引擎查询入口: 方块位置当前的无颜色光照等级(彩色光由 Shimmer 渲染, 不参与原版光照引擎)。 */
     public static int emissionAt(long packedPos) {
         ActiveLight light = LIGHTS.get(packedPos);

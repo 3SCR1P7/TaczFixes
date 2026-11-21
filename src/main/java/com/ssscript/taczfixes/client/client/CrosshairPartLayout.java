@@ -22,7 +22,7 @@ import java.util.Map;
 @OnlyIn(Dist.CLIENT)
 public final class CrosshairPartLayout {
     private static final Map<ResourceLocation, CrosshairPartLayout> CACHE = new HashMap<>();
-    private static final CrosshairPartLayout EMPTY = new CrosshairPartLayout(0, 0, List.of(), new int[0]);
+    private static final CrosshairPartLayout EMPTY = new CrosshairPartLayout(null, 0, 0, List.of(), new int[0]);
 
     /** 贴图中一个 1 至多像素高的连续横条。 */
     public record Strip(int x, int y, int width, int height) {
@@ -37,12 +37,20 @@ public final class CrosshairPartLayout {
     private final List<Part> parts;
 
     private final int[] alpha;
+    /** 来源准星贴图; EMPTY 布局为 null。 */
+    private final ResourceLocation sourceTexture;
 
-    private CrosshairPartLayout(int width, int height, List<Part> parts, int[] alpha) {
+    private CrosshairPartLayout(ResourceLocation sourceTexture, int width, int height, List<Part> parts, int[] alpha) {
+        this.sourceTexture = sourceTexture;
         this.width = width;
         this.height = height;
         this.parts = parts;
         this.alpha = alpha;
+    }
+
+    /** 稳定标识该布局来源的贴图, 用作外部动态贴图缓存的 key(对象 identityHashCode 会因回收复用而串图)。 */
+    public ResourceLocation sourceTexture() {
+        return this.sourceTexture;
     }
 
     public int alphaAt(int x, int y) {
@@ -91,7 +99,7 @@ public final class CrosshairPartLayout {
             try (InputStream stream = resource.open()) {
                 image = NativeImage.read(stream);
             }
-            CrosshairPartLayout layout = analyze(image);
+            CrosshairPartLayout layout = analyze(texture, image);
             image.close();
             return layout;
         } catch (Throwable ignored) {
@@ -99,7 +107,7 @@ public final class CrosshairPartLayout {
         }
     }
 
-    private static CrosshairPartLayout analyze(NativeImage image) {
+    private static CrosshairPartLayout analyze(ResourceLocation texture, NativeImage image) {
         int w = image.getWidth();
         int h = image.getHeight();
         if (w <= 0 || h <= 0) {
@@ -182,7 +190,7 @@ public final class CrosshairPartLayout {
             boolean centered = !ringLike && (containsCenter || length < Math.max(2.5f, w * 0.05f));
             parts.add(new Part(buildStrips(rowPixels), dirX, dirY, ringLike, centered));
         }
-        return new CrosshairPartLayout(w, h, parts, alpha);
+        return new CrosshairPartLayout(texture, w, h, parts, alpha);
     }
 
     private static List<Strip> buildStrips(Map<Integer, List<Integer>> rowPixels) {

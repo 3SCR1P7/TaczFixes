@@ -30,12 +30,26 @@ public class MixinEntityDamageReducer {
         String entityId = net.minecraft.core.registries.BuiltInRegistries.ENTITY_TYPE.getKey(this.taczfixes_damageTargetEntity.getType()).toString();
         List<? extends String> entries = Config.DAMAGE_REDUCTION_ENTITIES.get();
         for (String entry : entries) {
-            String[] parts = entry.split(",");
-            if (parts.length == 2 && parts[0].equals(entityId)) {
-                double reduction = Double.parseDouble(parts[1]);
-                cir.setReturnValue(cir.getReturnValue() * (float) (1.0 - reduction));
-                return;
+            String[] parts = entry == null ? new String[0] : entry.split(",");
+            if (parts.length != 2) {
+                continue;
             }
+            // 配置写错(非数字/越界)不能让服务端 tick 崩: 与 GunDamageReductionHandler 一样做完整防护。
+            if (!parts[0].trim().equals(entityId)) {
+                continue;
+            }
+            double reduction;
+            try {
+                reduction = Double.parseDouble(parts[1].trim());
+            } catch (NumberFormatException ignored) {
+                continue;
+            }
+            if (Double.isNaN(reduction)) {
+                continue;
+            }
+            reduction = Math.max(0.0D, Math.min(1.0D, reduction));
+            cir.setReturnValue(cir.getReturnValue() * (float) (1.0D - reduction));
+            return;
         }
     }
 
