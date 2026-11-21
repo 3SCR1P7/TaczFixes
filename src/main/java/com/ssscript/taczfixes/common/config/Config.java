@@ -450,29 +450,29 @@ public class Config {
                 .comment("默认的四肢伤害倍率。默认值：0.6")
                 .defineInRange("default", 0.6, 0.0, 1.0);
         GUN_TYPE_PISTOL = BUILDER
-                .comment("手枪的默认四肢伤害倍率。默认值：0.6")
-                .defineInRange("pistol", 0.6, 0.0, 1.0);
+                .comment("手枪的默认四肢伤害倍率。默认值：0.55")
+                .defineInRange("pistol", 0.55, 0.0, 1.0);
         GUN_TYPE_RIFLE = BUILDER
                 .comment("步枪的默认四肢伤害倍率。默认值：0.6")
                 .defineInRange("rifle", 0.6, 0.0, 1.0);
         GUN_TYPE_SNIPER = BUILDER
-                .comment("狙击枪的默认四肢伤害倍率。默认值：0.7")
-                .defineInRange("sniper", 0.7, 0.0, 1.0);
+                .comment("狙击枪的默认四肢伤害倍率。默认值：0.72")
+                .defineInRange("sniper", 0.72, 0.0, 1.0);
         GUN_TYPE_SHOTGUN = BUILDER
                 .comment("霰弹枪的默认四肢伤害倍率。默认值：0.8")
                 .defineInRange("shotgun", 0.8, 0.0, 1.0);
         GUN_TYPE_SMG = BUILDER
-                .comment("冲锋枪的默认四肢伤害倍率。默认值：0.5")
-                .defineInRange("smg", 0.5, 0.0, 1.0);
+                .comment("冲锋枪的默认四肢伤害倍率。默认值：0.55")
+                .defineInRange("smg", 0.55, 0.0, 1.0);
         GUN_TYPE_RPG = BUILDER
-                .comment("重型武器的默认四肢伤害倍率。默认值：0.8")
-                .defineInRange("rpg", 0.8, 0.0, 1.0);
+                .comment("重型武器的默认四肢伤害倍率。默认值：0.88")
+                .defineInRange("rpg", 0.88, 0.0, 1.0);
         GUN_TYPE_MG = BUILDER
-                .comment("机枪的默认四肢伤害倍率。默认值：0.7")
-                .defineInRange("mg", 0.7, 0.0, 1.0);
+                .comment("机枪的默认四肢伤害倍率。默认值：0.64")
+                .defineInRange("mg", 0.64, 0.0, 1.0);
         GUN_TYPE_DMR = BUILDER
-                .comment("射手步枪的默认四肢伤害倍率。默认值：0.65")
-                .defineInRange("dmr", 0.65, 0.0, 1.0);
+                .comment("射手步枪的默认四肢伤害倍率。默认值：0.68")
+                .defineInRange("dmr", 0.68, 0.0, 1.0);
         GUN_TYPE_OTHER = BUILDER
                 .comment("其他类型枪械的默认四肢伤害倍率。默认值：0.6")
                 .defineInRange("other", 0.6, 0.0, 1.0);
@@ -1650,10 +1650,10 @@ public class Config {
                 .comment("是否启用 PBR 反光和自发光效果，仅影响客户端画面。默认值：true")
                 .define("enabled", true);
         PBR_REFLECTION = BUILDER
-                .comment("枪械材质反光强度。默认值：0.5")
+                .comment("枪械材质反光强度。默认值：1.0")
                 .defineInRange("reflection_strength", 1.0, 0.0, 4.0);
         PBR_GLARE_STRENGTH = BUILDER
-                .comment("枪身高光的眩光强度。默认值：0.5")
+                .comment("枪身高光的眩光强度。默认值：1.0")
                 .defineInRange("glare_strength", 1.0, 0.0, 10.0);
         PBR_EMISSION = BUILDER
                 .comment("枪械自发光强度。默认值：1.0")
@@ -1662,11 +1662,11 @@ public class Config {
                 .comment("是否启用枪械自发光区域的泛光效果。默认值：true")
                 .define("bloom", true);
         PBR_BLOOM_STRENGTH = BUILDER
-                .comment("枪械泛光强度。默认值：0.7")
-                .defineInRange("bloom_strength", 0.7, 0.0, 2.0);
+                .comment("枪械泛光强度。默认值：0.8")
+                .defineInRange("bloom_strength", 0.8, 0.0, 2.0);
         PBR_BLOOM_RADIUS = BUILDER
-                .comment("泛光半径，越大开销越高。默认值：7.0")
-                .defineInRange("bloom_radius", 7.0, 1.0, 40.0);
+                .comment("泛光半径，越大开销越高。默认值：10.0")
+                .defineInRange("bloom_radius", 10.0, 1.0, 40.0);
         PBR_BLOOM_RESOLUTION = BUILDER
                 .comment("泛光渲染分辨率倍率，越高效果越好，但开销更大。默认值：1.0")
                 .defineInRange("bloom_resolution", 1.0, 0.25, 1.0);
@@ -1677,7 +1677,7 @@ public class Config {
                 .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
                 .define("bloom_tracer", false);
         PBR_FALLBACK_MATERIAL = BUILDER
-                .comment("没有 _s 贴图的枪械是否按底色推导材质，使这类枪包也有反光。默认值：true")
+                .comment("没有 _s 贴图的枪械是否按底色推导材质。默认值：true")
                 .define("fallback_material", true);
         PBR_DEFAULT_ROUGHNESS = BUILDER
                 .comment("无 _s 贴图时的默认粗糙度，越大越哑光。默认值：0.45")
@@ -1698,11 +1698,11 @@ public class Config {
                 .comment("是否启用屏幕空间反射，让枪械金属反射出场景中的方块与实体。默认值：true")
                 .define("ssr", true);
         PBR_SSR_STRENGTH = BUILDER
-                .comment("屏幕空间反射强度，0 等同关闭。默认值：0.8")
+                .comment("屏幕空间反射强度。默认值：0.8")
                 .defineInRange("ssr_strength", 0.8, 0.0, 2.0);
         PBR_SSR_STEPS = BUILDER
-                .comment("屏幕空间反射的射线步数。调低可明显降低反光开销，但会略少反射到远处物体。默认值：24")
-                .defineInRange("ssr_steps", 24, 4, 32);
+                .comment("屏幕空间反射的射线步数。调低可明显降低反光开销，但会略少反射到远处物体。默认值：16")
+                .defineInRange("ssr_steps", 16, 4, 32);
         PBR_WET_DETAIL = BUILDER
                 .comment("是否启用雨水膜细节（波纹扰动、雨痕），需要枪械浸雨。默认值：true")
                 .define("wet_detail", true);
@@ -1710,10 +1710,10 @@ public class Config {
                 .comment("是否叠加一层更大半径的宽泛光，让光晕过渡更自然。默认值：true")
                 .define("bloom_wide", true);
         PBR_BLOOM_UPDATE_INTERVAL = BUILDER
-                .comment("泛光光晕的更新间隔（帧）。1 = 每帧更新（最跟手）；越大开销越低，但光晕会有轻微拖影。默认值：1")
-                .defineInRange("bloom_update_interval", 1, 1, 8);
+                .comment("泛光光晕的更新间隔（帧）。默认值：2")
+                .defineInRange("bloom_update_interval", 2, 1, 8);
         PBR_BLOOM_WIDE_STRENGTH = BUILDER
-                .comment("宽泛光层强度。默认值：0.5")
+                .comment("宽泛光层强度。默认值：0.25")
                 .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);
         GUN_ENCHANT_GLINT_STRENGTH = BUILDER
                 .comment("附魔光效强度。默认值：1.0")
