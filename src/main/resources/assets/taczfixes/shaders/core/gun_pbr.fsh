@@ -28,6 +28,10 @@ uniform float EnvStrength;
 uniform float Anisotropy;
 uniform float WetDetail;
 uniform float SSRStrength;
+// SSR 射线步数(CPU 传 pbr_ssr_steps, 0 = 本帧不跑 SSR)。循环上限用 uniform, 低配可调低。
+uniform int SSRSteps;
+// 主渲染目标尺寸, 用于把 gl_FragCoord 换算成屏幕 UV, 避免每像素调用 textureSize。
+uniform vec2 ScreenSize;
 uniform float Time;
 // 动态迷彩: 由 PbrRenderer 按当前渲染物品的 NBT 逐次绘制写入。
 //   CamoIndex    = 当前迷彩序号(0=无), 对应生成程序里的 dispatch 分支
@@ -101,9 +105,9 @@ vec4 taczfixesPackDepth(float depth) {
     return enc;
 }
 
-vec3 mappedNormal(vec3 n, vec2 xy) {
-    vec3 dp1 = dFdx(viewPosition), dp2 = dFdy(viewPosition);
-    vec2 duv1 = dFdx(texCoord0), duv2 = dFdy(texCoord0);
+// 法线贴图: 切线基由 UV 导数构造。导数值由 main() 算一次后传入(mappedNormal 与
+// tangentBasis 原本各自再算一遍 dFdx/dFdy, 这里去重)。
+vec3 mappedNormal(vec3 n, vec2 xy, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2) {
     vec3 p2 = cross(dp2, n), p1 = cross(n, dp1);
     vec3 t = p2 * duv1.x + p1 * duv2.x;
     vec3 b = p2 * duv1.y + p1 * duv2.y;
@@ -124,10 +128,8 @@ vec3 metalF0(float code, vec3 albedo) {
     return albedo;
 }
 
-// 由 UV 导数构造切线基, 供各向异性高光使用(拉丝金属沿 U 方向拉长)。
-void tangentBasis(vec3 n, out vec3 t, out vec3 b) {
-    vec3 dp1 = dFdx(viewPosition), dp2 = dFdy(viewPosition);
-    vec2 duv1 = dFdx(texCoord0), duv2 = dFdy(texCoord0);
+// 由 UV 导数构造切线基, 供各向异性高光使用(拉丝金属沿 U 方向拉长)。导数由 main() 传入。
+void tangentBasis(vec3 n, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2, out vec3 t, out vec3 b) {
     vec3 tRaw = dp1 * duv2.y - dp2 * duv1.y;
     float len = length(tRaw);
     if (len < 1e-6) {
@@ -157,9 +159,12 @@ vec3 specGGX(vec3 n, vec3 v, vec3 t, vec3 b, vec3 l, vec3 lightColor, float inte
     float hb = dot(b, h) / ab;
     float denom = ht * ht + hb * hb + nh * nh;
     float d = 1.0 / max(3.14159265 * at * ab * denom * denom, 1e-6);
-    float k = pow(roughness + 1.0, 2.0) / 8.0;
+    float rp1 = roughness + 1.0;
+    float k = rp1 * rp1 * 0.125;
     float g = nv / (nv * (1.0 - k) + k) * nl / (nl * (1.0 - k) + k);
-    vec3 f = f0 + (1.0 - f0) * pow(1.0 - vh, 5.0);
+    float fv = 1.0 - vh;
+    float fv2 = fv * fv;
+    vec3 f = f0 + (1.0 - f0) * (fv2 * fv2 * fv);
     return f * d * g / max(4.0 * nv, 0.001) * lightColor * intensity;
 }
 
@@ -180,6 +185,12 @@ vec3 skyEnvironment(vec3 dirWorld) {
     return col;
 }
 
+// SSR 场景深度以 16 位(RG 两通道)打包进半分辨率场景纹理, 这里还原成 0..1 深度。
+float sampleSceneDepth(vec2 uv) {
+    vec4 s = texture(Sampler7, uv);
+    return s.r + s.g * (1.0 / 255.0);
+}
+
 // 屏幕空间反射 + 屏幕探针兜底。
 // 深度步进未命中时, 把反射方向投影到屏幕采样场景色(越界钳制并软化),
 // 保证金属表面始终有场景倒影, 而不是没命中就一片平。
@@ -191,14 +202,14 @@ vec4 screenSpaceReflection(vec3 n, vec3 envTint) {
     if (front <= 0.05) return result;
     vec3 pos = viewPosition + n * 0.05;
     float stepLen = max(length(viewPosition) * 0.015, 0.2);
-    for (int i = 0; i < 24; i++) {
+    for (int i = 0; i < SSRSteps; i++) {
         pos += Rv * stepLen;
         stepLen *= 1.24;
         vec4 clip = ProjMat * vec4(pos, 1.0);
         if (clip.w <= 0.0) break;
         vec2 uv = clip.xy / clip.w * 0.5 + 0.5;
         if (uv.x < 0.0 || uv.x > 1.0 || uv.y < 0.0 || uv.y > 1.0) break;
-        float sceneDepth = texture(Sampler7, uv).r;
+        float sceneDepth = sampleSceneDepth(uv);
         float candidateDepth = clip.z / clip.w * 0.5 + 0.5;
         float thickness = candidateDepth - sceneDepth;
         if (thickness > 0.0015 && thickness < 0.06) {
@@ -245,31 +256,39 @@ vec3 localAmbientSum() {
 }
 
 // 眩光: 比主反光更宽的高光叶, 写入泛光目标后由泛光链路模糊成光晕。
-vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo) {
+// 光源的视角空间方向由 main() 预先算好传入, 避免这里重复求逆/归一化。
+vec3 glareHighlight(vec3 n, vec3 v, float roughness, vec3 f0, vec3 albedo,
+                    vec3 lCelV, vec3 l1v, vec3 l2v, vec3 l3v, vec3 l4v) {
     float nv = max(dot(n, v), 0.001);
     float glareRoughness = max(roughness, 0.12);
     float wet = surfaceWetness();
     float weatherGain = mix(1.6, 0.45, wet);
-    float gr = clamp(glareRoughness * (0.75 + 1.0), 0.05, 1.0);
-    float a2 = pow(gr, 4.0);
-    float k = pow(gr + 1.0, 2.0) / 8.0;
+    float gr = clamp(glareRoughness * 1.75, 0.05, 1.0);
+    float gr2 = gr * gr;
+    float a2 = gr2 * gr2;
+    float grp1 = gr + 1.0;
+    float k = grp1 * grp1 * 0.125;
     float exposure = min(skyExposure, LocalSkyExposure);
     vec3 sum = vec3(0.0);
-    vec3 l = safeNormalize(worldToView() * CelestialDirection);
+    vec3 l = lCelV;
     vec3 h = safeNormalize(v + l);
     float nl = max(dot(n, l), 0.0);
     float nh = max(dot(n, h), 0.0);
     float vh = max(dot(v, h), 0.0);
-    float d = a2 / max(3.14159265 * pow(nh * nh * (a2 - 1.0) + 1.0, 2.0), 1e-6);
+    float ggxDenom = nh * nh * (a2 - 1.0) + 1.0;
+    float d = a2 / max(3.14159265 * ggxDenom * ggxDenom, 1e-6);
     float g = nv / (nv * (1.0 - k) + k) * nl / (nl * (1.0 - k) + k);
-    vec3 f = f0 + (1.0 - f0) * pow(1.0 - vh, 5.0);
+    float fv = 1.0 - vh;
+    float fv2 = fv * fv;
+    vec3 f = f0 + (1.0 - f0) * (fv2 * fv2 * fv);
     sum += f * d * g / max(4.0 * nv, 0.001) * mix(0.35, 1.0, 1.0 - gr)
             * CelestialColor * exposure * exposure * CelestialVisibility * SunOcclusion;
-    vec3 wp = fragWorldPos();
-    vec3 localSum = LocalLightColor1 * LocalLightStrength1 * max(dot(n, worldToView() * safeNormalize(LocalLightPos1 - wp)), 0.0)
-            + LocalLightColor2 * LocalLightStrength2 * max(dot(n, worldToView() * safeNormalize(LocalLightPos2 - wp)), 0.0)
-            + LocalLightColor3 * LocalLightStrength3 * max(dot(n, worldToView() * safeNormalize(LocalLightPos3 - wp)), 0.0)
-            + LocalLightColor4 * LocalLightStrength4 * max(dot(n, worldToView() * safeNormalize(LocalLightPos4 - wp)), 0.0);
+    // 局部光: 强度为 0 的槽位整项为 0, 直接跳过(均匀分支, 同一 draw 内全部像素一致)。
+    vec3 localSum = vec3(0.0);
+    if (LocalLightStrength1 > 0.0) localSum += LocalLightColor1 * LocalLightStrength1 * max(dot(n, l1v), 0.0);
+    if (LocalLightStrength2 > 0.0) localSum += LocalLightColor2 * LocalLightStrength2 * max(dot(n, l2v), 0.0);
+    if (LocalLightStrength3 > 0.0) localSum += LocalLightColor3 * LocalLightStrength3 * max(dot(n, l3v), 0.0);
+    if (LocalLightStrength4 > 0.0) localSum += LocalLightColor4 * LocalLightStrength4 * max(dot(n, l4v), 0.0);
     sum += localSum * gr * 0.22;
     vec3 result = sum * weatherGain;
     vec3 tint = albedo / max(dot(albedo, vec3(0.299, 0.587, 0.114)), 0.1);
@@ -315,11 +334,16 @@ void main() {
     glow += camoGlow * rawVertexColor.rgb * ColorModulator.rgb;
     float fog = 1.0 - smoothstep(FogStart, max(FogEnd, FogStart + 0.001), vertexDistance);
 
+    // 相机旋转、像素世界坐标、UV 导数只算一次; 法线/切线/局部光/眩光共用。
+    mat3 w2v = worldToView();
+    vec3 wp = CameraPos + transpose(w2v) * viewPosition;
+    vec3 dp1 = dFdx(viewPosition), dp2 = dFdy(viewPosition);
+    vec2 duv1 = dFdx(texCoord0), duv2 = dFdy(texCoord0);
     vec3 n = safeNormalize(viewNormal);
     float ao = 1.0;
     if (HasNormal != 0) {
         vec3 normalMap = texture(Sampler4, texCoord0).rgb;
-        n = mappedNormal(n, normalMap.rg * 2.0 - 1.0);
+        n = mappedNormal(n, normalMap.rg * 2.0 - 1.0, dp1, dp2, duv1, duv2);
         ao = normalMap.b;
     }
     // 湿润水膜: 在法线上叠一层细微波纹, 让雨天的反光有流动感。
@@ -337,7 +361,7 @@ void main() {
     vec3 v = safeNormalize(-viewPosition);
     vec3 t;
     vec3 b;
-    tangentBasis(n, t, b);
+    tangentBasis(n, dp1, dp2, duv1, duv2, t, b);
 
     vec3 wetBase = base.rgb * mix(1.0, 0.7, wet);
     vec3 linearBase = pow(wetBase, vec3(2.2));
@@ -349,7 +373,8 @@ void main() {
     float metallic;
     vec3 f0;
     if (hasSpecular) {
-        roughness = max(pow(1.0 - specular.r, 2.0), 0.045);
+        float invR = 1.0 - specular.r;
+        roughness = max(invR * invR, 0.045);
         metallic = step(229.5 / 255.0, specular.g);
         f0 = metallic > 0.5 ? metalF0(floor(specular.g * 255.0 + 0.5), linearBase)
                 : vec3(min(specular.g, 0.16));
@@ -369,19 +394,31 @@ void main() {
             : (FallbackMaterial != 0 ? max(DefaultReflection, ReflectionStrength * 0.25) : 0.0);
     float exposure = min(skyExposure, LocalSkyExposure);
     float sunVisibility = CelestialVisibility * SunOcclusion;
-    // 局部光方向按像素位置重算: 火把是近处点光源, 用相机位置算方向会有明显视差,
-    // 会把镜像高光点甩到尾/枪外。
-    vec3 wp = fragWorldPos();
+    // 世界空间与视角空间的局部光方向各算一次, 高光/镜像盘/柔光环/眩光共用。
     vec3 Lw1 = safeNormalize(LocalLightPos1 - wp);
     vec3 Lw2 = safeNormalize(LocalLightPos2 - wp);
     vec3 Lw3 = safeNormalize(LocalLightPos3 - wp);
     vec3 Lw4 = safeNormalize(LocalLightPos4 - wp);
+    vec3 lCelV = safeNormalize(w2v * CelestialDirection);
+    vec3 l1v = safeNormalize(w2v * Lw1);
+    vec3 l2v = safeNormalize(w2v * Lw2);
+    vec3 l3v = safeNormalize(w2v * Lw3);
+    vec3 l4v = safeNormalize(w2v * Lw4);
+    float s1 = LocalLightStrength1;
+    float s2 = LocalLightStrength2;
+    float s3 = LocalLightStrength3;
+    float s4 = LocalLightStrength4;
+    float localStrengthSum = s1 + s2 + s3 + s4;
 
     if (EmissionPass != 0) {
-        vec3 sunView = safeNormalize(worldToView() * CelestialDirection);
-        float sunBehindView = smoothstep(0.05, 0.75, sunView.z);
+        float sunBehindView = smoothstep(0.05, 0.75, lCelV.z);
         float backDim = mix(1.0, 0.2, sunBehindView);
-        vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * (GlareStrength * 0.25) * backDim;
+        vec3 glare = vec3(0.0);
+        // 没有太阳/月亮也点燃不起任何局部光时, 眩光恒为 0: 跳过整段高光叶计算。
+        if (localStrengthSum > 0.0 || (sunVisibility > 0.0 && exposure > 0.0)) {
+            glare = glareHighlight(n, v, roughness, f0, linearBase, lCelV, l1v, l2v, l3v, l4v)
+                    * (GlareStrength * 0.25) * backDim;
+        }
         vec3 total = (glow + glare) * fog;
         if (ScopeDivisionPass != 0) {
             if (emission <= 0.0 && dot(total, total) < 1.0e-6) discard;
@@ -389,7 +426,7 @@ void main() {
             fragEmission = taczfixesPackDepth(gl_FragCoord.z);
             return;
         }
-        float sceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
+        float sceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
         if (GlareDepthTest != 0 && gl_FragCoord.z > sceneDepth + 0.000001) discard;
         fragColor = vec4(total, alpha);
         fragEmission = taczfixesPackDepth(gl_FragCoord.z);
@@ -397,40 +434,52 @@ void main() {
     }
 
     // 太阳/月亮的直射高光(各向异性 GGX + 宽反光叶)。
-    vec3 l = safeNormalize(worldToView() * CelestialDirection);
-    vec3 celestialDirect = specGGX(n, v, t, b, l, CelestialColor,
-            exposure * exposure * sunVisibility, f0, roughness, aniso, 0.0);
+    vec3 l = lCelV;
+    vec3 celestialDirect = vec3(0.0);
     float areaT = 0.35;
     vec3 hCelestial = safeNormalize(v + l);
     float nl = max(dot(n, l), 0.0);
     float nh = max(dot(n, hCelestial), 0.0);
-    vec3 fresnel = f0 + (1.0 - f0) * pow(1.0 - max(dot(v, hCelestial), 0.0), 5.0);
+    float celVh = max(dot(v, hCelestial), 0.0);
+    float celFv = 1.0 - celVh;
+    float celFv2 = celFv * celFv;
+    vec3 fresnel = f0 + (1.0 - f0) * (celFv2 * celFv2 * celFv);
     // 大范围高光叶: 侧对太阳/月亮时可见面上仍要能看到明确的高光斑, 而不是只有柔和环境反光。
     float nlWide = smoothstep(-0.30, 0.22, nl);
-    celestialDirect += fresnel * nlWide * pow(nh, mix(32.0, 5.0, areaT))
-            * CelestialColor * exposure * exposure * sunVisibility * (1.15 * areaT);
+    // 太阳/月亮完全照不到(洞穴/被天花板挡住)时这一整块为 0: 跳过两次高光叶计算。
+    if (sunVisibility > 0.0 && exposure > 0.0) {
+        celestialDirect = specGGX(n, v, t, b, l, CelestialColor,
+                exposure * exposure * sunVisibility, f0, roughness, aniso, 0.0);
+        celestialDirect += fresnel * nlWide * pow(nh, mix(32.0, 5.0, areaT))
+                * CelestialColor * exposure * exposure * sunVisibility * (1.15 * areaT);
+    }
 
     // 多光源局部高光(火把/灯笼/枪口闪光/镭射等, 最多 4 条)。
     // 局部光用较宽的叶 + wrap, 否则低多边形枪械的大平面在光源侧对时完全看不到反光。
+    // 强度为 0 的槽位整项为 0, 用 uniform 分支跳过(同一次 draw 内所有像素走同一分支)。
     vec3 localDirect = vec3(0.0);
     vec3 localWide = vec3(0.0);
-
-    localDirect += specGGX(n, v, t, b, safeNormalize(worldToView() * Lw1),
-            LocalLightColor1, LocalLightStrength1 * 0.30, f0, mix(roughness, 0.22, 0.55), aniso, 0.0);
-    localDirect += specGGX(n, v, t, b, safeNormalize(worldToView() * Lw2),
-            LocalLightColor2, LocalLightStrength2 * 0.30, f0, mix(roughness, 0.22, 0.55), aniso, 0.0);
-    localDirect += specGGX(n, v, t, b, safeNormalize(worldToView() * Lw3),
-            LocalLightColor3, LocalLightStrength3 * 0.30, f0, mix(roughness, 0.22, 0.55), aniso, 0.0);
-    localDirect += specGGX(n, v, t, b, safeNormalize(worldToView() * Lw4),
-            LocalLightColor4, LocalLightStrength4 * 0.30, f0, mix(roughness, 0.22, 0.55), aniso, 0.0);
-    localWide += LocalLightColor1 * LocalLightStrength1 * 0.10
-            * pow(max(dot(n, safeNormalize(v + safeNormalize(worldToView() * Lw1))), 0.0), mix(48.0, 4.0, areaT));
-    localWide += LocalLightColor2 * LocalLightStrength2 * 0.10
-            * pow(max(dot(n, safeNormalize(v + safeNormalize(worldToView() * Lw2))), 0.0), mix(48.0, 4.0, areaT));
-    localWide += LocalLightColor3 * LocalLightStrength3 * 0.10
-            * pow(max(dot(n, safeNormalize(v + safeNormalize(worldToView() * Lw3))), 0.0), mix(48.0, 4.0, areaT));
-    localWide += LocalLightColor4 * LocalLightStrength4 * 0.10
-            * pow(max(dot(n, safeNormalize(v + safeNormalize(worldToView() * Lw4))), 0.0), mix(48.0, 4.0, areaT));
+    float localRough = mix(roughness, 0.22, 0.55);
+    if (s1 > 0.0) {
+        localDirect += specGGX(n, v, t, b, l1v, LocalLightColor1, s1 * 0.30, f0, localRough, aniso, 0.0);
+        localWide += LocalLightColor1 * s1 * 0.10
+                * pow(max(dot(n, safeNormalize(v + l1v)), 0.0), mix(48.0, 4.0, areaT));
+    }
+    if (s2 > 0.0) {
+        localDirect += specGGX(n, v, t, b, l2v, LocalLightColor2, s2 * 0.30, f0, localRough, aniso, 0.0);
+        localWide += LocalLightColor2 * s2 * 0.10
+                * pow(max(dot(n, safeNormalize(v + l2v)), 0.0), mix(48.0, 4.0, areaT));
+    }
+    if (s3 > 0.0) {
+        localDirect += specGGX(n, v, t, b, l3v, LocalLightColor3, s3 * 0.30, f0, localRough, aniso, 0.0);
+        localWide += LocalLightColor3 * s3 * 0.10
+                * pow(max(dot(n, safeNormalize(v + l3v)), 0.0), mix(48.0, 4.0, areaT));
+    }
+    if (s4 > 0.0) {
+        localDirect += specGGX(n, v, t, b, l4v, LocalLightColor4, s4 * 0.30, f0, localRough, aniso, 0.0);
+        localWide += LocalLightColor4 * s4 * 0.10
+                * pow(max(dot(n, safeNormalize(v + l4v)), 0.0), mix(48.0, 4.0, areaT));
+    }
     localWide *= areaT;
 
     // 反光基础参数: gloss/chrome 是"美术观感"的金属度, fres 控制掠射增强。
@@ -438,19 +487,16 @@ void main() {
     float gloss = clamp(1.0 - roughness * 0.9, 0.0, 1.0);
     float baseRefl = min(1.0, gloss * 2.0);
     float chrome = clamp(gloss * 2.0 - 1.0, 0.0, 1.0) * clamp(metallic, 0.0, 1.0);
-    float fres = mix(0.035 + 0.965 * pow(1.0 - ndv, 4.0),
-            0.46 + 0.54 * pow(1.0 - ndv, 2.2), chrome);
+    float ndvF = 1.0 - ndv;
+    float ndvF2 = ndvF * ndvF;
+    float fres = mix(0.035 + 0.965 * (ndvF2 * ndvF2), 0.46 + 0.54 * pow(ndvF, 2.2), chrome);
     float kRefl = (baseRefl + 0.85 * chrome) * EnvStrength * reflectionGain;
     // 高金属度整体收一点; 非金属(木头/塑料)大幅压掉光源反光, 避免被照亮发白。
     float metalAtten = mix(1.0, 0.62, clamp(metallic, 0.0, 1.0));
     float dielectricAtten = mix(0.30, 1.0, clamp(metallic, 0.0, 1.0));
 
     // 环境反射: 地平线用雾色, 天顶用真实天空色, 向下取地面回弹。
-    vec3 reflectedWorld = transpose(worldToView()) * reflect(-v, n);
-    float s1 = LocalLightStrength1;
-    float s2 = LocalLightStrength2;
-    float s3 = LocalLightStrength3;
-    float s4 = LocalLightStrength4;
+    vec3 reflectedWorld = transpose(w2v) * reflect(-v, n);
     vec3 lightTint = LocalLightColor1 * s1 + LocalLightColor2 * s2
             + LocalLightColor3 * s3 + LocalLightColor4 * s4;
     float torchSum = clamp(s1 + s2 + s3 + s4, 0.0, 1.5);
@@ -465,8 +511,7 @@ void main() {
     environment += localAmbientSum() * 0.03;
     vec3 envTint = mix(min(linearBase * 1.3, vec3(0.8)), min(f0 * 2.0, vec3(0.9)), metallic)
             * (0.15 + 0.85 * baseLuma);
-    float litFacing = max(nl * sunVisibility,
-            dot(n, safeNormalize(worldToView() * Lw1)) * LocalLightStrength1);
+    float litFacing = max(nl * sunVisibility, dot(n, l1v) * s1);
     float envFace = mix(0.55, 1.0, smoothstep(0.0, 0.4, litFacing));
     // 环境反射随局部亮度变化: 亮处(白天/被天空或灯光照到)约 1.4 倍, 暗处(洞穴/夜晚)约 0.4 倍。
     // 以前这里是固定 0.70, 现在换成亮度驱动的增益, 整体也略微变强。
@@ -475,8 +520,14 @@ void main() {
     float envGain = 0.40 + smoothstep(0.02, 0.90, envLocalBright);
     vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * envGain;
     // 屏幕空间反射(深度步进 + 屏幕探针兜底)。
-    vec4 ssr = screenSpaceReflection(n, envTint);
-    float ssrWeight = clamp(SSRStrength * ssr.a * (0.45 + 0.55 * (1.0 - roughness)) * clamp(metallic, 0.0, 1.0), 0.0, 0.55);
+    // 非金属像素的 SSR 权重恒为 0, 直接跳过整条射线步进(原实现每像素最多 24 次深度采样)。
+    vec4 ssr = vec4(0.0);
+    float ssrWeight = 0.0;
+    if (metallic > 0.0 && SSRStrength > 0.001 && kRefl > 0.0) {
+        ssr = screenSpaceReflection(n, envTint);
+        ssrWeight = clamp(SSRStrength * ssr.a * (0.45 + 0.55 * (1.0 - roughness))
+                * clamp(metallic, 0.0, 1.0), 0.0, 0.55);
+    }
     if (ssrWeight > 0.001) {
         indirect = mix(indirect, ssr.rgb * fres * kRefl * ao * 0.85, ssrWeight);
     }
@@ -489,16 +540,30 @@ void main() {
     // 日/月是大面积光源, 用更宽的盘和更低的环指数; 侧对时也能看到反光。
     float spreadC = radians(6.0 + roughness * 40.0) * (1.0 - 0.35 * chrome * (1.0 - roughness));
     float haloExpC = mix(40.0, 8.0, clamp(baseRefl, 0.0, 1.0));
-    float diskC = smoothstep(cos(spreadC), cos(spreadC * 0.40), dot(reflectedWorld, Lc)) * sunVisibility;
-    float haloC = pow(max(dot(reflectedWorld, Lc), 0.0), haloExpC) * sunVisibility;
-    float diskL = smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw1)) * s1
-            + smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw2)) * s2
-            + smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw3)) * s3
-            + smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw4)) * s4;
-    float haloL = pow(max(dot(reflectedWorld, Lw1), 0.0), haloExp * 1.15) * s1
-            + pow(max(dot(reflectedWorld, Lw2), 0.0), haloExp * 1.15) * s2
-            + pow(max(dot(reflectedWorld, Lw3), 0.0), haloExp * 1.15) * s3
-            + pow(max(dot(reflectedWorld, Lw4), 0.0), haloExp * 1.15) * s4;
+    float diskC = 0.0;
+    float haloC = 0.0;
+    if (sunVisibility > 0.0) {
+        diskC = smoothstep(cos(spreadC), cos(spreadC * 0.40), dot(reflectedWorld, Lc)) * sunVisibility;
+        haloC = pow(max(dot(reflectedWorld, Lc), 0.0), haloExpC) * sunVisibility;
+    }
+    float diskL = 0.0;
+    float haloL = 0.0;
+    if (s1 > 0.0) {
+        diskL += smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw1)) * s1;
+        haloL += pow(max(dot(reflectedWorld, Lw1), 0.0), haloExp * 1.15) * s1;
+    }
+    if (s2 > 0.0) {
+        diskL += smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw2)) * s2;
+        haloL += pow(max(dot(reflectedWorld, Lw2), 0.0), haloExp * 1.15) * s2;
+    }
+    if (s3 > 0.0) {
+        diskL += smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw3)) * s3;
+        haloL += pow(max(dot(reflectedWorld, Lw3), 0.0), haloExp * 1.15) * s3;
+    }
+    if (s4 > 0.0) {
+        diskL += smoothstep(cos(spread), cos(spread * 0.35), dot(reflectedWorld, Lw4)) * s4;
+        haloL += pow(max(dot(reflectedWorld, Lw4), 0.0), haloExp * 1.15) * s4;
+    }
     vec3 diskTerm = (CelestialColor * diskC * 1.30 + lightTint * diskL * 0.30)
             * specAmt * kRefl * (0.5 + 0.5 * fres);
     vec3 haloTerm = (CelestialColor * haloC + lightTint * haloL * 0.45)
@@ -506,8 +571,11 @@ void main() {
     // 近处火把的暖色缎光(宽反光, 与点状镜像高光互补)。
     vec3 sheenTerm = torchCol * (0.02 + 0.10 * fres) * kRefl * torchSum * dielectricAtten;
     // 日/月的广域反光: 让侧对太阳/月亮时枪身也有可见的宽反光。
-    vec3 celestialSheen = CelestialColor * sunVisibility * exposure * exposure
-            * (0.03 + 0.10 * fres) * kRefl * 0.45;
+    vec3 celestialSheen = vec3(0.0);
+    if (sunVisibility > 0.0 && exposure > 0.0) {
+        celestialSheen = CelestialColor * sunVisibility * exposure * exposure
+                * (0.03 + 0.10 * fres) * kRefl * 0.45;
+    }
 
     vec3 reflection = (celestialDirect * ao * reflectionGain
             + localDirect * ao + localWide * ao
@@ -515,11 +583,14 @@ void main() {
     float sunBehind = smoothstep(0.05, 0.75, l.z);
     reflection *= mix(1.0, 0.55, sunBehind);
     // 眩光: 主通道只加 0.35 倍作为清晰核心; 完整眩光值写进第二颜色附件, 由泛光链路模糊成外圈光晕。
-    vec3 glare = glareHighlight(n, v, roughness, f0, linearBase) * (GlareStrength * 0.25)
-            * mix(1.0, 0.2, sunBehind);
+    vec3 glare = vec3(0.0);
+    if (localStrengthSum > 0.0 || (sunVisibility > 0.0 && exposure > 0.0)) {
+        glare = glareHighlight(n, v, roughness, f0, linearBase, lCelV, l1v, l2v, l3v, l4v)
+                * (GlareStrength * 0.25) * mix(1.0, 0.2, sunBehind);
+    }
     vec3 glareCore = glare * 0.35;
     if (GlareDepthTest != 0) {
-        float glareSceneDepth = texture(Sampler5, gl_FragCoord.xy / vec2(textureSize(Sampler5, 0))).r;
+        float glareSceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
         glareCore *= step(gl_FragCoord.z, glareSceneDepth + 0.000001);
     }
     reflection += glareCore;

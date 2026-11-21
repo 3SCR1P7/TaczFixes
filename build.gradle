@@ -26,6 +26,11 @@ base {
     archivesName = mod_id
 }
 
+jar {
+    // 产物命名区分加载器: taczfixes-<version>-forge.jar
+    archiveFileName = "${mod_id}-${project.version}-forge.jar"
+}
+
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
 
 println "Java: ${System.getProperty 'java.version'}, JVM: ${System.getProperty 'java.vm.version'} (${System.getProperty 'java.vendor'}), Arch: ${System.getProperty 'os.arch'}"

@@ -1,0 +1,11 @@
+{
+    "vertex": "taczfixes:pbr_screen",
+    "fragment": "taczfixes:pbr_bloom_smooth",
+    "attributes": ["Position", "UV0"],
+    "samplers": [
+        { "name": "Sampler0" }
+    ],
+    "uniforms": [
+        { "name": "Alpha", "type": "float", "count": 1, "values": [1.0] }
+    ]
+}

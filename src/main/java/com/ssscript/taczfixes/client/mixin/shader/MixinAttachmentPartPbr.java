@@ -7,8 +7,6 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.system.MemoryStack;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 import org.spongepowered.asm.mixin.injection.At;
@@ -44,11 +42,9 @@ public abstract class MixinAttachmentPartPbr {
             at = @At("HEAD"), argsOnly = true, remap = false)
     private RenderType taczfixes$pbrAttachmentPart(RenderType original) {
         if (!PbrRenderer.enabled()) return original;
-        try (MemoryStack stack = MemoryStack.stackPush()) {
-            var mask = stack.malloc(4);
-            GL11.glGetBooleanv(GL11.GL_COLOR_WRITEMASK, mask);
-            if (mask.get(0) == 0 && mask.get(1) == 0 && mask.get(2) == 0) return original;
-        }
+        // 阴影阶段会关闭颜色写入, 那时不参与 PBR 路由。
+        // 掩码状态由 MixinGlStateManagerColorMask 跟踪, 不再每个部件做一次 glGetBooleanv。
+        if (!PbrRenderer.colorWritesEnabled()) return original;
         return PbrRenderer.resolve(original);
     }
 

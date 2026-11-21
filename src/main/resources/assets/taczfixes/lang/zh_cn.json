@@ -418,6 +418,7 @@
     "config.taczfixes.entry.visual_effect.bloom_tracer": "曳光弹泛光",
     "config.taczfixes.entry.visual_effect.bloom_laser": "镭射泛光",
     "config.taczfixes.entry.visual_effect.bloom_wide": "宽泛光层",
+    "config.taczfixes.entry.visual_effect.bloom_update_interval": "泛光更新间隔（帧）",
     "config.taczfixes.entry.visual_effect.bloom_wide_strength": "宽泛光强度",
     "config.taczfixes.entry.visual_effect.fallback_material": "无 PBR 贴图时的兜底材质",
     "config.taczfixes.entry.visual_effect.default_roughness": "默认粗糙度",
@@ -427,6 +428,7 @@
     "config.taczfixes.entry.visual_effect.anisotropy": "各向异性反光",
     "config.taczfixes.entry.visual_effect.ssr": "屏幕空间反射",
     "config.taczfixes.entry.visual_effect.ssr_strength": "屏幕空间反射强度",
+    "config.taczfixes.entry.visual_effect.ssr_steps": "屏幕空间反射步数",
     "config.taczfixes.entry.visual_effect.wet_detail": "雨水膜细节",
     "config.taczfixes.entry.visual_effect.enchantment_glint_strength": "附魔光效强度",
 

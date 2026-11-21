@@ -27,8 +27,10 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_ANISOTROPY;
     public static final ForgeConfigSpec.BooleanValue PBR_SSR;
     public static final ForgeConfigSpec.DoubleValue PBR_SSR_STRENGTH;
+    public static final ForgeConfigSpec.IntValue PBR_SSR_STEPS;
     public static final ForgeConfigSpec.BooleanValue PBR_WET_DETAIL;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_WIDE;
+    public static final ForgeConfigSpec.IntValue PBR_BLOOM_UPDATE_INTERVAL;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_WIDE_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue GUN_ENCHANT_GLINT_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue MOVEMENT_ROLL_MAX_ANGLE;
@@ -1698,12 +1700,18 @@ public class Config {
         PBR_SSR_STRENGTH = BUILDER
                 .comment("屏幕空间反射强度，0 等同关闭。默认值：0.8")
                 .defineInRange("ssr_strength", 0.8, 0.0, 2.0);
+        PBR_SSR_STEPS = BUILDER
+                .comment("屏幕空间反射的射线步数。调低可明显降低反光开销，但会略少反射到远处物体。默认值：24")
+                .defineInRange("ssr_steps", 24, 4, 32);
         PBR_WET_DETAIL = BUILDER
                 .comment("是否启用雨水膜细节（波纹扰动、雨痕），需要枪械浸雨。默认值：true")
                 .define("wet_detail", true);
         PBR_BLOOM_WIDE = BUILDER
                 .comment("是否叠加一层更大半径的宽泛光，让光晕过渡更自然。默认值：true")
                 .define("bloom_wide", true);
+        PBR_BLOOM_UPDATE_INTERVAL = BUILDER
+                .comment("泛光光晕的更新间隔（帧）。1 = 每帧更新（最跟手）；越大开销越低，但光晕会有轻微拖影。默认值：1")
+                .defineInRange("bloom_update_interval", 1, 1, 8);
         PBR_BLOOM_WIDE_STRENGTH = BUILDER
                 .comment("宽泛光层强度。默认值：0.5")
                 .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);

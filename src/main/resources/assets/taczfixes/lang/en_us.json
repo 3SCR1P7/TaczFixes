@@ -416,6 +416,7 @@
     "config.taczfixes.entry.visual_effect.bloom_tracer": "Bloom on Tracers",
     "config.taczfixes.entry.visual_effect.bloom_laser": "Bloom on Lasers",
     "config.taczfixes.entry.visual_effect.bloom_wide": "Wide Bloom Layer",
+    "config.taczfixes.entry.visual_effect.bloom_update_interval": "Bloom Update Interval (frames)",
     "config.taczfixes.entry.visual_effect.bloom_wide_strength": "Wide Bloom Strength",
     "config.taczfixes.entry.visual_effect.fallback_material": "Fallback Materials Without PBR Maps",
     "config.taczfixes.entry.visual_effect.default_roughness": "Default Roughness",
@@ -425,6 +426,7 @@
     "config.taczfixes.entry.visual_effect.anisotropy": "Anisotropic Reflections",
     "config.taczfixes.entry.visual_effect.ssr": "Screen-Space Reflections",
     "config.taczfixes.entry.visual_effect.ssr_strength": "SSR Strength",
+    "config.taczfixes.entry.visual_effect.ssr_steps": "SSR Steps",
     "config.taczfixes.entry.visual_effect.wet_detail": "Rain Water-Film Detail",
     "config.taczfixes.entry.visual_effect.enchantment_glint_strength": "Enchantment Glint Strength",
 

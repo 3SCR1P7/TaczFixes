@@ -67,6 +67,7 @@ public class ConfigScreen {
             bool_(e, entry, "visual_effect.bloom_laser", Config.PBR_BLOOM_LASER);
             bool_(e, entry, "visual_effect.bloom_wide", Config.PBR_BLOOM_WIDE);
             dbl_(e, entry, "visual_effect.bloom_wide_strength", Config.PBR_BLOOM_WIDE_STRENGTH);
+            intSlider_(e, entry, "visual_effect.bloom_update_interval", Config.PBR_BLOOM_UPDATE_INTERVAL, 1, 8);
         });
         sub(cat, entry, "gun_movement", e -> {
             dbl_(e, entry, "visual_effect.max_movement_roll_angle", Config.MOVEMENT_ROLL_MAX_ANGLE);
@@ -669,6 +670,14 @@ public class ConfigScreen {
                 .build());
     }
 
+    private static void intSlider_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
+                                   ForgeConfigSpec.IntValue v, int min, int max) {
+        cat.addEntry(entry.startIntSlider(entry(slug), v.get(), min, max)
+                .setDefaultValue(v.getDefault())
+                .setSaveConsumer(n -> safeSet(() -> v.set(n)))
+                .build());
+    }
+
     private static void str_(ConfigCategory cat, ConfigEntryBuilder entry, String slug,
                              ForgeConfigSpec.ConfigValue<String> v) {
         cat.addEntry(entry.startStrField(entry(slug), v.get())
@@ -686,6 +695,14 @@ public class ConfigScreen {
                 .setDefaultValue(com.ssscript.taczfixes.common.util.SpreadBlend.defaultMode())
                 .setSaveConsumer(n -> safeSet(() -> v.set(
                         com.ssscript.taczfixes.common.util.SpreadBlend.normalized(n))))
+                .build());
+    }
+
+    private static void intSlider_(List<AbstractConfigListEntry> entries, ConfigEntryBuilder entry, String slug,
+                                   ForgeConfigSpec.IntValue v, int min, int max) {
+        entries.add(entry.startIntSlider(entry(slug), v.get(), min, max)
+                .setDefaultValue(v.getDefault())
+                .setSaveConsumer(n -> safeSet(() -> v.set(n)))
                 .build());
     }
 
