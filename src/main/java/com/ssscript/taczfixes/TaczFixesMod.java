@@ -117,6 +117,16 @@ public class TaczFixesMod {
             ENCHANTMENTS.register("arcana_eden", GunEnchantments.ArcanaEden::new);
     public static final RegistryObject<Enchantment> PATIENCE_ENCHANTMENT =
             ENCHANTMENTS.register("patience", GunEnchantments.Patience::new);
+    public static final RegistryObject<Enchantment> SCARLET_DEATH_ENCHANTMENT =
+            ENCHANTMENTS.register("scarlet_death", GunEnchantments.ScarletDeath::new);
+    public static final RegistryObject<Enchantment> TOKONAGI_ENCHANTMENT =
+            ENCHANTMENTS.register("tokonagi", GunEnchantments.Tokonagi::new);
+    public static final RegistryObject<Enchantment> EMBER_ENCHANTMENT =
+            ENCHANTMENTS.register("ember", GunEnchantments.Ember::new);
+    public static final RegistryObject<Enchantment> POISED_ENCHANTMENT =
+            ENCHANTMENTS.register("poised", GunEnchantments.Poised::new);
+    public static final RegistryObject<Enchantment> SEAL_FLARE_ENCHANTMENT =
+            ENCHANTMENTS.register("seal_flare", GunEnchantments.SealFlare::new);
 
     @SuppressWarnings("removal")
     public TaczFixesMod() {
@@ -144,6 +154,7 @@ public class TaczFixesMod {
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.GunSmithTableEnergyHandler());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.compat.ArcanaSkillBridge());
         MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.CompatCommand());
+        MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.common.handler.NewGunEnchantmentHandler());
         if (net.minecraftforge.fml.ModList.get().isLoaded("irons_spellbooks")) {
             try {
                 MinecraftForge.EVENT_BUS.register(Class.forName("com.ssscript.taczfixes.common.handler.GunSpellHandler")

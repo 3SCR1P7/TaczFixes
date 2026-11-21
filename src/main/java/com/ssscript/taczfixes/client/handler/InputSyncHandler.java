@@ -17,6 +17,7 @@ import java.util.Set;
 public class InputSyncHandler {
 
     private static Set<String> lastSent = Collections.emptySet();
+    private static boolean lastCharging = false;
 
     @SubscribeEvent
     public void onClientTick(TickEvent.ClientTickEvent event) {
@@ -34,10 +35,21 @@ public class InputSyncHandler {
             return;
         }
         Set<String> current = new HashSet<>(pressed);
-        if (current.equals(lastSent)) {
+        boolean charging = taczfixes$isCharging(mc);
+        if (current.equals(lastSent) && charging == lastCharging) {
             return;
         }
         lastSent = current;
-        NetworkHandler.CHANNEL.sendToServer(new ClientMessageInputSync(new ArrayList<>(current)));
+        lastCharging = charging;
+        NetworkHandler.CHANNEL.sendToServer(new ClientMessageInputSync(new ArrayList<>(current), charging));
+    }
+
+    private static boolean taczfixes$isCharging(Minecraft mc) {
+        try {
+            var operator = com.tacz.guns.api.client.gameplay.IClientPlayerGunOperator.fromLocalPlayer(mc.player);
+            return operator != null && operator.getChargeProgress() > 0.001F;
+        } catch (Throwable ignored) {
+            return false;
+        }
     }
 }

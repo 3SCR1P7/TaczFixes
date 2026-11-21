@@ -63,6 +63,35 @@ public abstract class MixinModernKineticGunScriptAPI {
         return id == null ? "tacz:empty" : id.toString();
     }
 
+    /** lua: api:getMainhandGun() 返回主手枪械 id, 主手不是枪械时返回 tacz:empty。 */
+    @Unique
+    public String getMainhandGun() {
+        return taczfixes$handGunId(true);
+    }
+
+    /** lua: api:getOffhandGun() 返回副手枪械 id, 副手不是枪械时返回 tacz:empty。 */
+    @Unique
+    public String getOffhandGun() {
+        return taczfixes$handGunId(false);
+    }
+
+    @Unique
+    private String taczfixes$handGunId(boolean mainhand) {
+        if (shooter == null) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_GUN_ID.toString();
+        }
+        ItemStack stack = mainhand ? shooter.getMainHandItem() : shooter.getOffhandItem();
+        IGun gun = stack == null ? null : IGun.getIGunOrNull(stack);
+        if (gun == null) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_GUN_ID.toString();
+        }
+        ResourceLocation id = gun.getGunId(stack);
+        if (id == null || id.equals(com.tacz.guns.api.DefaultAssets.EMPTY_GUN_ID)) {
+            return com.tacz.guns.api.DefaultAssets.EMPTY_GUN_ID.toString();
+        }
+        return id.toString();
+    }
+
     /** lua: gun:getLevel() 获取枪械当前经验等级。 */
     @Unique
     public int getLevel() {

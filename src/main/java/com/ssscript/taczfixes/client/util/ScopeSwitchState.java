@@ -171,6 +171,22 @@ public final class ScopeSwitchState {
 
 
 
+    /** 枪上是否还装有除 exclude 之外的其它可切换瞄具(自定义槽里的 scope/sight)。 */
+    public static boolean hasOtherOptics(ItemStack gun, ResourceLocation exclude) {
+        if (gun == null || gun.isEmpty()) return false;
+        for (String slotId : collectCandidates(gun)) {
+            ItemStack item = CustomSlotStorage.get(gun, slotId);
+            if (item.isEmpty()) continue;
+            IAttachment attachment = IAttachment.getIAttachmentOrNull(item);
+            if (attachment == null) continue;
+            ResourceLocation id = attachment.getAttachmentId(item);
+            if (id != null && !DefaultAssets.isEmptyAttachmentId(id) && !id.equals(exclude)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     public static Optional<Float> customScopeAimTime(ItemStack gun) {
         return customScopeAimTime(gun, -1.0F);
     }

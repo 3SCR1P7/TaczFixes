@@ -25,6 +25,9 @@ uniform float DefaultMetal;
 uniform float DefaultReflection;
 uniform float EnvStrength;
 uniform float Anisotropy;
+// 视觉效果配置的金属度/粗糙度增幅: 最终值 = 原值 × (1 + 增幅), 1.0 即 +100%。
+uniform float MetalnessBoost;
+uniform float RoughnessBoost;
 uniform float WetDetail;
 uniform float SSRStrength;
 // SSR 射线步数(CPU 传 pbr_ssr_steps, 0 = 本帧不跑 SSR)。循环上限用 uniform, 低配可调低。
@@ -391,6 +394,9 @@ void main() {
         f0 = vec3(0.04);
     }
     roughness = mix(roughness, max(roughness * 0.25, 0.05), wet);
+    // 视觉增幅: 对最终材质值统一生效(金属度/粗糙度)。
+    metallic = clamp(metallic * (1.0 + clamp(MetalnessBoost, -1.0, 1.0)), 0.0, 1.0);
+    roughness = clamp(roughness * (1.0 + clamp(RoughnessBoost, -1.0, 1.0)), 0.045, 1.0);
     float aniso = clamp(Anisotropy, 0.0, 1.0) * clamp(metallic, 0.0, 1.0);
     // 配置里的 1.0 对应旧版 0.5 的实际强度, 这里统一折半。
     float reflectionGain = hasSpecular ? ReflectionStrength * 0.5

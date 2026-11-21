@@ -138,6 +138,11 @@ public class GunEnchantmentHelper {
             case "focused_ammo" -> Config.ENCH_FOCUSED_AMMO_ANVIL_MULT.get();
             case "arcana_eden" -> Config.ENCH_ARCANA_EDEN_ANVIL_MULT.get();
             case "patience" -> Config.ENCH_PATIENCE_ANVIL_MULT.get();
+            case "scarlet_death" -> Config.ENCH_SCARLET_DEATH_ANVIL_MULT.get();
+            case "tokonagi" -> Config.ENCH_TOKONAGI_ANVIL_MULT.get();
+            case "ember" -> Config.ENCH_EMBER_ANVIL_MULT.get();
+            case "poised" -> Config.ENCH_POISED_ANVIL_MULT.get();
+            case "seal_flare" -> Config.ENCH_SEAL_FLARE_ANVIL_MULT.get();
             default -> -1;
         };
     }

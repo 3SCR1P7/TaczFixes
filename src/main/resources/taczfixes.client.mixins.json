@@ -106,6 +106,7 @@
         "shader.MixinArcanaBeamPbr",
         "shader.MixinAttachmentPartPbr",
         "shader.MixinBeamRendererPbr",
+        "shader.MixinLaserBeamRenderState",
         "shader.MixinBedrockModelPbr",
         "shader.MixinBedrockPartPbr",
         "shader.MixinColoredLightGameRenderer",

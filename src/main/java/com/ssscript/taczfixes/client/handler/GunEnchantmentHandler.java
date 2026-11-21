@@ -926,12 +926,8 @@ public class GunEnchantmentHandler {
         if (chance < 1.0 && shooter.getRandom().nextDouble() >= chance) {
             return;
         }
-        Entity bullet = event.getBullet();
-        Holder<DamageType> voidType = (bullet == null ? target.level() : bullet.level())
-                .registryAccess().registryOrThrow(Registries.DAMAGE_TYPE).getHolderOrThrow(ModDamageTypes.BULLET_VOID);
-        DamageSource source = new DamageSource(voidType, shooter, shooter);
-        target.setHealth(0.0F);
-        target.die(source);
+        com.ssscript.taczfixes.common.handler.NewGunEnchantmentHandler.instantKill(target, shooter,
+                com.ssscript.taczfixes.common.handler.NewGunEnchantmentHandler.ABYSS_DAMAGE_ID);
     }
 
     private static final Map<UUID, Integer> BULLET_PENETRATION = new ConcurrentHashMap<>();

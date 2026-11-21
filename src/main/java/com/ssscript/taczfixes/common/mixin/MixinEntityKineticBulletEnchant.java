@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.common.mixin;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.util.GunEnchantmentHelper;
+import com.ssscript.taczfixes.common.util.GunEnchantmentUtil;
 import com.tacz.guns.entity.EntityKineticBullet;
 import com.tacz.guns.resource.pojo.data.gun.BulletData;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
@@ -60,6 +61,13 @@ public class MixinEntityKineticBulletEnchant {
         if (GunEnchantmentHelper.getLevel(gunItem, TaczFixesMod.ANTI_GRAVITY_ENCHANTMENT.get()) > 0) {
             this.gravity = 0.0f;
             this.friction = 0.0f;
+        }
+        // 封焰时刻: 过热>70% 时子弹点燃目标。
+        int sealFlare = GunEnchantmentUtil.level(gunItem, TaczFixesMod.SEAL_FLARE_ENCHANTMENT);
+        if (sealFlare > 0 && GunEnchantmentUtil.heatProgress(gunItem)
+                > (float) (Config.ENCH_SEAL_FLARE_HEAT_THRESHOLD_PERCENT.get() / 100.0D)) {
+            this.igniteEntity = true;
+            this.igniteEntityTime = Math.max(this.igniteEntityTime, Config.ENCH_SEAL_FLARE_IGNITE_TICKS.get());
         }
     }
 }

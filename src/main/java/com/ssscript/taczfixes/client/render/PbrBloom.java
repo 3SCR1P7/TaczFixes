@@ -44,6 +44,8 @@ public final class PbrBloom {
     private static RenderTarget smoothNarrow, smoothWide;
     private static VertexBuffer quad, maskQuad;
     private static boolean active, dirty, scopeMaskValid;
+    /** 当前是否处于"发光 MRT 写入"状态(beginEmissionWrite 与 endEmissionWrite 之间)。 */
+    private static boolean emissionWriteActive;
     private static final Matrix4f IDENTITY = new Matrix4f();
 
     /** 宽层高斯核相对窄层的倍数。旧实现是"窄层结果再乘 2.4 倍半径", 总 sigma = sqrt(1 + 2.4^2) ≈ 2.6。 */
@@ -73,6 +75,8 @@ public final class PbrBloom {
         active = true;
         dirty = false;
         scopeMaskValid = false;
+        // 上一帧若因异常没走到 endEmissionWrite, 这里兜底复位, 避免残留的"发光写入中"状态。
+        emissionWriteActive = false;
         int interval = Math.max(1, Config.PBR_BLOOM_UPDATE_INTERVAL.get());
         buildThisFrame = (bloomFrameCounter++ % interval) == 0L;
         if (!PbrRenderer.enabled() || !Config.PBR_BLOOM.get()) {
@@ -118,12 +122,43 @@ public final class PbrBloom {
             dirty = true;
         }
         GL30.glDrawBuffers(MRT_DRAW_BUFFERS);
+        // 发光深度附件(draw buffer 2)必须"替换"写入: 镭射/曳光等透明发光几何用加法混合绘制,
+        // 若跟着混合, 24 位打包深度会被相邻面片累加(饱和到 1), 遮罩就认为该处光源比整个场景还远,
+        // 整块泛光被丢弃(镭射不再泛光)。颜色附件 0/1 的混合保持不变。
+        emissionWriteActive = true;
+        disableEmissionDepthBlend();
         return true;
     }
 
     /** 主绘制后调用: 恢复单颜色附件绘制状态。 */
     public static void endEmissionWrite() {
+        emissionWriteActive = false;
+        // 恢复默认的按索引混合状态, 供下一次 MRT 写入/其它模组使用。
+        try {
+            GL30.glEnablei(GL11.GL_BLEND, 2);
+        } catch (Throwable ignored) {
+            // 驱动不支持按索引开关混合时忽略: 上面的状态本来也是默认值。
+        }
         GL30.glDrawBuffers(SINGLE_DRAW_BUFFER);
+    }
+
+    private static void disableEmissionDepthBlend() {
+        try {
+            GL30.glDisablei(GL11.GL_BLEND, 2);
+        } catch (Throwable ignored) {
+            // 按索引开关混合是 GL 3.0 核心功能, 正常驱动不会失败; 失败时退化为旧行为(只是泛光判定偏保守)。
+        }
+    }
+
+    /**
+     * {@link ShaderInstance#apply()} 会按着色器 JSON 的 blend 配置重新打开全局混合(对所有 draw buffer 生效),
+     * 所以发光 MRT 期间每次 shader apply 之后都要重新关掉发光深度附件的混合。
+     */
+    public static void applyEmissionDepthBlendFix() {
+        if (!emissionWriteActive) {
+            return;
+        }
+        disableEmissionDepthBlend();
     }
 
     /** MRT 是否不可用(驱动/FBO 不完整等); 不可用时退回单独补画一次发光。 */

@@ -27,7 +27,7 @@ function M.shoot(api)
     end
 end
 
-function M.bullet_tick(api)
+function M.tick_bullet(api)
   local motion = api:getBulletMotion(api)
   api:setBulletMotion(motion[1] * 2, motion[2] * 2, motion[3] * 2)
 end

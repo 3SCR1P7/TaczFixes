@@ -11,6 +11,7 @@ import java.util.UUID;
 public final class PlayerInputState {
 
     private static final Map<UUID, Set<String>> STATES = new HashMap<>();
+    private static final Map<UUID, Boolean> CHARGING = new HashMap<>();
 
     private PlayerInputState() {
     }
@@ -25,6 +26,21 @@ public final class PlayerInputState {
         }
     }
 
+    /** 更新某玩家是否正在蓄力。 */
+    public static synchronized void setCharging(UUID uuid, boolean charging) {
+        if (uuid == null) return;
+        if (charging) {
+            CHARGING.put(uuid, Boolean.TRUE);
+        } else {
+            CHARGING.remove(uuid);
+        }
+    }
+
+    /** 某玩家是否正在蓄力。 */
+    public static synchronized boolean isCharging(UUID uuid) {
+        return uuid != null && CHARGING.getOrDefault(uuid, Boolean.FALSE);
+    }
+
     /** 获取某玩家同步的按键集, 未同步过返回 null。 */
     public static synchronized Set<String> get(UUID uuid) {
         return uuid == null ? null : STATES.get(uuid);
@@ -33,5 +49,6 @@ public final class PlayerInputState {
     public static synchronized void remove(UUID uuid) {
         if (uuid == null) return;
         STATES.remove(uuid);
+        CHARGING.remove(uuid);
     }
 }

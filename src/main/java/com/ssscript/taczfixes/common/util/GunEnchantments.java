@@ -1,6 +1,7 @@
 package com.ssscript.taczfixes.common.util;
 
 import com.ssscript.taczfixes.common.config.Config;
+import net.minecraft.world.item.ItemStack;
 
 /**
  * 全部枪械附魔; 各自只有数值差异, 合并为一个文件便于维护。
@@ -187,6 +188,51 @@ public final class GunEnchantments {
         @Override
         public boolean isTradeable() {
             return false;
+        }
+    }
+
+    /** 猩红终焉: 命中目标后持续发红, 射手死亡时目标一同死亡。 */
+    public static class ScarletDeath extends BaseGunEnchantment {
+        public ScarletDeath() {
+            super(Rarity.VERY_RARE, Config.ENCH_SCARLET_DEATH_MAX_LEVEL::get, 10, 8, 8);
+        }
+    }
+
+    /** 常凪: 命中后冻结目标 floor(伤害)×等级 tick。 */
+    public static class Tokonagi extends BaseGunEnchantment {
+        public Tokonagi() {
+            super(Rarity.VERY_RARE, Config.ENCH_TOKONAGI_MAX_LEVEL::get, 10, 8, 8);
+        }
+    }
+
+    /** 余烬: 击杀时引发带火焰、破坏方块的爆炸。 */
+    public static class Ember extends BaseGunEnchantment {
+        public Ember() {
+            super(Rarity.VERY_RARE, Config.ENCH_EMBER_MAX_LEVEL::get, 6, 6, 6);
+        }
+    }
+
+    /** 蓄势待发: 只有蓄力枪可附魔; 蓄力时受到的伤害减少。 */
+    public static class Poised extends BaseGunEnchantment {
+        public Poised() {
+            super(Rarity.VERY_RARE, Config.ENCH_POISED_MAX_LEVEL::get, 8, 8, 6);
+        }
+
+        @Override
+        public boolean canApplyAtEnchantingTable(ItemStack stack) {
+            return super.canApplyAtEnchantingTable(stack) && GunEnchantmentUtil.hasChargeFeature(stack);
+        }
+    }
+
+    /** 封焰时刻: 只有过热枪可附魔; 伤害/射速随过热变化并点燃目标。 */
+    public static class SealFlare extends BaseGunEnchantment {
+        public SealFlare() {
+            super(Rarity.VERY_RARE, Config.ENCH_SEAL_FLARE_MAX_LEVEL::get, 8, 8, 6);
+        }
+
+        @Override
+        public boolean canApplyAtEnchantingTable(ItemStack stack) {
+            return super.canApplyAtEnchantingTable(stack) && GunEnchantmentUtil.hasHeatFeature(stack);
         }
     }
 }

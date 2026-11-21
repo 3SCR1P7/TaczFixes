@@ -57,6 +57,7 @@ public final class PbrRenderer {
     private static AbstractUniform uSkyZenith, uSkyHorizon, uSunHorizon, uSunAzimuth, uSunOcclusion;
     private static AbstractUniform uDefaultRoughness, uDefaultMetal, uDefaultReflection, uEnvStrength;
     private static AbstractUniform uAnisotropy, uWetDetail, uSSRStrength, uTime;
+    private static AbstractUniform uMetalnessBoost, uRoughnessBoost;
     private static AbstractUniform uSSRSteps, uScreenSize;
     private static AbstractUniform uViewRotX, uViewRotY, uViewRotZ;
     private static AbstractUniform uCameraPos;
@@ -490,6 +491,8 @@ public final class PbrRenderer {
         setUniform(uTime, (level.getGameTime() + partialTick) / 20f);
         setUniform(uEnvStrength, Config.PBR_ENV_STRENGTH.get().floatValue());
         setUniform(uAnisotropy, Config.PBR_ANISOTROPY.get().floatValue());
+        setUniform(uMetalnessBoost, Config.PBR_METALNESS_BOOST.get().floatValue());
+        setUniform(uRoughnessBoost, Config.PBR_ROUGHNESS_BOOST.get().floatValue());
         if (!level.dimensionType().hasSkyLight()
                 || level.effects().skyType() != DimensionSpecialEffects.SkyType.NORMAL) {
             setUniform(uCelestialDirection, 0f, 1f, 0f);
@@ -1040,6 +1043,7 @@ public final class PbrRenderer {
         uSkyZenith = uSkyHorizon = uSunHorizon = uSunAzimuth = uSunOcclusion = null;
         uDefaultRoughness = uDefaultMetal = uDefaultReflection = uEnvStrength = null;
         uAnisotropy = uWetDetail = uSSRStrength = uTime = null;
+        uMetalnessBoost = uRoughnessBoost = null;
         uSSRSteps = uScreenSize = null;
         uViewRotX = uViewRotY = uViewRotZ = null;
         uCameraPos = null;
@@ -1086,6 +1090,8 @@ public final class PbrRenderer {
         uDefaultReflection = s.safeGetUniform("DefaultReflection");
         uEnvStrength = s.safeGetUniform("EnvStrength");
         uAnisotropy = s.safeGetUniform("Anisotropy");
+        uMetalnessBoost = s.safeGetUniform("MetalnessBoost");
+        uRoughnessBoost = s.safeGetUniform("RoughnessBoost");
         uWetDetail = s.safeGetUniform("WetDetail");
         uSSRStrength = s.safeGetUniform("SSRStrength");
         uSSRSteps = s.safeGetUniform("SSRSteps");
@@ -1123,6 +1129,8 @@ public final class PbrRenderer {
         setUniform(uDefaultMetal, Config.PBR_DEFAULT_METAL.get().floatValue());
         setUniform(uDefaultReflection, Config.PBR_DEFAULT_REFLECTION.get().floatValue());
         setUniform(uAnisotropy, Config.PBR_ANISOTROPY.get().floatValue());
+        setUniform(uMetalnessBoost, Config.PBR_METALNESS_BOOST.get().floatValue());
+        setUniform(uRoughnessBoost, Config.PBR_ROUGHNESS_BOOST.get().floatValue());
         applyWetUniforms(hand, rainExposed);
         boolean ssr = sceneColorCaptured && sceneColorTexture != 0 && sceneDepthTexture != 0
                 && Config.PBR_SSR.get() && Config.PBR_SSR_STRENGTH.get() > 0.0D;
