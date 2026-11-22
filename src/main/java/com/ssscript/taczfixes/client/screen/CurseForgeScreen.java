@@ -6,7 +6,6 @@ import com.ssscript.taczfixes.client.curseforge.CurseForgeImages;
 import com.ssscript.taczfixes.client.curseforge.CurseForgeInstalledPacks;
 import com.ssscript.taczfixes.client.curseforge.GunPackInstaller;
 import com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker;
-import com.ssscript.taczfixes.client.util.PendingResourceReload;
 import com.ssscript.taczfixes.common.data.GunPackIds;
 import com.ssscript.taczfixes.common.data.GunPackSettings;
 import net.minecraft.client.Minecraft;
@@ -494,8 +493,8 @@ public class CurseForgeScreen extends Screen {
                         String namespace = GunPackInstaller.readGunPackNamespace(result.file());
                         CurseForgeInstalledPacks.recordInstall(file, result.file(), namespace);
                         GunPackUpdateChecker.invalidate();
-                        PendingResourceReload.request();
-                        // 新安装的枪包默认放在“可用”列表, 由玩家自己决定何时启用。
+                        // 新安装的枪包默认放在“可用”列表(未启用), 不改变已加载的资源集合, 因此不触发资源重载;
+                        // 玩家在管理界面把它移到“已选”后才会重载。
                         // 优先用扫描结果里的真实枪包 ID(转换/重命名后文件名可能变化), 否则禁用项对不上会导致它自动出现在已选列表。
                         String packId = resolveInstalledPackId(this.taczDir, result.file(), namespace);
                         if (packId != null && !packId.isBlank()) {

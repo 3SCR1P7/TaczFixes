@@ -9,6 +9,7 @@ import com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler;
 import com.ssscript.taczfixes.client.handler.EditDataKeyHandler;
 import com.ssscript.taczfixes.client.handler.GunDataMessageHandler;
 import com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler;
+import com.ssscript.taczfixes.client.handler.GunEnchantmentTooltipHandler;
 import com.ssscript.taczfixes.client.handler.GunPackKeyHandler;
 import com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler;
 import com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler;
@@ -96,6 +97,7 @@ public final class ClientModEvents {
             NeoForge.EVENT_BUS.register(new CrawlHitboxDebugHandler());
             NeoForge.EVENT_BUS.register(new DynamicCrosshairHandler());
             NeoForge.EVENT_BUS.register(new GunDurabilityTooltipHandler());
+            NeoForge.EVENT_BUS.register(new GunEnchantmentTooltipHandler());
             NeoForge.EVENT_BUS.register(new GunPackKeyHandler());
             NeoForge.EVENT_BUS.register(new GunPackMenuButtonHandler());
             NeoForge.EVENT_BUS.register(com.ssscript.taczfixes.client.hud.CustomHudController.instance());

@@ -31,6 +31,8 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.core.Holder;
 import net.minecraft.core.particles.ColorParticleOption;
+import net.minecraft.core.particles.DustColorTransitionOptions;
+import net.minecraft.core.particles.DustParticleOptions;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.damagesource.DamageSource;
@@ -66,6 +68,7 @@ import net.neoforged.neoforge.event.tick.ServerTickEvent;
 import net.neoforged.neoforge.server.ServerLifecycleHooks;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.items.ItemHandlerHelper;
+import org.joml.Vector3f;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +83,9 @@ public class GunEnchantmentHandler {
     private static final ResourceLocation LOYALTY_ANGLE_UUID = ResourceLocation.fromNamespaceAndPath("taczfixes", "loyalty_angle");
 
     private static final Map<UUID, Long> LAST_LIGHTNING = new ConcurrentHashMap<>();
+
+    /** 潘多拉悖论: 伤害加成倍率上限(生命值越低加成越高, 最多 1024 倍)。 */
+    private static final double PANDORA_MAX_DAMAGE_MULTIPLIER = 1024.0D;
 
     // ---------------------------------------------------------------- 新增五附魔的运行时状态
     /** 猩红终焉: 死亡提示用的伤害类型。 */
@@ -509,7 +515,8 @@ public class GunEnchantmentHandler {
         if (current <= 0.0F || max <= 0.0F) {
             return;
         }
-        event.setBaseAmount(event.getBaseAmount() * (max / current));
+        double multiplier = Math.min((double) max / current, PANDORA_MAX_DAMAGE_MULTIPLIER);
+        event.setBaseAmount(event.getBaseAmount() * (float) multiplier);
     }
 
     @SubscribeEvent
@@ -886,6 +893,7 @@ public class GunEnchantmentHandler {
         if (chance < 1.0 && shooter.getRandom().nextDouble() >= chance) {
             return;
         }
+        playAbyssKillEffect(target);
         instantKill(target, shooter, ABYSS_DAMAGE_ID);
     }
 
@@ -996,7 +1004,7 @@ public class GunEnchantmentHandler {
         }
     }
 
-    /** 余烬: 枪械击杀时在原位置引发带火爆炸。 */
+    /** 余烬: 击杀实体时引发一次不破坏方块的爆炸, 并点燃半径内的实体。 */
     private static void applyEmberExplosion(EntityKillByGunEvent event) {
         if (!GunEnchantmentHelper.isEnabled()) {
             return;
@@ -1011,14 +1019,25 @@ public class GunEnchantmentHandler {
         if (level <= 0) {
             return;
         }
-        Level levelObj = killed.level();
-        if (levelObj.isClientSide) {
+        if (!(killed.level() instanceof ServerLevel serverLevel)) {
             return;
         }
-        float power = (float) (Config.ENCH_EMBER_EXPLOSION_POWER_BASE.get()
-                + level * Config.ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL.get());
-        levelObj.explode(null, killed.getX(), killed.getY(), killed.getZ(),
-                power, true, Level.ExplosionInteraction.BLOCK);
+        double x = killed.getX();
+        double y = killed.getY();
+        double z = killed.getZ();
+        // 爆炸威力 = 1 + 附魔等级, 不破坏方块
+        serverLevel.explode(null, x, y, z, 1.0F + level, false, Level.ExplosionInteraction.NONE);
+        // 点燃半径 0.5 + 1.5×等级 内的实体, 持续 10 + 10×等级 tick
+        double radius = 0.5D + 1.5D * level;
+        int fireTicks = 10 + level * 10;
+        double radiusSqr = radius * radius;
+        AABB area = new AABB(x - radius, y - radius, z - radius, x + radius, y + radius, z + radius);
+        for (LivingEntity entity : serverLevel.getEntitiesOfClass(LivingEntity.class, area)) {
+            if (entity == killed || entity.fireImmune() || entity.distanceToSqr(x, y, z) > radiusSqr) {
+                continue;
+            }
+            entity.setRemainingFireTicks(Math.max(entity.getRemainingFireTicks(), fireTicks));
+        }
     }
 
     /** 蓄势待发: 持枪蓄力时受到的伤害减少 等级×15%。 */
@@ -1066,6 +1085,7 @@ public class GunEnchantmentHandler {
             CARDIAC_TARGETS.remove(targetId);
             Entity entity = findEntity(owner, targetId);
             if (entity instanceof LivingEntity target && target.isAlive()) {
+                playScarletKillEffect(target);
                 instantKill(target, owner, CARDIAC_DAMAGE_ID);
             }
         }
@@ -1124,6 +1144,7 @@ public class GunEnchantmentHandler {
         long now = serverLevel.getGameTime();
         long until = now + ticks;
         Freeze existing = FROZEN.get(target.getUUID());
+        boolean firstFreeze = existing == null;
         if (existing != null) {
             until = Math.max(existing.until(), until);
         }
@@ -1140,6 +1161,146 @@ public class GunEnchantmentHandler {
             syncFreeze(player, ticks);
             showFreezeActionBar(player);
         }
+        playTokonagiFreezeEffect(target, firstFreeze);
+    }
+
+    // ================================================================================
+    // 附魔触发的粒子特效(纯服务端生成, 由原版粒子包同步给附近玩家)
+    // ================================================================================
+
+    /** 凝渊者: 紫黑虚空 */
+    private static final DustParticleOptions ABYSS_VOID_DUST =
+            new DustParticleOptions(new Vector3f(0.46F, 0.12F, 0.92F), 1.5F);
+    private static final DustParticleOptions ABYSS_DEEP_DUST =
+            new DustParticleOptions(new Vector3f(0.16F, 0.03F, 0.36F), 2.0F);
+    /** 常凪: 无间地狱(暗红 + 灵魂火) */
+    private static final DustParticleOptions HELL_BLOOD_DUST =
+            new DustParticleOptions(new Vector3f(0.55F, 0.02F, 0.02F), 1.9F);
+    private static final DustParticleOptions HELL_EMBER_DUST =
+            new DustParticleOptions(new Vector3f(0.95F, 0.28F, 0.04F), 1.4F);
+    /** 猩红终焉: 血红 */
+    private static final DustColorTransitionOptions SCARLET_TO_DARK =
+            new DustColorTransitionOptions(new Vector3f(0.85F, 0.06F, 0.06F),
+                    new Vector3f(0.18F, 0.0F, 0.01F), 1.6F);
+    private static final DustParticleOptions SCARLET_DUST =
+            new DustParticleOptions(new Vector3f(0.92F, 0.05F, 0.10F), 1.3F);
+
+    /** 凝渊者秒杀: 两层虚空涟漪 + 虚空螺旋内爆 + 幽魂升腾。 */
+    public static void playAbyssKillEffect(LivingEntity target) {
+        if (!(target.level() instanceof ServerLevel level)) {
+            return;
+        }
+        double x = target.getX();
+        double y = target.getY();
+        double z = target.getZ();
+        double centerY = y + target.getBbHeight() * 0.55D;
+        // 中心强闪
+        level.sendParticles(ParticleTypes.FLASH, x, centerY, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        // 地面向外扩散的虚空涟漪(内圈亮紫, 外圈深紫)
+        for (int i = 0; i < 28; i++) {
+            double angle = Math.PI * 2.0D * i / 28.0D;
+            level.sendParticles(ABYSS_VOID_DUST, x + Math.cos(angle) * 1.1D, y + 0.12D,
+                    z + Math.sin(angle) * 1.1D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        for (int i = 0; i < 36; i++) {
+            double angle = Math.PI * 2.0D * i / 36.0D;
+            level.sendParticles(ABYSS_DEEP_DUST, x + Math.cos(angle) * 1.95D, y + 0.1D,
+                    z + Math.sin(angle) * 1.95D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        // 虚空螺旋: 越往上越细, 最终全部汇聚到目标身体中心
+        for (int i = 0; i < 44; i++) {
+            double t = i / 43.0D;
+            double angle = t * Math.PI * 6.0D;
+            double radius = 2.8D * (1.0D - t * 0.92D);
+            level.sendParticles(ParticleTypes.REVERSE_PORTAL,
+                    x + Math.cos(angle) * radius, centerY + 2.4D * t, z + Math.sin(angle) * radius,
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        // 向上飘散的幽魂 + 紫色虚空尘埃 + 下坠的传送门粒子
+        level.sendParticles(ParticleTypes.SQUID_INK, x, y + 0.4D, z, 18, 0.8D, 1.0D, 0.8D, 0.02D);
+        level.sendParticles(ABYSS_VOID_DUST, x, centerY, z, 60, 1.4D, 0.9D, 1.4D, 0.0D);
+        level.sendParticles(ParticleTypes.PORTAL, x, centerY, z, 40, 1.3D, 0.8D, 1.3D, 0.35D);
+        level.sendParticles(ParticleTypes.WITCH, x, centerY, z, 14, 0.9D, 0.6D, 0.9D, 0.01D);
+    }
+
+    /** 常凪冻结: 无间地狱 —— 地狱火环 + 灵魂火螺旋囚笼 + 余烬/灰烬升腾。refresh 时只补少量火星。 */
+    public static void playTokonagiFreezeEffect(LivingEntity target, boolean firstFreeze) {
+        if (!(target.level() instanceof ServerLevel level)) {
+            return;
+        }
+        double x = target.getX();
+        double y = target.getY();
+        double z = target.getZ();
+        double height = target.getBbHeight();
+        double centerY = y + height * 0.5D;
+        if (!firstFreeze) {
+            // 冻结刷新/延长: 少量火星, 避免连射时刷屏
+            level.sendParticles(ParticleTypes.FLAME, x, centerY, z, 8, 0.5D, 0.5D, 0.5D, 0.0D);
+            level.sendParticles(HELL_EMBER_DUST, x, centerY, z, 6, 0.6D, 0.5D, 0.6D, 0.0D);
+            return;
+        }
+        // 地面两层地狱火环: 内圈暗红血光, 外圈橙色余烬
+        for (int i = 0; i < 32; i++) {
+            double angle = Math.PI * 2.0D * i / 32.0D;
+            level.sendParticles(HELL_BLOOD_DUST, x + Math.cos(angle) * 1.6D, y + 0.1D,
+                    z + Math.sin(angle) * 1.6D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        for (int i = 0; i < 32; i++) {
+            double angle = Math.PI * 2.0D * i / 32.0D + Math.PI / 32.0D;
+            level.sendParticles(HELL_EMBER_DUST, x + Math.cos(angle) * 2.4D, y + 0.25D,
+                    z + Math.sin(angle) * 2.4D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        // 火焰螺旋囚笼: 自下而上盘旋并逐渐收紧
+        for (int i = 0; i < 44; i++) {
+            double t = i / 43.0D;
+            double angle = t * Math.PI * 6.0D;
+            double radius = 1.7D * (1.0D - t * 0.45D);
+            level.sendParticles(ParticleTypes.FLAME,
+                    x + Math.cos(angle) * radius, y + 0.15D + height * t, z + Math.sin(angle) * radius,
+                    1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        // 升腾的魂灵、火焰与余烬, 以及闷烧的灰烬黑烟
+        level.sendParticles(ParticleTypes.SOUL, x, y + 0.3D, z, 18, 0.7D, 0.9D, 0.7D, 0.015D);
+        level.sendParticles(ParticleTypes.FLAME, x, y + 0.2D, z, 30, 0.9D, 0.6D, 0.9D, 0.02D);
+        level.sendParticles(ParticleTypes.SMALL_FLAME, x, y + 0.3D, z, 36, 1.2D, 0.9D, 1.2D, 0.02D);
+        level.sendParticles(ParticleTypes.ASH, x, centerY, z, 26, 1.1D, 1.0D, 1.1D, 0.01D);
+        level.sendParticles(ParticleTypes.LARGE_SMOKE, x, y + 0.2D, z, 20, 1.2D, 0.6D, 1.2D, 0.01D);
+        level.sendParticles(ParticleTypes.LAVA, x, centerY, z, 18, 0.9D, 0.8D, 0.9D, 0.6D);
+        level.sendParticles(ParticleTypes.CRIMSON_SPORE, x, y + 0.1D, z, 24, 1.0D, 0.7D, 1.0D, 0.02D);
+        level.sendParticles(HELL_BLOOD_DUST, x, centerY, z, 50, 1.4D, 1.0D, 1.4D, 0.0D);
+    }
+
+    /** 猩红终焉秒杀: 血色冲击环 + 心脏收缩螺旋 + 血雾与伤害标记。 */
+    public static void playScarletKillEffect(LivingEntity target) {
+        if (!(target.level() instanceof ServerLevel level)) {
+            return;
+        }
+        double x = target.getX();
+        double y = target.getY();
+        double z = target.getZ();
+        double centerY = y + target.getBbHeight() * 0.5D;
+        level.sendParticles(ParticleTypes.FLASH, x, centerY, z, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        // 血色冲击环
+        for (int i = 0; i < 36; i++) {
+            double angle = Math.PI * 2.0D * i / 36.0D;
+            level.sendParticles(SCARLET_TO_DARK, x + Math.cos(angle) * 1.9D, y + 0.15D,
+                    z + Math.sin(angle) * 1.9D, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        // 逆向收缩的血色螺旋, 像心脏最后一次收束
+        for (int i = 0; i < 44; i++) {
+            double t = i / 43.0D;
+            double angle = -t * Math.PI * 8.0D;
+            double radius = 2.4D * (1.0D - t * 0.9D);
+            level.sendParticles(SCARLET_DUST,
+                    x + Math.cos(angle) * radius,
+                    centerY + 1.2D * (1.0D - t) - 0.4D,
+                    z + Math.sin(angle) * radius, 1, 0.0D, 0.0D, 0.0D, 0.0D);
+        }
+        // 心口处的伤害标记、溅射的血雾与猩红孢子
+        level.sendParticles(ParticleTypes.DAMAGE_INDICATOR, x, centerY, z, 12, 0.5D, 0.4D, 0.5D, 0.0D);
+        level.sendParticles(ParticleTypes.CRIMSON_SPORE, x, y + 0.1D, z, 46, 0.9D, 0.7D, 0.9D, 0.02D);
+        level.sendParticles(ParticleTypes.CRIT, x, centerY, z, 28, 1.1D, 1.0D, 1.1D, 0.4D);
+        level.sendParticles(SCARLET_DUST, x, centerY, z, 60, 1.5D, 1.1D, 1.5D, 0.0D);
     }
 
     /** 常凪冻结: 在原版 action bar 上显示红色提示。 */

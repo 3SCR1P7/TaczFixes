@@ -558,10 +558,6 @@ public class ConfigScreen {
         sub(cat, entry, "tokonagi", e -> {
             dbl_(e, entry, "enchantment.tokonagi_ticks_per_damage", Config.ENCH_TOKONAGI_TICKS_PER_DAMAGE);
         });
-        sub(cat, entry, "ember", e -> {
-            dbl_(e, entry, "enchantment.ember_explosion_power_base", Config.ENCH_EMBER_EXPLOSION_POWER_BASE);
-            dbl_(e, entry, "enchantment.ember_explosion_power_per_level", Config.ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL);
-        });
         sub(cat, entry, "poised", e -> {
             dbl_(e, entry, "enchantment.poised_reduction_percent_per_level", Config.ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL);
         });

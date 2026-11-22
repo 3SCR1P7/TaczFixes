@@ -249,8 +249,6 @@ public class Config {
     public static final ModConfigSpec.IntValue ENCH_PATIENCE_DELAY_MS;
     public static final ModConfigSpec.DoubleValue ENCH_PATIENCE_DAMAGE_PERCENT_PER_TICK_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_TOKONAGI_TICKS_PER_DAMAGE;
-    public static final ModConfigSpec.DoubleValue ENCH_EMBER_EXPLOSION_POWER_BASE;
-    public static final ModConfigSpec.DoubleValue ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_SEAL_FLARE_DAMAGE_PERCENT_PER_HEAT_PER_LEVEL;
     public static final ModConfigSpec.DoubleValue ENCH_SEAL_FLARE_HEAT_THRESHOLD_PERCENT;
@@ -1243,15 +1241,6 @@ public class Config {
         ENCH_TOKONAGI_TICKS_PER_DAMAGE = BUILDER
                 .comment("常凪：冻结 tick 数 = floor(子弹伤害) × 等级 × 此倍率。默认值：1.0")
                 .defineInRange("tokonagi_ticks_per_damage", 1.0, 0.0, 10.0);
-        BUILDER.pop();
-
-        BUILDER.push("ember");
-        ENCH_EMBER_EXPLOSION_POWER_BASE = BUILDER
-                .comment("余烬：击杀爆炸的基础威力。默认值：3.0")
-                .defineInRange("ember_explosion_power_base", 3.0, 0.0, 100.0);
-        ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL = BUILDER
-                .comment("余烬：每级附魔增加的爆炸威力。默认值：1.0")
-                .defineInRange("ember_explosion_power_per_level", 1.0, 0.0, 100.0);
         BUILDER.pop();
 
         BUILDER.push("poised");
