@@ -1773,8 +1773,8 @@ public class Config {
                 .comment("屏幕空间反射强度。默认值：1.0")
                 .defineInRange("ssr_strength", 1.0, 0.0, 4.0);
         PBR_SSR_STEPS = BUILDER
-                .comment("屏幕空间反射的射线步数。调低可降低反光开销，但会略少反射到远处物体。默认值：32")
-                .defineInRange("ssr_steps", 32, 4, 64);
+                .comment("屏幕空间反射的射线步数。调低可降低反光开销，但会略少反射到远处物体。默认值：24")
+                .defineInRange("ssr_steps", 24, 4, 64);
         PBR_WET_DETAIL = BUILDER
                 .comment("是否启用雨水膜细节（波纹扰动、雨痕），需要枪械浸雨。默认值：true")
                 .define("wet_detail", true);
@@ -1786,7 +1786,7 @@ public class Config {
                 .defineInRange("bloom_update_interval", 1, 1, 4);
         PBR_BLOOM_WIDE_STRENGTH = BUILDER
                 .comment("宽泛光层强度。默认值：0.25")
-                .defineInRange("bloom_wide_strength", 0.0, 0.0, 2.0);
+                .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);
         GUN_ENCHANT_GLINT_STRENGTH = BUILDER
                 .comment("附魔光效强度。默认值：1.0")
                 .defineInRange("enchantment_glint_strength", 1.0, 0.0, 2.0);

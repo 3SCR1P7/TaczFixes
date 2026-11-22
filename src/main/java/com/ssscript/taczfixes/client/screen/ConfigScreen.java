@@ -53,7 +53,7 @@ public class ConfigScreen {
         dbl_(cat, entry, "visual_effect.roughness_boost", Config.PBR_ROUGHNESS_BOOST);
         bool_(cat, entry, "visual_effect.ssr", Config.PBR_SSR);
         dbl_(cat, entry, "visual_effect.ssr_strength", Config.PBR_SSR_STRENGTH);
-        intSlider_(cat, entry, "visual_effect.ssr_steps", Config.PBR_SSR_STEPS, 4, 32);
+        intSlider_(cat, entry, "visual_effect.ssr_steps", Config.PBR_SSR_STEPS, 4, 64);
         bool_(cat, entry, "visual_effect.wet_detail", Config.PBR_WET_DETAIL);
         sub(cat, entry, "default_pbr", e -> {
             bool_(e, entry, "visual_effect.fallback_material", Config.PBR_FALLBACK_MATERIAL);
