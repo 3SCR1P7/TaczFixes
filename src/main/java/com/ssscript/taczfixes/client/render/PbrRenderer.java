@@ -142,8 +142,7 @@ public final class PbrRenderer {
         }
         return !isEmissionReplay() && !isAcceleratedPbrPass() && PbrBloom.configured()
                 && com.tacz.guns.compat.ar.ARCompat.shouldAccelerate()
-                && resolve(type) instanceof PbrType
-                && (!isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get());
+                && resolve(type) instanceof PbrType;
     }
 
     /** 是否还需要一次回读验证; 最多尝试几次, 失败就继续走补画, 不影响观感。 */
@@ -240,8 +239,7 @@ public final class PbrRenderer {
         enabledFrameValid = false;
         acceleratedEmissionWrites = 0;
         // 这些抑制计数器是 push/pop 配对的临时状态: 万一某次渲染异常导致 pop 丢失,
-        // 不清零会让曳光泛光/迷彩/材质兜底在本局游戏里永久失效。
-        tracerBloomSuppression = 0;
+        // 不清零会让迷彩/材质兜底在本局游戏里永久失效。
         materialFallbackSuppression = 0;
         camoSuppression = 0;
         emissionBlendOverride = 0;
@@ -434,7 +432,6 @@ public final class PbrRenderer {
         return frameEmission;
     }
 
-    private static int tracerBloomSuppression;
     private static int materialFallbackSuppression;
 
     public static void pushMaterialFallbackSuppression() {
@@ -445,20 +442,6 @@ public final class PbrRenderer {
         if (materialFallbackSuppression > 0) {
             materialFallbackSuppression--;
         }
-    }
-
-    public static void pushTracerBloomSuppression() {
-        tracerBloomSuppression++;
-    }
-
-    public static void popTracerBloomSuppression() {
-        if (tracerBloomSuppression > 0) {
-            tracerBloomSuppression--;
-        }
-    }
-
-    public static boolean isTracerBloomSuppressed() {
-        return tracerBloomSuppression > 0;
     }
 
     public static void updateCelestialLight(float partialTick) {
@@ -1594,8 +1577,7 @@ public final class PbrRenderer {
                 if (material.emissive() || camo.emissive() > 0f) {
                     markEmissionSource();
                 }
-                boolean tracerAllowed = !isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get();
-                if (tracerAllowed && PbrBloom.canCapture()) {
+                if (PbrBloom.canCapture()) {
                     int fbo = lastDrawFramebufferKnown ? lastDrawFramebuffer
                             : GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
                     boolean mainTarget = fbo == Minecraft.getInstance().getMainRenderTarget().frameBufferId;
@@ -1675,10 +1657,9 @@ public final class PbrRenderer {
                 applyCamoUniforms(camo);
 
                 RenderSystem.setShader(() -> shader);
-                boolean tracerAllowed = !isTracerBloomSuppressed() || Config.PBR_BLOOM_TRACER.get();
                 if (!emissionReplay) {
                     // MRT: 主绘制同一遍着色同时把发光写进主目标的第二颜色附件, 不再单独重画一遍几何。
-                    boolean emissionWrite = geometryEmitted && tracerAllowed
+                    boolean emissionWrite = geometryEmitted
                             && PbrBloom.beginEmissionWrite(mainTarget);
                     try {
                         mesh.drawWithShader(RenderSystem.getModelViewMatrix(), RenderSystem.getProjectionMatrix(), shader);
@@ -1687,7 +1668,7 @@ public final class PbrRenderer {
                             PbrBloom.endEmissionWrite();
                         }
                     }
-                    if (!emissionWrite && geometryEmitted && tracerAllowed && mainTarget
+                    if (!emissionWrite && geometryEmitted && mainTarget
                             && PbrBloom.mrtUnavailable() && PbrBloom.beginFallbackCapture()) {
                         try {
                             drawEmissionFallback(shader);
@@ -1695,7 +1676,7 @@ public final class PbrRenderer {
                             com.mojang.blaze3d.platform.GlStateManager._glBindFramebuffer(GL30.GL_FRAMEBUFFER, previousFbo);
                         }
                     }
-                } else if (geometryEmitted && tracerAllowed && mainTarget && PbrBloom.beginFallbackCapture()) {
+                } else if (geometryEmitted && mainTarget && PbrBloom.beginFallbackCapture()) {
                     // 加速渲染时主绘制被跳过, 这里补画一次发光(只写发光目标, 不碰主画面)。
                     try {
                         drawEmissionFallback(shader);

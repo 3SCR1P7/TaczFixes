@@ -432,7 +432,6 @@
     "config.taczfixes.entry.visual_effect.bloom_strength": "泛光强度",
     "config.taczfixes.entry.visual_effect.bloom_radius": "泛光半径",
     "config.taczfixes.entry.visual_effect.bloom_resolution": "泛光分辨率倍率",
-    "config.taczfixes.entry.visual_effect.bloom_tracer": "曳光弹泛光",
     "config.taczfixes.entry.visual_effect.bloom_laser": "镭射泛光",
     "config.taczfixes.entry.visual_effect.bloom_wide": "宽泛光层",
     "config.taczfixes.entry.visual_effect.bloom_update_interval": "泛光更新间隔（帧）",

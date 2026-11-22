@@ -66,7 +66,6 @@ public class ConfigScreen {
             dbl_(e, entry, "visual_effect.bloom_strength", Config.PBR_BLOOM_STRENGTH);
             dbl_(e, entry, "visual_effect.bloom_radius", Config.PBR_BLOOM_RADIUS);
             dbl_(e, entry, "visual_effect.bloom_resolution", Config.PBR_BLOOM_RESOLUTION);
-            bool_(e, entry, "visual_effect.bloom_tracer", Config.PBR_BLOOM_TRACER);
             bool_(e, entry, "visual_effect.bloom_laser", Config.PBR_BLOOM_LASER);
             bool_(e, entry, "visual_effect.bloom_wide", Config.PBR_BLOOM_WIDE);
             dbl_(e, entry, "visual_effect.bloom_wide_strength", Config.PBR_BLOOM_WIDE_STRENGTH);

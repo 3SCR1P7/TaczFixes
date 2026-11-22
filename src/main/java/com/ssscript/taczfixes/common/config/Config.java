@@ -17,7 +17,6 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_STRENGTH;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RADIUS;
     public static final ForgeConfigSpec.DoubleValue PBR_BLOOM_RESOLUTION;
-    public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_TRACER;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM_LASER;
     public static final ForgeConfigSpec.BooleanValue PBR_FALLBACK_MATERIAL;
     public static final ForgeConfigSpec.DoubleValue PBR_DEFAULT_ROUGHNESS;
@@ -1743,9 +1742,6 @@ public class Config {
         PBR_BLOOM_LASER = BUILDER
                 .comment("是否开启镭射泛光。默认值：true")
                 .define("bloom_laser", true);
-        PBR_BLOOM_TRACER = BUILDER
-                .comment("是否让自发光泛光效果作用于曳光弹。默认值：false")
-                .define("bloom_tracer", false);
         PBR_FALLBACK_MATERIAL = BUILDER
                 .comment("没有 _s 贴图的枪械是否按底色推导材质。默认值：true")
                 .define("fallback_material", true);
