@@ -429,7 +429,6 @@
     "config.taczfixes.entry.visual_effect.bloom_strength": "Bloom Strength",
     "config.taczfixes.entry.visual_effect.bloom_radius": "Bloom Radius",
     "config.taczfixes.entry.visual_effect.bloom_resolution": "Bloom Resolution Scale",
-    "config.taczfixes.entry.visual_effect.bloom_tracer": "Bloom on Tracers",
     "config.taczfixes.entry.visual_effect.bloom_laser": "Bloom on Lasers",
     "config.taczfixes.entry.visual_effect.bloom_wide": "Wide Bloom Layer",
     "config.taczfixes.entry.visual_effect.bloom_update_interval": "Bloom Update Interval (frames)",
