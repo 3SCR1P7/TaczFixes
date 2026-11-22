@@ -19,12 +19,12 @@ public abstract class MixinTmlAnimationManager {
     @Inject(method = {"playMaidAnimation(Lcom/github/tartaricacid/touhoulittlemaid/api/entity/IMaid;Ljava/util/HashMap;FFFFF)V"}, at = {@At("TAIL")}, require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private static void taczDualWield$mirrorBedrockFinalPose(IMaid maid, HashMap<String, ModelRendererWrapper> models, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callbackInfo) {
         Mob entity = maid == null ? null : maid.asEntity();
-        TouhouMaidDualWieldAnimation.mirrorBedrockPose(entity, models);
+        TouhouMaidDualWieldAnimation.mirrorBedrockPose(entity, models, netHeadYaw, headPitch);
     }
 
     @Inject(method = {"playGeckoMaidAnimation(Lcom/github/tartaricacid/touhoulittlemaid/api/entity/IMaid;Lcom/github/tartaricacid/touhoulittlemaid/geckolib3/geo/animated/AnimatedGeoModel;FFFFF)V"}, at = {@At("TAIL")}, require = ServerMessageOffhandActionResult.ACTION_SHOOT, remap = false)
     private static void taczDualWield$mirrorGeckoFinalPose(IMaid maid, AnimatedGeoModel model, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch, CallbackInfo callbackInfo) {
         Mob entity = maid == null ? null : maid.asEntity();
-        TouhouMaidDualWieldAnimation.mirrorGeckoPose(entity, model);
+        TouhouMaidDualWieldAnimation.mirrorGeckoPose(entity, model, netHeadYaw, headPitch);
     }
 }

@@ -518,7 +518,7 @@ void main() {
     float envFace = mix(0.55, 1.0, smoothstep(0.0, 0.4, litFacing));
     float envTorchBright = clamp(torchSum, 0.0, 1.0);
     float envLocalBright = clamp(exposure * 0.80 + envTorchBright * 0.40, 0.0, 1.0);
-    float envGain = 0.50 + 2.0 * smoothstep(0.02, 0.90, envLocalBright);
+    float envGain = 1.0 + smoothstep(0.02, 0.90, envLocalBright);
     vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * envGain;  // 屏幕空间反射(深度步进 + 屏幕探针兜底)。
     // 非金属像素的 SSR 权重恒为 0, 直接跳过整条射线步进(原实现每像素最多 24 次深度采样)。
     vec4 ssr = vec4(0.0);

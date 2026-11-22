@@ -1743,16 +1743,16 @@ public class Config {
                 .comment("是否开启镭射泛光。默认值：true")
                 .define("bloom_laser", true);
         PBR_FALLBACK_MATERIAL = BUILDER
-                .comment("没有 _s 贴图的枪械是否按底色推导材质。默认值：true")
+                .comment("没有PBR贴图的枪械是否按底色推导材质。默认值：true")
                 .define("fallback_material", true);
         PBR_DEFAULT_ROUGHNESS = BUILDER
-                .comment("无 _s 贴图时的默认粗糙度，越大越哑光。默认值：0.45")
+                .comment("无PBR贴图时的默认粗糙度，越大越哑光。默认值：0.45")
                 .defineInRange("default_roughness", 0.45, 0.03, 1.0);
         PBR_DEFAULT_METAL = BUILDER
-                .comment("无 _s 贴图时按底色亮度推导的金属度上限，越大越像金属。默认值：0.55")
+                .comment("无PBR贴图时按底色亮度推导的金属度上限，越大越像金属。默认值：0.55")
                 .defineInRange("default_metal", 0.55, 0.0, 1.0);
         PBR_DEFAULT_REFLECTION = BUILDER
-                .comment("无 _s 贴图时的默认反光强度。默认值：0.35")
+                .comment("无PBR贴图时的默认反光强度。默认值：0.35")
                 .defineInRange("default_reflection", 0.35, 0.0, 4.0);
         PBR_ENV_STRENGTH = BUILDER
                 .comment("天空环境反射强度，影响金属/光滑面反射天空与日落的明显程度。默认值：1.0")
@@ -1761,20 +1761,20 @@ public class Config {
                 .comment("各向异性反光强度，表现拉丝金属与枪管沿轴向的细长高光。默认值：0.5")
                 .defineInRange("anisotropy", 0.5, 0.0, 1.0);
         PBR_METALNESS_BOOST = BUILDER
-                .comment("金属度增幅：最终金属度 = 原金属度 × (1 + 增幅)。1.0 即 +100%，-1.0 即 -100%。默认值：0.0")
+                .comment("金属度增幅。默认值：0.0")
                 .defineInRange("metalness_boost", 0.0, -1.0, 1.0);
         PBR_ROUGHNESS_BOOST = BUILDER
-                .comment("粗糙度增幅：最终粗糙度 = 原粗糙度 × (1 + 增幅)。1.0 即 +100%，-1.0 即 -100%。默认值：0.0")
+                .comment("粗糙度增幅。默认值：0.0")
                 .defineInRange("roughness_boost", 0.0, -1.0, 1.0);
         PBR_SSR = BUILDER
                 .comment("是否启用屏幕空间反射，让枪械金属反射出场景中的方块与实体。默认值：true")
                 .define("ssr", true);
         PBR_SSR_STRENGTH = BUILDER
-                .comment("屏幕空间反射强度。默认值：0.8")
-                .defineInRange("ssr_strength", 0.8, 0.0, 2.0);
+                .comment("屏幕空间反射强度。默认值：1.0")
+                .defineInRange("ssr_strength", 1.0, 0.0, 4.0);
         PBR_SSR_STEPS = BUILDER
-                .comment("屏幕空间反射的射线步数。调低可明显降低反光开销，但会略少反射到远处物体。默认值：16")
-                .defineInRange("ssr_steps", 16, 4, 32);
+                .comment("屏幕空间反射的射线步数。调低可降低反光开销，但会略少反射到远处物体。默认值：32")
+                .defineInRange("ssr_steps", 32, 4, 64);
         PBR_WET_DETAIL = BUILDER
                 .comment("是否启用雨水膜细节（波纹扰动、雨痕），需要枪械浸雨。默认值：true")
                 .define("wet_detail", true);
@@ -1786,7 +1786,7 @@ public class Config {
                 .defineInRange("bloom_update_interval", 1, 1, 4);
         PBR_BLOOM_WIDE_STRENGTH = BUILDER
                 .comment("宽泛光层强度。默认值：0.25")
-                .defineInRange("bloom_wide_strength", 0.25, 0.0, 2.0);
+                .defineInRange("bloom_wide_strength", 0.0, 0.0, 2.0);
         GUN_ENCHANT_GLINT_STRENGTH = BUILDER
                 .comment("附魔光效强度。默认值：1.0")
                 .defineInRange("enchantment_glint_strength", 1.0, 0.0, 2.0);
