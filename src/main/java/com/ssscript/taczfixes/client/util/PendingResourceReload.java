@@ -14,21 +14,49 @@ public final class PendingResourceReload {
         pending = true;
     }
 
+    public static boolean isPending() {
+        return pending;
+    }
+
+    /**
+     * 主菜单下没有“世界内界面关闭”这个时机: 立即重载并清掉待处理标记。
+     * 标记必须在这里清掉, 否则进入世界(界面变 null)时会再重载一次。
+     */
+    public static void reloadNow() {
+        pending = false;
+        Minecraft mc = Minecraft.getInstance();
+        if (!reloadClient(mc)) {
+            return;
+        }
+        reloadIntegratedServer(mc);
+    }
+
     /** 由客户端 tick 调用; 界面已关闭时执行重载。 */
     public static void tick() {
         if (!pending) return;
         Minecraft mc = Minecraft.getInstance();
         if (mc.screen != null) return;
         pending = false;
+        if (!reloadClient(mc)) {
+            return;
+        }
+        reloadIntegratedServer(mc);
+    }
+
+    private static boolean reloadClient(Minecraft mc) {
         // 资源包/模组 jar 损坏时加载器会直接抛出异常, 进而让客户端崩溃。
         // 这里兜住: 重载失败只记录日志, 不把整个游戏带崩。
         try {
             mc.reloadResourcePacks();
+            return true;
         } catch (Throwable failed) {
             com.ssscript.taczfixes.TaczFixesMod.LOGGER.warn(
                     "Resource reload failed after gun pack change: {}", failed.toString());
-            return;
+            return false;
         }
+    }
+
+    private static void reloadIntegratedServer(Minecraft mc) {
         // 枪包同时提供 data 内容: 服务端数据包需要重建仓库(重跑 RepositorySource)再重载,
         // 否则禁用/新增的枪包的 data 与创造标签页不会更新。
         try {

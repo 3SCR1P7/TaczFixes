@@ -167,6 +167,7 @@ public class GunPackSelectionScreen extends PackSelectionScreen implements GunPa
             this.refreshUpdateButton();
             return;
         }
+        boolean wasEnabled = this.isPackEnabled(update.installed());
         try {
             this.applyUpdate(update, result.file());
         } catch (Throwable ignored) {
@@ -176,7 +177,10 @@ public class GunPackSelectionScreen extends PackSelectionScreen implements GunPa
         }
         this.lastUpdateLabel = null;
         this.refreshUpdateButton();
-        PendingResourceReload.request();
+        // 只有已启用的枪包内容变化才需要重载; 未启用的包更新后不影响已加载的资源集合。
+        if (wasEnabled) {
+            PendingResourceReload.request();
+        }
         Minecraft minecraft = Minecraft.getInstance();
         if (minecraft.screen == this) {
             try {
@@ -204,6 +208,22 @@ public class GunPackSelectionScreen extends PackSelectionScreen implements GunPa
         }
         CurseForgeInstalledPacks.updateFile(installed.modId(), update.latest(), finalFile, namespace);
         GunPackUpdateChecker.forget(installed.modId());
+    }
+
+    /** 该枪包更新前是否已启用: 只有已启用的枪包内容变化才需要重载资源。 */
+    private boolean isPackEnabled(CurseForgeInstalledPacks.Installed installed) {
+        if (installed == null) return true;
+        for (Map.Entry<String, CurseForgeInstalledPacks.Installed> entry : this.installedByPackId.entrySet()) {
+            if (installed.equals(entry.getValue())) {
+                return !GunPackSettings.isDisabled(entry.getKey());
+            }
+        }
+        String namespace = installed.namespace();
+        String fileName = installed.fileName();
+        if (namespace == null || namespace.isBlank() || fileName == null || fileName.isBlank()) {
+            return true;
+        }
+        return !GunPackSettings.isDisabled(GunPackIds.of(namespace, this.taczDir.resolve(fileName)));
     }
 
     private GunPackUpdateChecker.Update selectedUpdate() {

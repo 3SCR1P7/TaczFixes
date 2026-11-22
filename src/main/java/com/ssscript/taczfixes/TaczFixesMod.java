@@ -260,6 +260,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.CrawlHitboxDebugHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.DynamicCrosshairHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunDurabilityTooltipHandler());
+            MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunEnchantmentTooltipHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackKeyHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler());
             MinecraftForge.EVENT_BUS.register(com.ssscript.taczfixes.client.hud.CustomHudController.instance());

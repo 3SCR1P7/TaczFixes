@@ -630,8 +630,6 @@ public class ConfigScreen {
         });
         sub(cat, entry, "ember", e -> {
             int_(e, entry, "enchantment.max_level", Config.ENCH_EMBER_MAX_LEVEL);
-            dbl_(e, entry, "enchantment.ember_explosion_power_base", Config.ENCH_EMBER_EXPLOSION_POWER_BASE);
-            dbl_(e, entry, "enchantment.ember_explosion_power_per_level", Config.ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL);
             int_(e, entry, "enchantment.anvil_mult", Config.ENCH_EMBER_ANVIL_MULT);
         });
         sub(cat, entry, "poised", e -> {

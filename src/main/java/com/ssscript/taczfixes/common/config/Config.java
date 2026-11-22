@@ -307,8 +307,6 @@ public class Config {
     public static final ForgeConfigSpec.DoubleValue ENCH_TOKONAGI_TICKS_PER_DAMAGE;
     public static final ForgeConfigSpec.IntValue ENCH_EMBER_MAX_LEVEL;
     public static final ForgeConfigSpec.IntValue ENCH_EMBER_ANVIL_MULT;
-    public static final ForgeConfigSpec.DoubleValue ENCH_EMBER_EXPLOSION_POWER_BASE;
-    public static final ForgeConfigSpec.DoubleValue ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL;
     public static final ForgeConfigSpec.IntValue ENCH_POISED_MAX_LEVEL;
     public static final ForgeConfigSpec.IntValue ENCH_POISED_ANVIL_MULT;
     public static final ForgeConfigSpec.DoubleValue ENCH_POISED_REDUCTION_PERCENT_PER_LEVEL;
@@ -1497,12 +1495,6 @@ public class Config {
         ENCH_EMBER_ANVIL_MULT = BUILDER
                 .comment("余烬：经验等级乘数。默认值：2")
                 .defineInRange("ember_cost_multiplier", 2, 1, 100);
-        ENCH_EMBER_EXPLOSION_POWER_BASE = BUILDER
-                .comment("余烬：击杀爆炸的基础威力。默认值：3.0")
-                .defineInRange("ember_explosion_power_base", 3.0, 0.0, 100.0);
-        ENCH_EMBER_EXPLOSION_POWER_PER_LEVEL = BUILDER
-                .comment("余烬：每级附魔增加的爆炸威力。默认值：1.0")
-                .defineInRange("ember_explosion_power_per_level", 1.0, 0.0, 100.0);
         ENCH_POISED_MAX_LEVEL = BUILDER
                 .comment("蓄势待发：等级上限。默认值：4")
                 .defineInRange("poised_max_level", 4, 1, 10);
