@@ -29,6 +29,7 @@
         "compat.tml.MixinTmlAnimationManager",
         "compat.tml.MixinTmlBackGun",
         "compat.tml.MixinTmlBedrockHeldGun",
+        "compat.tml.MixinTmlGunGeckoAnimation",
         "compat.tml.MixinTmlHeldGun",
         "compat.ysm.MixinYsmBackGun",
         "compat.ysm.MixinYsmItemInHandLayer",

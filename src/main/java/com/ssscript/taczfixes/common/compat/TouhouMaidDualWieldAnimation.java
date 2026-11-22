@@ -13,6 +13,11 @@ import java.util.Map;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.Mob;
 
+/**
+ * 女仆双持兼容(仿照 YSM 双持的做法):
+ * 配合 {@code MixinTmlGunGeckoAnimation} 把持枪动画换成单手 rpg 变体后,
+ * 再把最终姿势里的右臂整条链(臂/前臂/手/手部挂点)镜像到左臂, 双持时两条手臂就都朝前持枪。
+ */
 public final class TouhouMaidDualWieldAnimation implements ICustomAnimation<Mob> {
     private static final String LEFT_ARM = "armLeft";
     private static final String RIGHT_ARM = "armRight";
@@ -27,12 +32,22 @@ public final class TouhouMaidDualWieldAnimation implements ICustomAnimation<Mob>
     private static final double FALLBACK_GUN_DROP_Y = -0.18d;
     private static final double FALLBACK_GUN_DROP_Z = 0.05d;
 
-    @Override
-    public void setRotationAngles(Mob maid, HashMap<String, ? extends IModelRenderer> models, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        mirrorBedrockPose(maid, models);
+    public void setRotationAngles(Mob maid, HashMap<String, ? extends IModelRenderer> models, float limbSwing,
+                                  float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        mirrorBedrockPose(maid, models, netHeadYaw, headPitch);
+    }
+
+    public void setGeckoRotationAngles(Mob maid, AnimatedGeoModel model, float limbSwing, float limbSwingAmount,
+                                       float ageInTicks, float netHeadYaw, float headPitch) {
+        mirrorGeckoPose(maid, model, netHeadYaw, headPitch);
     }
 
     public static void mirrorBedrockPose(Mob maid, Map<String, ? extends IModelRenderer> models) {
+        mirrorBedrockPose(maid, models, 0.0f, 0.0f);
+    }
+
+    public static void mirrorBedrockPose(Mob maid, Map<String, ? extends IModelRenderer> models,
+                                         float netHeadYaw, float headPitch) {
         if (!DualWieldEligibility.isDualWielding(maid)) {
             return;
         }
@@ -54,23 +69,41 @@ public final class TouhouMaidDualWieldAnimation implements ICustomAnimation<Mob>
         left.setRotateAngleZ(-right.getRotateAngleZ());
     }
 
-    @Override
-    public void setGeckoRotationAngles(Mob maid, AnimatedGeoModel model, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
-        mirrorGeckoPose(maid, model);
+    public static void mirrorGeckoPose(Mob maid, AnimatedGeoModel model) {
+        mirrorGeckoPose(maid, model, 0.0f, 0.0f);
     }
 
-    public static void mirrorGeckoPose(Mob maid, AnimatedGeoModel model) {
+    public static void mirrorGeckoPose(Mob maid, AnimatedGeoModel model, float netHeadYaw, float headPitch) {
         if (!DualWieldEligibility.isDualWielding(maid)) {
             return;
         }
-        mirrorGeckoBone(model, GECKO_RIGHT_ARM, GECKO_LEFT_ARM);
-        mirrorGeckoBone(model, GECKO_RIGHT_FOREARM, GECKO_LEFT_FOREARM);
-        mirrorGeckoBone(model, GECKO_RIGHT_HAND, GECKO_LEFT_HAND);
-        mirrorGeckoBone(model, GECKO_RIGHT_HAND_LOCATOR, GECKO_LEFT_HAND_LOCATOR);
+        mirrorGeckoBone(geckoBone(model, GECKO_RIGHT_ARM), geckoBone(model, GECKO_LEFT_ARM));
+        mirrorGeckoBone(geckoBone(model, GECKO_RIGHT_FOREARM), geckoBone(model, GECKO_LEFT_FOREARM));
+        mirrorGeckoBone(geckoBone(model, GECKO_RIGHT_HAND), geckoBone(model, GECKO_LEFT_HAND));
+        mirrorGeckoBone(geckoBone(model, GECKO_RIGHT_HAND_LOCATOR), geckoBone(model, GECKO_LEFT_HAND_LOCATOR));
         float focusProgress = DualFocusAimState.getEntityProgress(maid);
-        applyGeckoFocusLowReady(model.bones().get(GECKO_LEFT_ARM), focusProgress);
-        applyGeckoFocusLowReady(model.bones().get(GECKO_LEFT_FOREARM), focusProgress);
-        applyGeckoFocusLowReady(model.bones().get(GECKO_LEFT_HAND), focusProgress);
+        applyGeckoFocusLowReady(geckoBone(model, GECKO_LEFT_ARM), focusProgress);
+        applyGeckoFocusLowReady(geckoBone(model, GECKO_LEFT_FOREARM), focusProgress);
+        applyGeckoFocusLowReady(geckoBone(model, GECKO_LEFT_HAND), focusProgress);
+    }
+
+    private static AnimatedGeoBone geckoBone(AnimatedGeoModel model, String name) {
+        return (AnimatedGeoBone) model.bones().get(name);
+    }
+
+    private static void mirrorGeckoBone(AnimatedGeoBone right, AnimatedGeoBone left) {
+        if (right == null || left == null) {
+            return;
+        }
+        left.setRotationX(right.getRotationX());
+        left.setRotationY(-right.getRotationY());
+        left.setRotationZ(-right.getRotationZ());
+        left.setPositionX(-right.getPositionX());
+        left.setPositionY(right.getPositionY());
+        left.setPositionZ(right.getPositionZ());
+        left.setScaleX(right.getScaleX());
+        left.setScaleY(right.getScaleY());
+        left.setScaleZ(right.getScaleZ());
     }
 
     public static void applyFallbackOffhandLowReady(Mob maid, PoseStack poseStack) {
@@ -99,22 +132,5 @@ public final class TouhouMaidDualWieldAnimation implements ICustomAnimation<Mob>
         bone.setRotationX(Mth.lerp(progress, bone.getRotationX(), initial.rotationValueX));
         bone.setRotationY(Mth.lerp(progress, bone.getRotationY(), initial.rotationValueY));
         bone.setRotationZ(Mth.lerp(progress, bone.getRotationZ(), initial.rotationValueZ));
-    }
-
-    private static void mirrorGeckoBone(AnimatedGeoModel model, String rightName, String leftName) {
-        AnimatedGeoBone right = model.bones().get(rightName);
-        AnimatedGeoBone left = model.bones().get(leftName);
-        if (right == null || left == null) {
-            return;
-        }
-        left.setRotationX(right.getRotationX());
-        left.setRotationY(-right.getRotationY());
-        left.setRotationZ(-right.getRotationZ());
-        left.setPositionX(-right.getPositionX());
-        left.setPositionY(right.getPositionY());
-        left.setPositionZ(right.getPositionZ());
-        left.setScaleX(right.getScaleX());
-        left.setScaleY(right.getScaleY());
-        left.setScaleZ(right.getScaleZ());
     }
 }
