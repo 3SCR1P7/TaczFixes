@@ -3,22 +3,21 @@ package com.ssscript.taczfixes.client.mixin.shader;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.client.render.ShaderInjection;
-import com.mojang.blaze3d.platform.GlStateManager;
+import com.ssscript.taczfixes.client.render.ShaderSourceValidator;
 import com.mojang.blaze3d.preprocessor.GlslPreprocessor;
 import com.mojang.blaze3d.shaders.Program;
-import org.apache.commons.lang3.StringUtils;
-import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL20;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 
 import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.util.List;
 import java.util.Set;
 
 /**
  * 把彩色光代码注入原版着色器源码(移植自 Shimmer, MIT)。
+ * 注入是"尽力而为": 先试编译, 编译不过或源码结构不认识就原样放回, 绝不让游戏崩溃。
  */
 @SuppressWarnings({"target", "mapping", "public-target", "unresolvable-target", "visibility", "constraints", "overwrite", "default-package", "raw-types"})
 @Mixin(Program.class)
@@ -29,44 +28,58 @@ public abstract class MixinColoredLightProgram {
     private static String taczfixes$injectColoredLight(String shader, Program.Type type, String shaderName,
                                                        InputStream pShaderDataSame, String pShaderSourceName,
                                                        GlslPreprocessor processor) {
-        boolean isVsh = type == Program.Type.VERTEX;
+        if (type != Program.Type.VERTEX || !ShaderInjection.hasInjectVSH(shaderName)) {
+            return shader;
+        }
+
         String injectedShader;
-        if (isVsh && ShaderInjection.hasInjectVSH(shaderName)) {
+        try {
             injectedShader = ShaderInjection.injectVSH(shaderName, shader);
-        } else {
+        } catch (Throwable t) {
+            TaczFixesMod.LOGGER.debug("Could not inject colored light into shader {}", shaderName, t);
+            return shader;
+        }
+        if (injectedShader == null || injectedShader.equals(shader)) {
             return shader;
         }
 
-        int testShaderId = GlStateManager.glCreateShader(type == Program.Type.VERTEX ? GL20.GL_VERTEX_SHADER : GL20.GL_FRAGMENT_SHADER);
-        GlStateManager.glShaderSource(testShaderId, processor.process(injectedShader));
-        GlStateManager.glCompileShader(testShaderId);
-        if (GlStateManager.glGetShaderi(testShaderId, GL20.GL_COMPILE_STATUS) == GL11.GL_FALSE) {
-            String errorInfo = StringUtils.trim(GlStateManager.glGetShaderInfoLog(testShaderId, Short.MAX_VALUE));
-            GlStateManager.glDeleteShader(testShaderId);
-            TaczFixesMod.LOGGER.error("Couldn't compile injected {} program({},{}):{}", type.name(), pShaderSourceName, shaderName, errorInfo);
-            return shader;
-        }
-
+        // GlslPreprocessor 的"已导入路径"记录是共享状态: 试编译前后都要清空,
+        // 否则紧接着的真实编译会跳过 #moj_import(着色器缺函数)。
         taczfixes$clearImportedPathRecord(processor);
-
-        GlStateManager.glDeleteShader(testShaderId);
+        boolean compiles;
+        try {
+            List<String> processed = processor.process(injectedShader);
+            compiles = ShaderSourceValidator.compilesVertex(processed);
+        } catch (Throwable t) {
+            compiles = false;
+        } finally {
+            taczfixes$clearImportedPathRecord(processor);
+        }
+        if (!compiles) {
+            TaczFixesMod.LOGGER.debug("Discarding colored light injection for shader {} because the driver rejected it", shaderName);
+            return shader;
+        }
+        TaczFixesMod.LOGGER.info("Injecting colored light into shader vsh {}.", shaderName);
         return injectedShader;
     }
 
-    /** 清空 GlslPreprocessor 已导入路径记录, 否则真实编译时 #moj_import 会重复导入被跳过(着色器缺函数)。
-     *  字段名是混淆的, 按"唯一 Set 字段"定位。 */
+    /** 清空 GlslPreprocessor 已导入路径记录。字段名是混淆的, 遍历类继承链清空所有 Set 字段。 */
     @Unique
     private static void taczfixes$clearImportedPathRecord(Object processor) {
+        if (processor == null) {
+            return;
+        }
         try {
-            for (Field field : processor.getClass().getDeclaredFields()) {
-                if (!Set.class.isAssignableFrom(field.getType())) {
-                    continue;
-                }
-                field.setAccessible(true);
-                Object value = field.get(processor);
-                if (value instanceof Set<?> set) {
-                    set.clear();
-                    return;
+            for (Class<?> type = processor.getClass(); type != null && type != Object.class; type = type.getSuperclass()) {
+                for (Field field : type.getDeclaredFields()) {
+                    if (!Set.class.isAssignableFrom(field.getType())) {
+                        continue;
+                    }
+                    field.setAccessible(true);
+                    Object value = field.get(processor);
+                    if (value instanceof Set<?> set) {
+                        set.clear();
+                    }
                 }
             }
         } catch (Throwable ignored) {

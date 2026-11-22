@@ -57,7 +57,11 @@ public class ShaderUBO {
 
     public void bindToShader(int program, String bufBlockName) {
         if (blockBinding > -1) {
-            GL31.glUniformBlockBinding(program, GL31.glGetUniformBlockIndex(program, bufBlockName), blockBinding);
+            int index = GL31.glGetUniformBlockIndex(program, bufBlockName);
+            // 程序里没有这个 uniform block 时不要动 GL 状态(例如着色器被别的 mod 换了、我们没注入彩色光)。
+            if (index != GL31.GL_INVALID_INDEX) {
+                GL31.glUniformBlockBinding(program, index, blockBinding);
+            }
         }
     }
 }

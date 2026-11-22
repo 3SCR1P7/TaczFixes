@@ -12,6 +12,8 @@ import java.nio.FloatBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * 彩色光管理 + 着色器注入。移植自 Shimmer (MIT, https://github.com/Low-Drag-MC/Shimmer),
@@ -31,28 +33,118 @@ public enum LightManager {
         return "\n" + getLightShader() + "\n\n";
     }
 
+    private static final Pattern MAIN_DEFINITION = Pattern.compile("\\bvoid\\s+main\\s*\\(\\s*(?:void\\s*)?\\)");
+    private static final Pattern WRAPPED_MAIN_CALL = Pattern.compile("\\b([A-Za-z_]\\w*_main)\\s*\\(\\s*(?:void\\s*)?\\)\\s*;");
+
     private static String ChunkInjection(String s) {
-        s = s.replace("void main()", getShimmerSource() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'),
-                "vertexColor = color_light_uv(pos, vertexColor,UV2);\n"
-        ).toString();
+        return inject(s, "vertexColor = color_light_uv(pos, vertexColor,UV2);\n");
     }
 
     private static String PositionInjection(String s) {
-        s = s.replace("void main()", getShimmerSource() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'),
-                "vertexColor = color_light_uv(Position, vertexColor,UV2);\n"
-        ).toString();
+        return inject(s, "vertexColor = color_light_uv(Position, vertexColor,UV2);\n");
     }
 
     private static String EntityInjectionLightMapColor(String s) {
-        s = s.replace("void main()", getShimmerSource() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'), "lightMapColor = color_light(IViewRotMat * Position, lightMapColor);\n").toString();
+        return inject(s, "lightMapColor = color_light(IViewRotMat * Position, lightMapColor);\n");
     }
 
     private static String EntityInjectionVertexColor(String s) {
-        s = s.replace("void main()", getShimmerSource() + "void main()");
-        return new StringBuffer(s).insert(s.lastIndexOf('}'), "vertexColor = color_light(IViewRotMat * Position, vertexColor);\n").toString();
+        return inject(s, "vertexColor = color_light(IViewRotMat * Position, vertexColor);\n");
+    }
+
+    /** 在着色器真正的 main 函数体末尾插入语句, 并把彩色光函数定义插到该函数之前。
+     *  别的 mod(如 TaCZ: Scope Overhaul 的 INLINE 模式)会把 main 改名成 xxx_main 并在末尾包一层新的 main,
+     *  这时必须插进被调用的内层函数, 语句才能看到 main 里的局部变量。
+     *  找不到可插入的 main 时原样返回, 由调用方(试编译校验)决定是否使用。 */
+    private static String inject(String source, String statement) {
+        int[] target = findInjectionTarget(source);
+        if (target == null) {
+            return source;
+        }
+        return new StringBuilder(source)
+                .insert(target[1], statement)
+                .insert(target[0], getShimmerSource())
+                .toString();
+    }
+
+    /** @return [函数定义起始位置, 函数体右花括号位置] */
+    private static int[] findInjectionTarget(String source) {
+        Matcher main = MAIN_DEFINITION.matcher(source);
+        int mainStart = -1;
+        int mainEnd = -1;
+        while (main.find()) {
+            mainStart = main.start();
+            mainEnd = main.end();
+        }
+        if (mainStart < 0) {
+            return null;
+        }
+        int mainOpen = source.indexOf('{', mainEnd);
+        if (mainOpen < 0) {
+            return null;
+        }
+        int mainClose = findMatchingBrace(source, mainOpen);
+        if (mainClose < 0) {
+            return null;
+        }
+        Matcher wrapped = WRAPPED_MAIN_CALL.matcher(source.substring(mainOpen + 1, mainClose));
+        if (wrapped.find()) {
+            int bodyStart = findFunctionDefinition(source, wrapped.group(1), mainStart);
+            if (bodyStart >= 0) {
+                int bodyOpen = source.indexOf('{', bodyStart);
+                int bodyClose = bodyOpen < 0 ? -1 : findMatchingBrace(source, bodyOpen);
+                if (bodyClose >= 0) {
+                    return new int[]{bodyStart, bodyClose};
+                }
+            }
+        }
+        return new int[]{mainStart, mainClose};
+    }
+
+    private static int findFunctionDefinition(String source, String name, int before) {
+        Matcher definition = Pattern.compile("\\bvoid\\s+" + Pattern.quote(name) + "\\s*\\(").matcher(source);
+        int found = -1;
+        while (definition.find() && definition.start() < before) {
+            found = definition.start();
+        }
+        return found;
+    }
+
+    private static int findMatchingBrace(String source, int openBrace) {
+        int depth = 0;
+        for (int i = openBrace; i < source.length(); i++) {
+            char c = source.charAt(i);
+            if (c == '/' && i + 1 < source.length()) {
+                char next = source.charAt(i + 1);
+                if (next == '/') {
+                    i = source.indexOf('\n', i + 2);
+                    if (i < 0) {
+                        return -1;
+                    }
+                } else if (next == '*') {
+                    i = source.indexOf("*/", i + 2);
+                    if (i < 0) {
+                        return -1;
+                    }
+                    i++;
+                }
+            } else if (c == '"') {
+                i++;
+                while (i < source.length() && source.charAt(i) != '"') {
+                    if (source.charAt(i) == '\\') {
+                        i++;
+                    }
+                    i++;
+                }
+            } else if (c == '{') {
+                depth++;
+            } else if (c == '}') {
+                if (--depth == 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
     }
 
     private static String lightShader;
@@ -74,11 +166,7 @@ public enum LightManager {
 
     /** Embeddium(钠系)地形着色器注入: 顶点阶段按世界坐标叠加彩色光。 */
     public static String embeddiumVVSHInjection(String s) {
-        s = new StringBuffer(s).insert(s.lastIndexOf("void main()"), getLightShader()).toString();
-        s = new StringBuffer(s).insert(s.lastIndexOf('}'),
-                "v_Color = color_light_uv(position, v_Color, _vert_tex_light_coord).rgba;\n"
-        ).toString();
-        return s;
+        return inject(s, "v_Color = color_light_uv(position, v_Color, _vert_tex_light_coord).rgba;\n");
     }
 
     public static void injectShaders() {

@@ -1,7 +1,5 @@
 package com.ssscript.taczfixes.client.render;
 
-import com.ssscript.taczfixes.TaczFixesMod;
-
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +25,6 @@ public final class ShaderInjection {
     }
 
     public static String injectVSH(String shaderName, String content) {
-        TaczFixesMod.LOGGER.info("Injecting colored light into shader vsh {}.", shaderName);
         for (Function<String, String> function : VSH_INJECTIONS.getOrDefault(shaderName, Collections.emptyList())) {
             content = function.apply(content);
         }
