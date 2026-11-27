@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.client.other.ThirdPersonManager;
 import com.tacz.guns.client.resource.GunDisplayInstance;
+import com.tacz.guns.compat.playeranimator.PlayerAnimatorCompat;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.util.Mth;
@@ -65,10 +66,10 @@ public final class DualThirdPersonArmPose {
         }
         if (offGun && !mainGun) {
             // 主手物品、副手枪: 有 playeranimator 资源时由 playeranimator 层摆臂(与双手持枪完全一致);
-            // 没有资源时才退回 TaCZ 的 animateGunHold 兜底。
+            // 未安装 playeranimator 或没有对应动画资源时，使用 TaCZ 的持枪姿势。
             GunDisplayInstance offDisplay = TimelessAPI.getGunDisplay(offhand).orElse(null);
             boolean animatedByPlayerAnimator = offDisplay != null
-                    && com.tacz.guns.compat.playeranimator.animation.AnimationManager.hasPlayerAnimator3rd(offDisplay);
+                    && PlayerAnimatorCompat.hasPlayerAnimator3rd(entity, offDisplay);
             if (!animatedByPlayerAnimator) {
                 applyGunAnimationToBothArms(entity, rightArm, leftArm, body, head);
             }
