@@ -85,6 +85,7 @@ public class ConfigScreen {
             dbl_(e, entry, "aim_blur.focus_transition", Config.AIM_BLUR_FOCUS_TRANSITION);
         });
         dbl_(cat, entry, "visual_effect.enchantment_glint_strength", Config.GUN_ENCHANT_GLINT_STRENGTH);
+        bool_(cat, entry, "visual_effect.muzzle_after_smoke", Config.MUZZLE_AFTER_SMOKE);
     }
 
     private static void buildSuppression(ConfigCategory cat, ConfigEntryBuilder entry) {

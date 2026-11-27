@@ -23,6 +23,7 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleConsumer;
 
 /**
@@ -486,7 +487,19 @@ public final class CurseForgeApi {
      */
     public static CompletableFuture<GunPackInstaller.InstallResult> downloadAndInstall(
             FileInfo file, Path taczDir, DoubleConsumer progress) {
+        return downloadAndInstall(file, taczDir, progress, () -> false);
+    }
+
+    /**
+     * 带取消标记的下载安装: cancelled 返回 true 时尽快中止并清理临时文件
+     * (供“从 CurseForge 获取”界面点“返回”取消下载)。
+     */
+    public static CompletableFuture<GunPackInstaller.InstallResult> downloadAndInstall(
+            FileInfo file, Path taczDir, DoubleConsumer progress, BooleanSupplier cancelled) {
         return CompletableFuture.supplyAsync(() -> {
+            if (cancelled.getAsBoolean()) {
+                throw new CurseForgeException("cancelled");
+            }
             List<String> candidates = new ArrayList<>(downloadCandidates(file));
             String resolved = resolveDownloadUrl(file);
             if (resolved != null && !candidates.contains(resolved)) {
@@ -499,10 +512,15 @@ public final class CurseForgeApi {
             CurseForgeException lastError = null;
             boolean invalidPackSeen = false;
             for (String url : candidates) {
+                if (cancelled.getAsBoolean()) {
+                    throw new CurseForgeException("cancelled");
+                }
                 try {
                     progress.accept(0.0D);
                     return GunPackInstaller.downloadAndInstall(url, file.fileName(), taczDir,
-                            progress, DOWNLOAD_TIMEOUT_SECONDS, file.sha1());
+                            progress, DOWNLOAD_TIMEOUT_SECONDS, file.sha1(), cancelled);
+                } catch (GunPackInstaller.DownloadCancelledException cancelling) {
+                    throw new CurseForgeException("cancelled", cancelling);
                 } catch (GunPackInstaller.InvalidGunPackException invalid) {
                     if (invalid.isSha1Verified()) {
                         // 文件内容与 CurseForge 记录的 sha1 一致: 换镜像也是同一个坏包, 直接报错

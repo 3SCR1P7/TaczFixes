@@ -2,10 +2,12 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.ssscript.taczfixes.client.client.DualRenderContext;
 import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.client.MuzzleAfterSmoke;
 import com.tacz.guns.client.particle.ThirdPersonMuzzleParticleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.item.ItemStack;
 import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -20,8 +22,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = ThirdPersonMuzzleParticleManager.class, remap = false)
 public abstract class MixinThirdPersonMuzzleParticleManager {
 
+    @Inject(method = "onShoot", at = @At("HEAD"))
+    private static void taczfixes$recordAfterSmokeShot(LivingEntity shooter, ItemStack stack, CallbackInfo callback) {
+        MuzzleAfterSmoke.onShoot(shooter, stack);
+    }
+
+    @Inject(method = "resetTimestamps", at = @At("HEAD"))
+    private static void taczfixes$clearAfterSmoke(CallbackInfo callback) {
+        MuzzleAfterSmoke.clear();
+    }
+
     @Inject(method = "onMuzzleRendered", at = @At("HEAD"), cancellable = true, remap = false)
     private static void dualWield$gateThirdPersonFlashByHand(LivingEntity entity, Matrix4f muzzleMatrix, CallbackInfo callback) {
+        MuzzleAfterSmoke.onThirdPersonMuzzleRendered(entity, muzzleMatrix);
         LocalPlayer player = Minecraft.getInstance().player;
         if (player == null || entity != player || !DualWieldClient.isDualMode(player)) {
             return;

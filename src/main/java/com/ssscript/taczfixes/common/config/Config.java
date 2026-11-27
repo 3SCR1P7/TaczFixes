@@ -9,6 +9,7 @@ import java.util.List;
 
 @Mod.EventBusSubscriber(modid = TaczFixesMod.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 public class Config {
+    public static final ForgeConfigSpec.BooleanValue MUZZLE_AFTER_SMOKE;
     public static final ForgeConfigSpec.BooleanValue PBR_ENABLED;
     public static final ForgeConfigSpec.BooleanValue PBR_BLOOM;
     public static final ForgeConfigSpec.DoubleValue PBR_REFLECTION;
@@ -1700,6 +1701,9 @@ public class Config {
         SPECS.put("dual_wield", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
+        MUZZLE_AFTER_SMOKE = BUILDER
+                .comment("是否渲染停火后的枪口余烟。需同时开启 TaCZ 的枪口烟雾。默认值：true")
+                .define("muzzle_after_smoke", true);
         MOVEMENT_ROLL_MAX_ANGLE = BUILDER
                 .comment("左右移动时枪械桶滚的最大角度。默认值：15.0")
                 .defineInRange("max_movement_roll_angle", 15.0, 0.0, 45.0);

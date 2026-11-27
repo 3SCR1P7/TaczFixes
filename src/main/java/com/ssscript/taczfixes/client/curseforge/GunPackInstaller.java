@@ -24,6 +24,7 @@ import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.BooleanSupplier;
 import java.util.function.DoubleConsumer;
 import java.util.stream.Stream;
 import java.util.zip.ZipEntry;
@@ -78,6 +79,13 @@ public final class GunPackInstaller {
         }
     }
 
+    /** 用户取消下载时抛出(界面点“返回”): 中止下载并清理临时文件, 绝不安装半截枪包。 */
+    public static class DownloadCancelledException extends IOException {
+        public DownloadCancelledException() {
+            super("cancelled");
+        }
+    }
+
     /** 一次安装的结果。 */
     public record InstallResult(Path file, boolean converted, boolean metaAdded) {
     }
@@ -98,6 +106,18 @@ public final class GunPackInstaller {
     public static InstallResult downloadAndInstall(String url, String fileName, Path taczDir,
                                                    DoubleConsumer progress, double timeoutSeconds,
                                                    String expectedSha1) throws IOException {
+        return downloadAndInstall(url, fileName, taczDir, progress, timeoutSeconds, expectedSha1, () -> false);
+    }
+
+    /**
+     * 带取消标记的下载安装: cancelled 返回 true 时尽快中止(清理临时文件, 不安装),
+     * 供“从 CurseForge 获取”界面点“返回”时取消下载。
+     */
+    public static InstallResult downloadAndInstall(String url, String fileName, Path taczDir,
+                                                   DoubleConsumer progress, double timeoutSeconds,
+                                                   String expectedSha1, BooleanSupplier cancelled)
+            throws IOException {
+        if (cancelled.getAsBoolean()) throw new DownloadCancelledException();
         if (url == null || url.isBlank()) throw new DownloadException("empty download url");
         final URI uri;
         final HttpRequest request;
@@ -124,10 +144,11 @@ public final class GunPackInstaller {
         try {
             HttpResponse<InputStream> response;
             try {
+                if (cancelled.getAsBoolean()) throw new DownloadCancelledException();
                 response = HTTP.send(request, HttpResponse.BodyHandlers.ofInputStream());
             } catch (InterruptedException interrupted) {
                 Thread.currentThread().interrupt();
-                throw new DownloadException("cancelled");
+                throw new DownloadCancelledException();
             } catch (IOException network) {
                 throw new DownloadException(network.getClass().getSimpleName() + ": " + network.getMessage());
             }
@@ -146,6 +167,7 @@ public final class GunPackInstaller {
                 throw new DownloadException("unexpected content type: " + contentType);
             }
             long total = response.headers().firstValueAsLong("content-length").orElse(-1L);
+            if (cancelled.getAsBoolean()) throw new DownloadCancelledException();
             MessageDigest digest = expectedSha1 == null || expectedSha1.isBlank()
                     ? null : MessageDigest.getInstance("SHA-1");
             long read = 0L;
@@ -173,13 +195,14 @@ public final class GunPackInstaller {
                     if (total > 0L) {
                         progress.accept(Math.min(1.0D, (double) read / (double) total));
                     }
-                    if (Thread.currentThread().isInterrupted()) {
-                        throw new DownloadException("cancelled");
+                    if (Thread.currentThread().isInterrupted() || cancelled.getAsBoolean()) {
+                        throw new DownloadCancelledException();
                     }
                 }
             } finally {
                 watchdog.cancel(false);
             }
+            if (cancelled.getAsBoolean()) throw new DownloadCancelledException();
             if (stalled.get()) throw new DownloadException("download stalled");
             if (read <= 0L) throw new DownloadException("empty file");
             if (total > 0L && read != total) {
@@ -212,6 +235,7 @@ public final class GunPackInstaller {
                             digest != null);
                 }
             }
+            if (cancelled.getAsBoolean()) throw new DownloadCancelledException();
             progress.accept(1.0D);
             Path target = uniqueTarget(taczDir, fileName);
             moveIntoPlace(temp, target);

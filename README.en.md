@@ -8,8 +8,8 @@ An add-on mod for [Timeless and Classics Zero](https://www.curseforge.com/minecr
 
 | Branch | Minecraft | Loader | Mod version | TaCZ version |
 | --- | --- | --- | --- | --- |
-| `taczfixes` | 1.20.1 | Forge 47.4+ | 3.1.4 | tacz-forge 1.20.1 1.2.0 |
-| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.1.4 | tacz-neoforge 1.21.1 1.2.0 |
+| `taczfixes` | 1.20.1 | Forge 47.4+ | 3.1.5 | tacz-forge 1.20.1 1.2.0 |
+| `taczfixes-1.21.1` | 1.21.1 | NeoForge 21.1+ | 3.1.5 | tacz-neoforge 1.21.1 1.2.0 |
 
 Client and server must run the same TaCZ Fixes version (network protocol version `3`). Single-player and client-side installation is enough to use every feature.
 
