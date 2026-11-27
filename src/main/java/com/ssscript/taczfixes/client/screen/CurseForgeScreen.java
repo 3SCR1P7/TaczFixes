@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.NavigableMap;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 
 /**
@@ -92,6 +93,9 @@ public class CurseForgeScreen extends Screen {
     private boolean openingChild;
     private boolean managerClosed;
     private volatile double downloadProgress = -1.0D;
+    /** 当前下载任务 future 与取消标记: 下载中点“返回”/Esc 时置位并中止(不安装半截文件)。 */
+    private CompletableFuture<GunPackInstaller.InstallResult> downloadFuture;
+    private volatile boolean downloadCancelled;
     private int requestSeq;
     private int fileSeq;
     private CurseForgeApi.ModInfo selectedMod;
@@ -420,7 +424,8 @@ public class CurseForgeScreen extends Screen {
             this.settingsButton.active = !this.downloading;
         }
         if (this.backButton != null) {
-            this.backButton.active = !this.downloading;
+            // 下载中“返回”保持可用: 点击会取消下载并返回枪包管理界面
+            this.backButton.active = true;
         }
     }
 
@@ -467,14 +472,23 @@ public class CurseForgeScreen extends Screen {
         if (this.downloading || this.selectedFile == null) return;
         final CurseForgeApi.FileInfo file = this.selectedFile;
         this.downloading = true;
+        this.downloadCancelled = false;
         this.downloadProgress = 0.0D;
         this.statusColor = 0xFFA0A0A0;
         this.updateButtons();
-        CurseForgeApi.downloadAndInstall(file, this.taczDir, progress -> this.downloadProgress = progress)
+        this.downloadFuture = CurseForgeApi.downloadAndInstall(file, this.taczDir,
+                        progress -> this.downloadProgress = progress, () -> this.downloadCancelled)
                 .whenComplete((result, error) -> runOnClient(() -> {
+                    this.downloadFuture = null;
                     this.downloading = false;
                     this.downloadProgress = -1.0D;
                     if (error != null) {
+                        if (this.downloadCancelled) {
+                            // 玩家点“返回”取消了下载: 不提示错误
+                            this.downloadCancelled = false;
+                            this.updateButtons();
+                            return;
+                        }
                         this.status = describeError(error);
                         this.statusColor = 0xFFFF5555;
                     } else {
@@ -502,6 +516,7 @@ public class CurseForgeScreen extends Screen {
                             GunPackSettings.addDisabled(packId);
                         }
                     }
+                    this.downloadCancelled = false;
                     this.updateButtons();
                 }));
     }
@@ -549,13 +564,27 @@ public class CurseForgeScreen extends Screen {
         }
     }
 
-    /** 返回枪包管理界面: 先保存原界面上的选择, 再重建以显示新安装的枪包。 */
+    /** 返回枪包管理界面: 先取消进行中的下载, 再保存原界面上的选择并重建以显示新安装的枪包。 */
     private void leave() {
         if (this.leaveDone) return;
         this.leaveDone = true;
+        this.cancelDownload();
         this.closePackManager();
         this.applyPendingAvailable();
         Minecraft.getInstance().setScreen(GunPackScreen.create(this.returnParent));
+    }
+
+    /** 下载中离开界面: 置取消标记并取消 future, 后台下载会清理临时文件且不会安装半截枪包。 */
+    private void cancelDownload() {
+        if (!this.downloading) return;
+        this.downloadCancelled = true;
+        CompletableFuture<GunPackInstaller.InstallResult> future = this.downloadFuture;
+        this.downloadFuture = null;
+        if (future != null) {
+            future.cancel(true);
+        }
+        this.downloading = false;
+        this.downloadProgress = -1.0D;
     }
 
     /**
@@ -590,6 +619,7 @@ public class CurseForgeScreen extends Screen {
         }
         if (this.leaveDone) return;
         this.leaveDone = true;
+        this.cancelDownload();
         this.closePackManager();
         this.applyPendingAvailable();
     }

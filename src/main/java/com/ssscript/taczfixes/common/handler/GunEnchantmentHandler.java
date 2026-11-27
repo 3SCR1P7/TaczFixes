@@ -1066,9 +1066,10 @@ public class GunEnchantmentHandler {
     /** 猩红终焉: 射手死亡时, 其标记过的目标全部因心脏骤停死亡。 */
     @SubscribeEvent
     public void onLivingDeathScarletDeath(LivingDeathEvent event) {
-        UUID dead = event.getEntity().getUUID();
-        CARDIAC_TARGETS.remove(dead);
-        if (event.getEntity().level().isClientSide) {
+        LivingEntity owner = event.getEntity();
+        UUID dead = owner.getUUID();
+        if (owner.level().isClientSide) {
+            CARDIAC_TARGETS.remove(dead);
             return;
         }
         List<UUID> owned = new ArrayList<>();
@@ -1077,18 +1078,23 @@ public class GunEnchantmentHandler {
                 owned.add(entry.getKey());
             }
         }
-        if (owned.isEmpty()) {
-            return;
-        }
-        LivingEntity owner = event.getEntity();
+        int killed = 0;
         for (UUID targetId : owned) {
             CARDIAC_TARGETS.remove(targetId);
             Entity entity = findEntity(owner, targetId);
             if (entity instanceof LivingEntity target && target.isAlive()) {
                 playScarletKillEffect(target);
                 instantKill(target, owner, CARDIAC_DAMAGE_ID);
+                killed++;
             }
         }
+        // 至少一个被标记生物被带走: 用它们的死替代射手之死, 阻止射手死亡并保留 1 点生命值。
+        if (killed > 0 && owner instanceof Player player) {
+            event.setCanceled(true);
+            player.setHealth(1.0F);
+            return;
+        }
+        CARDIAC_TARGETS.remove(dead);
     }
 
     /** 猩红终焉标记的红色药水粒子 + 常凪冻结状态维护。 */

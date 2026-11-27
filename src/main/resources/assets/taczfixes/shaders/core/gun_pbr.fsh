@@ -200,15 +200,15 @@ float sampleSceneDepth(vec2 uv) {
 // 屏幕空间反射 + 屏幕探针兜底。
 // 深度步进未命中时, 把反射方向投影到屏幕采样场景色(越界钳制并软化),
 // 保证金属表面始终有场景倒影, 而不是没命中就一片平。
-vec4 screenSpaceReflection(vec3 n, vec3 envTint) {
+vec4 screenSpaceReflection(vec3 n, vec3 envTint, float strength, int steps) {
     vec4 result = vec4(0.0);
-    if (SSRStrength <= 0.001) return result;
+    if (strength <= 0.001) return result;
     vec3 Rv = reflect(normalize(viewPosition), n);
     float front = -Rv.z;
     if (front <= 0.05) return result;
     vec3 pos = viewPosition + n * 0.05;
     float stepLen = max(length(viewPosition) * 0.015, 0.2);
-    for (int i = 0; i < SSRSteps; i++) {
+    for (int i = 0; i < steps; i++) {
         pos += Rv * stepLen;
         stepLen *= 1.24;
         vec4 clip = ProjMat * vec4(pos, 1.0);
@@ -518,15 +518,19 @@ void main() {
     float envFace = mix(0.55, 1.0, smoothstep(0.0, 0.4, litFacing));
     float envTorchBright = clamp(torchSum, 0.0, 1.0);
     float envLocalBright = clamp(exposure * 0.80 + envTorchBright * 0.40, 0.0, 1.0);
-    float envGain = 1.0 + smoothstep(0.02, 0.90, envLocalBright);
-    vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao * envGain;  // 屏幕空间反射(深度步进 + 屏幕探针兜底)。
+    // 环境反射固定 1.0 倍(不再随亮度增强), 亮度只用于下面的 SSR 自适应。
+    vec3 indirect = environment * envTint * fres * kRefl * mix(0.55, 1.0, envFace) * ao;
+    // SSR 自适应: 步数暗处 ×0.35、亮处 ×1.5; 强度越亮越高、越暗越低。
+    float ssrBright = smoothstep(0.04, 0.85, envLocalBright);
+    float ssrStrength = SSRStrength * mix(0.30, 1.30, ssrBright);
+    int ssrSteps = int(clamp(float(SSRSteps) * mix(0.35, 1.5, ssrBright), 4.0, 64.0));
     // 非金属像素的 SSR 权重恒为 0, 直接跳过整条射线步进(原实现每像素最多 24 次深度采样)。
     vec4 ssr = vec4(0.0);
     float ssrWeight = 0.0;
-    if (metallic > 0.0 && SSRStrength > 0.001 && kRefl > 0.0) {
-        ssr = screenSpaceReflection(n, envTint);
-        ssrWeight = clamp(SSRStrength * ssr.a * (0.45 + 0.55 * (1.0 - roughness))
-                * clamp(metallic, 0.0, 1.0), 0.0, 0.55);
+    if (metallic > 0.0 && ssrStrength > 0.001 && kRefl > 0.0) {
+        ssr = screenSpaceReflection(n, envTint, ssrStrength, ssrSteps);
+        ssrWeight = clamp(ssrStrength * ssr.a * (0.45 + 0.55 * (1.0 - roughness))
+                * clamp(metallic, 0.0, 1.0), 0.0, mix(0.35, 0.70, ssrBright));
     }
     if (ssrWeight > 0.001) {
         indirect = mix(indirect, ssr.rgb * fres * kRefl * ao * 0.85, ssrWeight);
