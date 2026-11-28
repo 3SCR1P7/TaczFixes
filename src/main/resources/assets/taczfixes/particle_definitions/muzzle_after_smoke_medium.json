@@ -11,13 +11,13 @@
     "components": {
       "sbm:fp_emitter_local_space": { "position": true, "rotation": true, "velocity": false, "to_world": false },
       "minecraft:emitter_local_space": { "position": false, "rotation": true, "velocity": false },
-      "minecraft:emitter_rate_instant": { "num_particles": 4 },
+      "minecraft:emitter_rate_instant": { "num_particles": 2 },
       "minecraft:emitter_lifetime_once": { "active_time": 0.05 },
       "minecraft:emitter_shape_point": {
         "offset": [0, 0, 0],
         "direction": ["math.random(-0.27, 0.27)", 1, "math.random(-0.10, 0.10)"]
       },
-      "minecraft:particle_lifetime_expression": { "max_lifetime": "math.random(0.58, 0.74)" },
+      "minecraft:particle_lifetime_expression": { "max_lifetime": "math.random(0.36, 0.48)" },
       "minecraft:particle_initial_speed": "math.random(0.43, 0.70)",
       "minecraft:particle_motion_dynamic": {
         "linear_acceleration": ["0.20 * (v.particle_random_1 - 0.5)", 0.88, 0],
@@ -25,8 +25,8 @@
       },
       "minecraft:particle_appearance_billboard": {
         "size": [
-          "math.lerp(0.13, 0.36, v.particle_age / v.particle_lifetime) * (0.89 + 0.22 * v.particle_random_2)",
-          "math.lerp(0.18, 0.43, v.particle_age / v.particle_lifetime) * (0.89 + 0.22 * v.particle_random_2)"
+          "math.lerp(0.08, 0.23, v.particle_age / v.particle_lifetime) * (0.89 + 0.22 * v.particle_random_2)",
+          "math.lerp(0.11, 0.28, v.particle_age / v.particle_lifetime) * (0.89 + 0.22 * v.particle_random_2)"
         ],
         "facing_camera_mode": "rotate_y",
         "uv": {
