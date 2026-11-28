@@ -2,9 +2,9 @@ package com.ssscript.taczfixes.client.mixin.model;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.model.BedrockGunModel;
-import com.ssscript.taczfixes.client.client.DualInspectAnimationFilter;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
-import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.util.dual.DualInspectAnimationFilter;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;

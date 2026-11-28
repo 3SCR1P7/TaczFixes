@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin.model;
 
 import com.ssscript.taczfixes.common.util.ItemNbt;
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
 import com.ssscript.taczfixes.client.mixin.model.attachment.MixinBedrockAttachmentModelScopeSuppress;
 import com.ssscript.taczfixes.client.util.ArcanaMagnificationState;
 import com.ssscript.taczfixes.common.compat.ArcanaScopeViewState;

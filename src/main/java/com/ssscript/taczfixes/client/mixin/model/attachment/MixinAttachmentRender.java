@@ -10,7 +10,7 @@ import com.tacz.guns.client.model.bedrock.BedrockPart;
 import com.tacz.guns.client.model.functional.AttachmentRender;
 import com.tacz.guns.client.resource.index.ClientAttachmentIndex;
 import com.tacz.guns.client.resource.index.ClientSlotAdapterIndex;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
 import com.ssscript.taczfixes.client.render.PbrRenderer;
 import com.ssscript.taczfixes.common.compat.ArcanaScopeStateBridge;
 import java.lang.reflect.InvocationTargetException;

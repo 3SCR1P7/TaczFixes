@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin.dual;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.ssscript.taczfixes.client.client.DualThirdPersonRenderer;
+import com.ssscript.taczfixes.client.util.dual.DualThirdPersonRenderer;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import net.minecraft.client.model.ArmedModel;
 import net.minecraft.client.model.EntityModel;

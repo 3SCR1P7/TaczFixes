@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.input.ReloadKey;
-import com.ssscript.taczfixes.client.client.DualReloadCoordinator;
+import com.ssscript.taczfixes.client.util.dual.DualReloadCoordinator;
 import net.neoforged.neoforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

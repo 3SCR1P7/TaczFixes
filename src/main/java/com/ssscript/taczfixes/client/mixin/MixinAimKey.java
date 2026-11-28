@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.input.AimKey;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
 import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.InputEvent;
 import org.spongepowered.asm.mixin.Mixin;

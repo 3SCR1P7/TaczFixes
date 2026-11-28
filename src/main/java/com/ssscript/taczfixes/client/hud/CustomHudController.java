@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.hud;
 
-import com.ssscript.taczfixes.client.client.DualWieldClient;
-import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import com.ssscript.taczfixes.client.handler.AimSwayHandler;
 import com.ssscript.taczfixes.client.handler.HoldBreathKeyHandler;
 import com.ssscript.taczfixes.client.mixin.MixinGunHudOverlayAccessor;

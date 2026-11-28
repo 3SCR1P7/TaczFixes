@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.screen;
 
-import com.ssscript.taczfixes.client.curseforge.CurseForgeInstalledPacks;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeInstalledPacks;
 import com.ssscript.taczfixes.client.util.PendingResourceReload;
 import com.ssscript.taczfixes.common.data.GunPackSettings;
 import net.minecraft.client.Minecraft;

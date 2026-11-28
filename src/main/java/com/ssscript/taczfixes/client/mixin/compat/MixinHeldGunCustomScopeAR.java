@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin.compat;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.client.CustomScopeArPolicy;
+import com.ssscript.taczfixes.client.util.CustomScopeArPolicy;
 import com.tacz.guns.client.model.BedrockGunModel;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;

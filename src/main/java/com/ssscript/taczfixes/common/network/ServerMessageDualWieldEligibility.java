@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
-import com.ssscript.taczfixes.client.client.ClientOffhandNetworkHandler;
+import com.ssscript.taczfixes.client.handler.OffhandNetworkHandler;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +41,7 @@ public final class ServerMessageDualWieldEligibility {
         context.enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> {
                 return () -> {
-                    ClientOffhandNetworkHandler.handleEligibility(packet.rules);
+                    OffhandNetworkHandler.handleEligibility(packet.rules);
                 };
             });
         });

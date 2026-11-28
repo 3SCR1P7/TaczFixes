@@ -3,8 +3,8 @@ package com.ssscript.taczfixes.client.mixin;
 import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import com.mojang.blaze3d.platform.Window;
 import com.ssscript.taczfixes.client.hud.CustomHudManager;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
-import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.client.event.RenderCrosshairEvent;
 import net.minecraft.client.Minecraft;
@@ -57,11 +57,11 @@ public class MixinRenderCrosshairEventCustomHud {
             ci.cancel();
             return;
         }
-        if (com.ssscript.taczfixes.client.client.CrosshairBlockIndicator.render(graphics, window)) {
+        if (com.ssscript.taczfixes.client.util.crosshair.CrosshairBlockIndicator.render(graphics, window)) {
             ci.cancel();
             return;
         }
-        if (com.ssscript.taczfixes.client.client.DynamicCrosshair.render(graphics, window)) {
+        if (com.ssscript.taczfixes.client.util.crosshair.DynamicCrosshair.render(graphics, window)) {
             ci.cancel();
         }
     }

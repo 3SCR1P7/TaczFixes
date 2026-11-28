@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.client.util.CustomScopeViewShift;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
@@ -33,7 +33,7 @@ public class MixinFirstPersonRenderGunEvent {
         if (model == null) return;
 
         if (DualWieldClient.isDualMode(player)) {
-            double forwardOffset = com.ssscript.taczfixes.client.client.ForwardOffsetSmoothing.mainHand(
+            double forwardOffset = com.ssscript.taczfixes.client.util.dual.ForwardOffsetSmoothing.mainHand(
                     com.ssscript.taczfixes.common.util.DualWieldOverrides.forwardOffset(
                             stack, Config.DUAL_WIELD_FORWARD_OFFSET_PISTOL.get(), Config.DUAL_WIELD_FORWARD_OFFSET_OTHER.get()));
             poseStack.translate(0.0d, 0.0d, -forwardOffset);

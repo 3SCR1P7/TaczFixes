@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.common.compat;
 
 import com.ssscript.taczfixes.TaczFixesMod;
-import com.ssscript.taczfixes.client.client.DualFocusAimState;
-import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.util.dual.DualFocusAimState;
+import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.tacz.guns.api.item.IGun;
 import java.lang.reflect.InvocationTargetException;

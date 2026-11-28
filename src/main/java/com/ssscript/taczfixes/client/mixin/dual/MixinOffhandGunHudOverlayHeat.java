@@ -2,8 +2,8 @@ package com.ssscript.taczfixes.client.mixin.dual;
 
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.pojo.data.gun.GunData;
-import com.ssscript.taczfixes.client.client.DualOffhandHeatBar;
-import com.ssscript.taczfixes.client.client.OffhandGunHudOverlay;
+import com.ssscript.taczfixes.client.util.dual.DualOffhandHeatBar;
+import com.ssscript.taczfixes.client.util.dual.OffhandGunHudOverlay;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.client.DeltaTracker;

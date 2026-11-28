@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.client.DualRenderContext;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
-import com.ssscript.taczfixes.client.client.MuzzleAfterSmoke;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
+import com.ssscript.taczfixes.client.util.MuzzleAfterSmoke;
 import com.tacz.guns.client.particle.ThirdPersonMuzzleParticleManager;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;

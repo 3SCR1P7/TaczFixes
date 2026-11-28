@@ -62,9 +62,9 @@ public final class ClientModEvents {
         event.registerReloadListener(new AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
-                        .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor)
+                        .thenRunAsync(com.ssscript.taczfixes.client.util.crosshair.CrosshairPartLayout::clear, gameExecutor)
                         // 圆形准星动态贴图缓存也要在资源重载后失效并释放, 否则旧贴图残留且无限增长。
-                        .thenRunAsync(com.ssscript.taczfixes.client.client.ExpandedCircleCrosshair::clear, gameExecutor));
+                        .thenRunAsync(com.ssscript.taczfixes.client.util.crosshair.ExpandedCircleCrosshair::clear, gameExecutor));
     }
 
     private static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
@@ -78,7 +78,7 @@ public final class ClientModEvents {
     private static void onClientSetup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
             // 迷彩切换后让渲染侧按物品实例的缓存失效, 改装界面里立即看到效果
-            com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.camo.DynamicCamo::invalidate);
+            com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.util.camo.DynamicCamo::invalidate);
             NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationCameraHandler());
             NeoForge.EVENT_BUS.register(new SteplessZoomHandler());
             NeoForge.EVENT_BUS.register(new ScopeSwitchHandler());
@@ -103,7 +103,7 @@ public final class ClientModEvents {
             NeoForge.EVENT_BUS.register(com.ssscript.taczfixes.client.hud.CustomHudController.instance());
             NeoForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationClientEvents());
             // 启动后后台检查已安装枪包更新; 有更新时在枪包管理界面显示红点
-            com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
+            com.ssscript.taczfixes.client.util.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
         });
     }
 }

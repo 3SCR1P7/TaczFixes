@@ -5,35 +5,41 @@
       "identifier": "taczfixes:muzzle_after_smoke",
       "basic_render_parameters": {
         "material": "particles_blend",
-        "texture": "taczfixes:particle/muzzle_after_smoke"
+        "texture": "taczfixes:particle/muzzle_after_smoke_mist"
       }
     },
     "components": {
-      "sbm:fp_emitter_local_space": { "position": true, "rotation": false, "velocity": true, "to_world": false },
-      "minecraft:emitter_rate_instant": { "num_particles": 1 },
+      "sbm:fp_emitter_local_space": { "position": true, "rotation": true, "velocity": false, "to_world": false },
+      "minecraft:emitter_local_space": { "position": false, "rotation": true, "velocity": false },
+      "minecraft:emitter_rate_instant": { "num_particles": 2 },
       "minecraft:emitter_lifetime_once": { "active_time": 0.05 },
       "minecraft:emitter_shape_point": {
         "offset": [0, 0, 0],
-        "direction": ["math.random(-0.12, 0.12)", "math.random(-0.07, 0.07)", 1]
+        "direction": ["math.random(-0.22, 0.22)", 1, "math.random(-0.10, 0.10)"]
       },
-      "minecraft:particle_lifetime_expression": { "max_lifetime": "math.random(0.57, 0.72)" },
-      "minecraft:particle_initial_speed": "math.random(0.045, 0.10)",
+      "minecraft:particle_lifetime_expression": { "max_lifetime": "math.random(0.37, 0.48)" },
+      "minecraft:particle_initial_speed": "math.random(0.19, 0.31)",
       "minecraft:particle_motion_dynamic": {
-        "linear_acceleration": [0, 1, 0],
-        "linear_drag_coefficient": 1.2
+        "linear_acceleration": ["0.20 * (v.particle_random_1 - 0.5)", 0.57, 0],
+        "linear_drag_coefficient": 2.2
       },
       "minecraft:particle_appearance_lighting": {},
       "minecraft:particle_appearance_billboard": {
         "size": [
-          "math.lerp(0.10, 0.22, v.particle_age / v.particle_lifetime)",
-          "math.lerp(0.36, 0.96, v.particle_age / v.particle_lifetime)"
+          "math.lerp(0.11, 0.31, v.particle_age / v.particle_lifetime) * (0.89 + 0.22 * v.particle_random_2)",
+          "math.lerp(0.16, 0.37, v.particle_age / v.particle_lifetime) * (0.89 + 0.22 * v.particle_random_2)"
         ],
         "facing_camera_mode": "rotate_y",
         "uv": {
-          "texture_width": 128,
-          "texture_height": 256,
-          "uv": [0, 0],
-          "uv_size": [128, 256]
+          "texture_width": 1024,
+          "texture_height": 128,
+          "flipbook": {
+            "base_UV": [0, 0],
+            "size_UV": [128, 128],
+            "step_UV": [128, 0],
+            "max_frame": 8,
+            "stretch_to_lifetime": true
+          }
         }
       },
       "minecraft:particle_appearance_tinting": {
@@ -41,11 +47,10 @@
           "interpolant": "v.particle_age / v.particle_lifetime",
           "gradient": {
             "0.0": "#00FFFFFF",
-            "0.12": "#52FFFFFF",
-            "0.26": "#76FFFFFF",
-            "0.5": "#70FFFFFF",
-            "0.75": "#48FFFFFF",
-            "0.92": "#1FFFFFFF",
+            "0.12": "#37FFFFFF",
+            "0.28": "#37FFFFFF",
+            "0.55": "#1DFFFFFF",
+            "0.82": "#09FFFFFF",
             "1.0": "#00FFFFFF"
           }
         }

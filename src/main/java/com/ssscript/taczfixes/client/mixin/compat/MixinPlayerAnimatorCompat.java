@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.compat;
 
-import com.ssscript.taczfixes.client.client.DualWieldAnimatorContext;
+import com.ssscript.taczfixes.client.util.dual.DualWieldAnimatorContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import net.minecraft.world.entity.LivingEntity;

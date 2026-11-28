@@ -16,6 +16,6 @@ public abstract class MixinTickAnimationEvent {
         if (!Minecraft.getInstance().options.getCameraType().isFirstPerson() && "run".equals(input)) {
             resolved = "idle";
         }
-        return com.ssscript.taczfixes.client.client.MainhandMovementAnimation.adjustDualMovementTrigger(resolved, Minecraft.getInstance().player);
+        return com.ssscript.taczfixes.client.util.dual.MainhandMovementAnimation.adjustDualMovementTrigger(resolved, Minecraft.getInstance().player);
     }
 }
