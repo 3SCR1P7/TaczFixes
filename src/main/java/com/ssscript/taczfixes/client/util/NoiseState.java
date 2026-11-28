@@ -102,7 +102,10 @@ public final class NoiseState {
 
         int max = Config.FIRE_NOISE_MAX.get();
         value = Math.min(value, max);
-        if (GunTime.nowMillis() >= Math.max(nearbyStopAt, Math.max(mainStopAt, offhandStopAt))) {
+        boolean mainHeld = isAutomaticFireHeld(player, InteractionHand.MAIN_HAND);
+        boolean offhandHeld = isAutomaticFireHeld(player, InteractionHand.OFF_HAND);
+        if (!mainHeld && !offhandHeld
+                && GunTime.nowMillis() > Math.max(nearbyStopAt, Math.max(mainStopAt, offhandStopAt))) {
             boolean filterThresholdReached = value >= Config.FIRE_NOISE_FILTER_THRESHOLD.get();
             boolean tinnitusThresholdReached = value >= Config.FIRE_NOISE_TINNITUS_THRESHOLD.get();
             int decay;
@@ -149,6 +152,12 @@ public final class NoiseState {
     private static void addNoise(double noise, int max) {
         value = Math.min(max, value + noise);
         updateIntensity(max);
+    }
+
+    private static boolean isAutomaticFireHeld(LocalPlayer player, InteractionHand hand) {
+        ItemStack stack = player.getItemInHand(hand);
+        IGun gun = IGun.getIGunOrNull(stack);
+        return ClientCeaseFireTiming.isAutomaticFireHeld(player, hand, stack, gun);
     }
 
     private static void updateIntensity(int max) {
