@@ -5,6 +5,7 @@ import com.ssscript.taczfixes.client.util.NoiseState;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -17,10 +18,17 @@ public final class FireNoiseHandler {
     }
 
     @SubscribeEvent
-    public static void onMainHandFire(GunFirePostEvent event) {
-        if (event.getLogicalSide().isClient() && event.getShooter() instanceof LocalPlayer player
-                && event.getGunItemStack() == player.getMainHandItem()) {
-            NoiseState.onShot(player, InteractionHand.MAIN_HAND, event.getGunItemStack());
+    public static void onGunFire(GunFirePostEvent event) {
+        if (!event.getLogicalSide().isClient()) {
+            return;
+        }
+        LivingEntity shooter = event.getShooter();
+        if (shooter instanceof LocalPlayer player) {
+            if (event.getGunItemStack() == player.getMainHandItem()) {
+                NoiseState.onShot(player, InteractionHand.MAIN_HAND, event.getGunItemStack());
+            }
+        } else if (shooter != null) {
+            NoiseState.onNearbyShot(shooter, event.getGunItemStack());
         }
     }
 
