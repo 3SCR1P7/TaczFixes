@@ -555,15 +555,18 @@ public final class PbrBloom {
                                         int sceneDepthTexture, int narrowDepthTexture, int wideDepthTexture) {
         // Apply the shader first, then establish the actual draw state. ShaderInstance
         // and third-party hooks may otherwise replace factors set before apply().
-        shader.setSampler("Sampler0", narrow.getColorTextureId());
+        int narrowTexture = narrow.getColorTextureId();
+        boolean separateDepth = narrowTexture != narrowDepthTexture;
+        shader.setSampler("Sampler0", narrowTexture);
         shader.setSampler("Wide", wide.getColorTextureId());
         shader.setSampler("ScopeMask", maskTexture);
         shader.setSampler("SceneDepth", sceneDepthTexture);
-        shader.setSampler("NarrowDepth", narrowDepthTexture);
-        shader.setSampler("WideDepth", wideDepthTexture);
+        shader.setSampler("NarrowDepth", separateDepth ? narrowDepthTexture : 0);
+        shader.setSampler("WideDepth", separateDepth ? wideDepthTexture : 0);
         PbrRenderer.setBloomStrength(strength);
         PbrRenderer.setWideBloomStrength(wideStrength);
         PbrRenderer.setHasScopeMask(maskTexture != 0 ? 1 : 0);
+        PbrRenderer.setSeparateBloomDepth(separateDepth);
         quad.bind();
         shader.apply();
         RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();

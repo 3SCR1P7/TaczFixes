@@ -61,6 +61,7 @@ public final class PbrRenderer {
     private static AbstractUniform uCameraPos;
     private static AbstractUniform uCamoIndex, uCamoStrength, uCamoEmissive;
     private static AbstractUniform uBlurDirection, uCompositeStrength, uWideStrength, uHasScopeMask;
+    private static AbstractUniform uHasSeparateBloomDepth;
     private static AbstractUniform uCompositeScissorRect, uCompositeScissorFade, uCompositeHasScissor;
     private static AbstractUniform uSmoothAlpha;
     private static VertexBuffer mesh;
@@ -1006,6 +1007,7 @@ public final class PbrRenderer {
                     uCompositeStrength = s.safeGetUniform("Strength");
                     uWideStrength = s.safeGetUniform("WideStrength");
                     uHasScopeMask = s.safeGetUniform("HasScopeMask");
+                    uHasSeparateBloomDepth = s.safeGetUniform("HasSeparateDepth");
                     uCompositeScissorRect = s.safeGetUniform("ScissorRect");
                     uCompositeScissorFade = s.safeGetUniform("ScissorFade");
                     uCompositeHasScissor = s.safeGetUniform("HasScissor");
@@ -1035,6 +1037,7 @@ public final class PbrRenderer {
         uCameraPos = null;
         uCamoIndex = uCamoStrength = uCamoEmissive = null;
         uBlurDirection = uCompositeStrength = uWideStrength = uHasScopeMask = null;
+        uHasSeparateBloomDepth = null;
         uCompositeScissorRect = uCompositeScissorFade = uCompositeHasScissor = null;
         uSmoothAlpha = null;
         for (int i = 0; i < LOCAL_LIGHT_SLOTS; i++) {
@@ -1185,6 +1188,10 @@ public final class PbrRenderer {
         if (uHasScopeMask != null) uHasScopeMask.set(value);
     }
 
+    static void setSeparateBloomDepth(boolean separate) {
+        setUniform(uHasSeparateBloomDepth, separate ? 1 : 0);
+    }
+
     /** 合成 pass 的裁剪矩形(x0,y0,x1,y1 像素)与边缘淡出宽度。 */
     static void setCompositeScissor(boolean enabled, int x0, int y0, int x1, int y1, float fade) {
         if (uCompositeHasScissor != null) uCompositeHasScissor.set(enabled ? 1 : 0);
@@ -1249,7 +1256,8 @@ public final class PbrRenderer {
             return;
         }
         sceneColorCaptured = false;
-        if (!Config.PBR_SSR.get() || shader == null || sceneCaptureShader == null || !enabled()) {
+        if (!Config.PBR_SSR.get() || Config.PBR_SSR_STRENGTH.get() <= 0.0D
+                || shader == null || sceneCaptureShader == null || !enabled()) {
             return;
         }
         // 最近没有 PBR 几何在画(手里不是枪/没画世界里的枪)时, 不需要为 SSR 捕获场景。
@@ -1275,7 +1283,6 @@ public final class PbrRenderer {
         int previousDraw = GL11.glGetInteger(GL30.GL_DRAW_FRAMEBUFFER_BINDING);
         try {
             GL30.glBindFramebuffer(GL30.GL_FRAMEBUFFER, sceneCaptureFbo);
-            GL30.glDrawBuffers(SCENE_CAPTURE_DRAW_BUFFERS);
             RenderSystem.disableBlend();
             RenderSystem.disableDepthTest();
             RenderSystem.disableCull();
@@ -1307,6 +1314,10 @@ public final class PbrRenderer {
         }
         int halfW = Math.max(1, main.width / 2);
         int halfH = Math.max(1, main.height / 2);
+        if (sceneCaptureFbo >= 0 && sceneColorWidth == halfW && sceneColorHeight == halfH
+                && sceneDepthWidth == halfW && sceneDepthHeight == halfH) {
+            return true;
+        }
         int previousTexture = GL11.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
         try {
             if (sceneColorTexture == 0) {
@@ -1362,6 +1373,7 @@ public final class PbrRenderer {
             sceneCaptureUnavailable = true;
             return false;
         }
+        GL30.glDrawBuffers(SCENE_CAPTURE_DRAW_BUFFERS);
         sceneCaptureFbo = fbo;
         return true;
     }

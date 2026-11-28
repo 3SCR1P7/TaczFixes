@@ -46,6 +46,14 @@
       ]
     },
     {
+      "type": "int",
+      "count": 1,
+      "name": "HasSeparateDepth",
+      "values": [
+        0
+      ]
+    },
+    {
       "type": "float",
       "count": 4,
       "name": "ScissorRect",
