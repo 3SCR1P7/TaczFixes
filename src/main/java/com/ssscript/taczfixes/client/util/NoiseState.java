@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.client.util;
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.common.config.Config;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.util.CeaseFireTiming;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.util.time.GunTime;
 import net.minecraft.client.Minecraft;
@@ -13,14 +14,18 @@ import net.minecraft.sounds.SoundEvent;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
 
 public final class NoiseState {
+    private static final double NEARBY_SHOT_RANGE_SQUARED = 16.0D * 16.0D;
+    private static final double NEARBY_FULL_NOISE_RANGE_SQUARED = 4.0D * 4.0D;
     private static final SoundEvent RING = SoundEvent.createVariableRangeEvent(
             ResourceLocation.fromNamespaceAndPath(TaczFixesMod.MOD_ID, "fire_noise_ring"));
     private static double value;
     private static long mainStopAt;
     private static long offhandStopAt;
+    private static long nearbyStopAt;
     private static LocalPlayer owner;
     private static RingingSound ringing;
     private static volatile float filterIntensity;
@@ -50,8 +55,37 @@ public final class NoiseState {
         } else {
             offhandStopAt = stopAt;
         }
-        value = Math.min(max, value + TaczFixesDataManager.resolveFireNoise(stack));
-        updateIntensity(max);
+        addNoise(TaczFixesDataManager.resolveFireNoise(stack), max);
+    }
+
+    public static void onNearbyShot(LivingEntity shooter, ItemStack stack) {
+        Minecraft minecraft = Minecraft.getInstance();
+        if (!minecraft.isSameThread()) {
+            minecraft.execute(() -> onNearbyShot(shooter, stack));
+            return;
+        }
+        LocalPlayer player = minecraft.player;
+        if (player == null || player == shooter || !player.isAlive() || player.level() != shooter.level()) {
+            return;
+        }
+        double distanceSquared = player.distanceToSqr(shooter);
+        if (distanceSquared > NEARBY_SHOT_RANGE_SQUARED) {
+            return;
+        }
+        int max = Config.FIRE_NOISE_MAX.get();
+        IGun gun = IGun.getIGunOrNull(stack);
+        if (max <= 0 || gun == null) {
+            return;
+        }
+        double attenuation = NEARBY_FULL_NOISE_RANGE_SQUARED / Math.max(NEARBY_FULL_NOISE_RANGE_SQUARED, distanceSquared);
+        double noise = TaczFixesDataManager.resolveFireNoise(stack) * attenuation;
+        if (noise <= 0.0D) {
+            return;
+        }
+        updateOwner(player);
+        long stopAt = GunTime.nowMillis() + CeaseFireTiming.delay(shooter, stack, gun, false);
+        nearbyStopAt = Math.max(nearbyStopAt, stopAt);
+        addNoise(noise, max);
     }
 
     public static void tick() {
@@ -68,7 +102,7 @@ public final class NoiseState {
 
         int max = Config.FIRE_NOISE_MAX.get();
         value = Math.min(value, max);
-        if (GunTime.nowMillis() >= Math.max(mainStopAt, offhandStopAt)) {
+        if (GunTime.nowMillis() >= Math.max(nearbyStopAt, Math.max(mainStopAt, offhandStopAt))) {
             boolean filterThresholdReached = value >= Config.FIRE_NOISE_FILTER_THRESHOLD.get();
             boolean tinnitusThresholdReached = value >= Config.FIRE_NOISE_TINNITUS_THRESHOLD.get();
             int decay;
@@ -101,7 +135,7 @@ public final class NoiseState {
         }
         owner = null;
         value = 0.0D;
-        mainStopAt = offhandStopAt = 0L;
+        mainStopAt = offhandStopAt = nearbyStopAt = 0L;
         filterIntensity = ringVolume = 0.0F;
     }
 
@@ -110,6 +144,11 @@ public final class NoiseState {
             reset();
             owner = player;
         }
+    }
+
+    private static void addNoise(double noise, int max) {
+        value = Math.min(max, value + noise);
+        updateIntensity(max);
     }
 
     private static void updateIntensity(int max) {
