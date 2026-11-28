@@ -946,7 +946,7 @@ public final class PbrRenderer {
         MATERIALS.clear();
         TYPES.clear();
         CAMO_TYPES.clear();
-        com.ssscript.taczfixes.client.camo.DynamicCamo.clear();
+        com.ssscript.taczfixes.client.util.camo.DynamicCamo.clear();
         if (camoShader != null) {
             try {
                 camoShader.close();
@@ -973,9 +973,9 @@ public final class PbrRenderer {
                     // 动态迷彩: 把枪包提供的片段拼进 gun_pbr, 生成带 CamoIndex 分发的程序;
                     // 没有迷彩(或编译失败)时退回原程序, 迷彩行在面板里自然消失。
                     try {
-                        com.ssscript.taczfixes.client.camo.CamoShaderBuilder.Result camo =
-                                com.ssscript.taczfixes.client.camo.CamoShaderBuilder.build(event.getResourceProvider());
-                        com.ssscript.taczfixes.client.camo.DynamicCamo.publish(camo);
+                        com.ssscript.taczfixes.client.util.camo.CamoShaderBuilder.Result camo =
+                                com.ssscript.taczfixes.client.util.camo.CamoShaderBuilder.build(event.getResourceProvider());
+                        com.ssscript.taczfixes.client.util.camo.DynamicCamo.publish(camo);
                         if (camo != null) {
                             camoShader = camo.shader();
                             shader = camoShader;
@@ -984,7 +984,7 @@ public final class PbrRenderer {
                         }
                     } catch (Throwable t) {
                         TaczFixesMod.LOGGER.error("taczfixes: dynamic camo build failed, falling back to base gun_pbr", t);
-                        com.ssscript.taczfixes.client.camo.DynamicCamo.publish(null);
+                        com.ssscript.taczfixes.client.util.camo.DynamicCamo.publish(null);
                         camoShader = null;
                         shader = s;
                     }
@@ -1448,8 +1448,8 @@ public final class PbrRenderer {
         if (camoOwner == null) {
             camoOwner = com.ssscript.taczfixes.client.util.GunRecolorManager.currentRenderItem();
         }
-        com.ssscript.taczfixes.client.camo.DynamicCamo.Entry entry =
-                com.ssscript.taczfixes.client.camo.DynamicCamo.appliedOn(camoOwner);
+        com.ssscript.taczfixes.client.util.camo.DynamicCamo.Entry entry =
+                com.ssscript.taczfixes.client.util.camo.DynamicCamo.appliedOn(camoOwner);
         if (entry == null) {
             return CamoUniforms.NONE;
         }

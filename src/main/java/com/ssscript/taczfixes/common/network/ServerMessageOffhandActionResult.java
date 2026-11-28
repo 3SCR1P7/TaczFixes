@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.common.network;
 
-import com.ssscript.taczfixes.client.client.ClientOffhandNetworkHandler;
+import com.ssscript.taczfixes.client.handler.OffhandNetworkHandler;
 import java.util.UUID;
 import java.util.function.Supplier;
 import net.minecraft.network.FriendlyByteBuf;
@@ -53,7 +53,7 @@ public final class ServerMessageOffhandActionResult {
         context.enqueueWork(() -> {
             DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> {
                 return () -> {
-                    ClientOffhandNetworkHandler.handleActionResult(packet.actionType, packet.requestedStackId, packet.requestId, packet.shootTimestamp, packet.accepted, packet.stackMatched, packet.authoritativeFireMode, packet.authoritativeShootCoolDown);
+                    OffhandNetworkHandler.handleActionResult(packet.actionType, packet.requestedStackId, packet.requestId, packet.shootTimestamp, packet.accepted, packet.stackMatched, packet.authoritativeFireMode, packet.authoritativeShootCoolDown);
                 };
             });
         });

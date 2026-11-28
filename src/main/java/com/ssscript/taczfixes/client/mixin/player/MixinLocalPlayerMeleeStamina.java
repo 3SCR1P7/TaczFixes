@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin.player;
 
-import com.ssscript.taczfixes.client.client.DualWieldClient;
-import com.ssscript.taczfixes.client.client.DualWieldMelee;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.DualWieldMelee;
 import com.ssscript.taczfixes.client.util.AimingStaminaClientState;
 import com.ssscript.taczfixes.common.data.AttachmentTaczFixesManager;
 import com.ssscript.taczfixes.common.data.GunTaczFixesData;

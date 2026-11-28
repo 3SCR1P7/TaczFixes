@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.client.DualWieldMinigunAnimation;
+import com.ssscript.taczfixes.client.util.dual.DualWieldMinigunAnimation;
 import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;

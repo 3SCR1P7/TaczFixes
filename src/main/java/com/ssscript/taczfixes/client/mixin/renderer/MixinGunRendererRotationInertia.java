@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin.renderer;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
 import com.ssscript.taczfixes.client.util.GunRotationInertiaTransform;
 import com.tacz.guns.api.item.IGun;
 import net.minecraft.client.player.LocalPlayer;

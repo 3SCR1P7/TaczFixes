@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.util;
 
-import com.ssscript.taczfixes.client.camo.DynamicCamo;
+import com.ssscript.taczfixes.client.util.camo.DynamicCamo;
 import com.ssscript.taczfixes.common.network.ClientMessageGunColor;
 import com.ssscript.taczfixes.common.network.NetworkHandler;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;

@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin.compat.ysm;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
-import com.ssscript.taczfixes.client.client.DualThirdPersonRenderer;
+import com.ssscript.taczfixes.client.util.dual.DualThirdPersonRenderer;
 import com.ssscript.taczfixes.common.compat.YsmCompatibilityDiagnostics;
 import com.ssscript.taczfixes.common.compat.YsmDualWieldCompat;
 import com.ssscript.taczfixes.common.compat.YsmHeldLayerRenderState;

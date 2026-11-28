@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.screen;
 
-import com.ssscript.taczfixes.client.curseforge.CurseForgeConfig;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeConfig;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;

@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin;
 
-import com.ssscript.taczfixes.client.client.DualFocusAimKey;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.DualFocusAimKey;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
 import com.ssscript.taczfixes.common.util.CustomSlotStorage;
 import com.ssscript.taczfixes.client.util.ScopeSwitchState;
 import com.tacz.guns.api.DefaultAssets;

@@ -1,8 +1,8 @@
 package com.ssscript.taczfixes.client.mixin.dual;
 
-import com.ssscript.taczfixes.client.client.DualMuzzleFlashState;
-import com.ssscript.taczfixes.client.client.DualMuzzleHandScope;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualMuzzleFlashState;
+import com.ssscript.taczfixes.client.util.dual.DualMuzzleHandScope;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.renderer;
 
-import com.ssscript.taczfixes.client.client.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
 import net.minecraft.client.renderer.ItemInHandRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;

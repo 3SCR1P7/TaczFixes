@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.dual;
 
-import com.ssscript.taczfixes.client.client.DualThirdPersonArmPose;
+import com.ssscript.taczfixes.client.util.dual.DualThirdPersonArmPose;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.world.entity.LivingEntity;

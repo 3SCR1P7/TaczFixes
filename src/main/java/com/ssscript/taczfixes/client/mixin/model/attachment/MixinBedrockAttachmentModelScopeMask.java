@@ -3,7 +3,7 @@ package com.ssscript.taczfixes.client.mixin.model.attachment;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
 import com.ssscript.taczfixes.client.render.PbrBloom;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;

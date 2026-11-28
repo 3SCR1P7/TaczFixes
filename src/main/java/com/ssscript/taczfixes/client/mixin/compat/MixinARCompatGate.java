@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin.compat;
 
-import com.ssscript.taczfixes.client.camo.DynamicCamo;
-import com.ssscript.taczfixes.client.client.ClientArGate;
+import com.ssscript.taczfixes.client.util.camo.DynamicCamo;
+import com.ssscript.taczfixes.client.util.ClientArGate;
 import com.ssscript.taczfixes.client.util.GunRecolorManager;
 import com.tacz.guns.compat.ar.ARCompat;
 import net.minecraft.client.Minecraft;

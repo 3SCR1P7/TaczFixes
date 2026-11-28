@@ -3,7 +3,7 @@ package com.ssscript.taczfixes.client.mixin.model.attachment;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.model.BedrockAttachmentModel;
 import com.tacz.guns.client.model.bedrock.BedrockPart;
-import com.ssscript.taczfixes.client.client.DualRenderContext;
+import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
 import com.ssscript.taczfixes.common.network.ServerMessageOffhandActionResult;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;

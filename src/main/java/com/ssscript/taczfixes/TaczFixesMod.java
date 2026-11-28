@@ -222,9 +222,9 @@ public class TaczFixesMod {
         event.registerReloadListener(new com.ssscript.taczfixes.common.data.AdapterNativeDataReloadListener());
         event.registerReloadListener((barrier, resourceManager, preparationsProfiler, reloadProfiler, backgroundExecutor, gameExecutor) ->
                 java.util.concurrent.CompletableFuture.completedFuture(null).thenCompose(barrier::wait)
-                        .thenRunAsync(com.ssscript.taczfixes.client.client.CrosshairPartLayout::clear, gameExecutor)
+                        .thenRunAsync(com.ssscript.taczfixes.client.util.crosshair.CrosshairPartLayout::clear, gameExecutor)
                         // 圆形准星动态贴图缓存也要在资源重载后失效并释放, 否则旧贴图残留且无限增长。
-                        .thenRunAsync(com.ssscript.taczfixes.client.client.ExpandedCircleCrosshair::clear, gameExecutor));
+                        .thenRunAsync(com.ssscript.taczfixes.client.util.crosshair.ExpandedCircleCrosshair::clear, gameExecutor));
     }
 
     private void onRegisterKeyMappings(net.minecraftforge.client.event.RegisterKeyMappingsEvent event) {
@@ -241,7 +241,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.addListener(
                     com.ssscript.taczfixes.client.render.PbrRenderer::onRenderLevelStage);
             // 迷彩切换后让渲染侧按物品实例的缓存失效, 改装界面里立即看到效果
-            com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.camo.DynamicCamo::invalidate);
+            com.ssscript.taczfixes.common.util.GunColorStorage.setCamoChangeListener(com.ssscript.taczfixes.client.util.camo.DynamicCamo::invalidate);
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.attachment.AttachmentAnimationCameraHandler());
             MinecraftForge.EVENT_BUS.register(new SteplessZoomHandler());
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.ScopeSwitchHandler());
@@ -265,7 +265,7 @@ public class TaczFixesMod {
             MinecraftForge.EVENT_BUS.register(new com.ssscript.taczfixes.client.handler.GunPackMenuButtonHandler());
             MinecraftForge.EVENT_BUS.register(com.ssscript.taczfixes.client.hud.CustomHudController.instance());
             // 启动后后台检查已安装枪包更新; 有更新时在枪包管理界面显示红点
-            com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
+            com.ssscript.taczfixes.client.util.curseforge.GunPackUpdateChecker.checkOnStartupAsync();
         });
     }
 }

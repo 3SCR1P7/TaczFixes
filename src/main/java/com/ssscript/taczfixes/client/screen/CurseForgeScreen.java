@@ -1,11 +1,11 @@
 package com.ssscript.taczfixes.client.screen;
 
-import com.ssscript.taczfixes.client.curseforge.CurseForgeApi;
-import com.ssscript.taczfixes.client.curseforge.CurseForgeConfig;
-import com.ssscript.taczfixes.client.curseforge.CurseForgeImages;
-import com.ssscript.taczfixes.client.curseforge.CurseForgeInstalledPacks;
-import com.ssscript.taczfixes.client.curseforge.GunPackInstaller;
-import com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeApi;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeConfig;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeImages;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeInstalledPacks;
+import com.ssscript.taczfixes.client.util.curseforge.GunPackInstaller;
+import com.ssscript.taczfixes.client.util.curseforge.GunPackUpdateChecker;
 import com.ssscript.taczfixes.common.data.GunPackIds;
 import com.ssscript.taczfixes.common.data.GunPackSettings;
 import net.minecraft.client.Minecraft;

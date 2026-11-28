@@ -1,9 +1,9 @@
 package com.ssscript.taczfixes.client.screen;
 
-import com.ssscript.taczfixes.client.curseforge.CurseForgeApi;
-import com.ssscript.taczfixes.client.curseforge.CurseForgeInstalledPacks;
-import com.ssscript.taczfixes.client.curseforge.GunPackInstaller;
-import com.ssscript.taczfixes.client.curseforge.GunPackUpdateChecker;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeApi;
+import com.ssscript.taczfixes.client.util.curseforge.CurseForgeInstalledPacks;
+import com.ssscript.taczfixes.client.util.curseforge.GunPackInstaller;
+import com.ssscript.taczfixes.client.util.curseforge.GunPackUpdateChecker;
 import com.ssscript.taczfixes.client.mixin.MixinAbstractSelectionListAccessor;
 import com.ssscript.taczfixes.client.mixin.MixinPackSelectionScreenAccessor;
 import com.ssscript.taczfixes.client.util.PendingResourceReload;

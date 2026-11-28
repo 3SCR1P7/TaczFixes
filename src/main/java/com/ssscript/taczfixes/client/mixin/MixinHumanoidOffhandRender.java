@@ -2,7 +2,7 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.tacz.guns.client.renderer.other.HumanoidOffhandRender;
-import com.ssscript.taczfixes.client.client.DualThirdPersonRenderer;
+import com.ssscript.taczfixes.client.util.dual.DualThirdPersonRenderer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;

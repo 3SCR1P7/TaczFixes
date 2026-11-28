@@ -3,7 +3,7 @@ package com.ssscript.taczfixes.client.render;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.BufferBuilder;
 import com.mojang.blaze3d.vertex.VertexConsumer;
-import com.ssscript.taczfixes.client.client.ClientArGate;
+import com.ssscript.taczfixes.client.util.ClientArGate;
 import com.ssscript.taczfixes.common.config.Config;
 import java.util.ArrayDeque;
 import java.util.Collections;

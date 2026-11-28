@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.mixin.compat;
 
-import com.ssscript.taczfixes.client.client.DualWieldAnimatorContext;
+import com.ssscript.taczfixes.client.util.dual.DualWieldAnimatorContext;
 import com.ssscript.taczfixes.common.util.DualWieldEligibility;
 import java.util.Optional;
 import net.minecraft.world.entity.player.Player;

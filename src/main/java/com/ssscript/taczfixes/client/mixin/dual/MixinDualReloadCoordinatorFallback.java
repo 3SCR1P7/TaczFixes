@@ -1,7 +1,7 @@
 package com.ssscript.taczfixes.client.mixin.dual;
 
-import com.ssscript.taczfixes.client.client.DualReloadCoordinator;
-import com.ssscript.taczfixes.client.client.DualReloadFallback;
+import com.ssscript.taczfixes.client.util.dual.DualReloadCoordinator;
+import com.ssscript.taczfixes.client.util.dual.DualReloadFallback;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
 import org.spongepowered.asm.mixin.Mixin;

@@ -1,6 +1,6 @@
 package com.ssscript.taczfixes.client.render;
 
-import com.ssscript.taczfixes.client.client.ClientArGate;
+import com.ssscript.taczfixes.client.util.ClientArGate;
 import com.ssscript.taczfixes.common.config.Config;
 import java.util.ArrayDeque;
 import java.util.Deque;

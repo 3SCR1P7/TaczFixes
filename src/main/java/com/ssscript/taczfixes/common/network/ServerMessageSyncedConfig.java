@@ -72,7 +72,7 @@ public final class ServerMessageSyncedConfig {
     public static void handle(ServerMessageSyncedConfig message, Supplier<NetworkEvent.Context> contextSupplier) {
         NetworkEvent.Context context = contextSupplier.get();
         context.enqueueWork(() -> DistExecutor.unsafeRunWhenOn(Dist.CLIENT,
-                () -> () -> com.ssscript.taczfixes.client.client.ClientConfigSync.applyServerValues(message.entries)));
+                () -> () -> com.ssscript.taczfixes.client.util.ClientConfigSync.applyServerValues(message.entries)));
         context.setPacketHandled(true);
     }
 }

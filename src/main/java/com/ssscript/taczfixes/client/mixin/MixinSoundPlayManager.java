@@ -2,8 +2,8 @@ package com.ssscript.taczfixes.client.mixin;
 
 import com.tacz.guns.client.resource.GunDisplayInstance;
 import com.tacz.guns.client.sound.SoundPlayManager;
-import com.ssscript.taczfixes.client.client.DualWieldClient;
-import com.ssscript.taczfixes.client.client.OffhandDisplayManager;
+import com.ssscript.taczfixes.client.util.dual.DualWieldClient;
+import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import com.ssscript.taczfixes.common.util.DualWieldBalance;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.LocalPlayer;
