@@ -11,6 +11,7 @@ uniform sampler2D WideDepth;
 uniform float Strength;
 uniform float WideStrength;
 uniform int HasScopeMask;
+uniform int HasSeparateDepth;
 // 发光包围盒裁剪: ScissorRect = (x0, y0, x1, y1) 像素(左下原点), ScissorFade 边缘淡出宽度。
 uniform vec4 ScissorRect;
 uniform float ScissorFade;
@@ -28,12 +29,15 @@ float occlusion(float sceneDepth, float blurDepth) {
 
 void main() {
     float sceneDepth = texture(SceneDepth, texCoord).r;
-    float narrowDepth = texture(NarrowDepth, texCoord).a;
-    vec3 color = texture(Sampler0, texCoord).rgb * Strength * occlusion(sceneDepth, narrowDepth);
+    vec4 narrow = texture(Sampler0, texCoord);
+    // Temporal smoothing keeps only color. Otherwise the blur texture already carries depth.
+    float narrowDepth = HasSeparateDepth != 0 ? texture(NarrowDepth, texCoord).a : narrow.a;
+    vec3 color = narrow.rgb * Strength * occlusion(sceneDepth, narrowDepth);
     // 没开宽泛光层时连采样都省掉。
     if (WideStrength > 0.0) {
-        float wideDepth = texture(WideDepth, texCoord).a;
-        color += texture(Wide, texCoord).rgb * WideStrength * occlusion(sceneDepth, wideDepth);
+        vec4 wide = texture(Wide, texCoord);
+        float wideDepth = HasSeparateDepth != 0 ? texture(WideDepth, texCoord).a : wide.a;
+        color += wide.rgb * WideStrength * occlusion(sceneDepth, wideDepth);
     }
     color *= 1.6;
     if (HasScopeMask != 0) {

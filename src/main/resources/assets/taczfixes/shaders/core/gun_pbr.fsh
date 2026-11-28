@@ -235,11 +235,12 @@ vec4 screenSpaceReflection(vec3 n, vec3 envTint, float strength, int steps) {
     vec2 hi = vec2(0.990, 0.986);
     vec2 offv = max(max(lo - puv, puv - hi), vec2(0.0));
     float off = offv.x + offv.y;
+    float inside = 1.0 - smoothstep(0.0, 0.30, off);
+    if (inside <= 0.0) return result;
     vec2 cuv = clamp(puv, lo, hi);
     float give = 0.075 * smoothstep(0.0, 0.45, off);
     vec2 inward = step(puv, lo) - step(hi, puv);
     cuv += inward * give;
-    float inside = 1.0 - smoothstep(0.0, 0.30, off);
     float facing = 0.62 + 0.38 * smoothstep(0.0, 0.22, abs(front));
     float rad = 0.012 * (1.0 + 1.2 * clamp(off, 0.0, 1.0));
     vec2 ox = vec2(rad, 0.0);
@@ -417,20 +418,23 @@ void main() {
     float s2 = LocalLightStrength2;
     float s3 = LocalLightStrength3;
     float s4 = LocalLightStrength4;
-    float localStrengthSum = s1 + s2 + s3 + s4;
+    bool hasGlare = GlareStrength > 0.0
+            && (s1 + s2 + s3 + s4 > 0.0 || (sunVisibility > 0.0 && exposure > 0.0));
 
     if (EmissionPass != 0) {
         float sunBehindView = smoothstep(0.05, 0.75, lCelV.z);
         float backDim = mix(1.0, 0.2, sunBehindView);
         vec3 glare = vec3(0.0);
         // 没有太阳/月亮也点燃不起任何局部光时, 眩光恒为 0: 跳过整段高光叶计算。
-        if (localStrengthSum > 0.0 || (sunVisibility > 0.0 && exposure > 0.0)) {
+        if (hasGlare) {
             glare = glareHighlight(n, v, roughness, f0, linearBase, lCelV, l1v, l2v, l3v, l4v)
                     * (GlareStrength * 0.25) * backDim;
         }
         vec3 total = (glow + glare) * fog;
-        float sceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
-        if (GlareDepthTest != 0 && gl_FragCoord.z > sceneDepth + 0.000001) discard;
+        if (GlareDepthTest != 0) {
+            float sceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
+            if (gl_FragCoord.z > sceneDepth + 0.000001) discard;
+        }
         fragColor = vec4(total, alpha);
         fragEmission = taczfixesPackDepth(gl_FragCoord.z);
         return;
@@ -440,17 +444,17 @@ void main() {
     vec3 l = lCelV;
     vec3 celestialDirect = vec3(0.0);
     float areaT = 0.35;
-    vec3 hCelestial = safeNormalize(v + l);
     float nl = max(dot(n, l), 0.0);
-    float nh = max(dot(n, hCelestial), 0.0);
-    float celVh = max(dot(v, hCelestial), 0.0);
-    float celFv = 1.0 - celVh;
-    float celFv2 = celFv * celFv;
-    vec3 fresnel = f0 + (1.0 - f0) * (celFv2 * celFv2 * celFv);
-    // 大范围高光叶: 侧对太阳/月亮时可见面上仍要能看到明确的高光斑, 而不是只有柔和环境反光。
-    float nlWide = smoothstep(-0.30, 0.22, nl);
     // 太阳/月亮完全照不到(洞穴/被天花板挡住)时这一整块为 0: 跳过两次高光叶计算。
     if (sunVisibility > 0.0 && exposure > 0.0) {
+        vec3 hCelestial = safeNormalize(v + l);
+        float nh = max(dot(n, hCelestial), 0.0);
+        float celVh = max(dot(v, hCelestial), 0.0);
+        float celFv = 1.0 - celVh;
+        float celFv2 = celFv * celFv;
+        vec3 fresnel = f0 + (1.0 - f0) * (celFv2 * celFv2 * celFv);
+        // 大范围高光叶: 侧对太阳/月亮时可见面上仍要能看到明确的高光斑, 而不是只有柔和环境反光。
+        float nlWide = smoothstep(-0.30, 0.22, nl);
         celestialDirect = specGGX(n, v, t, b, l, CelestialColor,
                 exposure * exposure * sunVisibility, f0, roughness, aniso, 0.0);
         celestialDirect += fresnel * nlWide * pow(nh, mix(32.0, 5.0, areaT))
@@ -588,16 +592,16 @@ void main() {
     reflection *= mix(1.0, 0.55, sunBehind);
     // 眩光: 主通道只加 0.35 倍作为清晰核心; 完整眩光值写进第二颜色附件, 由泛光链路模糊成外圈光晕。
     vec3 glare = vec3(0.0);
-    if (localStrengthSum > 0.0 || (sunVisibility > 0.0 && exposure > 0.0)) {
+    if (hasGlare) {
         glare = glareHighlight(n, v, roughness, f0, linearBase, lCelV, l1v, l2v, l3v, l4v)
                 * (GlareStrength * 0.25) * mix(1.0, 0.2, sunBehind);
+        vec3 glareCore = glare * 0.35;
+        if (GlareDepthTest != 0) {
+            float glareSceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
+            glareCore *= step(gl_FragCoord.z, glareSceneDepth + 0.000001);
+        }
+        reflection += glareCore;
     }
-    vec3 glareCore = glare * 0.35;
-    if (GlareDepthTest != 0) {
-        float glareSceneDepth = texture(Sampler5, gl_FragCoord.xy / ScreenSize).r;
-        glareCore *= step(gl_FragCoord.z, glareSceneDepth + 0.000001);
-    }
-    reflection += glareCore;
     // 高光轻微外扩(类似过曝), 提升"闪"的读感。
     float reflLum = dot(reflection, vec3(0.2126, 0.7152, 0.0722));
     float over = smoothstep(0.55, 1.30, reflLum) * clamp(baseRefl * 0.45 + chrome * 0.85, 0.0, 1.0);
