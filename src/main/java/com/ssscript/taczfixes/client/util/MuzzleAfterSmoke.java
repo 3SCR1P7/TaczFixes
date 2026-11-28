@@ -1,12 +1,14 @@
 package com.ssscript.taczfixes.client.util;
 
 import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
+import com.ssscript.taczfixes.client.render.MuzzleSmokeRender;
 import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.ParticleEffectData;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.data.ParticleEffectDefinition;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.resource.ParticleDefinitionLoader;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.runtime.ParticleEmitterInstance;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.runtime.ParticleInstance;
+import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.world.MolangWorldParticleRenderType;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.world.SnowStormParticle;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.world.WorldEmitterManager;
 import com.mojang.blaze3d.vertex.VertexConsumer;
@@ -34,6 +36,7 @@ import java.util.WeakHashMap;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.particle.ParticleRenderType;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.InteractionHand;
@@ -45,7 +48,7 @@ import org.joml.Matrix4f;
 public final class MuzzleAfterSmoke {
     private static final long CEASE_FIRE_GRACE_MS = 100L;
     // Keep updating the muzzle anchor while particles from the last emission are visible.
-    private static final long ANCHOR_TAIL_MS = 800L;
+    private static final long ANCHOR_TAIL_MS = 1100L;
     private static final ResourceLocation EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke");
     private static final ResourceLocation MEDIUM_EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke_medium");
     private static final ResourceLocation HEAVY_EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke_heavy");
@@ -149,9 +152,12 @@ public final class MuzzleAfterSmoke {
         return null;
     }
 
+    public static boolean isAfterSmoke(ResourceLocation effectId) {
+        return EFFECT_ID.equals(effectId) || MEDIUM_EFFECT_ID.equals(effectId) || HEAVY_EFFECT_ID.equals(effectId);
+    }
+
     public static void moveFirstPersonSmoke(ParticleEmitterInstance emitter, Matrix4f muzzle, InteractionHand hand) {
-        ResourceLocation effectId = emitter.getDefinition().getIdentifier();
-        if (!EFFECT_ID.equals(effectId) && !MEDIUM_EFFECT_ID.equals(effectId) && !HEAVY_EFFECT_ID.equals(effectId)) {
+        if (!isAfterSmoke(emitter.getDefinition().getIdentifier())) {
             return;
         }
         LocalPlayer player = Minecraft.getInstance().player;
@@ -339,13 +345,23 @@ public final class MuzzleAfterSmoke {
 
     private static final class WorldSmokeParticle extends SnowStormParticle {
         private final Trail trail;
+        private final ParticleRenderType renderType;
         private Vec3 previousAnchor;
 
         private WorldSmokeParticle(ClientLevel level, ParticleInstance particle, ParticleEffectDefinition definition,
                 ParticleEmitterInstance emitter, Trail trail, Vec3 spawnAnchor) {
             super(level, particle, definition, emitter);
             this.trail = trail;
+            var description = definition.getDescription();
+            var texture = description.getTexture();
+            this.renderType = MuzzleSmokeRender.world(texture,
+                    MolangWorldParticleRenderType.get(description.getMaterial(), texture));
             this.previousAnchor = spawnAnchor;
+        }
+
+        @Override
+        public ParticleRenderType getRenderType() {
+            return renderType;
         }
 
         @Override
