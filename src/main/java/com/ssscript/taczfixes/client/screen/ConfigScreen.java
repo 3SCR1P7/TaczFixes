@@ -317,9 +317,12 @@ public class ConfigScreen {
     private static void buildFireNoise(ConfigCategory cat, ConfigEntryBuilder entry) {
         int_(cat, entry, "fire_noise.max", Config.FIRE_NOISE_MAX);
         int_(cat, entry, "fire_noise.filter_threshold", Config.FIRE_NOISE_FILTER_THRESHOLD);
+        dbl_(cat, entry, "fire_noise.filter_strength", Config.FIRE_NOISE_FILTER_STRENGTH);
         int_(cat, entry, "fire_noise.tinnitus_threshold", Config.FIRE_NOISE_TINNITUS_THRESHOLD);
-        int_(cat, entry, "fire_noise.decay_per_tick_high_noise", Config.FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE);
-        int_(cat, entry, "fire_noise.decay_per_tick_low_noise", Config.FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE);
+        dbl_(cat, entry, "fire_noise.tinnitus_strength", Config.FIRE_NOISE_TINNITUS_STRENGTH);
+        int_(cat, entry, "fire_noise.decay_per_tick_severe", Config.FIRE_NOISE_DECAY_PER_TICK_SEVERE);
+        int_(cat, entry, "fire_noise.decay_per_tick_mild", Config.FIRE_NOISE_DECAY_PER_TICK_MILD);
+        int_(cat, entry, "fire_noise.decay_per_tick_unaffected", Config.FIRE_NOISE_DECAY_PER_TICK_UNAFFECTED);
         dbl_(cat, entry, "fire_noise.suppressor_multiplier", Config.FIRE_NOISE_SUPPRESSOR_MULTIPLIER);
         sub(cat, entry, "fire_noise_gun_types", group -> Config.FIRE_NOISE_TYPES.forEach(
                 (type, value) -> int_(group, entry, "fire_noise.gun_types." + type, value)));
