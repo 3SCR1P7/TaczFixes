@@ -376,6 +376,7 @@ public final class PbrBloom {
     }
 
     private static final int[] SCISSOR_RECT = new int[4];
+    private static final float[] CLEAR_COLOR = {0f, 0f, 0f, 0f};
     private static final java.nio.IntBuffer SCISSOR_BOX = BufferUtils.createIntBuffer(4);
     private static boolean scissorActive;
     private static boolean scissorWasEnabled;
@@ -403,29 +404,21 @@ public final class PbrBloom {
         }
     }
 
-    /** 对当前目标启用 scissor; 没有发光包围盒时退回全屏。返回是否真的启用了裁剪。 */
-    private static boolean applyPassScissor(RenderTarget target) {
-        if (!scissorActive || target == null) {
-            return false;
-        }
+    private static boolean findPassScissor(RenderTarget target) {
         RenderTarget main = Minecraft.getInstance().getMainRenderTarget();
-        if (main == null || !PbrRenderer.emissionScissorRect(target.width, target.height,
-                main.width, main.height, scissorMarginPixels, SCISSOR_RECT)) {
-            GL11.glDisable(GL11.GL_SCISSOR_TEST);
-            return false;
-        }
+        return main != null && PbrRenderer.emissionScissorRect(target.width, target.height,
+                main.width, main.height, scissorMarginPixels, SCISSOR_RECT);
+    }
+
+    private static void enablePassScissor() {
         GL11.glEnable(GL11.GL_SCISSOR_TEST);
         GL11.glScissor(SCISSOR_RECT[0], SCISSOR_RECT[1], SCISSOR_RECT[2], SCISSOR_RECT[3]);
-        return true;
     }
 
     public static void composite() {
         if (!canCapture()) { dirty = false; return; }
         boolean build = buildThisFrame && dirty;
-        if (build) {
-            chainValid = true;
-        }
-        if (!chainValid) { dirty = false; return; }
+        if (!build && !chainValid) { dirty = false; return; }
         var main = Minecraft.getInstance().getMainRenderTarget();
         boolean depth = GL11.glIsEnabled(GL11.GL_DEPTH_TEST);
         boolean cull = GL11.glIsEnabled(GL11.GL_CULL_FACE);
@@ -449,7 +442,7 @@ public final class PbrBloom {
             GL11.glDisable(GL11.GL_STENCIL_TEST);
             ensureQuad();
             float radius = Config.PBR_BLOOM_RADIUS.get().floatValue();
-            // 包围盒膨胀: 覆盖窄/宽两层高斯的可视尾部。
+            // Include the widest Gaussian support plus padding for round-up and linear filtering.
             scissorMarginPixels = radius * (float) WIDE_SIGMA_FACTOR * 2.0F + 96.0F;
             beginPassScissor();
             float strength = Config.PBR_BLOOM_STRENGTH.get().floatValue();
@@ -471,6 +464,7 @@ public final class PbrBloom {
                     drawBlurPass(masked, wideA, wideSigma / main.width, 0f);
                     drawBlurPass(wideA, wideB, 0f, wideSigma / main.height);
                 }
+                chainValid = true;
             }
             // 3) 更新间隔 > 1 时, 把最新链结果按指数平滑进两张常驻纹理, 合成始终采样平滑结果:
             //    这样光晕是逐帧连续变化的, 隔帧重建不会造成亮度/位置来回跳造成闪烁。
@@ -570,7 +564,12 @@ public final class PbrBloom {
         quad.bind();
         shader.apply();
         RenderTarget mainTarget = Minecraft.getInstance().getMainRenderTarget();
-        boolean scissored = applyPassScissor(mainTarget);
+        boolean scissored = findPassScissor(mainTarget);
+        if (scissored) {
+            enablePassScissor();
+        } else {
+            GL11.glDisable(GL11.GL_SCISSOR_TEST);
+        }
         PbrRenderer.setCompositeScissor(scissored, SCISSOR_RECT[0], SCISSOR_RECT[1],
                 SCISSOR_RECT[0] + SCISSOR_RECT[2], SCISSOR_RECT[1] + SCISSOR_RECT[3],
                 Math.max(16.0F, Math.min(scissorMarginPixels, 0.45F * Math.min(SCISSOR_RECT[2], SCISSOR_RECT[3]))));
@@ -588,10 +587,23 @@ public final class PbrBloom {
 
     private static void draw(RenderTarget input, RenderTarget output, ShaderInstance shader) {
         output.bindWrite(true);
-        RenderSystem.setShaderTexture(0, input.getColorTextureId());
-        RenderSystem.setShader(() -> shader);
-        quad.bind();
-        quad.drawWithShader(IDENTITY, IDENTITY, shader);
+        boolean cropped = !scissorWasEnabled && findPassScissor(output)
+                && 4L * SCISSOR_RECT[2] * SCISSOR_RECT[3] < 3L * output.width * output.height;
+        if (cropped) {
+            // Clear outside the new bounds so the next filter pass never reads an old halo.
+            GL30.glClearBufferfv(GL11.GL_COLOR, 0, CLEAR_COLOR);
+            enablePassScissor();
+        }
+        try {
+            RenderSystem.setShaderTexture(0, input.getColorTextureId());
+            RenderSystem.setShader(() -> shader);
+            quad.bind();
+            quad.drawWithShader(IDENTITY, IDENTITY, shader);
+        } finally {
+            if (cropped) {
+                GL11.glDisable(GL11.GL_SCISSOR_TEST);
+            }
+        }
     }
 
     /** 可分离高斯的一遍。 */
@@ -630,6 +642,7 @@ public final class PbrBloom {
         if (smoothWide != null) smoothWide.destroyBuffers();
         emission = emissionDepth = masked = narrowA = narrowB = wideA = wideB = null;
         smoothNarrow = smoothWide = null;
+        chainValid = false;
         smoothValid = false;
         attachedFrameBufferId = -1;
         releaseScopeMask();
@@ -656,7 +669,6 @@ public final class PbrBloom {
 
     public static void release() {
         releaseTargets();
-        chainValid = false;
         if (quad != null) { quad.close(); quad = null; }
         if (maskQuad != null) { maskQuad.close(); maskQuad = null; }
         mrtUnavailable = false;
