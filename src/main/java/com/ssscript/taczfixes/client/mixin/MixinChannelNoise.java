@@ -49,9 +49,9 @@ public abstract class MixinChannelNoise {
                     return;
                 }
             }
-            EXTEfx.alFilterf(taczfixes$noiseFilter, EXTEfx.AL_BANDPASS_GAIN, 1.0F - 0.25F * intensity);
-            EXTEfx.alFilterf(taczfixes$noiseFilter, EXTEfx.AL_BANDPASS_GAINLF, 1.0F - 0.70F * intensity);
-            EXTEfx.alFilterf(taczfixes$noiseFilter, EXTEfx.AL_BANDPASS_GAINHF, 1.0F - 0.92F * intensity);
+            EXTEfx.alFilterf(taczfixes$noiseFilter, EXTEfx.AL_BANDPASS_GAIN, Math.max(0.0F, 1.0F - 0.25F * intensity));
+            EXTEfx.alFilterf(taczfixes$noiseFilter, EXTEfx.AL_BANDPASS_GAINLF, Math.max(0.0F, 1.0F - 0.70F * intensity));
+            EXTEfx.alFilterf(taczfixes$noiseFilter, EXTEfx.AL_BANDPASS_GAINHF, Math.max(0.0F, 1.0F - 0.92F * intensity));
             AL10.alSourcei(source, EXTEfx.AL_DIRECT_FILTER, taczfixes$noiseFilter);
         }
         taczfixes$appliedNoise = intensity;

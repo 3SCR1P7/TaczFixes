@@ -126,9 +126,12 @@ public class Config {
     public static final GunLightTypeConfig GUN_LIGHT_MUZZLE_ADJUST;
     public static final ForgeConfigSpec.IntValue FIRE_NOISE_MAX;
     public static final ForgeConfigSpec.IntValue FIRE_NOISE_FILTER_THRESHOLD;
+    public static final ForgeConfigSpec.DoubleValue FIRE_NOISE_FILTER_STRENGTH;
     public static final ForgeConfigSpec.IntValue FIRE_NOISE_TINNITUS_THRESHOLD;
-    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE;
-    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE;
+    public static final ForgeConfigSpec.DoubleValue FIRE_NOISE_TINNITUS_STRENGTH;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_SEVERE;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_MILD;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_UNAFFECTED;
     public static final ForgeConfigSpec.DoubleValue FIRE_NOISE_SUPPRESSOR_MULTIPLIER;
     public static final java.util.Map<String, ForgeConfigSpec.IntValue> FIRE_NOISE_TYPES;
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
@@ -690,27 +693,36 @@ public class Config {
 
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("fire_noise");
-        FIRE_NOISE_MAX = BUILDER.defineInRange("max", 1000, 0, 1_000_000);
-        FIRE_NOISE_FILTER_THRESHOLD = BUILDER.defineInRange("filter_threshold", 600, 0, 1_000_000);
-        FIRE_NOISE_TINNITUS_THRESHOLD = BUILDER.defineInRange("tinnitus_threshold", 800, 0, 1_000_000);
-        FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE = BUILDER
-                .comment("Noise removed per tick after ceasing fire when noise is at or above the lower of the filter and tinnitus thresholds.")
-                .defineInRange("decay_per_tick_high_noise", 5, 0, 1_000_000);
-        FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE = BUILDER
+        FIRE_NOISE_MAX = BUILDER.defineInRange("max", 2000, 0, 1_000_000);
+        FIRE_NOISE_FILTER_THRESHOLD = BUILDER.defineInRange("filter_threshold", 1000, 0, 1_000_000);
+        FIRE_NOISE_FILTER_STRENGTH = BUILDER
+                .comment("Multiplier for noise filter attenuation. Set to 0 to disable the filter.")
+                .defineInRange("filter_strength", 1.0D, 0.0D, 2.0D);
+        FIRE_NOISE_TINNITUS_THRESHOLD = BUILDER.defineInRange("tinnitus_threshold", 1500, 0, 1_000_000);
+        FIRE_NOISE_TINNITUS_STRENGTH = BUILDER
+                .comment("Tinnitus volume at maximum noise. Set to 0 to disable tinnitus.")
+                .defineInRange("tinnitus_strength", 0.40D, 0.0D, 1.0D);
+        FIRE_NOISE_DECAY_PER_TICK_SEVERE = BUILDER
+                .comment("Noise removed per tick after ceasing fire when both thresholds are reached.")
+                .defineInRange("decay_per_tick_severe", 10, 0, 1_000_000);
+        FIRE_NOISE_DECAY_PER_TICK_MILD = BUILDER
+                .comment("Noise removed per tick after ceasing fire when exactly one threshold is reached.")
+                .defineInRange("decay_per_tick_mild", 30, 0, 1_000_000);
+        FIRE_NOISE_DECAY_PER_TICK_UNAFFECTED = BUILDER
                 .comment("Noise removed per tick after ceasing fire when noise is below both thresholds.")
-                .defineInRange("decay_per_tick_low_noise", 50, 0, 1_000_000);
+                .defineInRange("decay_per_tick_unaffected", 100, 0, 1_000_000);
         FIRE_NOISE_SUPPRESSOR_MULTIPLIER = BUILDER.defineInRange("suppressor_multiplier", 0.2D, 0.0D, 10.0D);
         BUILDER.push("gun_types");
         var fireNoiseTypes = new java.util.LinkedHashMap<String, ForgeConfigSpec.IntValue>();
-        fireNoiseTypes.put("pistol", BUILDER.defineInRange("pistol", 25, 0, 1_000_000));
-        fireNoiseTypes.put("sniper", BUILDER.defineInRange("sniper", 210, 0, 1_000_000));
-        fireNoiseTypes.put("rifle", BUILDER.defineInRange("rifle", 30, 0, 1_000_000));
-        fireNoiseTypes.put("shotgun", BUILDER.defineInRange("shotgun", 50, 0, 1_000_000));
-        fireNoiseTypes.put("smg", BUILDER.defineInRange("smg", 25, 0, 1_000_000));
-        fireNoiseTypes.put("rpg", BUILDER.defineInRange("rpg", 400, 0, 1_000_000));
-        fireNoiseTypes.put("mg", BUILDER.defineInRange("mg", 35, 0, 1_000_000));
-        fireNoiseTypes.put("dmr", BUILDER.defineInRange("dmr", 70, 0, 1_000_000));
-        fireNoiseTypes.put("other", BUILDER.defineInRange("other", 50, 0, 1_000_000));
+        fireNoiseTypes.put("pistol", BUILDER.defineInRange("pistol", 45, 0, 1_000_000));
+        fireNoiseTypes.put("sniper", BUILDER.defineInRange("sniper", 420, 0, 1_000_000));
+        fireNoiseTypes.put("rifle", BUILDER.defineInRange("rifle", 60, 0, 1_000_000));
+        fireNoiseTypes.put("shotgun", BUILDER.defineInRange("shotgun", 100, 0, 1_000_000));
+        fireNoiseTypes.put("smg", BUILDER.defineInRange("smg", 45, 0, 1_000_000));
+        fireNoiseTypes.put("rpg", BUILDER.defineInRange("rpg", 825, 0, 1_000_000));
+        fireNoiseTypes.put("mg", BUILDER.defineInRange("mg", 75, 0, 1_000_000));
+        fireNoiseTypes.put("dmr", BUILDER.defineInRange("dmr", 150, 0, 1_000_000));
+        fireNoiseTypes.put("other", BUILDER.defineInRange("other", 100, 0, 1_000_000));
         FIRE_NOISE_TYPES = java.util.Collections.unmodifiableMap(fireNoiseTypes);
         BUILDER.pop();
         BUILDER.pop();

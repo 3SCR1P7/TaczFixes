@@ -69,10 +69,16 @@ public final class NoiseState {
         int max = Config.FIRE_NOISE_MAX.get();
         value = Math.min(value, max);
         if (GunTime.nowMillis() >= Math.max(mainStopAt, offhandStopAt)) {
-            int threshold = Math.min(Config.FIRE_NOISE_FILTER_THRESHOLD.get(), Config.FIRE_NOISE_TINNITUS_THRESHOLD.get());
-            int decay = value >= threshold
-                    ? Config.FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE.get()
-                    : Config.FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE.get();
+            boolean filterThresholdReached = value >= Config.FIRE_NOISE_FILTER_THRESHOLD.get();
+            boolean tinnitusThresholdReached = value >= Config.FIRE_NOISE_TINNITUS_THRESHOLD.get();
+            int decay;
+            if (filterThresholdReached && tinnitusThresholdReached) {
+                decay = Config.FIRE_NOISE_DECAY_PER_TICK_SEVERE.get();
+            } else if (filterThresholdReached || tinnitusThresholdReached) {
+                decay = Config.FIRE_NOISE_DECAY_PER_TICK_MILD.get();
+            } else {
+                decay = Config.FIRE_NOISE_DECAY_PER_TICK_UNAFFECTED.get();
+            }
             value = Math.max(0.0D, value - decay);
         }
         updateIntensity(max);
@@ -107,8 +113,10 @@ public final class NoiseState {
     }
 
     private static void updateIntensity(int max) {
-        filterIntensity = intensity(Config.FIRE_NOISE_FILTER_THRESHOLD.get(), max);
-        ringVolume = 0.08F * intensity(Config.FIRE_NOISE_TINNITUS_THRESHOLD.get(), max);
+        filterIntensity = Config.FIRE_NOISE_FILTER_STRENGTH.get().floatValue()
+                * intensity(Config.FIRE_NOISE_FILTER_THRESHOLD.get(), max);
+        ringVolume = Config.FIRE_NOISE_TINNITUS_STRENGTH.get().floatValue()
+                * intensity(Config.FIRE_NOISE_TINNITUS_THRESHOLD.get(), max);
     }
 
     private static float intensity(int threshold, int max) {
