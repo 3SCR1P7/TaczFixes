@@ -86,6 +86,30 @@ public class AttachmentTaczFixesManager {
         return (float) AttachmentPropertyManager.eval(modifiers, force);
     }
 
+    static double applyFireNoise(ItemStack gunItem, IGun gun, double base) {
+        List<Modifier> modifiers = collectValues(gunItem, data -> data.fire_noise);
+        for (String slotId : CustomSlotManager.getSlots(gunItem).keySet()) {
+            ItemStack stack = CustomSlotStorage.get(gunItem, slotId);
+            IAttachment attachment = IAttachment.getIAttachmentOrNull(stack);
+            if (attachment != null) {
+                AttachmentTaczFixesData data = resolveData(attachment.getAttachmentId(stack));
+                if (data != null && data.fire_noise != null) {
+                    modifiers.add(data.fire_noise);
+                }
+            }
+        }
+        ResourceLocation installed = gun.getAttachmentId(gunItem, AttachmentType.MUZZLE);
+        ResourceLocation muzzle = muzzleId(gunItem, gun);
+        AttachmentTaczFixesData data = muzzle == null ? null : resolveData(muzzle);
+        Modifier muzzleNoise = data == null ? null : data.fire_noise;
+        if (muzzleNoise != null && !muzzle.equals(installed)) {
+            modifiers.add(muzzleNoise);
+        }
+        double noise = modifiers.isEmpty() ? base : AttachmentPropertyManager.eval(modifiers, base);
+        return muzzleNoise == null && isSuppressor(gunItem, gun, muzzle)
+                ? noise * Config.FIRE_NOISE_SUPPRESSOR_MULTIPLIER.get() : noise;
+    }
+
     public static float applyFriction(ItemStack gunItem, float base) {
         return applyModifier(gunItem, base, data -> data.friction);
     }
@@ -455,7 +479,7 @@ public class AttachmentTaczFixesManager {
                 hasBullet = true;
             }
         }
-        if (muzzleWithoutLightAdjust(gunItem)) {
+        if (suppressorWithoutLightAdjust(gunItem)) {
             fireTime += Config.GUN_LIGHT_MUZZLE_ADJUST.fireTime.get();
             fireMax += Config.GUN_LIGHT_MUZZLE_ADJUST.fireLevelMax.get();
             fireMin += Config.GUN_LIGHT_MUZZLE_ADJUST.fireLevelMin.get();
@@ -486,18 +510,37 @@ public class AttachmentTaczFixesManager {
         return result;
     }
 
-    /** 枪口槽位已安装配件且该配件没有配置 light 字段时返回 true(此时叠加全局枪口光照增量)。 */
-    private static boolean muzzleWithoutLightAdjust(ItemStack gunItem) {
+    private static boolean suppressorWithoutLightAdjust(ItemStack gunItem) {
         IGun gun = IGun.getIGunOrNull(gunItem);
         if (gun == null) {
             return false;
         }
-        ResourceLocation muzzleId = gun.getAttachmentId(gunItem, AttachmentType.MUZZLE);
-        if (DefaultAssets.isEmptyAttachmentId(muzzleId)) {
+        ResourceLocation id = muzzleId(gunItem, gun);
+        if (!isSuppressor(gunItem, gun, id)) {
             return false;
         }
-        AttachmentTaczFixesData data = resolveData(muzzleId);
+        AttachmentTaczFixesData data = resolveData(id);
         return data == null || data.light == null;
+    }
+
+    private static ResourceLocation muzzleId(ItemStack stack, IGun gun) {
+        ResourceLocation id = gun.getAttachmentId(stack, AttachmentType.MUZZLE);
+        if (id == null || DefaultAssets.isEmptyAttachmentId(id)) {
+            id = gun.getBuiltInAttachmentId(stack, AttachmentType.MUZZLE);
+        }
+        return id == null || DefaultAssets.isEmptyAttachmentId(id) ? null : id;
+    }
+
+    private static boolean isSuppressor(ItemStack stack, IGun gun, @Nullable ResourceLocation id) {
+        if (id == null) return false;
+        var attachment = TimelessAPI.getCommonGunIndex(gun.getGunId(stack))
+                .map(index -> index.getGunData().getExclusiveAttachments().get(id))
+                .orElseGet(() -> TimelessAPI.getCommonAttachmentIndex(id).map(index -> index.getData()).orElse(null));
+        if (attachment == null) return false;
+        var silence = attachment.getModifier().get(com.tacz.guns.resource.modifier.custom.SilenceModifier.ID);
+        return attachment.getFlashHider() < 1.0F
+                || silence != null && silence.getValue() instanceof it.unimi.dsi.fastutil.Pair<?, ?> pair
+                && Boolean.TRUE.equals(pair.right());
     }
 
     private static int valueOrZero(@Nullable Integer value) {

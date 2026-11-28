@@ -28,6 +28,7 @@ public class ConfigScreen {
         buildRicochet(builder.getOrCreateCategory(cat("ricochet")), entry);
         buildDualWield(builder.getOrCreateCategory(cat("dual_wield")), entry);
         buildGunLight(builder.getOrCreateCategory(cat("gun_light")), entry);
+        buildFireNoise(builder.getOrCreateCategory(cat("fire_noise")), entry);
         buildAimingStamina(builder.getOrCreateCategory(cat("aiming_stamina")), entry);
         buildStamina(builder.getOrCreateCategory(cat("stamina")), entry);
         buildDynamicCrosshair(builder.getOrCreateCategory(cat("dynamic_crosshair")), entry);
@@ -272,7 +273,6 @@ public class ConfigScreen {
         dbl_(cat, entry, "inaccuracy.ramp_increment", Config.SPREAD_RAMP_INCREMENT);
         dbl_(cat, entry, "inaccuracy.ramp_flat_increment", Config.SPREAD_RAMP_FLAT_INCREMENT);
         int_(cat, entry, "inaccuracy.ramp_max_stacks", Config.SPREAD_RAMP_MAX_STACKS);
-        int_(cat, entry, "inaccuracy.ramp_decay_delay_ms", Config.SPREAD_RAMP_DECAY_DELAY_MS);
         dbl_(cat, entry, "inaccuracy.ramp_decay", Config.SPREAD_RAMP_DECAY);
         dbl_(cat, entry, "inaccuracy.jump_default_multiplier", Config.JUMP_INACCURACY_DEFAULT_MULTIPLIER);
         dbl_(cat, entry, "inaccuracy.jump_default_speed", Config.JUMP_INACCURACY_DEFAULT_SPEED);
@@ -314,10 +314,21 @@ public class ConfigScreen {
         dbl_(cat, entry, "gun_spell.cooldown_multiplier", Config.GUN_SPELL_COOLDOWN_MULTIPLIER);
     }
 
+    private static void buildFireNoise(ConfigCategory cat, ConfigEntryBuilder entry) {
+        int_(cat, entry, "fire_noise.max", Config.FIRE_NOISE_MAX);
+        int_(cat, entry, "fire_noise.filter_threshold", Config.FIRE_NOISE_FILTER_THRESHOLD);
+        int_(cat, entry, "fire_noise.tinnitus_threshold", Config.FIRE_NOISE_TINNITUS_THRESHOLD);
+        int_(cat, entry, "fire_noise.decay_per_tick_high_noise", Config.FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE);
+        int_(cat, entry, "fire_noise.decay_per_tick_low_noise", Config.FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE);
+        dbl_(cat, entry, "fire_noise.suppressor_multiplier", Config.FIRE_NOISE_SUPPRESSOR_MULTIPLIER);
+        sub(cat, entry, "fire_noise_gun_types", group -> Config.FIRE_NOISE_TYPES.forEach(
+                (type, value) -> int_(group, entry, "fire_noise.gun_types." + type, value)));
+    }
+
     private static void buildGunLight(ConfigCategory cat, ConfigEntryBuilder entry) {
         int_(cat, entry, "gun_light.max_lights", Config.GUN_LIGHT_MAX_LIGHTS);
         lst_(cat, entry, "gun_light.blacklist", Config.GUN_LIGHT_DISABLED_GUNS);
-        addGunLightGroup(cat, entry, "gun_light_muzzle_adjust", Config.GUN_LIGHT_MUZZLE_ADJUST);
+        addGunLightGroup(cat, entry, "gun_light_suppressor_adjust", Config.GUN_LIGHT_MUZZLE_ADJUST);
         for (java.util.Map.Entry<String, Config.GunLightTypeConfig> typeEntry : Config.GUN_LIGHT_TYPE_CONFIGS.entrySet()) {
             addGunLightGroup(cat, entry, "gun_light_type_" + typeEntry.getKey(), typeEntry.getValue());
         }

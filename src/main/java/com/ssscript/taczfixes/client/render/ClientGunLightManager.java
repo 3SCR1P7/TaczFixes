@@ -4,6 +4,7 @@ import com.ssscript.taczfixes.common.data.GunTaczFixesData;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.GunLightColor;
 import com.tacz.guns.entity.EntityKineticBullet;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -62,6 +63,10 @@ public final class ClientGunLightManager {
             this.endMillis = newEnd;
             this.current = newLevelMax;
         }
+
+        int blockEmission() {
+            return color < 0 ? current : 0;
+        }
     }
 
     private static final class TrackedBullet {
@@ -114,20 +119,30 @@ public final class ClientGunLightManager {
         int levelMax = Mth.clamp(entry.level_max == null ? 15 : entry.level_max, 0, 15);
         int levelMin = Mth.clamp(entry.level_min == null ? 0 : entry.level_min, 0, 15);
         int color = GunLightColor.parse(entry.color);
+        refreshLight(level, pos, position, key, existing, time, levelMax, levelMin, color);
+    }
+
+    private static void refreshLight(ClientLevel level, BlockPos pos, Vec3 position, long key, ActiveLight existing,
+                                     int time, int levelMax, int levelMin, int color) {
+        int previousEmission = existing == null ? 0 : existing.blockEmission();
         long now = System.currentTimeMillis();
+        ActiveLight light;
         if (existing != null) {
+            light = existing;
             existing.refresh(position, color, levelMax, levelMin, now, now + time);
-            if (existing.shimmerLight == null) {
-                existing.shimmerLight = createShimmerLight(position, color, levelMax, levelMax);
-            } else {
-                updateShimmerLight(existing.shimmerLight, position, color, levelMax, levelMax);
-            }
         } else {
-            ActiveLight light = new ActiveLight(now, now + time, levelMax, levelMin, levelMax, color, position);
-            light.shimmerLight = createShimmerLight(position, color, levelMax, levelMax);
+            light = new ActiveLight(now, now + time, levelMax, levelMin, levelMax, color, position);
             LIGHTS.put(key, light);
         }
         if (color < 0) {
+            removeShimmerLight(light.shimmerLight);
+            light.shimmerLight = null;
+        } else if (light.shimmerLight == null || light.shimmerLight.isRemoved()) {
+            light.shimmerLight = createShimmerLight(position, color, levelMax, levelMax);
+        } else {
+            updateShimmerLight(light.shimmerLight, position, color, levelMax, levelMax);
+        }
+        if (previousEmission != light.blockEmission()) {
             relight(level, pos);
         }
     }
@@ -170,31 +185,15 @@ public final class ClientGunLightManager {
             return;
         }
         long key = pos.asLong();
-        if (!LIGHTS.containsKey(key) && LIGHTS.size() >= com.ssscript.taczfixes.common.config.Config.GUN_LIGHT_MAX_LIGHTS.get()) {
+        ActiveLight existing = LIGHTS.get(key);
+        if (existing == null && LIGHTS.size() >= com.ssscript.taczfixes.common.config.Config.GUN_LIGHT_MAX_LIGHTS.get()) {
             if (!evictOldest(level)) {
                 return;
             }
         }
         int clampedMax = Mth.clamp(levelMax, 0, 15);
         int clampedMin = Mth.clamp(levelMin, 0, 15);
-        Vec3 position = Vec3.atCenterOf(pos);
-        long now = System.currentTimeMillis();
-        ActiveLight existing = LIGHTS.get(key);
-        if (existing != null) {
-            existing.refresh(position, color, clampedMax, clampedMin, now, now + time);
-            if (existing.shimmerLight == null) {
-                existing.shimmerLight = createShimmerLight(position, color, clampedMax, clampedMax);
-            } else {
-                updateShimmerLight(existing.shimmerLight, position, color, clampedMax, clampedMax);
-            }
-        } else {
-            ActiveLight light = new ActiveLight(now, now + time, clampedMax, clampedMin, clampedMax, color, position);
-            light.shimmerLight = createShimmerLight(position, color, clampedMax, clampedMax);
-            LIGHTS.put(key, light);
-        }
-        if (color < 0) {
-            relight(level, pos);
-        }
+        refreshLight(level, pos, Vec3.atCenterOf(pos), key, existing, time, clampedMax, clampedMin, color);
     }
 
     /** 线段光照(服务端同步用)。 */
@@ -208,17 +207,13 @@ public final class ClientGunLightManager {
             return;
         }
         int steps = Math.max(1, (int) Math.ceil(distance * 2.0d));
-        BlockPos previous = null;
-        List<BlockPos> visited = new ArrayList<>();
+        LongOpenHashSet visited = new LongOpenHashSet();
         for (int i = 0; i <= steps; i++) {
             double t = (double) i / (double) steps;
             BlockPos pos = BlockPos.containing(Mth.lerp(t, from.x, to.x), Mth.lerp(t, from.y, to.y), Mth.lerp(t, from.z, to.z));
-            if (pos.equals(previous) || visited.contains(pos)) {
-                continue;
+            if (visited.add(pos.asLong())) {
+                addRaw(pos, time, levelMax, levelMin, color);
             }
-            previous = pos;
-            visited.add(pos);
-            addRaw(pos, time, levelMax, levelMin, color);
         }
     }
 
@@ -251,7 +246,7 @@ public final class ClientGunLightManager {
     /** 光照引擎查询入口: 方块位置当前的无颜色光照等级(彩色光由 Shimmer 渲染, 不参与原版光照引擎)。 */
     public static int emissionAt(long packedPos) {
         ActiveLight light = LIGHTS.get(packedPos);
-        return light == null || light.color >= 0 ? 0 : light.current;
+        return light == null ? 0 : light.blockEmission();
     }
 
     public static void tick() {
@@ -270,14 +265,14 @@ public final class ClientGunLightManager {
             }
             float progress = (float) (now - light.startMillis) / (float) (light.endMillis - light.startMillis);
             int target = Mth.clamp(Math.round(Mth.lerp(progress, light.levelMax, light.levelMin)), 0, 15);
-            if (light.shimmerLight != null) {
-                updateShimmerLight(light.shimmerLight, light.position, light.color, light.levelMax, target);
-                light.current = target;
+            if (target == light.current) {
                 continue;
             }
-            if (target != light.current) {
-                light.current = target;
+            light.current = target;
+            if (light.color < 0) {
                 changed.add(BlockPos.of(entry.getKey()));
+            } else {
+                updateShimmerLight(light.shimmerLight, light.position, light.color, light.levelMax, target);
             }
         }
         for (BlockPos pos : changed) {
@@ -322,17 +317,13 @@ public final class ClientGunLightManager {
             return;
         }
         int steps = Math.max(1, (int) Math.ceil(distance * 2.0d));
-        BlockPos previous = null;
-        List<BlockPos> visited = new ArrayList<>();
+        LongOpenHashSet visited = new LongOpenHashSet();
         for (int i = 0; i <= steps; i++) {
             double t = (double) i / (double) steps;
             BlockPos pos = BlockPos.containing(Mth.lerp(t, from.x, to.x), Mth.lerp(t, from.y, to.y), Mth.lerp(t, from.z, to.z));
-            if (pos.equals(previous) || visited.contains(pos)) {
-                continue;
+            if (visited.add(pos.asLong())) {
+                add(pos, entry);
             }
-            previous = pos;
-            visited.add(pos);
-            add(pos, entry);
         }
     }
 
@@ -342,7 +333,7 @@ public final class ClientGunLightManager {
             return;
         }
         removeShimmerLight(light.shimmerLight);
-        if (light.color < 0) {
+        if (light.blockEmission() != 0) {
             relight(level, pos);
         }
     }

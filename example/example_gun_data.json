@@ -1,5 +1,6 @@
 {
   "taczfixes": {
+    "fire_noise": 100,
     // 自定义 HUD（仅 ApricityUI HTML）。
     // 页面路径: assets/<namespace>/hud/<name>.html
     // 填写 "namespace:name" 或 "namespace:hud/name.html"。

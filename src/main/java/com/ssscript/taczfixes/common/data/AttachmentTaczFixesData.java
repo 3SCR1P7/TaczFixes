@@ -10,6 +10,8 @@ public class AttachmentTaczFixesData {
     public Modifier limb_factor;
     public Map<String, GunTaczFixesData.RecoilConfig> recoil_multiplier;
     public Modifier fire_knockback_power;
+    /** 配件对每发开火噪音的修饰器。 */
+    public Modifier fire_noise;
     public Modifier friction;
     public Modifier gravity;
     public Modifier bullet_life;

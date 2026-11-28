@@ -1,5 +1,6 @@
 package com.ssscript.taczfixes.client.util.crosshair;
 
+import com.ssscript.taczfixes.client.util.ClientCeaseFireTiming;
 import com.ssscript.taczfixes.common.data.InaccuracyParams;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
 import com.ssscript.taczfixes.common.util.SpreadState;
@@ -7,6 +8,7 @@ import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.resource.pojo.data.gun.InaccuracyType;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.InteractionHand;
 import net.minecraft.world.item.ItemStack;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.api.distmarker.OnlyIn;
@@ -38,7 +40,9 @@ public final class CrosshairSpreadRamp {
         if (gunId == null) return;
         ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
         InaccuracyType state = InaccuracyType.getInaccuracyType(player);
-        InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state, stack);
+        InteractionHand hand = stack == player.getOffhandItem() ? InteractionHand.OFF_HAND : InteractionHand.MAIN_HAND;
+        long delay = ClientCeaseFireTiming.delay(player, hand, stack, gun);
+        InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state, stack, delay);
         if (params == null) return;
         ensureOwner(player);
         Entry entry = ENTRIES.computeIfAbsent(gunId, key -> new Entry());

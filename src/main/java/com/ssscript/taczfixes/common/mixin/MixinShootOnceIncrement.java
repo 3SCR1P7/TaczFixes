@@ -3,6 +3,7 @@ package com.ssscript.taczfixes.common.mixin;
 import com.ssscript.taczfixes.common.util.SpreadState;
 import com.ssscript.taczfixes.common.data.InaccuracyParams;
 import com.ssscript.taczfixes.common.data.TaczFixesDataManager;
+import com.ssscript.taczfixes.common.util.CeaseFireTiming;
 import com.ssscript.taczfixes.common.util.MultishotHelper;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.item.ModernKineticGunScriptAPI;
@@ -29,7 +30,9 @@ public class MixinShootOnceIncrement {
         if (gunId == null) return;
         ResourceLocation dataId = TaczFixesDataManager.resolveDataId(gunId);
         InaccuracyType state = InaccuracyType.getInaccuracyType(shooter);
-        InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state, gunItem);
+        long delay = TaczFixesDataManager.usesConfiguredSpreadRecovery(dataId)
+                ? CeaseFireTiming.delay(shooter, gunItem, gun, true) : 0L;
+        InaccuracyParams params = TaczFixesDataManager.resolveInaccuracyParams(dataId, state, gunItem, delay);
         SpreadState.onShot(shooter, dataId, params);
         MultishotHelper.onShotStart();
         com.ssscript.taczfixes.common.util.DoubleShotHelper.onShotStart();

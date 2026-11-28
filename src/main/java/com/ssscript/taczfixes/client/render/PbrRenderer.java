@@ -238,12 +238,14 @@ public final class PbrRenderer {
 
     // ----- 自发光几何的屏幕包围盒(用于泛光 mask/模糊/合成的 glScissor 裁剪) -----
     private static boolean emissionBoundsValid;
+    private static boolean emissionBoundsUnknown;
+    private static final org.joml.Matrix4f EMISSION_CLIP_MATRIX = new org.joml.Matrix4f();
     private static float emissionMinX, emissionMaxX, emissionMinY, emissionMaxY;
     private static boolean previousBoundsValid;
     private static float previousMinX, previousMaxX, previousMinY, previousMaxY;
 
     private static void beginEmissionBoundsFrame() {
-        if (emissionBoundsValid) {
+        if (emissionBoundsValid && !emissionBoundsUnknown) {
             previousBoundsValid = true;
             previousMinX = emissionMinX;
             previousMaxX = emissionMaxX;
@@ -253,6 +255,7 @@ public final class PbrRenderer {
             previousBoundsValid = false;
         }
         emissionBoundsValid = false;
+        emissionBoundsUnknown = false;
         emissionMinX = Float.POSITIVE_INFINITY;
         emissionMaxX = Float.NEGATIVE_INFINITY;
         emissionMinY = Float.POSITIVE_INFINITY;
@@ -261,13 +264,14 @@ public final class PbrRenderer {
 
     /**
      * 检查这批几何是否真的产生自发光像素, 同时累积这些顶点的屏幕 NDC 包围盒。
-     * 材质整体自发光时所有顶点都算; 否则只算 *_illuminated 顶点(打包光照 x 位为 1)。
+     * 已启用发光写入的批次中, 非自发光面也可能写入眩光和深度, 所以包围盒包含整个批次。
      */
     private static boolean analyzeEmissionGeometry(MeshData data, boolean allEmitted) {
         // 泛光链路没开时发光附件不会写: 这批几何既不需要标记, 也不需要包围盒, 直接跳过整趟扫描。
         if (!PbrBloom.configured()) {
             return false;
         }
+        boolean emitted = allEmitted;
         try {
             var state = data.drawState();
             var format = state.format();
@@ -275,6 +279,7 @@ public final class PbrRenderer {
             int vertexCount = state.vertexCount();
             ByteBuffer buffer = data.vertexBuffer();
             if (stride <= 0 || vertexCount <= 0 || buffer == null) {
+                emissionBoundsUnknown |= emitted;
                 return allEmitted;
             }
             int positionOffset = -1;
@@ -288,49 +293,48 @@ public final class PbrRenderer {
                 }
                 offset += element.byteSize();
             }
-            if (positionOffset < 0) {
-                return allEmitted;
+            if (!emitted && uv2Offset >= 0) {
+                for (int i = 0; i < vertexCount && !emitted; i++) {
+                    emitted = (buffer.getShort(i * stride + uv2Offset) & 1) != 0;
+                }
             }
-            var projection = RenderSystem.getProjectionMatrix();
+            if (!emitted || emissionBoundsUnknown) {
+                return emitted;
+            }
+            if (positionOffset < 0) {
+                emissionBoundsUnknown = true;
+                return true;
+            }
+            var projection = EMISSION_CLIP_MATRIX.set(RenderSystem.getProjectionMatrix())
+                    .mul(RenderSystem.getModelViewMatrix());
             float p00 = projection.m00(), p10 = projection.m10(), p20 = projection.m20(), p30 = projection.m30();
             float p01 = projection.m01(), p11 = projection.m11(), p21 = projection.m21(), p31 = projection.m31();
             float p03 = projection.m03(), p13 = projection.m13(), p23 = projection.m23(), p33 = projection.m33();
-            boolean found = false;
             float minX = Float.POSITIVE_INFINITY, maxX = Float.NEGATIVE_INFINITY;
             float minY = Float.POSITIVE_INFINITY, maxY = Float.NEGATIVE_INFINITY;
             for (int i = 0; i < vertexCount; i++) {
                 int base = i * stride;
-                if (!allEmitted) {
-                    if (uv2Offset < 0) {
-                        continue;
-                    }
-                    short lightMapX = buffer.getShort(base + uv2Offset);
-                    if ((lightMapX & 1) == 0) {
-                        continue;
-                    }
-                }
                 float x = buffer.getFloat(base + positionOffset);
                 float y = buffer.getFloat(base + positionOffset + 4);
                 float z = buffer.getFloat(base + positionOffset + 8);
                 float clipX = p00 * x + p10 * y + p20 * z + p30;
                 float clipY = p01 * x + p11 * y + p21 * z + p31;
                 float clipW = p03 * x + p13 * y + p23 * z + p33;
-                if (clipW <= 1.0E-5F) {
-                    continue;
+                if (!Float.isFinite(clipW) || clipW <= 1.0E-5F) {
+                    // A primitive crossing the camera plane cannot be bounded by its projected vertices.
+                    emissionBoundsUnknown = true;
+                    return true;
                 }
                 float ndcX = clipX / clipW;
                 float ndcY = clipY / clipW;
-                if (ndcX < -3.0F || ndcX > 3.0F || ndcY < -3.0F || ndcY > 3.0F) {
-                    continue;
+                if (!Float.isFinite(ndcX) || !Float.isFinite(ndcY)) {
+                    emissionBoundsUnknown = true;
+                    return true;
                 }
-                found = true;
                 minX = Math.min(minX, ndcX);
                 maxX = Math.max(maxX, ndcX);
                 minY = Math.min(minY, ndcY);
                 maxY = Math.max(maxY, ndcY);
-            }
-            if (!found) {
-                return false;
             }
             emissionBoundsValid = true;
             emissionMinX = Math.min(emissionMinX, minX);
@@ -339,7 +343,8 @@ public final class PbrRenderer {
             emissionMaxY = Math.max(emissionMaxY, maxY);
             return true;
         } catch (Throwable ignored) {
-            return allEmitted;
+            emissionBoundsUnknown |= emitted;
+            return emitted;
         }
     }
 
@@ -348,7 +353,7 @@ public final class PbrRenderer {
                                        float marginPixels, int[] out) {
         boolean hasCurrent = emissionBoundsValid;
         boolean hasPrevious = previousBoundsValid;
-        if ((!hasCurrent && !hasPrevious) || targetWidth <= 0 || targetHeight <= 0
+        if (emissionBoundsUnknown || (!hasCurrent && !hasPrevious) || targetWidth <= 0 || targetHeight <= 0
                 || mainWidth <= 0 || mainHeight <= 0) {
             return false;
         }
@@ -752,7 +757,8 @@ public final class PbrRenderer {
     private static int lastLocalLightBlockLight = -1;
     private static long lastPbrDrawAt = 0L;
 
-    private record LightCandidate(double score, Vec3 position, float red, float green, float blue, float target) {
+    private record LightCandidate(double score, BlockPos block, Vec3 position,
+                                  net.minecraft.world.level.block.state.BlockState state) {
     }
 
     /** 客户端方块更新(放/拆光源、放/拆遮挡物)时调用: 变化落在扫描范围内就立刻重扫。 */
@@ -785,6 +791,7 @@ public final class PbrRenderer {
         lastLocalLightScanLevel = level;
         lastLocalLightBlockLight = blockLight;
         LIGHT_CANDIDATES.clear();
+        int count = 0;
         if (blockLight > 0) {
             Minecraft minecraft = Minecraft.getInstance();
             var player = minecraft.player;
@@ -794,29 +801,24 @@ public final class PbrRenderer {
                 int emission = state.getLightEmission(level, pos);
                 if (emission <= 0) continue;
                 BlockPos immutable = pos.immutable();
-                if (!isLightVisible(level, visibilityAnchor, immutable, player)) continue;
                 double dx = immutable.getX() + 0.5D - origin.x;
                 double dy = immutable.getY() + 0.5D - origin.y;
                 double dz = immutable.getZ() + 0.5D - origin.z;
                 double distSqr = dx * dx + dy * dy + dz * dz;
                 double score = emission / (1.0D + distSqr * 0.35D);
-                int color = state.getMapColor(level, immutable).col;
-                float red = ((color >> 16) & 255) / 255f;
-                float green = ((color >> 8) & 255) / 255f;
-                float blue = (color & 255) / 255f;
-                if (red + green + blue < 0.1f) {
-                    red = 1.0f;
-                    green = 0.86f;
-                    blue = 0.67f;
+                LIGHT_CANDIDATES.add(new LightCandidate(score, immutable, Vec3.atCenterOf(immutable), state));
+            }
+            // Stable sorting preserves the existing tie-breaker for equally ranked lights.
+            LIGHT_CANDIDATES.sort((a, b) -> Double.compare(b.score(), a.score()));
+            for (int i = 0; i < LIGHT_CANDIDATES.size() && count < LOCAL_LIGHT_SLOTS; i++) {
+                LightCandidate candidate = LIGHT_CANDIDATES.get(i);
+                if (isLightVisible(level, visibilityAnchor, candidate.block(), player)) {
+                    LIGHT_CANDIDATES.set(count++, candidate);
                 }
-                LIGHT_CANDIDATES.add(new LightCandidate(score, Vec3.atCenterOf(immutable), red, green, blue,
-                        (float) Math.min(1.0D, score / 7.0D)));
             }
         }
         // 开火/镭射/爆炸等动态光只照亮世界, 不参与枪身反光:
             // 枪口闪光离枪太近, 参与反光会变成逐帧闪烁的假高光。
-            LIGHT_CANDIDATES.sort((a, b) -> Double.compare(b.score(), a.score()));
-            int count = Math.min(LOCAL_LIGHT_SLOTS, LIGHT_CANDIDATES.size());
             boolean[] used = new boolean[count];
             for (int slot = 0; slot < LOCAL_LIGHT_SLOTS; slot++) {
                 Vec3 previous = lightSlotPos[slot];
@@ -847,14 +849,24 @@ public final class PbrRenderer {
                 }
                 used[bestIndex] = true;
                 LightCandidate candidate = LIGHT_CANDIDATES.get(bestIndex);
+                float target = (float) Math.min(1.0D, candidate.score() / 7.0D);
                 if (previous == null || previous.distanceToSqr(candidate.position()) > 6.25D) {
-                    lightStrength[slot] = Math.min(lightStrength[slot], candidate.target());
+                    lightStrength[slot] = Math.min(lightStrength[slot], target);
+                }
+                int color = candidate.state().getMapColor(level, candidate.block()).col;
+                float red = ((color >> 16) & 255) / 255f;
+                float green = ((color >> 8) & 255) / 255f;
+                float blue = (color & 255) / 255f;
+                if (red + green + blue < 0.1f) {
+                    red = 1.0f;
+                    green = 0.86f;
+                    blue = 0.67f;
                 }
                 lightSlotPos[slot] = candidate.position();
-                lightColorR[slot] = candidate.red();
-                lightColorG[slot] = candidate.green();
-                lightColorB[slot] = candidate.blue();
-                lightTargetStrength[slot] = candidate.target();
+                lightColorR[slot] = red;
+                lightColorG[slot] = green;
+                lightColorB[slot] = blue;
+                lightTargetStrength[slot] = target;
             }
         updateLocalLightSlots(origin, dt);
     }
@@ -1602,6 +1614,7 @@ public final class PbrRenderer {
                     boolean mainTarget = fbo == Minecraft.getInstance().getMainRenderTarget().frameBufferId;
                     acceleratedEmissionWrite = PbrBloom.beginEmissionWrite(mainTarget);
                     if (acceleratedEmissionWrite) {
+                        emissionBoundsUnknown = true;
                         acceleratedEmissionWrites++;
                     }
                 }
@@ -1631,13 +1644,6 @@ public final class PbrRenderer {
         @Override
         public void draw(MeshData data) {
             if (data == null) return;
-            // 顶点数据在 upload 之后会被释放: 先判断这批几何是否真的会发光(材质自发光或 *_illuminated 顶点),
-            // 顺便累积发光顶点的屏幕包围盒, 供泛光裁剪用。
-            boolean allEmitted = material.emissive() || camo.emissive() > 0f;
-            boolean geometryEmitted = analyzeEmissionGeometry(data, allEmitted);
-            if (geometryEmitted) {
-                markEmissionSource();
-            }
             if (mesh == null) mesh = new VertexBuffer(VertexBuffer.Usage.DYNAMIC);
             // 纹理槽的"旧值"必须在 setupRenderState() 之前读: 它会把 slot5 绑成主深度。
             int mainFbo = Minecraft.getInstance().getMainRenderTarget().frameBufferId;
@@ -1654,6 +1660,12 @@ public final class PbrRenderer {
             setupRenderState();
             ShaderInstance previous = RenderSystem.getShader();
             try {
+                // Read vertices before upload and use the matrices installed by setupRenderState().
+                boolean allEmitted = material.emissive() || camo.emissive() > 0f;
+                boolean geometryEmitted = analyzeEmissionGeometry(data, allEmitted);
+                if (geometryEmitted) {
+                    markEmissionSource();
+                }
                 mesh.bind();
                 mesh.upload(data);
                 if (!enabled()) {

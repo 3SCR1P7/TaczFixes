@@ -221,6 +221,7 @@
         "MixinRightHandRender",
         "MixinShootKey",
         "MixinSoundPlayManager",
+        "MixinChannelNoise",
         "MixinThirdPersonDisabler",
         "MixinThirdPersonMuzzleParticleManager",
         "MixinTickAnimationEvent",

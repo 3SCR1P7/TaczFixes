@@ -2,7 +2,6 @@ package com.ssscript.taczfixes.client.util;
 
 import com.ssscript.taczfixes.client.util.dual.DualRenderContext;
 import com.ssscript.taczfixes.client.render.MuzzleSmokeRender;
-import com.ssscript.taczfixes.client.util.dual.OffhandDisplayManager;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.common.resource.pojo.ParticleEffectData;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.data.ParticleEffectDefinition;
 import com.github.mcmodderanchor.simplebedrockmodel.v1.particle.resource.ParticleDefinitionLoader;
@@ -18,14 +17,11 @@ import com.tacz.guns.api.DefaultAssets;
 import com.tacz.guns.api.TimelessAPI;
 import com.tacz.guns.api.item.IGun;
 import com.tacz.guns.api.item.attachment.AttachmentType;
-import com.tacz.guns.api.item.gun.FireMode;
 import com.tacz.guns.api.modifier.JsonProperty;
 import com.tacz.guns.config.client.RenderConfig;
 import com.tacz.guns.resource.index.CommonAttachmentIndex;
-import com.tacz.guns.resource.index.CommonGunIndex;
 import com.tacz.guns.resource.modifier.custom.SilenceModifier;
 import com.tacz.guns.resource.pojo.data.attachment.AttachmentData;
-import com.tacz.guns.resource.pojo.data.gun.GunData;
 import com.tacz.guns.util.time.GunTime;
 import it.unimi.dsi.fastutil.Pair;
 import java.util.ArrayList;
@@ -46,7 +42,6 @@ import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
 
 public final class MuzzleAfterSmoke {
-    private static final long CEASE_FIRE_GRACE_MS = 100L;
     // Keep updating the muzzle anchor while particles from the last emission are visible.
     private static final long ANCHOR_TAIL_MS = 850L;
     private static final ResourceLocation EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke");
@@ -92,28 +87,7 @@ public final class MuzzleAfterSmoke {
             trail = new Trail(gunId, selectedSlot(shooter, hand));
             TRAILS.computeIfAbsent(shooter, key -> new EnumMap<>(InteractionHand.class)).put(hand, trail);
         }
-        trail.recordShot(now, shotInterval(shooter, hand, stack, gun) + CEASE_FIRE_GRACE_MS);
-    }
-
-    private static long shotInterval(LivingEntity shooter, InteractionHand hand, ItemStack stack, IGun gun) {
-        GunData data = TimelessAPI.getCommonGunIndex(gun.getGunId(stack)).map(CommonGunIndex::getGunData).orElse(null);
-        if (data != null) {
-            FireMode mode = gun.getFireMode(stack);
-            if (mode == FireMode.BURST) {
-                return data.getBurstShootInterval();
-            }
-            if (hand == InteractionHand.MAIN_HAND) {
-                return data.getShootInterval(shooter, mode, stack);
-            }
-            if (shooter instanceof LocalPlayer player) {
-                long interval = OffhandDisplayManager.getClientState().getShootInterval(player, stack);
-                if (interval > 0) {
-                    return interval;
-                }
-            }
-        }
-        int rpm = gun.getRPM(stack);
-        return 60_000L / (rpm > 0 ? rpm : 300);
+        trail.recordShot(now, ClientCeaseFireTiming.delay(shooter, hand, stack, gun));
     }
 
     public static void clear() {
