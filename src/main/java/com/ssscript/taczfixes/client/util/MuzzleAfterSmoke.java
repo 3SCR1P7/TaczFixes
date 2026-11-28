@@ -180,7 +180,7 @@ public final class MuzzleAfterSmoke {
         if (trail == null) {
             return null;
         }
-        trail.finishVolleyIfDue(now);
+        trail.finishVolleyIfDue(shooter, hand, now);
         if (!trail.active || now < trail.lastShot || trail.isFinished(now) || !shooter.isAlive()
                 || !isEnabled()
                 || trail.selectedSlot != selectedSlot(shooter, hand)
@@ -267,8 +267,11 @@ public final class MuzzleAfterSmoke {
             amount = SmokeAmount.NONE;
         }
 
-        private void finishVolleyIfDue(long now) {
-            if (shots == 0 || now < stopAt) {
+        private void finishVolleyIfDue(LivingEntity shooter, InteractionHand hand, long now) {
+            ItemStack stack = shooter.getItemInHand(hand);
+            IGun gun = IGun.getIGunOrNull(stack);
+            if (shots == 0 || now <= stopAt
+                    || ClientCeaseFireTiming.isAutomaticFireHeld(shooter, hand, stack, gun)) {
                 return;
             }
             amount = shots >= 10 ? SmokeAmount.HEAVY

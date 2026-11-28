@@ -2,6 +2,7 @@ package com.ssscript.taczfixes.client.handler;
 
 import com.ssscript.taczfixes.TaczFixesMod;
 import com.ssscript.taczfixes.client.util.NoiseState;
+import com.ssscript.taczfixes.common.util.DualWieldStackId;
 import com.tacz.guns.api.event.common.GunFirePostEvent;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.InteractionHand;
@@ -24,7 +25,7 @@ public final class FireNoiseHandler {
         }
         LivingEntity shooter = event.getShooter();
         if (shooter instanceof LocalPlayer player) {
-            if (event.getGunItemStack() == player.getMainHandItem()) {
+            if (DualWieldStackId.matches(event.getGunItemStack(), player.getMainHandItem())) {
                 NoiseState.onShot(player, InteractionHand.MAIN_HAND, event.getGunItemStack());
             }
         } else if (shooter != null) {
