@@ -1,0 +1,25 @@
+#version 150
+
+#moj_import <fog.glsl>
+
+uniform sampler2D Sampler0;
+uniform vec4 ColorModulator;
+uniform float FogStart;
+uniform float FogEnd;
+uniform vec4 FogColor;
+
+in float vertexDistance;
+in vec2 texCoord0;
+in vec4 vertexColor;
+in vec4 lightMapColor;
+in vec4 overlayColor;
+
+out vec4 fragColor;
+
+void main() {
+    // Soft smoke edges need the entire alpha gradient.
+    vec4 smoke = texture(Sampler0, texCoord0) * vertexColor * ColorModulator;
+    smoke.rgb = mix(overlayColor.rgb, smoke.rgb, overlayColor.a);
+    smoke *= lightMapColor;
+    fragColor = linear_fog(smoke, vertexDistance, FogStart, FogEnd, FogColor);
+}

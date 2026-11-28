@@ -217,6 +217,7 @@
         "MixinMouseHandlerZoomSensitivity",
         "MixinMuzzleFlashHandScope",
         "MixinMuzzleParticleManager",
+        "MixinSnowstormSmokeRender",
         "MixinObjectAnimationAccessor",
         "MixinObjectAnimationRunner",
         "compat.MixinPlayerAnimatorAdjustment",
