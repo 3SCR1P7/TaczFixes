@@ -48,13 +48,15 @@ import org.joml.Matrix4f;
 public final class MuzzleAfterSmoke {
     private static final long CEASE_FIRE_GRACE_MS = 100L;
     // Keep updating the muzzle anchor while particles from the last emission are visible.
-    private static final long ANCHOR_TAIL_MS = 1100L;
+    private static final long ANCHOR_TAIL_MS = 850L;
     private static final ResourceLocation EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke");
     private static final ResourceLocation MEDIUM_EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke_medium");
     private static final ResourceLocation HEAVY_EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke_heavy");
+    private static final ResourceLocation WISP_EFFECT_ID = ResourceLocation.tryParse("taczfixes:muzzle_after_smoke_wisp");
     private static final ParticleEffectData EFFECT = new ParticleEffectData(EFFECT_ID, "muzzle_flash", null);
     private static final ParticleEffectData MEDIUM_EFFECT = new ParticleEffectData(MEDIUM_EFFECT_ID, "muzzle_flash", null);
     private static final ParticleEffectData HEAVY_EFFECT = new ParticleEffectData(HEAVY_EFFECT_ID, "muzzle_flash", null);
+    private static final ParticleEffectData WISP_EFFECT = new ParticleEffectData(WISP_EFFECT_ID, "muzzle_flash", null);
     private static final Map<LivingEntity, EnumMap<InteractionHand, Trail>> TRAILS = new WeakHashMap<>();
     private static final Map<ParticleEmitterInstance, Trail> FIRST_PERSON_EMITTERS = new WeakHashMap<>();
 
@@ -126,34 +128,21 @@ public final class MuzzleAfterSmoke {
         LocalPlayer player = Minecraft.getInstance().player;
         long now = GunTime.nowMillis();
         Trail trail = player == null ? null : getTrail(player, hand, now);
-        ResourceLocation effectId = trail == null ? null : trail.claimEffect(player.getItemInHand(hand), now);
-        ParticleEffectData smoke = effectData(effectId);
-        if (smoke == null) {
+        List<ParticleEffectData> smoke = trail == null ? List.of() : trail.claimEffects(player.getItemInHand(hand), now);
+        if (smoke.isEmpty()) {
             return particles;
         }
         if (particles == null || particles.isEmpty()) {
-            return List.of(smoke);
+            return smoke;
         }
         List<ParticleEffectData> combined = new ArrayList<>(particles);
-        combined.add(smoke);
+        combined.addAll(smoke);
         return combined;
     }
 
-    private static ParticleEffectData effectData(ResourceLocation effectId) {
-        if (EFFECT_ID.equals(effectId)) {
-            return EFFECT;
-        }
-        if (MEDIUM_EFFECT_ID.equals(effectId)) {
-            return MEDIUM_EFFECT;
-        }
-        if (HEAVY_EFFECT_ID.equals(effectId)) {
-            return HEAVY_EFFECT;
-        }
-        return null;
-    }
-
     public static boolean isAfterSmoke(ResourceLocation effectId) {
-        return EFFECT_ID.equals(effectId) || MEDIUM_EFFECT_ID.equals(effectId) || HEAVY_EFFECT_ID.equals(effectId);
+        return EFFECT_ID.equals(effectId) || MEDIUM_EFFECT_ID.equals(effectId)
+                || HEAVY_EFFECT_ID.equals(effectId) || WISP_EFFECT_ID.equals(effectId);
     }
 
     public static void moveFirstPersonSmoke(ParticleEmitterInstance emitter, Matrix4f muzzle, InteractionHand hand) {
@@ -194,17 +183,16 @@ public final class MuzzleAfterSmoke {
         }
         Vec3 position = new Vec3(muzzleWorld.m30(), muzzleWorld.m31(), muzzleWorld.m32());
         trail.worldPosition = position;
-        ResourceLocation effectId = trail.claimEffect(shooter.getItemInHand(hand), now);
-        if (effectId == null) {
-            return;
-        }
-        ParticleEffectDefinition definition = ParticleDefinitionLoader.getInstance().getDefinition(effectId);
-        if (definition == null) {
-            return;
-        }
         WorldEmitterManager manager = WorldEmitterManager.getInstance();
-        ParticleEmitterInstance emitter = manager.addEmitter(level, position, Vec3.ZERO, definition);
-        if (emitter != null) {
+        for (ParticleEffectData effect : trail.claimEffects(shooter.getItemInHand(hand), now)) {
+            ParticleEffectDefinition definition = ParticleDefinitionLoader.getInstance().getDefinition(effect.effect());
+            if (definition == null) {
+                continue;
+            }
+            ParticleEmitterInstance emitter = manager.addEmitter(level, position, Vec3.ZERO, definition);
+            if (emitter == null) {
+                continue;
+            }
             manager.updateEmitterAnchor(emitter, muzzleWorld);
             emitter.setExternalParticleManagement(particle -> minecraft.particleEngine.add(
                     new WorldSmokeParticle(level, particle, definition, emitter, trail, position)));
@@ -267,9 +255,9 @@ public final class MuzzleAfterSmoke {
 
     private enum SmokeAmount {
         NONE(0L, 0L),
-        LIGHT(420L, 90L),
-        MEDIUM(650L, 75L),
-        HEAVY(900L, 65L);
+        LIGHT(260L, 95L),
+        MEDIUM(390L, 100L),
+        HEAVY(520L, 95L);
 
         private final long duration;
         private final long spacing;
@@ -289,6 +277,7 @@ public final class MuzzleAfterSmoke {
         private SmokeAmount amount = SmokeAmount.NONE;
         private long followUntil;
         private long nextEmissionAt;
+        private int emittedBatches;
         private boolean active = true;
         private Vec3 worldPosition;
 
@@ -312,6 +301,7 @@ public final class MuzzleAfterSmoke {
                     : shots >= 7 ? SmokeAmount.MEDIUM
                     : shots >= 4 ? SmokeAmount.LIGHT : SmokeAmount.NONE;
             nextEmissionAt = stopAt;
+            emittedBatches = 0;
             shots = 0;
         }
 
@@ -319,27 +309,30 @@ public final class MuzzleAfterSmoke {
             return shots == 0 && now >= stopAt + amount.duration && now >= followUntil;
         }
 
-        private ResourceLocation claimEffect(ItemStack stack, long now) {
+        private List<ParticleEffectData> claimEffects(ItemStack stack, long now) {
             if (amount == SmokeAmount.NONE || now < nextEmissionAt || now >= stopAt + amount.duration) {
-                return null;
+                return List.of();
             }
             IGun gun = IGun.getIGunOrNull(stack);
             if (gun == null || suppressesAfterSmoke(stack, gun)) {
                 active = false;
-                return null;
+                return List.of();
             }
-            ResourceLocation effectId = switch (amount) {
-                case LIGHT -> EFFECT_ID;
-                case MEDIUM -> MEDIUM_EFFECT_ID;
-                case HEAVY -> HEAVY_EFFECT_ID;
+            ParticleEffectData cloud = switch (amount) {
+                case LIGHT -> EFFECT;
+                case MEDIUM -> MEDIUM_EFFECT;
+                case HEAVY -> HEAVY_EFFECT;
                 case NONE -> null;
             };
-            if (effectId == null || ParticleDefinitionLoader.getInstance().getDefinition(effectId) == null) {
-                return null;
+            ParticleDefinitionLoader definitions = ParticleDefinitionLoader.getInstance();
+            if (cloud == null || definitions.getDefinition(cloud.effect()) == null) {
+                return List.of();
             }
             nextEmissionAt = now + amount.spacing;
             followUntil = now + ANCHOR_TAIL_MS;
-            return effectId;
+            boolean emitWisp = emittedBatches++ % 3 == 0;
+            return emitWisp && definitions.getDefinition(WISP_EFFECT_ID) != null
+                    ? List.of(cloud, WISP_EFFECT) : List.of(cloud);
         }
     }
 
