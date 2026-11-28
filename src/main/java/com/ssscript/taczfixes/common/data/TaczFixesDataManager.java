@@ -208,6 +208,25 @@ public class TaczFixesDataManager {
         return AttachmentTaczFixesManager.applyLight(gunStack, resolveLight(gunId));
     }
 
+    /** 每发开火噪音，包含配件调整。 */
+    public static double resolveFireNoise(ItemStack gunStack) {
+        if (gunStack == null || gunStack.isEmpty()) return 0;
+        IGun gun = IGun.getIGunOrNull(gunStack);
+        if (gun == null) return 0;
+        ResourceLocation gunId = gun.getGunId(gunStack);
+        ResourceLocation dataId = resolveDataId(gunId);
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        double base = data != null && data.fire_noise != null ? data.fire_noise : defaultFireNoise(gunId);
+        double noise = AttachmentTaczFixesManager.applyFireNoise(gunStack, gun, base);
+        return Double.isFinite(noise) ? Math.max(0.0D, noise) : 0.0D;
+    }
+
+    private static double defaultFireNoise(@Nullable ResourceLocation gunId) {
+        String type = gunId == null ? "other" : TimelessAPI.getCommonGunIndex(gunId)
+                .map(index -> index.getType()).orElse("other").toLowerCase(Locale.ROOT);
+        return Config.FIRE_NOISE_TYPES.getOrDefault(type, Config.FIRE_NOISE_TYPES.get("other")).get();
+    }
+
     /** 按枪械 id 取动态光照配置; 黑名单枪械返回 null, data 中无 light 字段时使用全局配置。 */
     @Nullable
     public static GunTaczFixesData.LightConfig resolveLight(ResourceLocation gunId) {
@@ -429,10 +448,16 @@ public class TaczFixesDataManager {
         return result;
     }
 
-    public static InaccuracyParams resolveInaccuracyParams(ResourceLocation dataId, InaccuracyType state) {
+    public static boolean usesConfiguredSpreadRecovery(ResourceLocation dataId) {
+        GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
+        return data == null || data.inaccuracy_multiplier == null || data.inaccuracy_multiplier.isEmpty();
+    }
+
+    private static InaccuracyParams resolveInaccuracyParams(ResourceLocation dataId, InaccuracyType state,
+                                                            long ceaseFireDelay) {
         GunTaczFixesData data = dataId == null ? null : DATA.get(dataId);
         if (data == null || data.inaccuracy_multiplier == null || data.inaccuracy_multiplier.isEmpty()) {
-            return fromConfig();
+            return fromConfig(ceaseFireDelay);
         }
         String key = state == null ? "stand" : state.name().toLowerCase(Locale.ROOT);
         GunTaczFixesData.InaccuracyConfig cfg = data.inaccuracy_multiplier.get(key);
@@ -453,16 +478,21 @@ public class TaczFixesDataManager {
     }
 
     public static InaccuracyParams resolveInaccuracyParams(ResourceLocation dataId, InaccuracyType state, ItemStack gunItem) {
-        InaccuracyParams base = resolveInaccuracyParams(dataId, state);
+        return resolveInaccuracyParams(dataId, state, gunItem, 0L);
+    }
+
+    public static InaccuracyParams resolveInaccuracyParams(ResourceLocation dataId, InaccuracyType state,
+                                                           ItemStack gunItem, long ceaseFireDelay) {
+        InaccuracyParams base = resolveInaccuracyParams(dataId, state, ceaseFireDelay);
         if (gunItem == null) return base;
         return AttachmentTaczFixesManager.adjustInaccuracy(gunItem, base);
     }
 
-    private static InaccuracyParams fromConfig() {
+    private static InaccuracyParams fromConfig(long ceaseFireDelay) {
         boolean enabled = Config.SPREAD_RAMP_ENABLED.get();
         return new InaccuracyParams(
                 enabled ? Config.SPREAD_RAMP_MAX_STACKS.get() : 0,
-                Config.SPREAD_RAMP_DECAY_DELAY_MS.get(),
+                ceaseFireDelay,
                 Config.SPREAD_RAMP_DECAY.get(),
                 enabled ? Config.SPREAD_RAMP_INCREMENT.get() : 0.0,
                 enabled ? Config.SPREAD_RAMP_FLAT_INCREMENT.get() : 0.0);

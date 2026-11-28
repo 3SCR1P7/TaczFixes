@@ -1,5 +1,11 @@
 {
   "taczfixes": {
+    "fire_noise": {
+      "addend": 1,
+      "multiplier": 0.5,
+      "percent": 0.1,
+      "function": "y = x - 1"
+    },
     "attachment_slots": {
       // 槽位id，对应模型文件中的*_pos，*_adapter。
       // 在这里，可以随意填写id，只要不和本配件提供的其它配件槽id重复。
@@ -63,7 +69,8 @@
         // 对每次开火叠加的连射惩罚的调整
         // 对于flat和percent都生效
         "multiplier": 0.5
-      },
+      }
+    },
     "cooldown_speed": {
       // 对于回正速度的调整
       "addned": 0.1

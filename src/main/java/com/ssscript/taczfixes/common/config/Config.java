@@ -124,6 +124,13 @@ public class Config {
     public static final String[] GUN_LIGHT_TYPE_NAMES = {"pistol", "sniper", "rifle", "shotgun", "smg", "rpg", "mg", "dmr"};
     public static final java.util.Map<String, GunLightTypeConfig> GUN_LIGHT_TYPE_CONFIGS = new java.util.LinkedHashMap<>();
     public static final GunLightTypeConfig GUN_LIGHT_MUZZLE_ADJUST;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_MAX;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_FILTER_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_TINNITUS_THRESHOLD;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE;
+    public static final ForgeConfigSpec.IntValue FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE;
+    public static final ForgeConfigSpec.DoubleValue FIRE_NOISE_SUPPRESSOR_MULTIPLIER;
+    public static final java.util.Map<String, ForgeConfigSpec.IntValue> FIRE_NOISE_TYPES;
     public static final ForgeConfigSpec.BooleanValue RECOIL_FIRE_RATE_REDUCTION_ENABLED;
     public static final ForgeConfigSpec.IntValue RECOIL_FIRE_RATE_WINDOW;
     public static final ForgeConfigSpec.DoubleValue RECOIL_FIRE_RATE_FACTOR;
@@ -559,7 +566,7 @@ public class Config {
                 .comment("连射惩罚的最大应用次数。默认值：30")
                 .defineInRange("max_stacks", 30, 0, 1000);
         SPREAD_RAMP_DECAY_DELAY_MS = BUILDER
-                .comment("距离上次开火时间超出此数值后将开始回正散布。默认值：200")
+                .comment("枪械 data 声明连射惩罚但省略 cooldown_delay 时使用的毫秒数。默认值：200")
                 .defineInRange("decay_delay_ms", 200, 0, 10000);
         SPREAD_RAMP_DECAY = BUILDER
                 .comment("回正散布的速度。默认值：0.1")
@@ -680,6 +687,34 @@ public class Config {
 
         BUILDER.pop();
         SPECS.put("gun_light", BUILDER.build());
+
+        BUILDER = new ForgeConfigSpec.Builder();
+        BUILDER.push("fire_noise");
+        FIRE_NOISE_MAX = BUILDER.defineInRange("max", 1000, 0, 1_000_000);
+        FIRE_NOISE_FILTER_THRESHOLD = BUILDER.defineInRange("filter_threshold", 600, 0, 1_000_000);
+        FIRE_NOISE_TINNITUS_THRESHOLD = BUILDER.defineInRange("tinnitus_threshold", 800, 0, 1_000_000);
+        FIRE_NOISE_DECAY_PER_TICK_HIGH_NOISE = BUILDER
+                .comment("Noise removed per tick after ceasing fire when noise is at or above the lower of the filter and tinnitus thresholds.")
+                .defineInRange("decay_per_tick_high_noise", 5, 0, 1_000_000);
+        FIRE_NOISE_DECAY_PER_TICK_LOW_NOISE = BUILDER
+                .comment("Noise removed per tick after ceasing fire when noise is below both thresholds.")
+                .defineInRange("decay_per_tick_low_noise", 50, 0, 1_000_000);
+        FIRE_NOISE_SUPPRESSOR_MULTIPLIER = BUILDER.defineInRange("suppressor_multiplier", 0.2D, 0.0D, 10.0D);
+        BUILDER.push("gun_types");
+        var fireNoiseTypes = new java.util.LinkedHashMap<String, ForgeConfigSpec.IntValue>();
+        fireNoiseTypes.put("pistol", BUILDER.defineInRange("pistol", 25, 0, 1_000_000));
+        fireNoiseTypes.put("sniper", BUILDER.defineInRange("sniper", 210, 0, 1_000_000));
+        fireNoiseTypes.put("rifle", BUILDER.defineInRange("rifle", 30, 0, 1_000_000));
+        fireNoiseTypes.put("shotgun", BUILDER.defineInRange("shotgun", 50, 0, 1_000_000));
+        fireNoiseTypes.put("smg", BUILDER.defineInRange("smg", 25, 0, 1_000_000));
+        fireNoiseTypes.put("rpg", BUILDER.defineInRange("rpg", 400, 0, 1_000_000));
+        fireNoiseTypes.put("mg", BUILDER.defineInRange("mg", 35, 0, 1_000_000));
+        fireNoiseTypes.put("dmr", BUILDER.defineInRange("dmr", 70, 0, 1_000_000));
+        fireNoiseTypes.put("other", BUILDER.defineInRange("other", 50, 0, 1_000_000));
+        FIRE_NOISE_TYPES = java.util.Collections.unmodifiableMap(fireNoiseTypes);
+        BUILDER.pop();
+        BUILDER.pop();
+        SPECS.put("fire_noise", BUILDER.build());
 
         BUILDER = new ForgeConfigSpec.Builder();
         BUILDER.push("gun_spell");

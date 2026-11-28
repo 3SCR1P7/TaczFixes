@@ -1559,6 +1559,7 @@ public final class DualWieldClient {
     }
 
     private static void playOffhandShotVisual(LocalPlayer player, ItemStack stack, GunDisplayInstance display, GunData gunData) {
+        com.ssscript.taczfixes.client.util.NoiseState.onShot(player, net.minecraft.world.InteractionHand.OFF_HAND, stack);
         OffhandDisplayManager.triggerNative("shoot");
         DualMuzzleFlashState.record(DualRenderContext.HandPhase.OFFHAND);
         markThirdPersonFlashHand(DualRenderContext.HandPhase.OFFHAND);

@@ -42,6 +42,14 @@ public class SpreadState {
         return applyPenalty(baseInaccuracy, currentStacks, params);
     }
 
+    public static void recordLatestFire(LivingEntity shooter, ResourceLocation gunId) {
+        Map<ResourceLocation, Entry> perGun = STATES.get(shooter.getUUID());
+        Entry entry = perGun == null ? null : perGun.get(gunId);
+        if (entry != null) {
+            entry.lastShotTime = System.currentTimeMillis();
+        }
+    }
+
     public static float applyPenalty(float baseInaccuracy, int appliedStacks, InaccuracyParams params) {
         int stacks = Math.max(0, appliedStacks);
         double shotPercent = params != null ? params.shotPercent : Config.SPREAD_RAMP_INCREMENT.get();
